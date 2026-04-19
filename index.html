@@ -234,6 +234,20 @@
 .timeline-date.today:hover {
     background-color: #EFF6FF !important; /* Трохи насиченіший колір акценту лісу */
 }
+    /* --- ІНТЕРАКТИВНІСТЬ КЛІТИНОК СІТКИ (Місця для створення броні) --- */
+.timeline-cell {
+    transition: all 0.2s ease;
+    position: relative;
+}
+
+.timeline-cell:hover {
+    background-color: rgba(85, 107, 47, 0.15) !important; /* Наша фірмова оливкова підсвітка */
+    transform: scale(1.05); /* Легке приємне збільшення */
+    z-index: 5; /* Виводимо на передній план при наведенні */
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.08); /* М'яка тінь */
+    border-radius: 6px; /* Трохи заокруглюємо краї саме при наведенні */
+    cursor: pointer;
+}
     </style>
 </head>
 <body>
