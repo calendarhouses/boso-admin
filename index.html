@@ -234,18 +234,21 @@
 .timeline-date.today:hover {
     background-color: #EFF6FF !important; /* Трохи насиченіший колір акценту лісу */
 }
-    /* --- ІНТЕРАКТИВНІСТЬ КЛІТИНОК СІТКИ (Місця для створення броні) --- */
+/* --- ПРЕМІУМ-ІНТЕРАКТИВНІСТЬ СІТКИ (BOSO 3D Effect) --- */
 .timeline-cell {
-    transition: all 0.2s ease;
+    /* Додаємо "пружну" анімацію (cubic-bezier) для дорогого відчуття */
+    transition: transform 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275), box-shadow 0.2s ease, background-color 0.2s ease;
     position: relative;
+    z-index: 1;
 }
 
 .timeline-cell:hover {
-    background-color: rgba(85, 107, 47, 0.15) !important; /* Наша фірмова оливкова підсвітка */
-    transform: scale(1.05); /* Легке приємне збільшення */
-    z-index: 5; /* Виводимо на передній план при наведенні */
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.08); /* М'яка тінь */
-    border-radius: 6px; /* Трохи заокруглюємо краї саме при наведенні */
+    background-color: var(--card-bg) !important; /* Робимо фон суцільним білим, щоб приховати лінії сітки під ним */
+    transform: scale(1.25); /* Збільшуємо значно сильніше, ніж раніше */
+    z-index: 50; /* Виводимо на самий передній план над усіма рядками */
+    box-shadow: 0 12px 24px rgba(85, 107, 47, 0.25); /* М'яка, але глибока тінь оливкового відтінку */
+    border: 2px solid var(--accent); /* Чітка фірмова рамка, щоб виділити блок */
+    border-radius: 8px; /* Гарні заокруглення */
     cursor: pointer;
 }
     </style>
