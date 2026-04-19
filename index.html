@@ -1229,26 +1229,38 @@
             const checkOutStr = document.getElementById('adminCheckOut').value;
             const roomName = document.getElementById('adminCottage').value;
             const guests = parseInt(document.getElementById('adminGuests').value) || 2;
+            const petsSelect = document.getElementById('adminPets');
+            const pets = petsSelect ? petsSelect.value : "Ні";
+            const cont = document.getElementById('liveCalculatorContainer');
 
-            if (!checkInStr || !checkOutStr || !roomName) return;
+            if (!checkInStr || !checkOutStr || !roomName) { cont.innerHTML = ''; return; }
 
-            const d1 = new Date(checkInStr);
-            const d2 = new Date(checkOutStr);
+            // БЕЗПЕЧНИЙ ПАРСИНГ ДАТ
+            let safeIn = checkInStr.includes('.') ? checkInStr.split('.').reverse().join('-') : checkInStr;
+            let safeOut = checkOutStr.includes('.') ? checkOutStr.split('.').reverse().join('-') : checkOutStr;
+
+            const d1 = new Date(safeIn);
+            const d2 = new Date(safeOut);
             let nights = Math.round((d2 - d1) / (1000 * 60 * 60 * 24));
-            if (nights < 1) nights = 1;
+            if (nights < 1 || isNaN(nights)) nights = 1;
 
-            const room = roomsList.find(r => r.name === roomName || roomName.includes(r.name));
-            if (!room) return;
+            // РОЗУМНИЙ ПОШУК НОМЕРА
+            const room = roomsList.find(r => r.name === roomName || roomName.includes(r.name) || r.name.includes(roomName.split(' ')[0]));
+            if (!room) { cont.innerHTML = ''; return; }
 
             let basePriceTotal = 0;
             for (let i = 0; i < nights; i++) {
                 let curr = new Date(d1); curr.setDate(curr.getDate() + i);
+                let ds = `${curr.getFullYear()}-${String(curr.getMonth()+1).padStart(2,'0')}-${String(curr.getDate()).padStart(2,'0')}`;
                 let isWeekend = (curr.getDay() === 0 || curr.getDay() === 6);
-                basePriceTotal += isWeekend ? room.priceWeekend : room.priceWeekday;
+                let dp = isWeekend ? room.priceWeekend : room.priceWeekday;
+                if (customPrices[room.id] && customPrices[room.id][ds]) dp = customPrices[room.id][ds];
+                basePriceTotal += dp;
             }
 
             let extraGuests = Math.max(0, guests - room.capacity);
             let extraGuestFee = extraGuests * 2500 * nights;
+            let petFee = (pets === "Так") ? (500 + 200 * nights) : 0;
 
             let discountPercent = 0;
             if (nights >= 30) discountPercent = 0.73;
@@ -1259,12 +1271,27 @@
 
             let amountToDiscount = basePriceTotal + extraGuestFee;
             let discountAmount = Math.round(amountToDiscount * discountPercent);
-            let totalPrice = amountToDiscount - discountAmount;
+            let totalPrice = amountToDiscount - discountAmount + petFee;
             let prepay = Math.round(totalPrice / 2);
 
-            document.getElementById('prevBase').innerText = totalPrice + " грн";
-            document.getElementById('prevPrepay').innerText = prepay + " грн";
-            document.getElementById('prevTotal').innerText = totalPrice + " грн";
+            // МАЛЮЄМО НОВУ КРАСИВУ РОЗШИФРОВКУ
+            cont.innerHTML = `
+                <div class="form-section" style="background:#FDFCFB;">
+                    <span class="form-section-title" style="color:var(--accent);">Розшифровка (${nights} ночей)</span>
+                    <div style="display:flex; justify-content:space-between; margin-bottom:5px;"><span>Базова вартість:</span><strong>${basePriceTotal} грн</strong></div>
+                    ${extraGuestFee > 0 ? `<div style="display:flex; justify-content:space-between; margin-bottom:5px;"><span>Дод. гості:</span><strong>+${extraGuestFee} грн</strong></div>` : ''}
+                    ${petFee > 0 ? `<div style="display:flex; justify-content:space-between; margin-bottom:5px;"><span>Тварини:</span><strong>+${petFee} грн</strong></div>` : ''}
+                    ${discountAmount > 0 ? `<div style="display:flex; justify-content:space-between; margin-bottom:5px; color:var(--danger);"><span>Знижка:</span><strong>-${discountAmount} грн</strong></div>` : ''}
+                    
+                    <div style="display:flex; justify-content:space-between; margin-top:10px; border-top:1px dashed #D1D5DB; padding-top:10px; color:var(--success); font-size:14px; font-weight:600;">
+                        <span>Передоплата (50%):</span><span>${prepay} грн</span>
+                    </div>
+
+                    <div style="display:flex; justify-content:space-between; margin-top:10px; border-top:2px solid var(--accent); padding-top:10px; font-size:18px;">
+                        <span>Загальна вартість:</span><strong style="color:var(--accent);">${totalPrice} грн</strong>
+                    </div>
+                </div>
+            `;
         }
 
         // Вішаємо слухачів на поля, щоб ціна мінялась при кожному кліку
