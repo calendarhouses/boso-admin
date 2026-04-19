@@ -3,16 +3,29 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>DuzhTech | Адмін Панель</title>
+    <title>BOSO | Панель Управління</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
     
     <style>
+        /* --- НОВА ПРЕМІУМ-ПАЛІТРА BOSO (ОЛИВКА, ВУГІЛЛЯ, КРЕМ) --- */
         :root {
-            --sidebar-bg: #111827; --sidebar-hover: #1F2937;
-            --bg-color: #F3F4F6; --card-bg: #FFFFFF;
-            --text-main: #111827; --text-muted: #6B7280;
-            --accent: #3B82F6; --success: #10B981; --danger: #EF4444; --warning: #F59E0B;
+            /* Основні кольори фону та тексту */
+            --bg-color: #FDFCFB; 
+            --card-bg: #FFFFFF;
+            --text-main: #1A1A1A; 
+            --text-muted: #757575;
+
+            /* Акцентні кольори (Ліс, Преміум) */
+            --accent: #556B2F; 
+            --accent-hover: #4B5D28; 
+            --success: #8FBC8F; 
+            --warning: #D2B48C; 
+            --danger: #BC8F8F; 
+
+            /* Сайдбар (Темний преміум) */
+            --sidebar-bg: #2C2C2C; 
+            --sidebar-hover: #3E3E3E;
         }
 
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Inter', sans-serif; }
@@ -43,8 +56,29 @@
         .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; flex-shrink: 0;}
         .header h1 { font-size: 28px; font-weight: 600; letter-spacing: -0.5px; }
         
-        .btn-primary { background: linear-gradient(135deg, #3B82F6 0%, #2563EB 100%); color: white; padding: 12px 24px; border: none; border-radius: 10px; font-size: 14px; font-weight: 600; cursor: pointer; transition: 0.3s; box-shadow: 0 4px 12px rgba(37, 99, 235, 0.25); display: flex; align-items: center; gap: 8px;}
-        .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 6px 16px rgba(37, 99, 235, 0.35); }
+        .btn-primary {
+    /* Однотонний оливковий, без дешевих градієнтів */
+    background: var(--accent); 
+    color: white;
+    padding: 12px 24px;
+    border: none;
+    border-radius: 10px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: 0.3s ease;
+    /* М'яка кольорова тінь */
+    box-shadow: 0 4px 6px rgba(85, 107, 47, 0.2); 
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.btn-primary:hover {
+    background: var(--accent-hover);
+    transform: translateY(-2px); /* Ефект підняття */
+    box-shadow: 0 6px 12px rgba(85, 107, 47, 0.3);
+}
         .btn-secondary { background: white; border: 1px solid #D1D5DB; padding: 10px 20px; border-radius: 8px; font-weight: 600; cursor: pointer; transition: 0.2s;}
         .btn-secondary:hover { background: #F9FAFB; }
         .btn-success { background: var(--success); color: white; border: none; padding: 10px 20px; border-radius: 8px; font-weight: 600; cursor: pointer; transition: 0.2s; display: flex; align-items: center; gap: 6px;}
@@ -178,12 +212,34 @@
         .mode-toggle { display: flex; background: #F3F4F6; padding: 4px; border-radius: 10px; margin: 0 16px; }
         .mode-btn { padding: 6px 16px; font-size: 13px; font-weight: 600; color: #6B7280; cursor: pointer; border-radius: 8px; transition: 0.2s; user-select: none;}
         .mode-btn.active { background: #FFFFFF; color: #111827; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
+
+        /* --- СТИЛІ ДЛЯ ІНТЕРАКТИВНОСТІ ШАХМАТКИ (PREMIUM EFFECT) --- */
+.timeline-date {
+    /* Плавність для всіх ефектів */
+    transition: background-color 0.3s ease, transform 0.2s ease, box-shadow 0.3s ease, z-index 0s;
+    cursor: pointer; /* Змінюємо курсор на "руку" для клікабельності */
+    position: relative; /* Необхідно для коректного z-index */
+    z-index: 1;
+}
+
+/* Ефект при наведенні курсору */
+.timeline-date:hover {
+    background-color: rgba(85, 107, 47, 0.1) !important; /* Легке підсвічування новим акцентним кольором (оливковим) */
+    transform: scale(1.15) translateY(-2px); /* Збільшення на 15% та легке підняття вгору */
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05); /* М'яка преміум-тінь */
+    z-index: 10; /* Виводимо дату на передній план, щоб вона не перекривалася сусідами */
+}
+
+/* Окремо для сьогоднішньої дати, щоб зберегти її унікальність */
+.timeline-date.today:hover {
+    background-color: #EFF6FF !important; /* Трохи насиченіший колір акценту лісу */
+}
     </style>
 </head>
 <body>
 
     <div class="sidebar">
-        <div class="logo">Duzh<span>Tech</span></div>
+        <div class="logo">BOSO<span>.</span></div>
         <div class="menu-item" onclick="switchView('grid')" id="menu-grid">
             <div class="menu-item-content">
                 <svg class="menu-icon" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 0 1 2.25-2.25h13.5A2.25 2.25 0 0 1 21 7.5v11.25m-18 0A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75m-18 0v-7.5A2.25 2.25 0 0 1 5.25 9h13.5A2.25 2.25 0 0 1 21 11.25v7.5m-9-6h.008v.008H12v-.008ZM12 15h.008v.008H12V15Zm0 2.25h.008v.008H12v-.008ZM9.75 15h.008v.008H9.75V15Zm0 2.25h.008v.008H9.75v-.008ZM7.5 15h.008v.008H7.5V15Zm0 2.25h.008v.008H7.5v-.008Zm6.75-4.5h.008v.008h-.008v-.008Zm0 2.25h.008v.008h-.008V15Zm0 2.25h.008v.008h-.008v-.008Zm2.25-4.5h.008v.008H16.5v-.008Zm0 2.25h.008v.008H16.5V15Z" /></svg>Шахматка
@@ -1158,25 +1214,91 @@
             document.getElementById('bookingDrawer').classList.add('active');
         }
 
-        function openDetailsByRow(rowNumber) {
-            const booking = allBookings.find(b => b.row == rowNumber);
-            if (!booking) return;
-            editingRowNumber = rowNumber;
-            document.getElementById('drawerTitle').innerText = `Деталі броні`;
-            document.getElementById('adminName').value = String(booking.name).replace(' (Ручна бронь)', ''); 
-            document.getElementById('adminPhone').value = '+' + formatPhone(booking.phone);
-            document.getElementById('adminGuests').value = booking.guests || 2;
-            
-            const cottageSelect = document.getElementById('adminCottage');
-            cottageSelect.innerHTML = roomsList.map(r => `<option value="${r.name}">${r.name} (${r.desc})</option>`).join('');
-            cottageSelect.value = roomsList.some(r => r.name === booking.cottage) ? booking.cottage : (roomsList[0] ? roomsList[0].name : "");
+        // --- ОНОВЛЕНА ФУНКЦІЯ: ВІДКРИТТЯ ДЕТАЛЕЙ З РОЗГОРНУТОЮ ВАРТІСТЮ ---
+function openDetailsByRow(rowNumber) {
+    const booking = allBookings.find(b => b.row == rowNumber);
+    if (!booking) return;
+    editingRowNumber = rowNumber;
+    
+    // Оновлюємо заголовок (змінено на BOSO)
+    document.getElementById('drawerTitle').innerText = `Деталі броні ${booking.id}`;
+    
+    // Заповнюємо базові поля
+    document.getElementById('adminName').value = String(booking.name).replace(' (Ручна бронь)', '');
+    document.getElementById('adminPhone').value = '+' + formatPhone(booking.phone);
+    document.getElementById('adminGuests').value = booking.guests || 2;
+    
+    // Динамічно формуємо список номерів
+    const cottageSelect = document.getElementById('adminCottage');
+    cottageSelect.innerHTML = roomsList.map(r => `<option value="${r.name}">${r.name} (${r.desc})</option>`).join('');
+    cottageSelect.value = roomsList.some(r => r.name === booking.cottage) ? booking.cottage : (roomsList[0] ? roomsList[0].name : "");
 
-            checkInPicker.setDate(booking.checkIn); checkOutPicker.setDate(booking.checkOut);
-            document.querySelectorAll('.status-btn').forEach(b => b.classList.remove('active'));
-            let matched = Array.from(document.querySelectorAll('.status-btn')).find(b => b.getAttribute('data-status') === booking.status);
-            if(matched) matched.classList.add('active'); else document.querySelector('.status-btn[data-status="Нова бронь"]').classList.add('active');
-            document.getElementById('bookingDrawer').classList.add('active');
-        }
+    // Налаштовуємо дати
+    checkInPicker.setDate(booking.checkIn);
+    checkOutPicker.setDate(booking.checkOut);
+    
+    // Активуємо правильний статус
+    document.querySelectorAll('.status-btn').forEach(b => b.classList.remove('active'));
+    let matched = Array.from(document.querySelectorAll('.status-btn')).find(b => b.getAttribute('data-status') === booking.status);
+    if(matched) matched.classList.add('active'); else document.querySelector('.status-btn[data-status="Nova бронь"]').classList.add('active');
+
+    // --- РОЗГОРНУТА ВАРТІСТЬ БРОНЮВАННЯ (PREMIUM VIEW) ---
+    // Знаходимо форму та перевіряємо, чи є вже блок вартості
+    const form = document.getElementById('adminBookingForm');
+    let costSection = document.getElementById('detailsCostSection');
+    
+    if (!costSection) {
+        // Якщо немає - створюємо його з преміум-стилями
+        costSection = document.createElement('div');
+        costSection.id = 'detailsCostSection';
+        costSection.className = 'form-section';
+        costSection.style.cssText = 'background: #FDFCFB; border: 1px solid #E5E7EB; border-radius: 12px; padding: 20px; margin-top: 24px;';
+        form.appendChild(costSection);
+    }
+
+    // Отримуємо та перетворюємо фінансові дані
+    const basePrice = parseFloat(booking.basePrice) || 0;
+    const discountAmount = parseFloat(booking.discountAmount) || 0;
+    const extraGuestFee = parseFloat(booking.extraGuestFee) || 0;
+    const petFee = parseFloat(booking.petFee) || 0;
+    const totalPrice = parseFloat(booking.totalPrice) || 0;
+
+    // Формуємо HTML для розшифровки вартості
+    costSection.innerHTML = `
+        <span class="form-section-title" style="color: var(--accent); font-weight: 700; margin-bottom: 16px;">Розшифровка вартості</span>
+        
+        <div style="display: flex; justify-content: space-between; margin-bottom: 10px; font-size: 14px; color: var(--text-main);">
+            <span>Базова вартість номера:</span>
+            <strong style="font-weight: 600;">${basePrice.toFixed(0)} грн</strong>
+        </div>
+        
+        ${extraGuestFee > 0 ? `
+        <div style="display: flex; justify-content: space-between; margin-bottom: 10px; font-size: 14px; color: var(--text-main);">
+            <span>Додаткові гості:</span>
+            <strong style="font-weight: 600; color: #4B5563;">+${extraGuestFee.toFixed(0)} грн</strong>
+        </div>` : ''}
+        
+        ${petFee > 0 ? `
+        <div style="display: flex; justify-content: space-between; margin-bottom: 10px; font-size: 14px; color: var(--text-main);">
+            <span>Проживання з тваринами:</span>
+            <strong style="font-weight: 600; color: #4B5563;">+${petFee.toFixed(0)} грн</strong>
+        </div>` : ''}
+        
+        ${discountAmount > 0 ? `
+        <div style="display: flex; justify-content: space-between; margin-bottom: 15px; font-size: 14px; color: #DC2626; padding-top: 5px; border-top: 1px dashed #E5E7EB;">
+            <span style="font-weight: 500;">Знижка:</span>
+            <strong style="font-weight: 700;">-${discountAmount.toFixed(0)} грн</strong>
+        </div>` : ''}
+        
+        <div style="display: flex; justify-content: space-between; border-top: 2px solid var(--accent); padding-top: 15px; margin-top: 5px; font-size: 18px; font-weight: 700;">
+            <span style="color: var(--text-main);">Загальна вартість:</span>
+            <strong style="color: var(--accent);">${totalPrice.toFixed(0)} грн</strong>
+        </div>
+    `;
+    
+    // Показуємо панель (Drawer)
+    document.getElementById('bookingDrawer').classList.add('active');
+}
 
         function closeDrawer() { document.getElementById('bookingDrawer').classList.remove('active'); }
 
