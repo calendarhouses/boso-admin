@@ -1245,7 +1245,8 @@
             if (nights < 1 || isNaN(nights)) nights = 1;
 
             // РОЗУМНИЙ ПОШУК НОМЕРА
-            const room = roomsList.find(r => r.name === roomName || roomName.includes(r.name) || r.name.includes(roomName.split(' ')[0]));
+            // ТОЧНИЙ ПОШУК НОМЕРА (ніяких дурних вгадувань)
+            const room = roomsList.find(r => r.name === roomName);
             if (!room) { cont.innerHTML = ''; return; }
 
             let basePriceTotal = 0;
