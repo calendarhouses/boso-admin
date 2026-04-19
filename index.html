@@ -531,7 +531,14 @@
                             <div class="form-group"><label>Дата заїзду:</label><input type="text" id="adminCheckIn" required></div>
                             <div class="form-group"><label>Дата виїзду:</label><input type="text" id="adminCheckOut" required></div>
                             <div class="form-group"><label>Дорослих:</label><input type="number" id="adminGuests" value="2" min="1"></div>
-                            <div class="form-group"><label>Тварини:</label><select id="adminPets"><option value="Ні">Ні</option><option value="Так">Так (+ доплата)</option></select></div>
+                           <div class="form-group">
+    <label>Тварини:</label>
+    <div class="mode-toggle" style="margin: 0; width: 100%; box-sizing: border-box;">
+        <div class="mode-btn pet-btn active" data-val="Ні" onclick="togglePet('Ні')" style="flex: 1; text-align: center;">Ні</div>
+        <div class="mode-btn pet-btn" data-val="Так" onclick="togglePet('Так')" style="flex: 1; text-align: center;">Так (+ доплата)</div>
+    </div>
+    <input type="hidden" id="adminPets" value="Ні">
+</div>
                         </div>
                     </div>
                     
@@ -1223,6 +1230,14 @@
             });
         } // <--- ОСЬ ЦІЄЇ ДУЖКИ НЕ ВИСТАЧАЛО! ВОНА ЗАКРИВАЄ renderPriceGrid()
 
+        // --- ПЕРЕМИКАЧ ТВАРИН ---
+        function togglePet(val) {
+            document.getElementById('adminPets').value = val;
+            document.querySelectorAll('.pet-btn').forEach(btn => {
+                btn.classList.toggle('active', btn.getAttribute('data-val') === val);
+            });
+            updatePricePreview(); // Моментально перераховуємо ціну!
+        }
         // --- ПАНЕЛЬ ДЕТАЛЕЙ БРОНЮВАННЯ ТА ЖИВИЙ КАЛЬКУЛЯТОР ---
         function updatePricePreview() {
             const checkInStr = document.getElementById('adminCheckIn').value;
@@ -1314,7 +1329,7 @@
             // Скидаємо статуси та тварин
             document.querySelectorAll('.status-btn').forEach(b => b.classList.remove('active'));
             document.querySelector('.status-btn[data-status="Нова бронь"]').classList.add('active');
-            if(document.getElementById('adminPets')) document.getElementById('adminPets').value = "Ні";
+            if(document.getElementById('adminPets')) togglePet('Ні');
             
             // Динамічно формуємо список номерів у формі
             const cottageSelect = document.getElementById('adminCottage');
@@ -1366,9 +1381,10 @@
             checkInPicker.setDate(booking.checkIn);
             checkOutPicker.setDate(booking.checkOut);
             
-            // Тварини (якщо в базі "Так", ставимо "Так", інакше "Ні")
-            const petsSelect = document.getElementById('adminPets');
-            if (petsSelect) petsSelect.value = (booking.pets === "Так" || booking.pets === true) ? "Так" : "Ні";
+            // Тварини (встановлюємо правильну кнопку)
+            if (document.getElementById('adminPets')) {
+                togglePet((booking.pets === "Так" || booking.pets === true) ? "Так" : "Ні");
+            }
             
             // Статус
             document.querySelectorAll('.status-btn').forEach(b => b.classList.remove('active'));
