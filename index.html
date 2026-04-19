@@ -521,26 +521,22 @@
                             <div class="form-group"><label>Джерело:</label><select id="adminSource"><option>Телефон (Пряме)</option><option>Telegram Бот</option><option>Booking.com</option></select></div>
                         </div>
                     </div>
-                    <div class="form-section">
+                   <div class="form-section">
                         <span class="form-section-title">Дані про заїзд</span>
                         <div class="form-group">
                             <label>Номер / Котедж:</label>
-                            <select id="adminCottage">
-                                </select>
+                            <select id="adminCottage"></select>
                         </div>
                         <div class="form-grid">
                             <div class="form-group"><label>Дата заїзду:</label><input type="text" id="adminCheckIn" required></div>
                             <div class="form-group"><label>Дата виїзду:</label><input type="text" id="adminCheckOut" required></div>
                             <div class="form-group"><label>Дорослих:</label><input type="number" id="adminGuests" value="2" min="1"></div>
-                            <div class="form-group"><label>Дітей:</label><input type="number" value="0" min="0"></div>
+                            <div class="form-group"><label>Тварини:</label><select id="adminPets"><option value="Ні">Ні</option><option value="Так">Так (+ доплата)</option></select></div>
                         </div>
                     </div>
-                   <div class="form-section" style="background: #F9FAFB; border-color: #E5E7EB;">
-                        <span class="form-section-title">Вартість бронювання</span>
-                        <div style="display: flex; justify-content: space-between; margin-bottom: 12px; font-size: 14px; color: #4B5563;"><span>Загальна вартість (зі знижкою):</span><strong id="prevBase">0 грн</strong></div>
-                        <div style="display: flex; justify-content: space-between; margin-bottom: 12px; font-size: 14px; color: #4B5563;"><span>Передоплата:</span><strong id="prevPrepay" style="color: var(--success);">0 грн</strong></div>
-                        <div style="display: flex; justify-content: space-between; border-top: 1px solid #D1D5DB; padding-top: 12px; font-size: 16px;"><span>До сплати:</span><strong id="prevTotal" style="color: var(--accent);">0 грн</strong></div>
-                    </div>
+                    
+                    <div id="liveCalculatorContainer"></div>
+                    
                 </form>
             </div>
             <div class="drawer-footer">
@@ -584,6 +580,8 @@
             { id: 2, name: "Ранній заїзд", rooms: "Всі", price: 0, active: false }
         ];
 
+        let customPrices = {}; // Тут будуть зберігатися ціни по датах
+        
         // --- ІНІЦІАЛІЗАЦІЯ: ЗАВАНТАЖУЄМО БРОНІ ТА НАЛАШТУВАННЯ З ХМАРИ ---
         async function initApp() {
             try {
@@ -597,7 +595,6 @@
                 ]);
                 
                 allBookings = await bookingsRes.json();
-                
                 const settingsData = await settingsRes.json();
                 
                 // Якщо в хмарі вже є збережені налаштування - замінюємо базові
@@ -606,6 +603,7 @@
                     if (settingsData.discountsList) discountsList = settingsData.discountsList;
                     if (settingsData.customServicesList) customServicesList = settingsData.customServicesList;
                     if (settingsData.sysServicesList) sysServicesList = settingsData.sysServicesList;
+                    if (settingsData.customPrices) customPrices = settingsData.customPrices; // ДОДАНО: Читаємо ціни
                 }
 
                 // Рендеримо сторінку, яка відкрита за замовчуванням
@@ -628,7 +626,8 @@
                 roomsList: roomsList,
                 discountsList: discountsList,
                 customServicesList: customServicesList,
-                sysServicesList: sysServicesList
+                sysServicesList: sysServicesList,
+                customPrices: customPrices // ДОДАНО: Зберігаємо ціни
             };
             
             try {
@@ -646,6 +645,14 @@
         let currentEditType = null;
         let currentEditId = null;
 
+        const settingsToSave = {
+                roomsList: roomsList,
+                discountsList: discountsList,
+                customServicesList: customServicesList,
+                sysServicesList: sysServicesList,
+                customPrices: customPrices // ДОДАНО
+            };
+        
         // Утиліти
         function formatPhone(phoneStr) {
             let clean = String(phoneStr || '').replace(/\D/g, '');
@@ -932,9 +939,21 @@
             } else if (currentEditType === 'price') {
                 const roomSel = document.getElementById('mPriceRoom').value;
                 const amount = parseInt(document.getElementById('mPriceAmount').value) || 0;
+                
                 if (amount > 0) {
+                    const startDate = new Date(priceTimelineBaseDate);
+                    const daysCount = new Date(startDate.getFullYear(), startDate.getMonth() + 1, 0).getDate();
+                    
                     roomsList.forEach(r => {
-                        if (roomSel === 'all' || r.id == roomSel) { r.priceWeekday = amount; r.priceWeekend = amount; }
+                        if (roomSel === 'all' || r.id == roomSel) {
+                            if (!customPrices[r.id]) customPrices[r.id] = {};
+                            // Записуємо ціну на кожен день обраного місяця
+                            for (let i = 1; i <= daysCount; i++) {
+                                let d = new Date(startDate.getFullYear(), startDate.getMonth(), i);
+                                let dateStr = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+                                customPrices[r.id][dateStr] = amount;
+                            }
+                        }
                     });
                 }
                 renderPriceGrid();
@@ -1177,19 +1196,31 @@
                 datesContainer.innerHTML += `<div class="timeline-date ${isWeekend ? 'weekend' : ''}" style="height: 50px;">${d.getDate()} <span>${daysArr[d.getDay()]}</span></div>`;
             }
 
-            roomsList.forEach((room, roomIndex) => {
+           roomsList.forEach((room, roomIndex) => {
                 roomsContainer.innerHTML += `<div class="timeline-room" style="height: 50px;">${room.short}<span>${room.desc}</span></div>`;
                 let rowHtml = `<div class="timeline-row-bg" style="height: 50px; position: relative;">`;
+                
                 for (let i = 0; i < daysCount; i++) {
                     const d = new Date(startDate); d.setDate(startDate.getDate() + i);
                     const isWeekend = d.getDay() === 0 || d.getDay() === 6;
-                    const price = isWeekend ? room.priceWeekend : room.priceWeekday;
+                    
+                    // 1. Створюємо рядок дати для пошуку (напр. "2026-04-19")
+                    const dateStr = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+                    
+                    // 2. Беремо стандартну ціну
+                    let price = isWeekend ? room.priceWeekend : room.priceWeekday;
+                    
+                    // 3. НОВА МАГІЯ: Якщо в пам'яті є збережена ціна саме на ЦЮ дату - беремо її!
+                    if (customPrices[room.id] && customPrices[room.id][dateStr]) {
+                        price = customPrices[room.id][dateStr]; 
+                    }
+                    
                     rowHtml += `<div class="price-cell ${isWeekend ? 'weekend-price' : ''}" onclick="openGenericModal('price')">${price}</div>`;
                 }
+                
                 rowHtml += `</div>`;
                 gridContainer.innerHTML += rowHtml;
             });
-        }
 
         // --- ПАНЕЛЬ ДЕТАЛЕЙ БРОНЮВАННЯ ТА ЖИВИЙ КАЛЬКУЛЯТОР ---
         function updatePricePreview() {
@@ -1251,9 +1282,10 @@
             document.getElementById('drawerTitle').innerText = 'Нове бронювання'; 
             document.getElementById('adminBookingForm').reset();
             
-            // Скидаємо статуси
+            // Скидаємо статуси та тварин
             document.querySelectorAll('.status-btn').forEach(b => b.classList.remove('active'));
             document.querySelector('.status-btn[data-status="Нова бронь"]').classList.add('active');
+            if(document.getElementById('adminPets')) document.getElementById('adminPets').value = "Ні";
             
             // Динамічно формуємо список номерів у формі
             const cottageSelect = document.getElementById('adminCottage');
@@ -1277,97 +1309,55 @@
                 checkOutPicker.clear(); 
             }
 
+            // Змушуємо калькулятор відразу порахувати ціну для підставлених дат!
+            setTimeout(updatePricePreview, 100);
+
             document.getElementById('bookingDrawer').classList.add('active');
         }
 
-        // --- ОНОВЛЕНА ФУНКЦІЯ: ВІДКРИТТЯ ДЕТАЛЕЙ З РОЗГОРНУТОЮ ВАРТІСТЮ ---
-function openDetailsByRow(rowNumber) {
-    const booking = allBookings.find(b => b.row == rowNumber);
-    if (!booking) return;
-    editingRowNumber = rowNumber;
-    
-    // Оновлюємо заголовок (змінено на BOSO)
-    document.getElementById('drawerTitle').innerText = `Деталі броні ${booking.id}`;
-    
-    // Заповнюємо базові поля
-    document.getElementById('adminName').value = String(booking.name).replace(' (Ручна бронь)', '');
-    document.getElementById('adminPhone').value = '+' + formatPhone(booking.phone);
-    document.getElementById('adminGuests').value = booking.guests || 2;
-    
-    // Динамічно формуємо список номерів
-    const cottageSelect = document.getElementById('adminCottage');
-    cottageSelect.innerHTML = roomsList.map(r => `<option value="${r.name}">${r.name} (${r.desc})</option>`).join('');
-    cottageSelect.value = roomsList.some(r => r.name === booking.cottage) ? booking.cottage : (roomsList[0] ? roomsList[0].name : "");
+      // --- ВІДКРИТТЯ ДЕТАЛЕЙ ІСНУЮЧОЇ БРОНІ ---
+        function openDetailsByRow(rowNumber) {
+            const booking = allBookings.find(b => b.row == rowNumber);
+            if (!booking) return;
+            editingRowNumber = rowNumber;
+            
+            document.getElementById('drawerTitle').innerText = `Деталі броні ${booking.id || ''}`;
+            
+            // Заповнюємо поля
+            document.getElementById('adminName').value = String(booking.name).replace(' (Ручна бронь)', '');
+            document.getElementById('adminPhone').value = '+' + formatPhone(booking.phone);
+            document.getElementById('adminGuests').value = booking.guests || 2;
+            
+            // Номери
+            const cottageSelect = document.getElementById('adminCottage');
+            cottageSelect.innerHTML = roomsList.map(r => `<option value="${r.name}">${r.name} (${r.desc})</option>`).join('');
+            cottageSelect.value = roomsList.some(r => r.name === booking.cottage) ? booking.cottage : (roomsList[0] ? roomsList[0].name : "");
 
-    // Налаштовуємо дати
-    checkInPicker.setDate(booking.checkIn);
-    checkOutPicker.setDate(booking.checkOut);
-    
-    // Активуємо правильний статус
-    document.querySelectorAll('.status-btn').forEach(b => b.classList.remove('active'));
-    let matched = Array.from(document.querySelectorAll('.status-btn')).find(b => b.getAttribute('data-status') === booking.status);
-    if(matched) matched.classList.add('active'); else document.querySelector('.status-btn[data-status="Nova бронь"]').classList.add('active');
+            // Дати
+            checkInPicker.setDate(booking.checkIn);
+            checkOutPicker.setDate(booking.checkOut);
+            
+            // Тварини (якщо в базі "Так", ставимо "Так", інакше "Ні")
+            const petsSelect = document.getElementById('adminPets');
+            if (petsSelect) petsSelect.value = (booking.pets === "Так" || booking.pets === true) ? "Так" : "Ні";
+            
+            // Статус
+            document.querySelectorAll('.status-btn').forEach(b => b.classList.remove('active'));
+            let matched = Array.from(document.querySelectorAll('.status-btn')).find(b => b.getAttribute('data-status') === booking.status);
+            if(matched) matched.classList.add('active'); 
+            else document.querySelector('.status-btn[data-status="Нова бронь"]').classList.add('active');
 
-    // --- РОЗГОРНУТА ВАРТІСТЬ БРОНЮВАННЯ (PREMIUM VIEW) ---
-    // Знаходимо форму та перевіряємо, чи є вже блок вартості
-    const form = document.getElementById('adminBookingForm');
-    let costSection = document.getElementById('detailsCostSection');
-    
-    if (!costSection) {
-        // Якщо немає - створюємо його з преміум-стилями
-        costSection = document.createElement('div');
-        costSection.id = 'detailsCostSection';
-        costSection.className = 'form-section';
-        costSection.style.cssText = 'background: #FDFCFB; border: 1px solid #E5E7EB; border-radius: 12px; padding: 20px; margin-top: 24px;';
-        form.appendChild(costSection);
-    }
+            // ВИКЛИКАЄМО ЖИВИЙ КАЛЬКУЛЯТОР (через мікро-паузу, щоб дані встигли зайти в поля)
+            setTimeout(updatePricePreview, 100);
+            
+            document.getElementById('bookingDrawer').classList.add('active');
+        }
 
-    // Отримуємо та перетворюємо фінансові дані
-    const basePrice = parseFloat(booking.basePrice) || 0;
-    const discountAmount = parseFloat(booking.discountAmount) || 0;
-    const extraGuestFee = parseFloat(booking.extraGuestFee) || 0;
-    const petFee = parseFloat(booking.petFee) || 0;
-    const totalPrice = parseFloat(booking.totalPrice) || 0;
+        function closeDrawer() { 
+            document.getElementById('bookingDrawer').classList.remove('active'); 
+        }
 
-    // Формуємо HTML для розшифровки вартості
-    costSection.innerHTML = `
-        <span class="form-section-title" style="color: var(--accent); font-weight: 700; margin-bottom: 16px;">Розшифровка вартості</span>
-        
-        <div style="display: flex; justify-content: space-between; margin-bottom: 10px; font-size: 14px; color: var(--text-main);">
-            <span>Базова вартість номера:</span>
-            <strong style="font-weight: 600;">${basePrice.toFixed(0)} грн</strong>
-        </div>
-        
-        ${extraGuestFee > 0 ? `
-        <div style="display: flex; justify-content: space-between; margin-bottom: 10px; font-size: 14px; color: var(--text-main);">
-            <span>Додаткові гості:</span>
-            <strong style="font-weight: 600; color: #4B5563;">+${extraGuestFee.toFixed(0)} грн</strong>
-        </div>` : ''}
-        
-        ${petFee > 0 ? `
-        <div style="display: flex; justify-content: space-between; margin-bottom: 10px; font-size: 14px; color: var(--text-main);">
-            <span>Проживання з тваринами:</span>
-            <strong style="font-weight: 600; color: #4B5563;">+${petFee.toFixed(0)} грн</strong>
-        </div>` : ''}
-        
-        ${discountAmount > 0 ? `
-        <div style="display: flex; justify-content: space-between; margin-bottom: 15px; font-size: 14px; color: #DC2626; padding-top: 5px; border-top: 1px dashed #E5E7EB;">
-            <span style="font-weight: 500;">Знижка:</span>
-            <strong style="font-weight: 700;">-${discountAmount.toFixed(0)} грн</strong>
-        </div>` : ''}
-        
-        <div style="display: flex; justify-content: space-between; border-top: 2px solid var(--accent); padding-top: 15px; margin-top: 5px; font-size: 18px; font-weight: 700;">
-            <span style="color: var(--text-main);">Загальна вартість:</span>
-            <strong style="color: var(--accent);">${totalPrice.toFixed(0)} грн</strong>
-        </div>
-    `;
-    
-    // Показуємо панель (Drawer)
-    document.getElementById('bookingDrawer').classList.add('active');
-}
-
-        function closeDrawer() { document.getElementById('bookingDrawer').classList.remove('active'); }
-
+        // --- ЗБЕРЕЖЕННЯ БРОНІ (КНОПКА В ПАНЕЛІ) ---
         document.getElementById('adminBookingForm').addEventListener('submit', async function(e) {
             e.preventDefault(); 
             const btn = document.getElementById('adminSubmitBtn'); 
@@ -1381,14 +1371,14 @@ function openDetailsByRow(rowNumber) {
                 cottage: document.getElementById('adminCottage').value, 
                 name: document.getElementById('adminName').value, 
                 phone: document.getElementById('adminPhone').value, 
-                guests: document.getElementById('adminGuests').value, // ДОДАЛИ ЦЕЙ РЯДОК
+                guests: document.getElementById('adminGuests').value,
+                pets: document.getElementById('adminPets').value, // Передаємо тварин в базу!
                 status: document.querySelector('.status-btn.active').getAttribute('data-status') 
             };
             
             if (editingRowNumber !== null) bookingData.row = editingRowNumber;
             
             try { 
-                // Відправляємо запит
                 await fetch(API_URL, { 
                     method: 'POST', 
                     headers: { 'Content-Type': 'text/plain;charset=utf-8' }, 
@@ -1397,20 +1387,18 @@ function openDetailsByRow(rowNumber) {
                 
                 closeDrawer(); 
                 showToast("Бронь успішно збережена"); 
-                
-                // Чекаємо, поки нові дані завантажаться
-                await initApp();
+                await initApp(); // Оновлюємо шахматку
                 
             } catch (error) { 
-                console.error("Деталі помилки:", error);
-                alert("Помилка збереження! Перевір консоль (F12)."); 
+                console.error("Помилка:", error);
+                alert("Помилка збереження!"); 
             } finally { 
                 btn.innerText = originalText; 
                 btn.disabled = false; 
             }
         });
 
-        // Запуск при завантаженні сторінки (Завантажить броні і налаштування з хмари)
+        // Запуск системи при завантаженні сторінки
         window.onload = initApp;
     </script>
 </body>
