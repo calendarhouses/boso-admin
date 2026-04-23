@@ -1918,7 +1918,7 @@ document.getElementById('bookingDrawer').classList.add('active');
             }
         });
 
-        // --- ЛОГІКА ПРЕМІУМ-КАРТКИ (TOOLTIP) ---
+      // --- ЛОГІКА ПРЕМІУМ-КАРТКИ (TOOLTIP) ---
 function showPremiumTooltip(element, rowNumber) {
     const tooltip = document.getElementById('premiumTooltip');
     const b = allBookings.find(x => x.row == rowNumber);
@@ -1940,12 +1940,16 @@ function showPremiumTooltip(element, rowNumber) {
     } else if (total === 0) {
         finText = "Очікує прорахунку ціни"; finBg = "#F3F4F6"; finColor = "#4B5563";
     } else if (paid === 0) {
-        finText = `Очікує передплату (${total} грн)`; finBg = "#FEF3C7"; finColor = "#B45309";
+        // ВИПРАВЛЕНО: Тепер рахує рівно 50% від суми для підказки
+        finText = `Очікує передплату (${Math.round(total / 2)} грн)`; finBg = "#FEF3C7"; finColor = "#B45309";
     } else if (balance <= 0) {
         finText = `Сплачено повністю (${total} грн)`; finBg = "#D1FAE5"; finColor = "#059669";
     } else {
         finText = `Залишок до сплати: ${balance} грн`; finBg = "#FEE2E2"; finColor = "#DC2626";
     }
+
+    // НОВЕ: Рядок з авансом (генерується тільки якщо людина вже щось заплатила)
+    let paidRowHtml = paid > 0 ? `<div class="tt-row"><span class="tt-label">Внесено (Аванс):</span> <span class="tt-value" style="color: #059669;">${paid} грн</span></div>` : '';
 
     // Заповнюємо картку
     tooltip.innerHTML = `
@@ -1957,6 +1961,7 @@ function showPremiumTooltip(element, rowNumber) {
             <div class="tt-row"><span class="tt-label">Номер:</span> <span class="tt-value">${b.cottage}</span></div>
             <div class="tt-row"><span class="tt-label">Дати:</span> <span class="tt-value" style="color: var(--accent);">${inDate} — ${outDate}</span></div>
             <div class="tt-row"><span class="tt-label">Загальна сума:</span> <span class="tt-value">${total} грн</span></div>
+            ${paidRowHtml}
             <div class="tt-status" style="background: ${finBg}; color: ${finColor};">${finText}</div>
         </div>
     `;
