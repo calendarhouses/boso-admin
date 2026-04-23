@@ -103,8 +103,21 @@
     transform: translateY(-2px); /* Ефект підняття */
     box-shadow: 0 6px 12px rgba(85, 107, 47, 0.3);
 }
-        .btn-secondary { background: white; border: 1px solid #D1D5DB; padding: 10px 20px; border-radius: 8px; font-weight: 600; cursor: pointer; transition: 0.2s;}
-        .btn-secondary:hover { background: #F9FAFB; }
+        .btn-secondary { 
+    background: white; 
+    border: 1px solid #D1D5DB; 
+    padding: 12px 24px; 
+    border-radius: 10px; 
+    font-size: 14px; 
+    font-weight: 600; 
+    cursor: pointer; 
+    transition: 0.3s ease; 
+    display: flex; 
+    align-items: center; 
+    justify-content: center;
+    gap: 8px;
+}
+.btn-secondary:hover { background: #F9FAFB; transform: translateY(-2px); box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05); }
         .btn-success { background: var(--success); color: white; border: none; padding: 10px 20px; border-radius: 8px; font-weight: 600; cursor: pointer; transition: 0.2s; display: flex; align-items: center; gap: 6px;}
         .btn-success:hover { background: #059669; }
         
@@ -612,7 +625,20 @@ input[type="number"] {
         </div>
     </div>
 
-
+<div id="customConfirmModal" class="modal-overlay">
+        <div class="modal-box" style="max-width: 380px; text-align: center; padding: 30px 24px;">
+            <div style="background: #FEE2E2; color: #DC2626; width: 64px; height: 64px; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 20px;">
+                <svg width="32" height="32" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+            </div>
+            <h3 style="font-size: 18px; font-weight: 700; color: #111827; margin-bottom: 10px;">Видалити бронювання?</h3>
+            <p style="font-size: 14px; color: #6B7280; margin-bottom: 24px; line-height: 1.5;">Цю дію неможливо скасувати. Бронь буде назавжди видалена з бази даних.</p>
+            <div style="display: flex; gap: 12px; justify-content: center;">
+                <button class="btn-secondary" onclick="closeCustomConfirm()" style="flex: 1;">Скасувати</button>
+                <button class="btn-primary" style="flex: 1; background: #DC2626; border: 1px solid #B91C1C; box-shadow: 0 4px 6px rgba(220, 38, 38, 0.2);" onclick="confirmDeleteBooking()">Видалити</button>
+            </div>
+        </div>
+    </div>
+    
     <div id="bookingDrawer" class="drawer-overlay">
         <div class="drawer">
             <div class="drawer-header">
@@ -1859,14 +1885,23 @@ function hidePremiumTooltip() {
     document.getElementById('premiumTooltip').classList.remove('visible');
 }
 
-        // --- ФУНКЦІЯ ВИДАЛЕННЯ БРОНІ ---
-async function deleteCurrentBooking() {
+        // --- ЛОГІКА КАСТОМНОГО ВИДАЛЕННЯ БРОНІ ---
+function deleteCurrentBooking() {
     if (!editingRowNumber) return;
-    if (!confirm("Ви впевнені, що хочете НАЗАВЖДИ видалити це бронювання?")) return;
+    // Замість браузерного вікна викликаємо нашу красу:
+    document.getElementById('customConfirmModal').classList.add('active');
+}
+
+function closeCustomConfirm() {
+    document.getElementById('customConfirmModal').classList.remove('active');
+}
+
+async function confirmDeleteBooking() {
+    closeCustomConfirm(); // Ховаємо вікно підтвердження
     
     const btn = document.getElementById('adminDeleteBtn');
     const originalText = btn.innerHTML;
-    btn.innerText = "Видалення...";
+    btn.innerHTML = "Видалення...";
     btn.disabled = true;
 
     try {
@@ -1876,7 +1911,7 @@ async function deleteCurrentBooking() {
             body: JSON.stringify({ action: 'deleteBooking', row: editingRowNumber })
         });
         
-        closeDrawer();
+        closeDrawer(); // Закриваємо велику панель
         showToast("Бронювання успішно видалено");
         await initApp(); // Оновлюємо шахматку
     } catch (error) {
