@@ -1597,9 +1597,17 @@ document.getElementById('adminGuests').addEventListener('change', updatePricePre
 document.getElementById('adminCottage').addEventListener('change', updatePricePreview);
 
         function openNewBookingDrawer(prefillRoom = null, prefillDate = null) {
-            editingRowNumber = null; 
-            document.getElementById('drawerTitle').innerText = 'Нове бронювання'; 
-            document.getElementById('adminBookingForm').reset();
+    editingRowNumber = null; 
+    document.getElementById('drawerTitle').innerText = 'Нове бронювання'; 
+    document.getElementById('adminBookingForm').reset();
+    
+    // --- ДОДАЙ ОСЬ ЦЕЙ РЯДОК ---
+    // Очищаємо пам'ять калькулятора від попередніх відкритих броней
+    document.getElementById('liveCalculatorContainer').innerHTML = '';
+    
+    // Скидаємо статуси та тварин
+    document.querySelectorAll('.status-btn').forEach(b => b.classList.remove('active'));
+    // ... далі йде твій старий код цієї функції
             
             // Скидаємо статуси та тварин
             document.querySelectorAll('.status-btn').forEach(b => b.classList.remove('active'));
