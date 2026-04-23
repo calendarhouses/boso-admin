@@ -1167,19 +1167,50 @@
                         const durationDays = Math.round((outDate - inDate) / (1000 * 60 * 60 * 24));
                         
                         if (offsetDays + durationDays > 0 && offsetDays < daysCount) {
-                            let statusClass = 'status-new'; let s = String(b.status).toLowerCase();
-                            if (s.includes('підтвердж') || s.includes('заїхав')) statusClass = 'status-confirmed';
-                            if (s.includes('скас')) statusClass = 'status-cancelled';
-                            
-                            let blockLeft = offsetDays * cellWidth; 
-                            let blockWidth = durationDays * cellWidth; 
-                            let paddingLeft = 12;
-                            
-                            if (offsetDays < 0) { blockWidth = (durationDays + offsetDays) * cellWidth; blockLeft = 0; paddingLeft = 4; }
-                            if (offsetDays + durationDays > daysCount) { blockWidth = (daysCount - offsetDays) * cellWidth; }
-                            
-                            currentRow.innerHTML += `<div class="booking-block ${statusClass}" style="left: ${blockLeft}px; width: ${blockWidth}px; padding-left: ${paddingLeft}px;" onclick="openDetailsByRow(${b.row})">${String(b.name).replace(' (Ручна бронь)', '')} <span>${durationDays} ночей</span></div>`;
-                        }
+    let statusClass = 'status-new'; 
+    let s = String(b.status).toLowerCase();
+    if (s.includes('підтвердж') || s.includes('заїхав')) statusClass = 'status-confirmed';
+    if (s.includes('скас')) statusClass = 'status-cancelled';
+    
+    let blockLeft = offsetDays * cellWidth; 
+    let blockWidth = durationDays * cellWidth; 
+    let paddingLeft = 12;
+    
+    if (offsetDays < 0) { blockWidth = (durationDays + offsetDays) * cellWidth; blockLeft = 0; paddingLeft = 4; }
+    if (offsetDays + durationDays > daysCount) { blockWidth = (daysCount - offsetDays) * cellWidth; }
+    
+    // --- ФІНАНСОВА ЛОГІКА ДЛЯ ШАХМАТКИ ---
+    let total = Number(b.totalPrice) || 0;
+    let paid = Number(b.paidAmount) || 0;
+    let balance = total - paid;
+    
+    let finText = "";
+    let finColor = "";
+    
+    // Якщо бронь скасована, гроші не світимо яскраво
+    if (statusClass === 'status-cancelled') {
+        finText = "Скасовано"; finColor = "#9CA3AF";
+    } else if (total === 0) {
+        finText = "Ціна не вказана"; finColor = "#9CA3AF";
+    } else if (paid === 0) {
+        finText = "Очікує оплату"; finColor = "#FCD34D"; // Жовтий для нових броней (status-new)
+        // Якщо це зелений блок (підтверджено), жовтий текст погано видно, робимо його біло-прозорим
+        if(statusClass === 'status-confirmed') finColor = "rgba(255,255,255,0.9)";
+    } else if (balance <= 0) {
+        finText = "Оплачено"; finColor = "#10B981"; // Зелений
+        if(statusClass === 'status-confirmed') finColor = "#A7F3D0"; // Світло-зелений для зеленого блоку
+    } else {
+        finText = `Борг: ${balance} грн`; finColor = "#EF4444"; // Червоний
+        if(statusClass === 'status-confirmed') finColor = "#FECACA"; // Світло-червоний для зеленого блоку
+    }
+
+    currentRow.innerHTML += `
+        <div class="booking-block ${statusClass}" style="left: ${blockLeft}px; width: ${blockWidth}px; padding-left: ${paddingLeft}px;" onclick="openDetailsByRow(${b.row})">
+            ${String(b.name).replace(' (Ручна бронь)', '')} 
+            <span style="color: ${finColor}; font-weight: 700; font-size: 10.5px; margin-top: 1px;">${finText}</span>
+            <span style="opacity: 0.7; font-weight: 400;">${durationDays} ночей</span>
+        </div>`;
+}
                     }
                 });
             });
@@ -1319,28 +1350,65 @@
             let prepay = Math.round(totalPrice / 2);
 
             // МАЛЮЄМО НОВУ КРАСИВУ РОЗШИФРОВКУ
-            cont.innerHTML = `
-                <div class="form-section" style="background:#FDFCFB;">
-                    <span class="form-section-title" style="color:var(--accent);">Розшифровка (${nights} ночей)</span>
-                    <div style="display:flex; justify-content:space-between; margin-bottom:5px;"><span>Базова вартість:</span><strong>${basePriceTotal} грн</strong></div>
-                    ${extraGuestFee > 0 ? `<div style="display:flex; justify-content:space-between; margin-bottom:5px;"><span>Дод. гості:</span><strong>+${extraGuestFee} грн</strong></div>` : ''}
-                    ${petFee > 0 ? `<div style="display:flex; justify-content:space-between; margin-bottom:5px;"><span>Тварини:</span><strong>+${petFee} грн</strong></div>` : ''}
-                    ${discountAmount > 0 ? `<div style="display:flex; justify-content:space-between; margin-bottom:5px; color:var(--danger);"><span>Знижка:</span><strong>-${discountAmount} грн</strong></div>` : ''}
-                    
-                    <div style="display:flex; justify-content:space-between; margin-top:10px; border-top:1px dashed #D1D5DB; padding-top:10px; color:var(--success); font-size:14px; font-weight:600;">
-                        <span>Передоплата (50%):</span><span>${prepay} грн</span>
-                    </div>
+            // МАЛЮЄМО НОВУ КРАСИВУ РОЗШИФРОВКУ З ПОЛЯМИ ВВОДУ
+// МАЛЮЄМО НОВУ КРАСИВУ РОЗШИФРОВКУ З ПОЛЯМИ ВВОДУ
+cont.innerHTML = `
+    <div class="form-section" style="background:#FDFCFB; border-color: var(--accent);">
+        <span class="form-section-title" style="color:var(--accent);">Розшифровка (${nights} ночей)</span>
+        
+        <div style="font-size: 13px; color: #4B5563; margin-bottom: 12px;">
+            <div style="display:flex; justify-content:space-between; margin-bottom:4px;"><span>Базова:</span><span>${basePriceTotal} грн</span></div>
+            ${extraGuestFee > 0 ? `<div style="display:flex; justify-content:space-between; margin-bottom:4px;"><span>Дод. гості:</span><span>+${extraGuestFee} грн</span></div>` : ''}
+            ${petFee > 0 ? `<div style="display:flex; justify-content:space-between; margin-bottom:4px;"><span>Тварини:</span><span>+${petFee} грн</span></div>` : ''}
+            ${discountAmount > 0 ? `<div style="display:flex; justify-content:space-between; margin-bottom:4px; color:var(--danger);"><span>Знижка:</span><span>-${discountAmount} грн</span></div>` : ''}
+        </div>
 
-                    <div style="display:flex; justify-content:space-between; margin-top:10px; border-top:2px solid var(--accent); padding-top:10px; font-size:18px;">
-                        <span>Загальна вартість:</span><strong style="color:var(--accent);">${totalPrice} грн</strong>
+        <div style="border-top: 2px solid var(--accent); padding-top: 15px;">
+            <div class="form-group" style="margin-bottom: 12px;">
+                <label style="color: var(--accent); font-weight: 700;">До сплати (Загальна вартість):</label>
+                <input type="number" id="adminTotalPrice" value="${totalPrice}" style="font-weight:bold; font-size: 16px; border-color: var(--accent); background: #FFF;">
+            </div>
+            
+            <div class="form-grid">
+                <div class="form-group" style="margin-bottom: 0;">
+                    <label>Внесено (Аванс):</label>
+                    <input type="number" id="adminPaidAmount" value="0" placeholder="0">
+                </div>
+                <div class="form-group" style="margin-bottom: 0;">
+                    <label>Залишок (Борг):</label>
+                    <div id="adminBalance" style="padding: 11px; font-size: 15px; font-weight: bold; color: #DC2626; background: #FEE2E2; border-radius: 10px; text-align: center; border: 1px solid #FECACA;">
+                        ${totalPrice} грн
                     </div>
                 </div>
-            `;
-        }
+            </div>
+        </div>
+    </div>
+`;
 
-        // Вішаємо слухачів на поля, щоб ціна мінялась при кожному кліку
-        document.getElementById('adminCottage').addEventListener('change', updatePricePreview);
-        document.getElementById('adminGuests').addEventListener('input', updatePricePreview);
+    // --- ВАЖЛИВО: Ці два рядки тепер ВСЕРЕДИНІ функції updatePricePreview! ---
+    document.getElementById('adminTotalPrice').addEventListener('input', calculateBalanceLive);
+    document.getElementById('adminPaidAmount').addEventListener('input', calculateBalanceLive);
+} // <--- Дужка закриття функції updatePricePreview()
+
+// А функція перерахунку лежить окремо
+function calculateBalanceLive() {
+    let total = Number(document.getElementById('adminTotalPrice').value) || 0;
+    let paid = Number(document.getElementById('adminPaidAmount').value) || 0;
+    let balance = total - paid;
+    let balEl = document.getElementById('adminBalance');
+
+    if (balance <= 0) {
+        balEl.innerText = "Оплачено (0 грн)";
+        balEl.style.color = "#059669"; // Зелений
+        balEl.style.background = "#D1FAE5";
+        balEl.style.borderColor = "#A7F3D0";
+    } else {
+        balEl.innerText = `${balance} грн`;
+        balEl.style.color = "#DC2626"; // Червоний
+        balEl.style.background = "#FEE2E2";
+        balEl.style.borderColor = "#FECACA";
+    }
+}
         
         // ОНОВЛЕНІ РЯДКИ FLATPICKR (з доданим onChange: updatePricePreview)
         const checkOutPicker = flatpickr("#adminCheckOut", { locale: "uk", dateFormat: "Y-m-d", altInput: true, altFormat: "d.m.Y", onChange: updatePricePreview });
@@ -1420,10 +1488,21 @@
             if(matched) matched.classList.add('active'); 
             else document.querySelector('.status-btn[data-status="Нова бронь"]').classList.add('active');
 
-            // ВИКЛИКАЄМО ЖИВИЙ КАЛЬКУЛЯТОР (через мікро-паузу, щоб дані встигли зайти в поля)
-            setTimeout(updatePricePreview, 100);
-            
-            document.getElementById('bookingDrawer').classList.add('active');
+            // ВИКЛИКАЄМО ЖИВИЙ КАЛЬКУЛЯТОР 
+setTimeout(() => {
+    updatePricePreview();
+    // ПІСЛЯ того як калькулятор відмалювався, ПЕРЕЗАПИСУЄМО його поля даними з бази
+    setTimeout(() => {
+        if(document.getElementById('adminTotalPrice')) {
+            document.getElementById('adminTotalPrice').value = booking.totalPrice || 0;
+            document.getElementById('adminPaidAmount').value = booking.paidAmount || 0;
+            // Тригеримо перерахунок залишку
+            document.getElementById('adminTotalPrice').dispatchEvent(new Event('input'));
+        }
+    }, 50);
+}, 100);
+
+document.getElementById('bookingDrawer').classList.add('active');
         }
 
         function closeDrawer() { 
@@ -1439,15 +1518,18 @@
             btn.disabled = true;
             
             const bookingData = { 
-                checkIn: document.getElementById('adminCheckIn').value, 
-                checkOut: document.getElementById('adminCheckOut').value, 
-                cottage: document.getElementById('adminCottage').value, 
-                name: document.getElementById('adminName').value, 
-                phone: document.getElementById('adminPhone').value, 
-                guests: document.getElementById('adminGuests').value,
-                pets: document.getElementById('adminPets').value, // Передаємо тварин в базу!
-                status: document.querySelector('.status-btn.active').getAttribute('data-status') 
-            };
+    checkIn: document.getElementById('adminCheckIn').value, 
+    checkOut: document.getElementById('adminCheckOut').value, 
+    cottage: document.getElementById('adminCottage').value, 
+    name: document.getElementById('adminName').value, 
+    phone: document.getElementById('adminPhone').value, 
+    guests: document.getElementById('adminGuests').value,
+    pets: document.getElementById('adminPets').value,
+    status: document.querySelector('.status-btn.active').getAttribute('data-status'),
+    // --- ДОДАНІ ФІНАНСИ ---
+    totalPrice: document.getElementById('adminTotalPrice').value,
+    paidAmount: document.getElementById('adminPaidAmount').value
+};
             
             if (editingRowNumber !== null) bookingData.row = editingRowNumber;
             
