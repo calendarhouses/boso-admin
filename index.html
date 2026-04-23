@@ -634,7 +634,16 @@
                         <div class="form-grid">
                             <div class="form-group"><label>Дата заїзду:</label><input type="text" id="adminCheckIn" required></div>
                             <div class="form-group"><label>Дата виїзду:</label><input type="text" id="adminCheckOut" required></div>
-                            <div class="form-group"><label>Дорослих:</label><input type="number" id="adminGuests" value="2" min="1"></div>
+                            <div class="form-group">
+    <label>Дорослих:</label>
+    <div style="display: flex; align-items: center; gap: 4px;">
+        <button type="button" onclick="changeGuests(-1)" style="width: 44px; height: 44px; background: #FEE2E2; color: #DC2626; border: 1px solid #FECACA; border-radius: 10px; font-size: 20px; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: 0.2s;" onmouseover="this.style.background='#FECACA'" onmouseout="this.style.background='#FEE2E2'">-</button>
+        
+        <input type="number" id="adminGuests" value="2" min="1" style="text-align: center; width: 100%; -moz-appearance: textfield; padding: 12px 0;">
+        
+        <button type="button" onclick="changeGuests(1)" style="width: 44px; height: 44px; background: #D1FAE5; color: #059669; border: 1px solid #A7F3D0; border-radius: 10px; font-size: 20px; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: 0.2s;" onmouseover="this.style.background='#A7F3D0'" onmouseout="this.style.background='#D1FAE5'">+</button>
+    </div>
+</div>
                            <div class="form-group">
     <label>Тварини:</label>
     <div class="mode-toggle" style="margin: 0; width: 100%; display: flex; padding: 4px; background: #F3F4F6; border-radius: 10px; height: 42px;">
@@ -1445,6 +1454,7 @@ currentRow.innerHTML += `
     let discountAmount = Math.round(amountToDiscount * discountPercent);
     let totalPrice = amountToDiscount - discountAmount + petFee;
 
+    // МАЛЮЄМО НОВУ КРАСИВУ РОЗШИФРОВКУ З ПОЛЯМИ ВВОДУ
     cont.innerHTML = `
         <div class="form-section" style="background:#FDFCFB; border-color: var(--accent);">
             <span class="form-section-title" style="color:var(--accent);">Розшифровка (${nights} ночей)</span>
@@ -1467,16 +1477,24 @@ currentRow.innerHTML += `
                     <div class="form-group" style="margin-bottom: 0;">
                         <label>Внесено (Аванс):</label>
                         <div style="position: relative; display: flex; align-items: center;">
-                            <input type="number" id="adminPaidAmount" value="${savedPaidAmount}" placeholder="0" style="padding-right: 85px; width: 100%;">
+                            <input type="number" id="adminPaidAmount" value="${savedPaidAmount}" placeholder="0" style="padding-right: 125px; width: 100%;">
                             
-                            <div id="prepayBtn" onclick="setHalfPrepayment()" title="Встановити 50% авансу" 
-                                 style="position: absolute; right: 6px; background: #D1FAE5; color: #065F46; font-size: 13px; font-weight: 700; padding: 4px 8px; border-radius: 6px; cursor: pointer; transition: 0.2s; display: flex; align-items: center; gap: 4px;" 
-                                 onmouseover="this.style.background='#A7F3D0'" 
-                                 onmouseout="this.style.background='#D1FAE5'">
-                                <svg width="14" height="14" fill="none" stroke="#059669" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"></path>
-                                </svg>
-                                <span id="prepayBtnText">${Math.round(totalPrice / 2)}</span>
+                            <div style="position: absolute; right: 6px; display: flex; gap: 4px;">
+                                <div onclick="setHalfPrepayment()" title="Встановити 50% авансу" 
+                                     style="background: #F3F4F6; color: #4B5563; font-size: 12px; font-weight: 700; padding: 4px 8px; border-radius: 6px; cursor: pointer; transition: 0.2s; display: flex; align-items: center; gap: 4px;" 
+                                     onmouseover="this.style.background='#E5E7EB'" 
+                                     onmouseout="this.style.background='#F3F4F6'">
+                                    <svg width="12" height="12" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"></path></svg>
+                                    50%
+                                </div>
+                                
+                                <div onclick="setFullPrepayment()" title="Сплачено повністю" 
+                                     style="background: #D1FAE5; color: #065F46; font-size: 12px; font-weight: 700; padding: 4px 8px; border-radius: 6px; cursor: pointer; transition: 0.2s; display: flex; align-items: center; gap: 4px;" 
+                                     onmouseover="this.style.background='#A7F3D0'" 
+                                     onmouseout="this.style.background='#D1FAE5'">
+                                    <svg width="12" height="12" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"></path></svg>
+                                    100%
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -1508,6 +1526,26 @@ function setHalfPrepayment() {
         let total = Number(totalInput.value) || 0;
         paidInput.value = Math.round(total / 2); // Рахує рівно половину
         calculateBalanceLive(); // Одразу перемальовує залишок
+    }
+}
+
+        // --- ФУНКЦІЯ ДЛЯ КНОПКИ "ОПЛАЧЕНО" (100%) ---
+function setFullPrepayment() {
+    let totalInput = document.getElementById('adminTotalPrice');
+    let paidInput = document.getElementById('adminPaidAmount');
+    if (totalInput && paidInput) {
+        paidInput.value = Number(totalInput.value) || 0; // Бере повну суму
+        calculateBalanceLive(); // Перемальовує залишок в 0
+    }
+}
+        // --- ФУНКЦІЯ ДЛЯ КНОПОК + ТА - (ДОРОСЛІ) ---
+function changeGuests(amount) {
+    let input = document.getElementById('adminGuests');
+    let currentVal = parseInt(input.value) || 1;
+    let newVal = currentVal + amount;
+    if (newVal >= 1) { // Не даємо поставити менше 1 гостя
+        input.value = newVal;
+        updatePricePreview(); // Одразу перераховуємо ціну!
     }
 }
         
