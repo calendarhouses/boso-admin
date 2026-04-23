@@ -1463,24 +1463,31 @@ currentRow.innerHTML += `
                 </div>
                 
                 <div class="form-grid">
+                    
                     <div class="form-group" style="margin-bottom: 0;">
-    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
-        <label style="margin: 0;">Внесено (Аванс):</label>
-        <div id="prepayBtn" onclick="setHalfPrepayment()" 
-             style="background: #D1FAE5; color: #065F46; font-size: 11px; font-weight: 700; padding: 3px 8px; border-radius: 6px; cursor: pointer; transition: 0.2s; border: 1px solid #A7F3D0; user-select: none;" 
-             onmouseover="this.style.background='#A7F3D0'" 
-             onmouseout="this.style.background='#D1FAE5'">
-            50% (${Math.round(totalPrice / 2)} грн)
-        </div>
-    </div>
-    <input type="number" id="adminPaidAmount" value="${savedPaidAmount}" placeholder="0">
-</div>
+                        <label>Внесено (Аванс):</label>
+                        <div style="position: relative; display: flex; align-items: center;">
+                            <input type="number" id="adminPaidAmount" value="${savedPaidAmount}" placeholder="0" style="padding-right: 85px; width: 100%;">
+                            
+                            <div id="prepayBtn" onclick="setHalfPrepayment()" title="Встановити 50% авансу" 
+                                 style="position: absolute; right: 6px; background: #D1FAE5; color: #065F46; font-size: 13px; font-weight: 700; padding: 4px 8px; border-radius: 6px; cursor: pointer; transition: 0.2s; display: flex; align-items: center; gap: 4px;" 
+                                 onmouseover="this.style.background='#A7F3D0'" 
+                                 onmouseout="this.style.background='#D1FAE5'">
+                                <svg width="14" height="14" fill="none" stroke="#059669" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"></path>
+                                </svg>
+                                <span id="prepayBtnText">${Math.round(totalPrice / 2)}</span>
+                            </div>
+                        </div>
+                    </div>
+
                     <div class="form-group" style="margin-bottom: 0;">
                         <label>Залишок (Борг):</label>
                         <div id="adminBalance" style="padding: 11px; font-size: 15px; font-weight: bold; color: #DC2626; background: #FEE2E2; border-radius: 10px; text-align: center; border: 1px solid #FECACA;">
                             0 грн
                         </div>
                     </div>
+
                 </div>
             </div>
         </div>
@@ -1512,8 +1519,8 @@ function calculateBalanceLive() {
     let balEl = document.getElementById('adminBalance');
 
     // РОЗУМНЕ ОНОВЛЕННЯ ТЕКСТУ НА ЗЕЛЕНІЙ КНОПЦІ 50%
-    let prepayBtn = document.getElementById('prepayBtn');
-    if (prepayBtn) prepayBtn.innerText = `50% (${Math.round(total / 2)} грн)`;
+    let prepayBtnText = document.getElementById('prepayBtnText');
+if (prepayBtnText) prepayBtnText.innerText = Math.round(total / 2);
 
     if (balance <= 0) {
         balEl.innerText = "Оплачено (0 грн)";
