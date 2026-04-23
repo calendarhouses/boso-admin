@@ -1257,14 +1257,15 @@ if (document.getElementById('view-grid').style.display === 'flex') {
         }
 
         function shiftTimeline(months) { 
-            if (timelineMode === 'continuous') {
-                // В режимі 35 днів стрілочки гортають на 2 тижні для зручності
-                timelineBaseDate.setDate(timelineBaseDate.getDate() + (months > 0 ? 14 : -14));
-            } else {
-                timelineBaseDate.setMonth(timelineBaseDate.getMonth() + months); 
-            }
-            renderTimeline(); 
-        }
+    if (timelineMode === 'continuous') {
+        timelineBaseDate.setDate(timelineBaseDate.getDate() + (months > 0 ? 14 : -14));
+    } else {
+        // Жорстко фіксуємо 1-ше число ПЕРЕД зміною місяця
+        timelineBaseDate.setDate(1);
+        timelineBaseDate.setMonth(timelineBaseDate.getMonth() + months); 
+    }
+    renderTimeline(); 
+}
         
         function resetTimelineToToday() { 
             timelineBaseDate = new Date(); 
@@ -1394,11 +1395,18 @@ currentRow.innerHTML += `
                 });
             });
             
-            // Розумний автоскрол при завантаженні (тільки якщо на екрані є "Сьогодні")
-            if(timelineMode === 'month' && timelineBaseDate.getMonth() === today.getMonth()) {
-               document.getElementById('timelineScroll').scrollLeft = Math.max(0, (today.getDate() - 3) * cellWidth); 
-            } else if (timelineMode === 'continuous' && timelineBaseDate <= today) {
-               document.getElementById('timelineScroll').scrollLeft = 0; 
+            // Розумний автоскрол при завантаженні (з фіксом для перемикання місяців)
+            if (timelineMode === 'month') {
+                if (timelineBaseDate.getMonth() === today.getMonth() && timelineBaseDate.getFullYear() === today.getFullYear()) {
+                    // Якщо поточний місяць — мотаємо до сьогоднішнього дня (-3 дні для зручності)
+                    document.getElementById('timelineScroll').scrollLeft = Math.max(0, (today.getDate() - 3) * cellWidth); 
+                } else {
+                    // Якщо це БУДЬ-ЯКИЙ інший місяць — жорстко відмотуємо на 1-ше число!
+                    document.getElementById('timelineScroll').scrollLeft = 0;
+                }
+            } else if (timelineMode === 'continuous') {
+                // Для режиму 35 днів завжди відмотуємо на початок
+                document.getElementById('timelineScroll').scrollLeft = 0; 
             }
         }
 
