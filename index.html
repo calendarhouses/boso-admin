@@ -1949,7 +1949,7 @@ function showPremiumTooltip(element, rowNumber) {
     }
 
     // НОВЕ: Рядок з авансом (генерується тільки якщо людина вже щось заплатила)
-    let paidRowHtml = paid > 0 ? `<div class="tt-row"><span class="tt-label">Внесено (Аванс):</span> <span class="tt-value" style="color: #059669;">${paid} грн</span></div>` : '';
+    let paidRowHtml = paid > 0 ? `<div class="tt-row"><span class="tt-label">Внесено:</span> <span class="tt-value" style="color: #059669;">${paid} грн</span></div>` : '';
 
     // Заповнюємо картку
     tooltip.innerHTML = `
