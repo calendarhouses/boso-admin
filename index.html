@@ -1438,6 +1438,48 @@ currentRow.innerHTML += `
 
     const room = roomsList.find(r => r.name === roomName);
     if (!room) { cont.innerHTML = ''; return; }
+    // --- 1. ПЕРЕВІРКА НА ОВЕРБУКІНГ ---
+    let isOverlap = false;
+    for (let b of allBookings) {
+        if (editingRowNumber && b.row == editingRowNumber) continue; // Не порівнюємо з собою ж при редагуванні
+        if (String(b.status).toLowerCase().includes('скас')) continue; // Скасовані не враховуємо
+
+        if (b.cottage === roomName) {
+            let exIn = new Date(b.checkIn); exIn.setHours(0,0,0,0);
+            let exOut = new Date(b.checkOut); exOut.setHours(0,0,0,0);
+            let currentIn = new Date(d1); currentIn.setHours(0,0,0,0);
+            let currentOut = new Date(d2); currentOut.setHours(0,0,0,0);
+            
+            // Логіка: Заїзд1 < Виїзд2 ТА Виїзд1 > Заїзд2 (дозволяє заїзд в день виїзду іншого гостя)
+            if (currentIn < exOut && currentOut > exIn) {
+                isOverlap = true;
+                break;
+            }
+        }
+    }
+
+    const submitBtn = document.getElementById('adminSubmitBtn');
+    if (isOverlap) {
+        submitBtn.disabled = true;
+        submitBtn.style.opacity = '0.5';
+        submitBtn.style.cursor = 'not-allowed';
+        
+        cont.innerHTML = `
+            <div class="form-section" style="background:#FEF2F2; border-color: #EF4444; padding: 30px 20px;">
+                <div style="color: #DC2626; font-weight: bold; font-size: 15px; text-align: center; display: flex; flex-direction: column; align-items: center; gap: 12px;">
+                    <svg width="40" height="40" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+                    ОБЕРЕЖНО: ОВЕРБУКІНГ!
+                    <span style="font-size: 13px; font-weight: 500; color: #991B1B;">Ці дати вже зайняті іншим гостем у цьому номері.</span>
+                </div>
+            </div>
+        `;
+        return; // Зупиняємо калькулятор
+    } else {
+        submitBtn.disabled = false;
+        submitBtn.style.opacity = '1';
+        submitBtn.style.cursor = 'pointer';
+    }
+    // --- КІНЕЦЬ ПЕРЕВІРКИ ---
 
     let basePriceTotal = 0;
     for (let i = 0; i < nights; i++) {
@@ -1719,11 +1761,24 @@ document.getElementById('bookingDrawer').classList.add('active');
             if (editingRowNumber !== null) bookingData.row = editingRowNumber;
             
             try { 
-                await fetch(API_URL, { 
+                let res = await fetch(API_URL, { 
                     method: 'POST', 
                     headers: { 'Content-Type': 'text/plain;charset=utf-8' }, 
                     body: JSON.stringify(bookingData) 
                 }); 
+                
+                let json = await res.json();
+                
+                if (json.error === "OVERLAP") {
+                    alert("❌ ПОМИЛКА: Ці дати щойно були зайняті іншим клієнтом. Оновіть сторінку.");
+                    return; // Бронь не зберігається, вікно не закривається
+                }
+                
+                closeDrawer(); 
+                showToast("Бронь успішно збережена"); 
+                await initApp(); 
+                
+            } catch (error) { 
                 
                 closeDrawer(); 
                 showToast("Бронь успішно збережена"); 
