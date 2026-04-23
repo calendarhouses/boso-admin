@@ -1745,18 +1745,17 @@ document.getElementById('bookingDrawer').classList.add('active');
             btn.disabled = true;
             
             const bookingData = { 
-    checkIn: document.getElementById('adminCheckIn').value, 
-    checkOut: document.getElementById('adminCheckOut').value, 
-    cottage: document.getElementById('adminCottage').value, 
-    name: document.getElementById('adminName').value, 
-    phone: document.getElementById('adminPhone').value, 
-    guests: document.getElementById('adminGuests').value,
-    pets: document.getElementById('adminPets').value,
-    status: document.querySelector('.status-btn.active').getAttribute('data-status'),
-    // --- ДОДАНІ ФІНАНСИ ---
-    totalPrice: document.getElementById('adminTotalPrice').value,
-    paidAmount: document.getElementById('adminPaidAmount').value
-};
+                checkIn: document.getElementById('adminCheckIn').value, 
+                checkOut: document.getElementById('adminCheckOut').value, 
+                cottage: document.getElementById('adminCottage').value, 
+                name: document.getElementById('adminName').value, 
+                phone: document.getElementById('adminPhone').value, 
+                guests: document.getElementById('adminGuests').value,
+                pets: document.getElementById('adminPets').value,
+                status: document.querySelector('.status-btn.active').getAttribute('data-status'),
+                totalPrice: document.getElementById('adminTotalPrice').value,
+                paidAmount: document.getElementById('adminPaidAmount').value
+            };
             
             if (editingRowNumber !== null) bookingData.row = editingRowNumber;
             
@@ -1777,12 +1776,6 @@ document.getElementById('bookingDrawer').classList.add('active');
                 closeDrawer(); 
                 showToast("Бронь успішно збережена"); 
                 await initApp(); 
-                
-            } catch (error) { 
-                
-                closeDrawer(); 
-                showToast("Бронь успішно збережена"); 
-                await initApp(); // Оновлюємо шахматку
                 
             } catch (error) { 
                 console.error("Помилка:", error);
