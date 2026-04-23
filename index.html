@@ -324,6 +324,26 @@
             border-radius: 6px;
             cursor: pointer;
         }
+        /* --- ПРЕМІУМ КНОПКИ ДЛЯ ТВАРИН --- */
+.pet-btn {
+    display: flex !important;
+    align-items: center;
+    justify-content: center;
+    line-height: 1.1;
+    padding: 4px !important;
+}
+.pet-btn.active[data-val="Ні"] {
+    background: #FEF2F2 !important;
+    color: #DC2626 !important;
+    border: 1px solid #FECACA;
+    box-shadow: 0 2px 4px rgba(220, 38, 38, 0.05) !important;
+}
+.pet-btn.active[data-val="Так"] {
+    background: #F0FDF4 !important;
+    color: #059669 !important;
+    border: 1px solid #A7F3D0;
+    box-shadow: 0 2px 4px rgba(5, 150, 105, 0.05) !important;
+}
     </style>
 </head>
 <body>
@@ -561,9 +581,9 @@
                             <div class="form-group"><label>Дорослих:</label><input type="number" id="adminGuests" value="2" min="1"></div>
                            <div class="form-group">
     <label>Тварини:</label>
-    <div class="mode-toggle" style="margin: 0; width: 100%; box-sizing: border-box;">
-        <div class="mode-btn pet-btn active" data-val="Ні" onclick="togglePet('Ні')" style="flex: 1; text-align: center;">Ні</div>
-        <div class="mode-btn pet-btn" data-val="Так" onclick="togglePet('Так')" style="flex: 1; text-align: center;">Так (+ доплата)</div>
+    <div class="mode-toggle" style="margin: 0; width: 100%; box-sizing: border-box; display: flex; height: 44px; padding: 4px;">
+        <div class="mode-btn pet-btn active" data-val="Ні" onclick="togglePet('Ні')">Ні</div>
+        <div class="mode-btn pet-btn" data-val="Так" onclick="togglePet('Так')">Так (+ доплата)</div>
     </div>
     <input type="hidden" id="adminPets" value="Ні">
 </div>
@@ -1179,37 +1199,42 @@
     if (offsetDays < 0) { blockWidth = (durationDays + offsetDays) * cellWidth; blockLeft = 0; paddingLeft = 4; }
     if (offsetDays + durationDays > daysCount) { blockWidth = (daysCount - offsetDays) * cellWidth; }
     
-    // --- ФІНАНСОВА ЛОГІКА ДЛЯ ШАХМАТКИ ---
-    let total = Number(b.totalPrice) || 0;
-    let paid = Number(b.paidAmount) || 0;
-    let balance = total - paid;
-    
-    let finText = "";
-    let finColor = "";
-    
-    // Якщо бронь скасована, гроші не світимо яскраво
-    if (statusClass === 'status-cancelled') {
-        finText = "Скасовано"; finColor = "#9CA3AF";
-    } else if (total === 0) {
-        finText = "Ціна не вказана"; finColor = "#9CA3AF";
-    } else if (paid === 0) {
-        finText = "Очікує оплату"; finColor = "#FCD34D"; // Жовтий для нових броней (status-new)
-        // Якщо це зелений блок (підтверджено), жовтий текст погано видно, робимо його біло-прозорим
-        if(statusClass === 'status-confirmed') finColor = "rgba(255,255,255,0.9)";
-    } else if (balance <= 0) {
-        finText = "Оплачено"; finColor = "#10B981"; // Зелений
-        if(statusClass === 'status-confirmed') finColor = "#A7F3D0"; // Світло-зелений для зеленого блоку
-    } else {
-        finText = `Борг: ${balance} грн`; finColor = "#EF4444"; // Червоний
-        if(statusClass === 'status-confirmed') finColor = "#FECACA"; // Світло-червоний для зеленого блоку
-    }
+    // --- ФІНАНСОВА ЛОГІКА ДЛЯ ШАХМАТКИ (ПРЕМІУМ ДИЗАЙН) ---
+let total = Number(b.totalPrice) || 0;
+let paid = Number(b.paidAmount) || 0;
+let balance = total - paid;
 
-    currentRow.innerHTML += `
-        <div class="booking-block ${statusClass}" style="left: ${blockLeft}px; width: ${blockWidth}px; padding-left: ${paddingLeft}px;" onclick="openDetailsByRow(${b.row})">
-            ${String(b.name).replace(' (Ручна бронь)', '')} 
-            <span style="color: ${finColor}; font-weight: 700; font-size: 10.5px; margin-top: 1px;">${finText}</span>
-            <span style="opacity: 0.7; font-weight: 400;">${durationDays} ночей</span>
-        </div>`;
+let finText = "";
+let badgeBg = "";
+let badgeColor = "#FFFFFF";
+
+if (statusClass === 'status-cancelled') {
+    finText = "Скасовано"; badgeBg = "rgba(0,0,0,0.05)"; badgeColor = "#9CA3AF";
+} else if (total === 0) {
+    finText = "Немає ціни"; badgeBg = "rgba(255,255,255,0.3)"; badgeColor = "#1A1A1A";
+} else if (paid === 0) {
+    finText = "Очікує оплату"; badgeBg = "#F59E0B"; // Жовтий
+} else if (balance <= 0) {
+    finText = "Оплачено"; badgeBg = "#10B981"; // Зелений
+} else {
+    finText = `Борг: ${balance} грн`; badgeBg = "#EF4444"; // Червоний
+}
+
+let guestName = String(b.name).replace(' (Ручна бронь)', '');
+let hoverTitle = `${guestName} | ${durationDays} ночей | ${finText}`; // Текст для наведення мишкою
+
+currentRow.innerHTML += `
+    <div class="booking-block ${statusClass}" style="left: ${blockLeft}px; width: ${blockWidth}px; padding: 6px 8px; justify-content: flex-start;" onclick="openDetailsByRow(${b.row})" title="${hoverTitle}">
+        <div style="font-size: 12px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; line-height: 1.2;">
+            ${guestName}
+        </div>
+        
+        <div style="margin-top: 4px; display: flex; overflow: hidden;">
+            <span style="background: ${badgeBg}; color: ${badgeColor}; font-size: 9px; font-weight: 700; padding: 2px 6px; border-radius: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; box-shadow: 0 1px 2px rgba(0,0,0,0.1);">
+                ${finText}
+            </span>
+        </div>
+    </div>`;
 }
                     }
                 });
