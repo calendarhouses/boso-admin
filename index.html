@@ -667,6 +667,16 @@
         // ВАЖЛИВО: ВСТАВ СВОЄ ПОСИЛАННЯ З GOOGLE SCRIPT!
         const API_URL = "https://script.google.com/macros/s/AKfycbx1RYoMJySplZ18Wv54PQjxzHnZqIb3Wsw63oG-PAOKMvuXEym8Y7aFS-L_pxvfX6o4DQ/exec";
         
+        // --- ФУНКЦІЯ ДЛЯ ПРАВИЛЬНОЇ МНОЖИНИ (1 гість, 2 гості, 5 гостей) ---
+function getGuestWord(count) {
+    let n = Math.abs(parseInt(count)) % 100;
+    let n1 = n % 10;
+    if (n > 10 && n < 20) return "гостей";
+    if (n1 > 1 && n1 < 5) return "гості";
+    if (n1 === 1) return "гість";
+    return "гостей";
+}
+        
         let allBookings = [];
         let editingRowNumber = null;
 
@@ -718,8 +728,14 @@
                     if (settingsData.customPrices) customPrices = settingsData.customPrices; // ДОДАНО: Читаємо ціни
                 }
 
-                // Рендеримо сторінку, яка відкрита за замовчуванням
-                renderTable(allBookings);
+                // Оновлюємо ту сторінку, яка зараз відкрита у користувача
+if (document.getElementById('view-grid').style.display === 'flex') {
+    renderTimeline();
+} else if (document.getElementById('view-guests').style.display === 'block') {
+    renderGuests(document.getElementById('guestSearch').value);
+} else {
+    renderTable(allBookings);
+}
                 
                 // Підвантажуємо дані для налаштувань, щоб вони були готові
                 renderSettingsRooms();
@@ -1664,7 +1680,7 @@ function showPremiumTooltip(element, rowNumber) {
     tooltip.innerHTML = `
         <div class="tt-header">
             <span class="tt-name">${guestName}</span>
-            <span class="tt-guests">${b.guests} гостей</span>
+            <span class="tt-guests">${b.guests} ${getGuestWord(b.guests)}</span>
         </div>
         <div class="tt-body">
             <div class="tt-row"><span class="tt-label">Номер:</span> <span class="tt-value">${b.cottage}</span></div>
