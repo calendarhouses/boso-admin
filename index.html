@@ -1702,7 +1702,6 @@ document.querySelectorAll('.status-btn').forEach(btn => {
 // === ОСЬ ТУТ ВСТАВЛЯЄМО СЛУХАЧІ ДЛЯ ЖИВОГО КАЛЬКУЛЯТОРА ===
 document.getElementById('adminGuests').addEventListener('input', updatePricePreview);
 document.getElementById('adminGuests').addEventListener('change', updatePricePreview);
-document.getElementById('adminCottage').addEventListener('change', updatePricePreview);
 
         function openNewBookingDrawer(prefillRoom = null, prefillDate = null) {
     editingRowNumber = null; 
@@ -1740,10 +1739,6 @@ document.getElementById('adminCottage').addEventListener('change', updatePricePr
     // Скидаємо джерело на дефолт
     document.getElementById('adminSource').value = "Instagram";
     document.getElementById('sourceSelectedText').innerText = "Instagram";
-            // Якщо ми клікнули з шахматки - підставляємо номер
-            if (prefillRoom) {
-                cottageSelect.value = prefillRoom;
-            }
 
             // Якщо ми клікнули з шахматки - підставляємо дату
             if (prefillDate) {
