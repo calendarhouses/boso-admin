@@ -344,6 +344,62 @@
     border: 1px solid #A7F3D0;
     box-shadow: 0 2px 4px rgba(5, 150, 105, 0.05) !important;
 }
+        /* --- ПРЕМІУМ КНОПКИ ДЛЯ ТВАРИН --- */
+.pet-btn {
+    flex: 1; /* Змушує кнопки бути однаковими по ширині */
+    display: flex !important;
+    align-items: center;
+    justify-content: center;
+    font-size: 13px;
+    font-weight: 600;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: 0.2s;
+    padding: 0 !important; /* Прибираємо криві відступи */
+    margin: 0 !important;
+    border: 1px solid transparent;
+}
+.pet-btn.active[data-val="Ні"] {
+    background: #FFFFFF !important;
+    color: #DC2626 !important; /* Червоний текст */
+    border-color: #FECACA !important;
+    box-shadow: 0 2px 4px rgba(220,38,38,0.1) !important;
+}
+.pet-btn.active[data-val="Так"] {
+    background: #FFFFFF !important;
+    color: #059669 !important; /* Зелений текст */
+    border-color: #A7F3D0 !important;
+    box-shadow: 0 2px 4px rgba(5,150,105,0.1) !important;
+}
+
+/* --- ПРЕМІУМ КАРТКА ПРИ НАВЕДЕННІ (TOOLTIP) --- */
+.premium-tooltip {
+    position: fixed;
+    pointer-events: none; /* Щоб не заважала клікати на саму бронь */
+    z-index: 9999;
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(8px);
+    border: 1px solid #E5E7EB;
+    border-radius: 12px;
+    padding: 14px 16px;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1), 0 4px 6px rgba(0, 0, 0, 0.05);
+    opacity: 0;
+    transform: translateY(10px);
+    transition: opacity 0.2s ease, transform 0.2s ease;
+    min-width: 220px;
+}
+.premium-tooltip.visible {
+    opacity: 1;
+    transform: translateY(0);
+}
+.tt-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #F3F4F6; padding-bottom: 8px; margin-bottom: 10px; }
+.tt-name { font-weight: 700; font-size: 15px; color: #111827; }
+.tt-guests { font-size: 12px; color: #6B7280; font-weight: 600; background: #F3F4F6; padding: 4px 8px; border-radius: 6px; }
+.tt-body { font-size: 13px; color: #4B5563; display: flex; flex-direction: column; gap: 6px; }
+.tt-row { display: flex; justify-content: space-between; align-items: center;}
+.tt-label { color: #6B7280; }
+.tt-value { font-weight: 600; color: #111827; }
+.tt-status { margin-top: 8px; display: inline-flex; align-items: center; justify-content: center; padding: 6px 10px; border-radius: 8px; font-size: 12px; font-weight: 700; }
     </style>
 </head>
 <body>
@@ -581,7 +637,7 @@
                             <div class="form-group"><label>Дорослих:</label><input type="number" id="adminGuests" value="2" min="1"></div>
                            <div class="form-group">
     <label>Тварини:</label>
-    <div class="mode-toggle" style="margin: 0; width: 100%; box-sizing: border-box; display: flex; height: 44px; padding: 4px;">
+    <div class="mode-toggle" style="margin: 0; width: 100%; display: flex; padding: 4px; background: #F3F4F6; border-radius: 10px; height: 42px;">
         <div class="mode-btn pet-btn active" data-val="Ні" onclick="togglePet('Ні')">Ні</div>
         <div class="mode-btn pet-btn" data-val="Так" onclick="togglePet('Так')">Так (+ доплата)</div>
     </div>
@@ -601,6 +657,7 @@
         </div>
     </div>
 
+    <div id="premiumTooltip" class="premium-tooltip"></div>
     <div id="toast-container"></div>
 
     <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
@@ -1188,43 +1245,39 @@
                         
                         if (offsetDays + durationDays > 0 && offsetDays < daysCount) {
     let statusClass = 'status-new'; 
-    let s = String(b.status).toLowerCase();
-    if (s.includes('підтвердж') || s.includes('заїхав')) statusClass = 'status-confirmed';
-    if (s.includes('скас')) statusClass = 'status-cancelled';
-    
-    let blockLeft = offsetDays * cellWidth; 
-    let blockWidth = durationDays * cellWidth; 
-    let paddingLeft = 12;
-    
-    if (offsetDays < 0) { blockWidth = (durationDays + offsetDays) * cellWidth; blockLeft = 0; paddingLeft = 4; }
-    if (offsetDays + durationDays > daysCount) { blockWidth = (daysCount - offsetDays) * cellWidth; }
-    
-    // --- ФІНАНСОВА ЛОГІКА ДЛЯ ШАХМАТКИ (ПРЕМІУМ ДИЗАЙН) ---
+let s = String(b.status).toLowerCase();
+if (s.includes('підтвердж') || s.includes('заїхав')) statusClass = 'status-confirmed';
+if (s.includes('скас')) statusClass = 'status-cancelled';
+
+let blockLeft = offsetDays * cellWidth; 
+let blockWidth = durationDays * cellWidth; 
+let paddingLeft = 12;
+
+if (offsetDays < 0) { blockWidth = (durationDays + offsetDays) * cellWidth; blockLeft = 0; paddingLeft = 4; }
+if (offsetDays + durationDays > daysCount) { blockWidth = (daysCount - offsetDays) * cellWidth; }
+
+// --- МІНІ-СТАТУС ДЛЯ САМОГО БЛОКУ (Обрізаний) ---
 let total = Number(b.totalPrice) || 0;
 let paid = Number(b.paidAmount) || 0;
 let balance = total - paid;
 
-let finText = "";
-let badgeBg = "";
-let badgeColor = "#FFFFFF";
+let finText = ""; let badgeBg = ""; let badgeColor = "#FFFFFF";
 
-if (statusClass === 'status-cancelled') {
-    finText = "Скасовано"; badgeBg = "rgba(0,0,0,0.05)"; badgeColor = "#9CA3AF";
-} else if (total === 0) {
-    finText = "Немає ціни"; badgeBg = "rgba(255,255,255,0.3)"; badgeColor = "#1A1A1A";
-} else if (paid === 0) {
-    finText = "Очікує оплату"; badgeBg = "#F59E0B"; // Жовтий
-} else if (balance <= 0) {
-    finText = "Оплачено"; badgeBg = "#10B981"; // Зелений
-} else {
-    finText = `Борг: ${balance} грн`; badgeBg = "#EF4444"; // Червоний
-}
+if (statusClass === 'status-cancelled') { finText = "Скасовано"; badgeBg = "rgba(0,0,0,0.05)"; badgeColor = "#9CA3AF"; } 
+else if (total === 0) { finText = "Немає ціни"; badgeBg = "rgba(255,255,255,0.3)"; badgeColor = "#1A1A1A"; } 
+else if (paid === 0) { finText = "Очікує оплату"; badgeBg = "#F59E0B"; } 
+else if (balance <= 0) { finText = "Оплачено"; badgeBg = "#10B981"; } 
+else { finText = `Борг: ${balance} грн`; badgeBg = "#EF4444"; }
 
 let guestName = String(b.name).replace(' (Ручна бронь)', '');
-let hoverTitle = `${guestName} | ${durationDays} ночей | ${finText}`; // Текст для наведення мишкою
 
+// Малюємо блок. Додаємо onmouseenter та onmouseleave
 currentRow.innerHTML += `
-    <div class="booking-block ${statusClass}" style="left: ${blockLeft}px; width: ${blockWidth}px; padding: 6px 8px; justify-content: flex-start;" onclick="openDetailsByRow(${b.row})" title="${hoverTitle}">
+    <div class="booking-block ${statusClass}" style="left: ${blockLeft}px; width: ${blockWidth}px; padding: 6px 8px; justify-content: flex-start;" 
+         onclick="openDetailsByRow(${b.row})"
+         onmouseenter="showPremiumTooltip(this, ${b.row})" 
+         onmouseleave="hidePremiumTooltip()">
+        
         <div style="font-size: 12px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; line-height: 1.2;">
             ${guestName}
         </div>
@@ -1578,6 +1631,70 @@ document.getElementById('bookingDrawer').classList.add('active');
             }
         });
 
+        // --- ЛОГІКА ПРЕМІУМ-КАРТКИ (TOOLTIP) ---
+function showPremiumTooltip(element, rowNumber) {
+    const tooltip = document.getElementById('premiumTooltip');
+    const b = allBookings.find(x => x.row == rowNumber);
+    if (!b) return;
+
+    const inDate = new Date(b.checkIn).toLocaleDateString('uk-UA', { day: 'numeric', month: 'short' });
+    const outDate = new Date(b.checkOut).toLocaleDateString('uk-UA', { day: 'numeric', month: 'short' });
+    const guestName = String(b.name).replace(' (Ручна бронь)', '');
+    
+    let total = Number(b.totalPrice) || 0;
+    let paid = Number(b.paidAmount) || 0;
+    let balance = total - paid;
+    
+    let finText = ""; let finColor = ""; let finBg = "";
+    let statusClass = String(b.status).toLowerCase();
+
+    if (statusClass.includes('скас')) {
+        finText = "Бронь скасована"; finBg = "#F3F4F6"; finColor = "#9CA3AF";
+    } else if (total === 0) {
+        finText = "Очікує прорахунку ціни"; finBg = "#F3F4F6"; finColor = "#4B5563";
+    } else if (paid === 0) {
+        finText = `Очікує передплату (${total} грн)`; finBg = "#FEF3C7"; finColor = "#B45309";
+    } else if (balance <= 0) {
+        finText = `Сплачено повністю (${total} грн)`; finBg = "#D1FAE5"; finColor = "#059669";
+    } else {
+        finText = `Залишок до сплати: ${balance} грн`; finBg = "#FEE2E2"; finColor = "#DC2626";
+    }
+
+    // Заповнюємо картку
+    tooltip.innerHTML = `
+        <div class="tt-header">
+            <span class="tt-name">${guestName}</span>
+            <span class="tt-guests">${b.guests} гостей</span>
+        </div>
+        <div class="tt-body">
+            <div class="tt-row"><span class="tt-label">Номер:</span> <span class="tt-value">${b.cottage}</span></div>
+            <div class="tt-row"><span class="tt-label">Дати:</span> <span class="tt-value" style="color: var(--accent);">${inDate} — ${outDate}</span></div>
+            <div class="tt-row"><span class="tt-label">Загальна сума:</span> <span class="tt-value">${total} грн</span></div>
+            <div class="tt-status" style="background: ${finBg}; color: ${finColor};">${finText}</div>
+        </div>
+    `;
+
+    // Розраховуємо ідеальну позицію над блоком
+    const rect = element.getBoundingClientRect();
+    let top = rect.top - tooltip.offsetHeight - 15;
+    let left = rect.left + (rect.width / 2) - (tooltip.offsetWidth / 2);
+
+    // Якщо згори мало місця — показуємо знизу
+    if (top < 10) top = rect.bottom + 15;
+    
+    // Щоб не вилазило за краї екрану з боків
+    if (left < 10) left = 10;
+    if (left + tooltip.offsetWidth > window.innerWidth - 10) left = window.innerWidth - tooltip.offsetWidth - 10;
+
+    tooltip.style.top = top + 'px';
+    tooltip.style.left = left + 'px';
+    tooltip.classList.add('visible');
+}
+
+function hidePremiumTooltip() {
+    document.getElementById('premiumTooltip').classList.remove('visible');
+}
+        
         // Запуск системи при завантаженні сторінки
         window.onload = initApp;
     </script>
