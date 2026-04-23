@@ -642,9 +642,10 @@ input[type="number"] {
             </div>
             <h3 style="font-size: 18px; font-weight: 700; color: #111827; margin-bottom: 10px;">Видалити бронювання?</h3>
             <p style="font-size: 14px; color: #6B7280; margin-bottom: 24px; line-height: 1.5;">Цю дію неможливо скасувати. Бронь буде назавжди видалена з бази даних.</p>
-            <div style="display: flex; gap: 12px; justify-content: center;">
-                <button class="btn-secondary" onclick="closeCustomConfirm()" style="flex: 1;">Скасувати</button>
-                <button class="btn-primary" style="flex: 1; background: #DC2626; border: 1px solid #B91C1C; box-shadow: 0 4px 6px rgba(220, 38, 38, 0.2);" onclick="confirmDeleteBooking()">Видалити</button>
+            
+            <div style="display: flex; gap: 12px; justify-content: center; align-items: stretch;">
+                <button class="btn-secondary" onclick="closeCustomConfirm()" style="flex: 1; height: 46px; margin: 0; justify-content: center;">Скасувати</button>
+                <button class="btn-primary" onclick="confirmDeleteBooking()" style="flex: 1; height: 46px; margin: 0; justify-content: center; background: #DC2626; border: 1px solid #B91C1C; box-shadow: 0 4px 6px rgba(220, 38, 38, 0.2);">Видалити</button>
             </div>
         </div>
     </div>
