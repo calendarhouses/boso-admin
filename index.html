@@ -465,8 +465,15 @@ input[type="number"] {
             <div class="submenu-item active" onclick="switchSettingsTab('rooms', this)">Номери</div>
             <div class="submenu-item" onclick="switchSettingsTab('prices', this)">Конструктор цін</div>
             <div class="submenu-item" onclick="switchSettingsTab('discounts', this)">Знижки</div>
-            <div class="submenu-item" onclick="switchSettingsTab('reports', this)">Звіти</div>
         </div>
+        
+        <div class="menu-item" onclick="switchView('reports')" id="menu-reports">
+            <div class="menu-item-content">
+                <svg class="menu-icon" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                Звіти
+            </div>
+        </div>
+
     </div>
 
     <div class="main-content">
@@ -527,6 +534,16 @@ input[type="number"] {
                 <thead><tr><th>Ім'я Клієнта</th><th>Телефон</th><th>Статистика</th><th>Остання бронь</th><th>Дія</th></tr></thead>
                 <tbody id="guestsTableBody"></tbody>
             </table>
+        </div>
+
+        <div id="view-reports" class="card" style="display: none; height: 100%;">
+            <div style="background: #F9FAFB; border: 1px dashed #D1D5DB; border-radius: 12px; padding: 80px 20px; text-align: center; color: #6B7280; margin-top: 10px;"> 
+                <div style="background: #E5E7EB; width: 80px; height: 80px; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 24px;"> 
+                    <svg width="40" height="40" fill="none" stroke="#4B5563" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg> 
+                </div> 
+                <h3 style="font-size: 20px; font-weight: 700; color: #374151; margin-bottom: 12px;">Розділ у розробці</h3> 
+                <p style="font-size: 15px; max-width: 450px; margin: 0 auto;">Тут буде відображатися детальна статистика, фінансові звіти та аналітика по всім бронюванням за обраний період.</p> 
+            </div> 
         </div>
 
         <div id="view-settings" style="display: none; flex-direction: column; height: 100%;">
@@ -897,7 +914,6 @@ if (document.getElementById('view-grid').style.display === 'flex') {
             setTimeout(() => { toast.classList.remove('show'); setTimeout(() => toast.remove(), 400); }, 3000);
         }
 
-        // --- НАВІГАЦІЯ ПО ГОЛОВНОМУ МЕНЮ ТА ПІДМЕНЮ ---
         function switchView(viewName) {
             document.querySelectorAll('.menu-item').forEach(el => el.classList.remove('active'));
             document.getElementById('menu-' + viewName).classList.add('active');
@@ -907,12 +923,15 @@ if (document.getElementById('view-grid').style.display === 'flex') {
                 document.getElementById('menu-settings').classList.remove('expanded');
             }
 
+            // Ховаємо всі сторінки
             document.getElementById('view-list').style.display = 'none';
             document.getElementById('view-grid').style.display = 'none';
             document.getElementById('view-guests').style.display = 'none';
             document.getElementById('view-settings').style.display = 'none';
+            document.getElementById('view-reports').style.display = 'none'; 
             document.getElementById('mainActionButton').style.display = 'flex';
 
+            // Показуємо потрібну
             if(viewName === 'list') {
                 document.getElementById('view-list').style.display = 'block';
                 document.getElementById('pageTitle').innerText = 'Бронювання';
@@ -925,6 +944,11 @@ if (document.getElementById('view-grid').style.display === 'flex') {
                 document.getElementById('view-guests').style.display = 'block';
                 document.getElementById('pageTitle').innerText = 'База гостей';
                 renderGuests(); 
+            } else if(viewName === 'reports') {
+                // Відкриваємо Звіти
+                document.getElementById('view-reports').style.display = 'block';
+                document.getElementById('pageTitle').innerText = 'Звіти та Аналітика';
+                document.getElementById('mainActionButton').style.display = 'none'; 
             }
         }
 
