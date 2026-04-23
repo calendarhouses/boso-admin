@@ -669,9 +669,16 @@ input[type="number"] {
                     
                 </form>
             </div>
-            <div class="drawer-footer">
-                <button class="btn-secondary" onclick="closeDrawer()">Закрити</button>
-                <button type="submit" class="btn-primary" form="adminBookingForm" id="adminSubmitBtn">Зберегти бронь</button>
+            <div class="drawer-footer" style="justify-content: space-between;">
+                <button type="button" class="btn-outline-danger" id="adminDeleteBtn" onclick="deleteCurrentBooking()" style="display: none; padding: 10px 16px;">
+                    <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                    Видалити
+                </button>
+                
+                <div style="display: flex; gap: 12px;">
+                    <button type="button" class="btn-secondary" onclick="closeDrawer()">Закрити</button>
+                    <button type="submit" class="btn-primary" form="adminBookingForm" id="adminSubmitBtn">Зберегти бронь</button>
+                </div>
             </div>
         </div>
     </div>
@@ -1642,7 +1649,8 @@ document.getElementById('adminCottage').addEventListener('change', updatePricePr
     editingRowNumber = null; 
     document.getElementById('drawerTitle').innerText = 'Нове бронювання'; 
     document.getElementById('adminBookingForm').reset();
-    
+    document.getElementById('adminDeleteBtn').style.display = 'none';
+            
     // --- ДОДАЙ ОСЬ ЦЕЙ РЯДОК ---
     // Очищаємо пам'ять калькулятора від попередніх відкритих броней
     document.getElementById('liveCalculatorContainer').innerHTML = '';
@@ -1691,6 +1699,7 @@ document.getElementById('adminCottage').addEventListener('change', updatePricePr
             editingRowNumber = rowNumber;
             
             document.getElementById('drawerTitle').innerText = `Деталі броні ${booking.id || ''}`;
+            document.getElementById('adminDeleteBtn').style.display = 'flex';
             
             // Заповнюємо поля
             document.getElementById('adminName').value = String(booking.name).replace(' (Ручна бронь)', '');
@@ -1848,6 +1857,35 @@ function showPremiumTooltip(element, rowNumber) {
 
 function hidePremiumTooltip() {
     document.getElementById('premiumTooltip').classList.remove('visible');
+}
+
+        // --- ФУНКЦІЯ ВИДАЛЕННЯ БРОНІ ---
+async function deleteCurrentBooking() {
+    if (!editingRowNumber) return;
+    if (!confirm("Ви впевнені, що хочете НАЗАВЖДИ видалити це бронювання?")) return;
+    
+    const btn = document.getElementById('adminDeleteBtn');
+    const originalText = btn.innerHTML;
+    btn.innerText = "Видалення...";
+    btn.disabled = true;
+
+    try {
+        let res = await fetch(API_URL, {
+            method: 'POST',
+            headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+            body: JSON.stringify({ action: 'deleteBooking', row: editingRowNumber })
+        });
+        
+        closeDrawer();
+        showToast("Бронювання успішно видалено");
+        await initApp(); // Оновлюємо шахматку
+    } catch (error) {
+        console.error("Помилка видалення:", error);
+        alert("Помилка видалення!");
+    } finally {
+        btn.innerHTML = originalText;
+        btn.disabled = false;
+    }
 }
         
         // Запуск системи при завантаженні сторінки
