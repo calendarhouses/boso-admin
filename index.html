@@ -977,11 +977,14 @@ if (document.getElementById('view-grid').style.display === 'flex') {
             document.querySelectorAll('.submenu-item').forEach(nav => nav.classList.remove('active'));
             el.classList.add('active');
 
+            // ХОВАЄМО ВСІ ІНШІ СТОРІНКИ (Додали сюди view-reports)
             document.getElementById('view-list').style.display = 'none';
             document.getElementById('view-grid').style.display = 'none';
             document.getElementById('view-guests').style.display = 'none';
+            document.getElementById('view-reports').style.display = 'none'; 
             document.getElementById('mainActionButton').style.display = 'none'; 
             
+            // ПОКАЗУЄМО НАЛАШТУВАННЯ
             document.getElementById('view-settings').style.display = 'flex';
             document.getElementById('pageTitle').innerText = 'Налаштування системи';
 
