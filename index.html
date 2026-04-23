@@ -125,13 +125,15 @@
         .settings-content { background: var(--card-bg); border-radius: 16px; padding: 30px; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05); min-height: 500px; display: flex; flex-direction: column;}
         .settings-title { font-size: 20px; font-weight: 600; margin-bottom: 24px; color: var(--text-main); display: flex; justify-content: space-between; align-items: center; }
 
-        /* ТАБЛИЦІ ЗАГАЛЬНЕ */
+        /* ТАБЛИЦІ ЗАГАЛЬНЕ (Ідеальне вирівнювання) */
         .tabs { display: flex; gap: 20px; border-bottom: 1px solid #E5E7EB; margin-bottom: 20px; padding-bottom: 10px; }
-        .tab { color: var(--text-muted); font-weight: 500; cursor: pointer; padding-bottom: 10px; margin-bottom: -11px; }
+        .tab { color: var(--text-muted); font-weight: 500; cursor: pointer; padding-bottom: 10px; margin-bottom: -11px; transition: 0.2s; }
+        .tab:hover { color: #111827; }
         .tab.active { color: var(--accent); border-bottom: 2px solid var(--accent); }
-        table { width: 100%; border-collapse: collapse; }
-        th { text-align: left; padding: 16px; color: var(--text-muted); font-weight: 500; font-size: 13px; text-transform: uppercase; border-bottom: 1px solid #E5E7EB; }
-        td { padding: 16px; border-bottom: 1px solid #E5E7EB; font-size: 14px; vertical-align: middle; }
+        
+        table { width: 100%; border-collapse: collapse; text-align: left; }
+        th { text-align: left; padding: 16px 20px; color: var(--text-muted); font-weight: 600; font-size: 12px; text-transform: uppercase; border-bottom: 1px solid #E5E7EB; letter-spacing: 0.5px; }
+        td { text-align: left; padding: 16px 20px; border-bottom: 1px solid #E5E7EB; font-size: 14px; vertical-align: middle; }
         .badge { padding: 6px 12px; border-radius: 20px; font-size: 12px; font-weight: 600; display: inline-flex; align-items: center; gap: 6px; }
         .badge.new { background-color: #DBEAFE; color: #1E40AF; }
         .badge.confirmed { background-color: #D1FAE5; color: #065F46; }
@@ -486,11 +488,19 @@ input[type="number"] {
         </div>
 
         <div id="view-list" class="card">
-            <div class="tabs">
-                <div class="tab active">Всі броні</div>
-                <div class="tab">Майбутні</div>
-                <div class="tab">Скасовані</div>
+            <div class="tabs" id="bookingsTabs">
+                <div class="tab active" onclick="filterBookings('all', this)">Всі броні</div>
+                <div class="tab" onclick="filterBookings('future', this)">Майбутні</div>
+                <div class="tab" onclick="filterBookings('cancelled', this)">Скасовані</div>
             </div>
+            
+            <div id="guestFilterTab" style="display: none; align-items: center; justify-content: space-between; background: #F9FAFB; padding: 12px 20px; border-radius: 10px; margin-bottom: 20px; border: 1px dashed #D1D5DB;">
+                <div style="font-size: 14px; color: #4B5563;">
+                    Показано броні клієнта: <strong id="filterGuestName" style="color: var(--accent); font-size: 16px; margin-left: 6px;"></strong>
+                </div>
+                <button class="btn-secondary" style="padding: 8px 16px; font-size: 13px; height: auto;" onclick="resetGuestFilter()">✕ Скинути фільтр</button>
+            </div>
+
             <table>
                 <thead><tr><th>Дати</th><th>Клієнт</th><th>Котедж</th><th>Статус</th><th>Дія</th></tr></thead>
                 <tbody id="bookingsTableBody"></tbody>
@@ -946,6 +956,7 @@ if (document.getElementById('view-grid').style.display === 'flex') {
                 document.getElementById('view-list').style.display = 'block';
                 document.getElementById('pageTitle').innerText = 'Бронювання';
                 renderTable(allBookings);
+                resetGuestFilter(); // <--- Додай тільки цей рядок!
             } else if(viewName === 'grid') {
                 document.getElementById('view-grid').style.display = 'flex';
                 document.getElementById('pageTitle').innerText = 'Шахматка';
@@ -1294,15 +1305,48 @@ if (document.getElementById('view-grid').style.display === 'flex') {
             });
         }
 
-        document.querySelectorAll('.tab').forEach(tab => {
-            tab.addEventListener('click', function() {
-                document.querySelectorAll('.tab').forEach(t => t.classList.remove('active')); this.classList.add('active');
-                const filterType = this.innerText.toLowerCase(); let filtered = allBookings;
-                if (filterType.includes('майбутні')) { const today = new Date(); today.setHours(0,0,0,0); filtered = allBookings.filter(b => new Date(b.checkIn) >= today && !String(b.status).toLowerCase().includes('скас')); }
-                else if (filterType.includes('скасовані')) { filtered = allBookings.filter(b => String(b.status).toLowerCase().includes('скас')); }
-                renderTable(filtered);
-            });
-        });
+        // --- ЛОГІКА ФІЛЬТРАЦІЇ В ТАБЛИЦІ БРОНЮВАНЬ ---
+        function filterBookings(filterType, element) {
+            document.querySelectorAll('#bookingsTabs .tab').forEach(t => t.classList.remove('active'));
+            if(element) element.classList.add('active');
+
+            let filtered = allBookings;
+            const today = new Date(); 
+            today.setHours(0,0,0,0); 
+
+            if (filterType === 'future') { 
+                filtered = allBookings.filter(b => new Date(b.checkIn) >= today && !String(b.status).toLowerCase().includes('скас')); 
+            } else if (filterType === 'cancelled') { 
+                filtered = allBookings.filter(b => String(b.status).toLowerCase().includes('скас')); 
+            }
+            renderTable(filtered);
+        }
+
+        // --- ВІДКРИТТЯ БРОНЮВАНЬ КОНКРЕТНОГО ГОСТЯ ---
+        function showGuestBookings(phone, name) {
+            switchView('list'); // Переходимо на сторінку списку
+            
+            // Ховаємо вкладки, показуємо плашку фільтру
+            document.getElementById('bookingsTabs').style.display = 'none';
+            document.getElementById('guestFilterTab').style.display = 'flex';
+            document.getElementById('filterGuestName').innerText = name;
+            
+            // Залишаємо чистий заголовок
+            document.getElementById('pageTitle').innerText = 'Бронювання';
+            
+            const filteredBookings = allBookings.filter(b => formatPhone(b.phone) === phone);
+            renderTable(filteredBookings);
+        }
+
+        // --- СКИНУТИ ФІЛЬТР ГОСТЯ ---
+        function resetGuestFilter() {
+            document.getElementById('bookingsTabs').style.display = 'flex';
+            document.getElementById('guestFilterTab').style.display = 'none';
+            
+            // Робимо активною вкладку "Всі броні"
+            let allTab = document.querySelector('#bookingsTabs .tab');
+            filterBookings('all', allTab);
+        }
 
         // --- ШАХМАТКА БРОНЮВАНЬ ---
         let timelineMode = 'month'; // Режим за замовчуванням
