@@ -465,7 +465,7 @@ input[type="number"] {
             <div class="submenu-item active" onclick="switchSettingsTab('rooms', this)">Номери</div>
             <div class="submenu-item" onclick="switchSettingsTab('prices', this)">Конструктор цін</div>
             <div class="submenu-item" onclick="switchSettingsTab('discounts', this)">Знижки</div>
-            <div class="submenu-item" onclick="switchSettingsTab('services', this)">Додаткові послуги</div>
+            <div class="submenu-item" onclick="switchSettingsTab('reports', this)">Звіти</div>
         </div>
     </div>
 
@@ -582,41 +582,53 @@ input[type="number"] {
                     </div>
                 </div>
                 
-                <div id="set-discounts" class="settings-tab-content" style="display: none;">
-                    <div class="settings-title">Налаштування знижок</div>
-                    <p style="color: #6B7280; font-size: 14px; margin-bottom: 24px; max-width: 600px; line-height: 1.5;">Створюйте знижки, які будуть автоматично застосовуватися при бронюванні. Збільшуйте тривалість бронювань, надаючи знижки для гостей.</p>
+                <div id="set-discounts" class="settings-tab-content" style="display: none;"> 
+                    <div class="settings-title">Налаштування знижок</div> 
+                    <p style="color: #6B7280; font-size: 14px; margin-bottom: 24px; max-width: 600px; line-height: 1.5;">Створюйте знижки, які будуть автоматично застосовуватися при бронюванні. Збільшуйте тривалість бронювань, надаючи знижки для гостей.</p> 
                     
-                    <table>
-                        <thead><tr><th>Умова</th><th>Знижка</th><th>Номери</th><th>Дії</th></tr></thead>
-                        <tbody id="settingsDiscountsTableBody">
-                            </tbody>
-                    </table>
-                    <button class="btn-secondary" style="margin-top: 20px; font-size: 13px;" onclick="openGenericModal('discount')">+ Додати знижку</button>
+                    <table> 
+                        <thead><tr><th>Умова</th><th>Знижка</th><th>Номери</th><th>Дії</th></tr></thead> 
+                        <tbody id="settingsDiscountsTableBody"> 
+                        </tbody> 
+                    </table> 
+                    <button class="btn-secondary" style="margin-top: 20px; font-size: 13px;" onclick="openGenericModal('discount')">+ Додати знижку</button> 
+                </div> 
+
+                <div id="set-reports" class="settings-tab-content" style="display: none;"> 
+                    <div class="settings-title">Звіти та Аналітика</div> 
+                    
+                    <div style="background: #F9FAFB; border: 1px dashed #D1D5DB; border-radius: 12px; padding: 60px 20px; text-align: center; color: #6B7280; margin-top: 20px;"> 
+                        <div style="background: #E5E7EB; width: 64px; height: 64px; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 20px;"> 
+                            <svg width="32" height="32" fill="none" stroke="#4B5563" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg> 
+                        </div> 
+                        <h3 style="font-size: 18px; font-weight: 700; color: #374151; margin-bottom: 10px;">Розділ у розробці</h3> 
+                        <p style="font-size: 14px; max-width: 400px; margin: 0 auto;">Тут буде відображатися статистика, фінансові звіти та аналітика по всім бронюванням за обраний період.</p> 
+                    </div> 
                 </div>
 
-                <div id="set-services" class="settings-tab-content" style="display: none;">
-                    <div class="settings-title">Системні додаткові послуги</div>
-                    <table style="margin-bottom: 40px;">
-                        <thead><tr><th>Назва</th><th>Номери</th><th>Ціна (грн)</th><th>Доступність</th><th>Дії</th></tr></thead>
-                        <tbody id="settingsSysServicesTableBody">
-                            </tbody>
-                    </table>
+                <div id="set-services" class="settings-tab-content" style="display: none;"> 
+                    <div class="settings-title">Системні додаткові послуги</div> 
+                    <table style="margin-bottom: 40px;"> 
+                        <thead><tr><th>Назва</th><th>Номери</th><th>Ціна (грн)</th><th>Доступність</th><th>Дії</th></tr></thead> 
+                        <tbody id="settingsSysServicesTableBody"> 
+                        </tbody> 
+                    </table> 
 
-                    <div class="settings-title">
-                        Ваші додаткові послуги
-                        <button class="btn-success" style="padding: 10px 16px; font-size: 13px;" onclick="openGenericModal('customService')">+ Додаткова послуга</button>
-                    </div>
-                    <p style="color: #6B7280; font-size: 14px; margin-bottom: 24px;">Створюйте додаткові послуги, які ви можете додавати до бронювань (наприклад, Чан, Дрова).</p>
+                    <div class="settings-title"> 
+                        Ваші додаткові послуги 
+                        <button class="btn-success" style="padding: 10px 16px; font-size: 13px;" onclick="openGenericModal('customService')">+ Додаткова послуга</button> 
+                    </div> 
+                    <p style="color: #6B7280; font-size: 14px; margin-bottom: 24px;">Створюйте додаткові послуги, які ви можете додавати до бронювань (наприклад, Чан, Дрова).</p> 
                     
-                    <table>
-                        <thead><tr><th>Назва</th><th>Номери</th><th>Ціна (грн)</th><th>Подобова</th><th>За гостя</th><th>Доступність</th><th>Дії</th></tr></thead>
-                        <tbody id="settingsServicesTableBody">
-                            </tbody>
-                    </table>
-                </div>
+                    <table> 
+                        <thead><tr><th>Назва</th><th>Номери</th><th>Ціна (грн)</th><th>Подобова</th><th>За гостя</th><th>Доступність</th><th>Дії</th></tr></thead> 
+                        <tbody id="settingsServicesTableBody"> 
+                        </tbody> 
+                    </table> 
+                </div> 
 
-            </div>
-        </div>
+            </div> 
+        </div> 
     </div>
 
 
@@ -628,9 +640,9 @@ input[type="number"] {
             </div>
             <div class="modal-body" id="gModalBody">
                 </div>
-            <div class="modal-footer">
-                <button class="btn-secondary" onclick="closeGenericModal()">Скасувати</button>
-                <button class="btn-success" onclick="saveGenericModal()">Зберегти</button>
+            <div class="modal-footer" style="display: flex; gap: 12px; justify-content: flex-end; align-items: stretch;">
+                <button class="btn-secondary" onclick="closeGenericModal()" style="height: 46px; margin: 0; display: flex; align-items: center;">Скасувати</button>
+                <button class="btn-primary" onclick="saveGenericModal()" style="height: 46px; margin: 0; display: flex; align-items: center;">Зберегти</button>
             </div>
         </div>
     </div>
