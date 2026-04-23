@@ -400,6 +400,16 @@
 .tt-label { color: #6B7280; }
 .tt-value { font-weight: 600; color: #111827; }
 .tt-status { margin-top: 8px; display: inline-flex; align-items: center; justify-content: center; padding: 6px 10px; border-radius: 8px; font-size: 12px; font-weight: 700; }
+
+        /* --- ПРИБИРАЄМО СТРІЛОЧКИ В ПОЛЯХ З ЦИФРАМИ --- */
+input[type="number"]::-webkit-inner-spin-button,
+input[type="number"]::-webkit-outer-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+input[type="number"] {
+    -moz-appearance: textfield;
+}
     </style>
 </head>
 <body>
