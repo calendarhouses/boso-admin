@@ -791,6 +791,16 @@ function getGuestWord(count) {
     if (n1 === 1) return "гість";
     return "гостей";
 }
+
+        // --- ФУНКЦІЯ ДЛЯ ПРАВИЛЬНОЇ МНОЖИНИ ЗАЇЗДІВ (1 заїзд, 2 заїзди, 5 заїздів) ---
+function getVisitWord(count) {
+    let n = Math.abs(parseInt(count)) % 100;
+    let n1 = n % 10;
+    if (n > 10 && n < 20) return "заїздів";
+    if (n1 > 1 && n1 < 5) return "заїзди";
+    if (n1 === 1) return "заїзд";
+    return "заїздів";
+}
         
         let allBookings = [];
         let editingRowNumber = null;
@@ -1242,9 +1252,20 @@ if (document.getElementById('view-grid').style.display === 'flex') {
             guests.forEach(g => {
                 const dateStr = g.lastVisit.getFullYear() > 2000 ? g.lastVisit.toLocaleDateString('uk-UA', { day: 'numeric', month: 'long', year: 'numeric' }) : 'Немає заїздів';
                 const cleanPhone = g.phone;
+                
                 tbody.innerHTML += `<tr>
                     <td><strong>${g.name}</strong></td><td style="color: #4B5563;">+${cleanPhone}</td>
-                    <td><span class="badge new">${g.count} заїздів</span></td><td style="color: #6B7280;">${dateStr}</td>
+                    
+                    <td>
+                        <span class="badge new" onclick="showGuestBookings('${cleanPhone}', '${g.name}')" 
+                              style="cursor: pointer; transition: 0.2s; box-shadow: 0 2px 4px rgba(30, 64, 175, 0.1);" 
+                              onmouseover="this.style.transform='scale(1.05)'; this.style.background='#BFDBFE'" 
+                              onmouseout="this.style.transform='scale(1)'; this.style.background='#DBEAFE'">
+                            ${g.count} ${getVisitWord(g.count)}
+                        </span>
+                    </td>
+                    
+                    <td style="color: #6B7280;">${dateStr}</td>
                     <td><div style="display: flex; gap: 6px;"><a href="https://t.me/+${cleanPhone}" target="_blank" class="contact-btn tg">Telegram</a><a href="https://wa.me/${cleanPhone}" target="_blank" class="contact-btn" style="background: #25D366; color: white;">WhatsApp</a></div></td>
                 </tr>`;
             });
@@ -2053,6 +2074,24 @@ document.addEventListener('click', function(e) {
         document.querySelectorAll('.custom-select-wrapper').forEach(w => w.classList.remove('open'));
     }
 });
+
+        // --- ФУНКЦІЯ: ВІДКРИТТЯ БРОНЮВАНЬ КОНКРЕТНОГО ГОСТЯ ---
+function showGuestBookings(phone, name) {
+    // 1. Переходимо на вкладку списку
+    switchView('list');
+    
+    // 2. Фільтруємо всі броні, залишаємо тільки ті, де телефон збігається
+    const filteredBookings = allBookings.filter(b => formatPhone(b.phone) === phone);
+    
+    // 3. Змінюємо заголовок сторінки, щоб було видно фільтр
+    document.getElementById('pageTitle').innerHTML = `
+        Бронювання: <span style="color: var(--accent); font-weight: 700;">${name}</span>
+        <button class="btn-secondary" style="display: inline-flex; padding: 6px 12px; font-size: 12px; margin-left: 16px; height: auto;" onclick="switchView('list')">✕ Скинути фільтр</button>
+    `;
+    
+    // 4. Малюємо таблицю тільки з цими бронями
+    renderTable(filteredBookings);
+}
         
         // Запуск системи при завантаженні сторінки
         window.onload = initApp;
