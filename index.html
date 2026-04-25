@@ -276,89 +276,30 @@
         .form-group input:focus, .form-group select:focus, .form-group textarea:focus { background: #FFF; border-color: var(--accent); box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.1); }
         .form-group select { appearance: none; -webkit-appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%236B7280'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 16px center; background-size: 16px; padding-right: 40px; cursor: pointer; }
         
-      /* --- АБСОЛЮТНО НОВІ ПРЕМІУМ ЧЕКБОКСИ (СИСТЕМА BOSO) --- */
-        .checkbox-group { display: flex; flex-direction: column; gap: 10px; margin-top: 8px; }
+      /* --- ПРЕМІУМ КНОПКИ-ПЕРЕМИКАЧІ (ЗАМІСТЬ ЧЕКБОКСІВ) --- */
+        .chips-container { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 6px; }
         
-        .boso-checkbox {
-            display: flex;
-            align-items: center;
-            position: relative;
+        .chip-btn {
+            padding: 8px 16px;
+            background: #F3F4F6;
+            border: 1px solid #E5E7EB;
+            border-radius: 10px;
+            font-size: 13px;
+            font-weight: 600;
+            color: #4B5563;
             cursor: pointer;
-            font-size: 14px;
-            font-weight: 500;
-            color: #374151;
-            user-select: none;
-            gap: 10px;
-            margin: 0;
-        }
-
-        /* 1. Повністю ховаємо стандартний системний інпут */
-        .boso-checkbox input {
-            position: absolute;
-            opacity: 0;
-            cursor: pointer;
-            height: 0;
-            width: 0;
-            margin: 0;
-        }
-
-        /* 2. Малюємо наш власний ідеальний квадратик / кружечок (Браузер не має над ним влади) */
-        .boso-mark {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            height: 20px;
-            width: 20px;
-            min-width: 20px;
-            background-color: #FFF;
-            border: 2px solid #D1D5DB;
-            border-radius: 6px; /* Квадрат для чекбокса */
             transition: all 0.2s ease;
+            user-select: none;
         }
         
-        .boso-radio {
-            border-radius: 50%; /* Коло для радіо-кнопки */
-        }
-
-        /* 3. Ефекти при наведенні і кліку */
-        .boso-checkbox:hover input ~ .boso-mark { border-color: var(--success); }
-
-        .boso-checkbox input:checked ~ .boso-mark {
-            background-color: var(--success);
+        .chip-btn:hover { background: #E5E7EB; }
+        
+        /* Зелений активний стан */
+        .chip-btn.active {
+            background: #F0FDF4;
             border-color: var(--success);
-        }
-
-        /* 4. Малюємо саму галочку/крапку (прихована за замовчуванням) */
-        .boso-mark::after {
-            content: "";
-            display: none;
-        }
-
-        .boso-checkbox input:checked ~ .boso-mark::after {
-            display: block;
-        }
-
-        /* SVG Галочка */
-        .boso-mark:not(.boso-radio)::after {
-            width: 12px;
-            height: 12px;
-            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='20 6 9 17 4 12'%3E%3C/polyline%3E%3C/svg%3E");
-            background-size: contain;
-            background-repeat: no-repeat;
-        }
-
-        /* Біла крапочка для радіо */
-        .boso-radio::after {
-            width: 8px;
-            height: 8px;
-            border-radius: 50%;
-            background-color: white;
-        }
-        
-        /* Вирівнюємо текст окремо */
-        .boso-text {
-            line-height: 1;
-            padding-top: 1px; /* Оптичне вирівнювання */
+            color: #059669;
+            box-shadow: 0 2px 4px rgba(5, 150, 105, 0.1);
         }
         .status-toggle { display: flex; background: #F3F4F6; padding: 4px; border-radius: 12px; margin-bottom: 24px; }
         .status-btn { flex: 1; padding: 10px; text-align: center; font-size: 13px; font-weight: 600; color: #6B7280; cursor: pointer; border-radius: 8px; transition: 0.2s; user-select: none; display: flex; align-items: center; justify-content: center; gap: 6px;}
@@ -1219,37 +1160,17 @@ if (document.getElementById('view-grid').style.display === 'flex') {
             } else if (type === 'price') {
                 title.innerText = 'Конструктор цін';
                 
-                // Формуємо список з НОВИМИ ПРЕМІУМ-ЧЕКБОКСАМИ
-                let roomOptionsHtml = `
-                    <div class="custom-option" style="padding: 8px 12px;">
-                        <label class="boso-checkbox" style="width: 100%;">
-                            <input type="checkbox" id="mPriceRoomAll" checked onchange="toggleAllPriceRooms(this)">
-                            <span class="boso-mark"></span>
-                            <span class="boso-text">Усі номери</span>
-                        </label>
-                    </div>
-                `;
-                roomOptionsHtml += roomsList.map(r => `
-                    <div class="custom-option" style="padding: 8px 12px;">
-                        <label class="boso-checkbox" style="width: 100%;">
-                            <input type="checkbox" class="price-room-cb" value="${r.id}" checked onchange="updatePriceRoomText()">
-                            <span class="boso-mark"></span>
-                            <span class="boso-text">${r.name}</span>
-                        </label>
-                    </div>
-                `).join('');
+                // Генеруємо кнопочки для номерів (всі активні за замовчуванням)
+                let roomsChips = `<div class="chip-btn active" id="chip-room-all" onclick="toggleAllRoomsChip()">Усі номери</div>`;
+                roomsChips += roomsList.map(r => 
+                    `<div class="chip-btn room-chip active" data-id="${r.id}" onclick="toggleSingleRoomChip(this)">${r.name}</div>`
+                ).join('');
 
                 body.innerHTML = `
                     <div class="form-group">
                         <label>Оберіть номери:</label>
-                        <div class="custom-select-wrapper" id="mPriceRoomWrapper">
-                            <div class="custom-select-trigger" onclick="toggleCustomSelect('mPriceRoomWrapper')">
-                                <span id="mPriceRoomText">Усі номери</span>
-                                <svg width="16" height="16" fill="none" stroke="#6B7280" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
-                            </div>
-                            <div class="custom-select-options" onclick="event.stopPropagation()">
-                                ${roomOptionsHtml}
-                            </div>
+                        <div class="chips-container">
+                            ${roomsChips}
                         </div>
                     </div>
                     
@@ -1276,23 +1197,12 @@ if (document.getElementById('view-grid').style.display === 'flex') {
                     
                     <div class="form-group" style="margin-bottom: 0;">
                         <label>Оберіть дні тижня:</label>
-                        <div class="checkbox-group" style="flex-direction: row; gap: 20px;">
-                            <label class="boso-checkbox">
-                                <input type="radio" name="priceDays" value="all" checked>
-                                <span class="boso-mark boso-radio"></span>
-                                <span class="boso-text">Усі дні</span>
-                            </label>
-                            <label class="boso-checkbox">
-                                <input type="radio" name="priceDays" value="weekdays">
-                                <span class="boso-mark boso-radio"></span>
-                                <span class="boso-text">Будні</span>
-                            </label>
-                            <label class="boso-checkbox">
-                                <input type="radio" name="priceDays" value="weekends">
-                                <span class="boso-mark boso-radio"></span>
-                                <span class="boso-text">Вихідні</span>
-                            </label>
+                        <div class="chips-container" id="daysChipsContainer">
+                            <div class="chip-btn active day-chip" data-val="all" onclick="selectDayChip(this)">Усі дні</div>
+                            <div class="chip-btn day-chip" data-val="weekdays" onclick="selectDayChip(this)">Будні</div>
+                            <div class="chip-btn day-chip" data-val="weekends" onclick="selectDayChip(this)">Вихідні</div>
                         </div>
+                        <input type="hidden" id="mPriceDays" value="all">
                     </div>
                 `;
             } else if (type === 'discount') {
@@ -1471,14 +1381,13 @@ if (document.getElementById('view-grid').style.display === 'flex') {
                 renderSettingsServices();
 
             } else if (currentEditType === 'price') {
-                // 1. Отримуємо масив ID всіх вибраних номерів
-                const selectedRooms = Array.from(document.querySelectorAll('.price-room-cb'))
-                                           .filter(cb => cb.checked)
-                                           .map(cb => cb.value);
+                // Збираємо ID всіх номерів, які зараз світяться зеленим (мають клас active)
+                const selectedRooms = Array.from(document.querySelectorAll('.room-chip.active'))
+                                           .map(chip => chip.getAttribute('data-id'));
                                            
                 const amount = parseInt(document.getElementById('mPriceAmount').value) || 0;
                 const periodMonths = parseInt(document.getElementById('mPricePeriod').value) || 1;
-                const dayType = document.querySelector('input[name="priceDays"]:checked').value;
+                const dayType = document.getElementById('mPriceDays').value; // Беремо значення з прихованого поля
                 
                 if (amount > 0 && selectedRooms.length > 0) {
                     const startDate = new Date(priceTimelineBaseDate); 
@@ -1487,7 +1396,6 @@ if (document.getElementById('view-grid').style.display === 'flex') {
                     const daysCount = Math.round((endDate - startDate) / (1000 * 60 * 60 * 24));
                     
                     roomsList.forEach(r => {
-                        // 2. Записуємо ціну тільки якщо ID номера є у вибраному списку
                         if (selectedRooms.includes(String(r.id))) {
                             if (!customPrices[r.id]) customPrices[r.id] = {};
                             
@@ -2358,27 +2266,46 @@ document.addEventListener('click', function(e) {
     }
 });
 
-        // --- ЛОГІКА МУЛЬТИ-ВИБОРУ ДЛЯ НОМЕРІВ ---
-        function toggleAllPriceRooms(el) {
-            document.querySelectorAll('.price-room-cb').forEach(cb => cb.checked = el.checked);
-            updatePriceRoomText();
+        // --- ЛОГІКА КНОПОК-ПЕРЕМИКАЧІВ ---
+        
+        // 1. Клік по кнопці "Усі номери"
+        function toggleAllRoomsChip() {
+            const allBtn = document.getElementById('chip-room-all');
+            const isActive = !allBtn.classList.contains('active');
+            
+            if (isActive) {
+                allBtn.classList.add('active');
+                document.querySelectorAll('.room-chip').forEach(c => c.classList.add('active'));
+            } else {
+                allBtn.classList.remove('active');
+                document.querySelectorAll('.room-chip').forEach(c => c.classList.remove('active'));
+            }
         }
 
-        function updatePriceRoomText() {
-            const checkboxes = document.querySelectorAll('.price-room-cb');
-            const allCb = document.getElementById('mPriceRoomAll');
-            const checkedCount = Array.from(checkboxes).filter(cb => cb.checked).length;
+        // 2. Клік по конкретному номеру
+        function toggleSingleRoomChip(el) {
+            el.classList.toggle('active');
             
-            if (checkedCount === checkboxes.length) {
-                if(allCb) allCb.checked = true;
-                document.getElementById('mPriceRoomText').innerText = "Усі номери";
-            } else if (checkedCount === 0) {
-                if(allCb) allCb.checked = false;
-                document.getElementById('mPriceRoomText').innerText = "Оберіть номери";
+            // Якщо всі кнопки активні, підсвічуємо і "Усі номери"
+            const allChips = document.querySelectorAll('.room-chip');
+            const activeChips = document.querySelectorAll('.room-chip.active');
+            const allBtn = document.getElementById('chip-room-all');
+            
+            if (allChips.length === activeChips.length) {
+                allBtn.classList.add('active');
             } else {
-                if(allCb) allCb.checked = false;
-                document.getElementById('mPriceRoomText').innerText = `Обрано: ${checkedCount}`;
+                allBtn.classList.remove('active');
             }
+        }
+
+        // 3. Клік по днях (тільки ОДИН можливий вибір)
+        function selectDayChip(el) {
+            // Знімаємо зелений колір з усіх кнопок днів
+            document.querySelectorAll('.day-chip').forEach(c => c.classList.remove('active'));
+            // Даємо зелений колір тій, на яку клікнули
+            el.classList.add('active');
+            // Зберігаємо вибір у приховане поле
+            document.getElementById('mPriceDays').value = el.getAttribute('data-val');
         }
         
         // Запуск системи при завантаженні сторінки
