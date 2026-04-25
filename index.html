@@ -1918,13 +1918,34 @@ currentRow.innerHTML += `
     let extraGuestFee = extraGuests * dynamicExtraPrice * nights;
     let petFee = (pets === "Так") ? (500 + 200 * nights) : 0;
 
+   // --- РОЗУМНИЙ ПІДБІР ЗНИЖКИ ---
     let discountPercent = 0;
-    if (nights >= 30) discountPercent = 0.73;
-    else if (nights >= 14) discountPercent = 0.57;
-    else if (nights >= 7) discountPercent = 0.43;
-    else if (nights >= 3) discountPercent = 0.20;
-    else if (nights >= 2) discountPercent = 0.15;
+    
+    // Знаходимо ID поточного номера (шукаємо в нашому списку roomsList за назвою)
+    const currentRoomObj = roomsList.find(r => r.name === roomName);
+    const currentRoomId = currentRoomObj ? String(currentRoomObj.id) : null;
 
+    if (currentRoomId && typeof discountsList !== 'undefined') {
+        discountsList.forEach(d => {
+            const condNights = parseInt(String(d.condition).replace(/\D/g,'')) || 0;
+            const dPct = parseInt(String(d.discount).replace(/\D/g,'')) / 100;
+            
+            // Перевірка 1: Чи достатньо ночей?
+            if (nights >= condNights) {
+                // Перевірка 2: Чи підходить номер? (якщо "all" або ID в списку)
+                const appliesToRoom = d.roomsIds && (d.roomsIds.includes("all") || d.roomsIds.includes(currentRoomId));
+                
+                if (appliesToRoom) {
+                    // Якщо ця знижка краща за попередню знайдену — беремо її
+                    if (dPct > discountPercent) {
+                        discountPercent = dPct;
+                    }
+                }
+            }
+        });
+    }
+
+    // Ті самі твої три рядки, які рахують саму математику (їх не чіпаємо)
     let amountToDiscount = basePriceTotal + extraGuestFee;
     let discountAmount = Math.round(amountToDiscount * discountPercent);
     let totalPrice = amountToDiscount - discountAmount + petFee;
