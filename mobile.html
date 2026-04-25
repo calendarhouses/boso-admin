@@ -172,8 +172,18 @@
         
         /* ЗБІЛЬШЕНО: Ширина колонки номерів */
         .timeline-sidebar { width: 90px; flex-shrink: 0; border-right: 1px solid #E5E7EB; background: #F9FAFB; display: flex; flex-direction: column; z-index: 10; }
-        .timeline-sidebar-header { height: 70px; border-bottom: 1px solid #E5E7EB; display: flex; align-items: center; justify-content: center; padding: 0 5px; font-weight: 700; color: #9CA3AF; font-size: 10px; text-transform: uppercase;}
-        
+        .timeline-sidebar-header { 
+            height: 80px; /* Змінюємо з 70 на 80 */
+            border-bottom: 1px solid #E5E7EB; 
+            display: flex; 
+            align-items: center; 
+            justify-content: center; 
+            padding: 0 5px; 
+            font-weight: 700; 
+            color: #9CA3AF; 
+            font-size: 10px; 
+            text-transform: uppercase;
+        }
         /* ЗБІЛЬШЕНО: Висота рядка 60px */
         .timeline-room { height: 60px; border-bottom: 1px solid #E5E7EB; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; padding: 0 4px; font-size: 12px; font-weight: 700; color: #111827; line-height: 1.1;}
         .timeline-room span { font-size: 10px; font-weight: 500; color: #6B7280; margin-top: 4px; }
@@ -359,7 +369,6 @@
                 <div class="m-tab active" onclick="switchSettingsTab('rooms', this)">Номери</div>
                 <div class="m-tab" onclick="switchSettingsTab('prices', this)">Ціни</div>
                 <div class="m-tab" onclick="switchSettingsTab('discounts', this)">Знижки</div>
-                <div class="m-tab" onclick="switchSettingsTab('services', this)">Послуги</div>
             </div>
 
             <div id="set-rooms" class="settings-tab-content">
@@ -395,14 +404,6 @@
             <div id="set-discounts" class="settings-tab-content" style="display: none;"> 
                 <button class="btn-primary" style="margin-bottom: 16px;" onclick="openGenericModal('discount')">+ Додати знижку</button> 
                 <table><tbody id="settingsDiscountsTableBody"></tbody></table> 
-            </div> 
-
-            <div id="set-services" class="settings-tab-content" style="display: none;"> 
-                <h3 style="font-size: 15px; margin-bottom: 12px;">Системні послуги</h3>
-                <table style="margin-bottom: 24px;"><tbody id="settingsSysServicesTableBody"></tbody></table> 
-                
-                <h3 style="font-size: 15px; margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center;">Ваші послуги <button class="btn-success" style="width: auto; padding: 6px 12px; font-size: 12px;" onclick="openGenericModal('customService')">+ Додати</button></h3>
-                <table><tbody id="settingsServicesTableBody"></tbody></table> 
             </div> 
         </div>
 
@@ -683,7 +684,6 @@
             if(tabName === 'rooms') renderSettingsRooms();
             if(tabName === 'prices') renderPriceGrid();
             if(tabName === 'discounts') renderSettingsDiscounts();
-            if(tabName === 'services') renderSettingsServices();
         }
 
         function renderSettingsRooms() {
