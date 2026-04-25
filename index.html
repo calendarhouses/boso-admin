@@ -1139,9 +1139,21 @@ if (document.getElementById('view-grid').style.display === 'flex') {
             } else if (type === 'price') {
                 title.innerText = 'Конструктор цін';
                 
-                // Формуємо красивий список номерів
-                let roomOptionsHtml = `<div class="custom-option selected" onclick="selectOption('mPriceRoomWrapper', 'mPriceRoom', 'all', this, 'Усі номери')">Усі номери</div>`;
-                roomOptionsHtml += roomsList.map(r => `<div class="custom-option" onclick="selectOption('mPriceRoomWrapper', 'mPriceRoom', '${r.id}', this, '${r.name}')">${r.name}</div>`).join('');
+                // Формуємо список з ЧЕКБОКСАМИ (Мульти-вибір)
+                let roomOptionsHtml = `
+                    <div class="custom-option" style="padding: 8px 12px;">
+                        <label class="custom-checkbox" style="width: 100%; cursor: pointer;">
+                            <input type="checkbox" id="mPriceRoomAll" checked onchange="toggleAllPriceRooms(this)"> Усі номери
+                        </label>
+                    </div>
+                `;
+                roomOptionsHtml += roomsList.map(r => `
+                    <div class="custom-option" style="padding: 8px 12px;">
+                        <label class="custom-checkbox" style="width: 100%; cursor: pointer;">
+                            <input type="checkbox" class="price-room-cb" value="${r.id}" checked onchange="updatePriceRoomText()"> ${r.name}
+                        </label>
+                    </div>
+                `).join('');
 
                 body.innerHTML = `
                     <div class="form-group">
@@ -1151,9 +1163,10 @@ if (document.getElementById('view-grid').style.display === 'flex') {
                                 <span id="mPriceRoomText">Усі номери</span>
                                 <svg width="16" height="16" fill="none" stroke="#6B7280" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
                             </div>
-                            <div class="custom-select-options">${roomOptionsHtml}</div>
+                            <div class="custom-select-options" onclick="event.stopPropagation()">
+                                ${roomOptionsHtml}
+                            </div>
                         </div>
-                        <input type="hidden" id="mPriceRoom" value="all">
                     </div>
                     
                     <div class="form-group">
@@ -1362,35 +1375,33 @@ if (document.getElementById('view-grid').style.display === 'flex') {
                 renderSettingsServices();
 
             } else if (currentEditType === 'price') {
-                const roomSel = document.getElementById('mPriceRoom').value;
+                // 1. Отримуємо масив ID всіх вибраних номерів
+                const selectedRooms = Array.from(document.querySelectorAll('.price-room-cb'))
+                                           .filter(cb => cb.checked)
+                                           .map(cb => cb.value);
+                                           
                 const amount = parseInt(document.getElementById('mPriceAmount').value) || 0;
                 const periodMonths = parseInt(document.getElementById('mPricePeriod').value) || 1;
                 const dayType = document.querySelector('input[name="priceDays"]:checked').value;
                 
-                if (amount > 0) {
-                    // Точка старту - 1-ше число місяця, який зараз відкрито в шахматці
+                if (amount > 0 && selectedRooms.length > 0) {
                     const startDate = new Date(priceTimelineBaseDate); 
-                    
-                    // Визначаємо кінцеву дату на основі вибору (1, 3 або 12 місяців)
                     const endDate = new Date(startDate);
                     endDate.setMonth(endDate.getMonth() + periodMonths);
-                    
-                    // Рахуємо загальну кількість днів у періоді
                     const daysCount = Math.round((endDate - startDate) / (1000 * 60 * 60 * 24));
                     
                     roomsList.forEach(r => {
-                        if (roomSel === 'all' || r.id == roomSel) {
+                        // 2. Записуємо ціну тільки якщо ID номера є у вибраному списку
+                        if (selectedRooms.includes(String(r.id))) {
                             if (!customPrices[r.id]) customPrices[r.id] = {};
                             
-                            // Проходимось по кожному дню з обраного періоду
                             for (let i = 0; i < daysCount; i++) {
                                 let d = new Date(startDate); 
                                 d.setDate(startDate.getDate() + i);
-                                let isWeekend = (d.getDay() === 0 || d.getDay() === 6); // 0 - Неділя, 6 - Субота
+                                let isWeekend = (d.getDay() === 0 || d.getDay() === 6);
                                 
-                                // Фільтруємо по днях тижня
-                                if (dayType === 'weekdays' && isWeekend) continue; // Пропускаємо вихідні, якщо обрано "Будні"
-                                if (dayType === 'weekends' && !isWeekend) continue; // Пропускаємо будні, якщо обрано "Вихідні"
+                                if (dayType === 'weekdays' && isWeekend) continue; 
+                                if (dayType === 'weekends' && !isWeekend) continue; 
                                 
                                 let dateStr = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
                                 customPrices[r.id][dateStr] = amount;
@@ -2250,6 +2261,29 @@ document.addEventListener('click', function(e) {
         document.querySelectorAll('.custom-select-wrapper').forEach(w => w.classList.remove('open'));
     }
 });
+
+        // --- ЛОГІКА МУЛЬТИ-ВИБОРУ ДЛЯ НОМЕРІВ ---
+        function toggleAllPriceRooms(el) {
+            document.querySelectorAll('.price-room-cb').forEach(cb => cb.checked = el.checked);
+            updatePriceRoomText();
+        }
+
+        function updatePriceRoomText() {
+            const checkboxes = document.querySelectorAll('.price-room-cb');
+            const allCb = document.getElementById('mPriceRoomAll');
+            const checkedCount = Array.from(checkboxes).filter(cb => cb.checked).length;
+            
+            if (checkedCount === checkboxes.length) {
+                if(allCb) allCb.checked = true;
+                document.getElementById('mPriceRoomText').innerText = "Усі номери";
+            } else if (checkedCount === 0) {
+                if(allCb) allCb.checked = false;
+                document.getElementById('mPriceRoomText').innerText = "Оберіть номери";
+            } else {
+                if(allCb) allCb.checked = false;
+                document.getElementById('mPriceRoomText').innerText = `Обрано: ${checkedCount}`;
+            }
+        }
         
         // Запуск системи при завантаженні сторінки
         window.onload = () => {
