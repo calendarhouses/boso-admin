@@ -1421,26 +1421,36 @@ if (document.getElementById('view-grid').style.display === 'flex') {
         function showGuestBookings(phone, name) {
             switchView('list'); // Переходимо на сторінку списку
             
-            // Ховаємо вкладки, показуємо плашку фільтру
+            // 1. ХОВАЄМО вкладки "Всі броні, Майбутні, Скасовані"
             document.getElementById('bookingsTabs').style.display = 'none';
-            document.getElementById('guestFilterTab').style.display = 'flex';
-            document.getElementById('filterGuestName').innerText = name;
             
-            // Залишаємо чистий заголовок
-            document.getElementById('pageTitle').innerText = 'Бронювання';
+            // 2. Ховаємо стару плашку (щоб не заважала, якщо вона ще є в HTML)
+            let oldFilterTab = document.getElementById('guestFilterTab');
+            if (oldFilterTab) oldFilterTab.style.display = 'none';
             
+            // 3. Робимо красивий заголовок з іменем і кнопкою "Скинути"
+            document.getElementById('pageTitle').innerHTML = `
+                Бронювання: <span style="color: var(--accent); font-weight: 700;">${name}</span>
+                <button class="btn-secondary" style="display: inline-flex; padding: 6px 12px; font-size: 13px; margin-left: 16px; height: auto;" onclick="resetGuestFilter()">✕ Скинути фільтр</button>
+            `;
+            
+            // 4. Фільтруємо і малюємо таблицю
             const filteredBookings = allBookings.filter(b => formatPhone(b.phone) === phone);
             renderTable(filteredBookings);
         }
 
         // --- СКИНУТИ ФІЛЬТР ГОСТЯ ---
         function resetGuestFilter() {
-            document.getElementById('bookingsTabs').style.display = 'flex';
-            document.getElementById('guestFilterTab').style.display = 'none';
+            // 1. Повертаємо вкладки на місце
+            let tabs = document.getElementById('bookingsTabs');
+            if (tabs) tabs.style.display = 'flex';
             
-            // Робимо активною вкладку "Всі броні"
+            // 2. Повертаємо стандартний заголовок
+            document.getElementById('pageTitle').innerText = 'Бронювання';
+            
+            // 3. Активуємо вкладку "Всі броні" і показуємо весь список
             let allTab = document.querySelector('#bookingsTabs .tab');
-            filterBookings('all', allTab);
+            if (allTab) filterBookings('all', allTab);
         }
 
         // --- ШАХМАТКА БРОНЮВАНЬ ---
