@@ -679,17 +679,17 @@ input[type="number"] {
             </div>
     </div>
 
-<div id="customConfirmModal" class="modal-overlay">
+<div id="customConfirmModal" class="modal-overlay" style="z-index: 3000;">
         <div class="modal-box" style="max-width: 380px; text-align: center; padding: 30px 24px;">
             <div style="background: #FEE2E2; color: #DC2626; width: 64px; height: 64px; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 20px;">
                 <svg width="32" height="32" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
             </div>
-            <h3 style="font-size: 18px; font-weight: 700; color: #111827; margin-bottom: 10px;">Видалити бронювання?</h3>
-            <p style="font-size: 14px; color: #6B7280; margin-bottom: 24px; line-height: 1.5;">Цю дію неможливо скасувати. Бронь буде назавжди видалена з бази даних.</p>
+            <h3 id="confirmModalTitle" style="font-size: 18px; font-weight: 700; color: #111827; margin-bottom: 10px;">Видалити?</h3>
+            <p id="confirmModalDesc" style="font-size: 14px; color: #6B7280; margin-bottom: 24px; line-height: 1.5;">Цю дію неможливо скасувати.</p>
             
             <div style="display: flex; gap: 12px; justify-content: center; align-items: stretch;">
                 <button class="btn-secondary" onclick="closeCustomConfirm()" style="flex: 1; height: 46px; margin: 0; justify-content: center;">Скасувати</button>
-                <button class="btn-primary" onclick="confirmDeleteBooking()" style="flex: 1; height: 46px; margin: 0; justify-content: center; background: #DC2626; border: 1px solid #B91C1C; box-shadow: 0 4px 6px rgba(220, 38, 38, 0.2);">Видалити</button>
+                <button id="confirmModalActionBtn" class="btn-primary" style="flex: 1; height: 46px; margin: 0; justify-content: center; background: #DC2626; border: 1px solid #B91C1C; box-shadow: 0 4px 6px rgba(220, 38, 38, 0.2);">Видалити</button>
             </div>
         </div>
     </div>
@@ -1078,12 +1078,18 @@ if (document.getElementById('view-grid').style.display === 'flex') {
         }
 
         function deleteItem(type, id) {
-            if(!confirm("Дійсно видалити?")) return;
-            if(type === 'discount') { discountsList = discountsList.filter(d => d.id !== id); renderSettingsDiscounts(); }
-            if(type === 'service') { customServicesList = customServicesList.filter(s => s.id !== id); renderSettingsServices(); }
-            
-            saveSettingsToCloud(); // Зберігаємо видалення в хмару
-            showToast("Успішно видалено");
+            let itemStr = type === 'discount' ? 'знижку' : 'послугу';
+            openCustomConfirm(
+                `Видалити ${itemStr}?`,
+                "Цю дію неможливо скасувати.",
+                function() {
+                    closeCustomConfirm();
+                    if(type === 'discount') { discountsList = discountsList.filter(d => d.id !== id); renderSettingsDiscounts(); }
+                    if(type === 'service') { customServicesList = customServicesList.filter(s => s.id !== id); renderSettingsServices(); }
+                    saveSettingsToCloud();
+                    showToast("Успішно видалено");
+                }
+            );
         }
         
         function clearPricesAlert() {
@@ -1165,20 +1171,72 @@ if (document.getElementById('view-grid').style.display === 'flex') {
 
         function closeGenericModal() { document.getElementById('genericModal').classList.remove('active'); }
 
+        // --- УНІВЕРСАЛЬНЕ ВІКНО ПІДТВЕРДЖЕННЯ ---
+        function openCustomConfirm(title, desc, actionFunction) {
+            document.getElementById('confirmModalTitle').innerText = title;
+            document.getElementById('confirmModalDesc').innerText = desc;
+            document.getElementById('confirmModalActionBtn').onclick = actionFunction;
+            document.getElementById('customConfirmModal').classList.add('active');
+        }
+
+        function closeCustomConfirm() {
+            document.getElementById('customConfirmModal').classList.remove('active');
+        }
+
+        // --- ВИДАЛЕННЯ БРОНІ ---
+        function deleteCurrentBooking() {
+            if (!editingRowNumber) return;
+            openCustomConfirm(
+                "Видалити бронювання?",
+                "Цю дію неможливо скасувати. Бронь буде назавжди видалена з бази даних.",
+                confirmDeleteBooking
+            );
+        }
+
+        async function confirmDeleteBooking() {
+            closeCustomConfirm(); 
+            const btn = document.getElementById('adminDeleteBtn');
+            const originalText = btn.innerHTML;
+            btn.innerHTML = "Видалення...";
+            btn.disabled = true;
+
+            try {
+                let res = await fetch(API_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                    body: JSON.stringify({ action: 'deleteBooking', row: editingRowNumber })
+                });
+                closeDrawer(); 
+                showToast("Бронювання успішно видалено");
+                await initApp(); 
+            } catch (error) {
+                alert("Помилка видалення!");
+            } finally {
+                btn.innerHTML = originalText;
+                btn.disabled = false;
+            }
+        }
+
+        // --- ВИДАЛЕННЯ КОТЕДЖІВ (З МОДАЛКИ НАЛАШТУВАНЬ) ---
         function deleteGenericItem() {
-            if (!confirm("Ви впевнені, що хочете назавжди видалити цей номер?")) return;
-            
+            let itemType = currentEditType === 'room' ? 'котедж' : 'елемент';
+            openCustomConfirm(
+                `Видалити цей ${itemType}?`,
+                "Ви впевнені, що хочете назавжди видалити його? Всі прив'язані до нього налаштування зникнуть.",
+                confirmDeleteGenericItem
+            );
+        }
+
+        function confirmDeleteGenericItem() {
+            closeCustomConfirm(); // Ховаємо червоне вікно
             if (currentEditType === 'room') {
                 roomsList = roomsList.filter(r => r.id !== currentEditId);
                 renderSettingsRooms();
-                
-                // Якщо відкрита сітка цін — оновлюємо і її
                 if(document.getElementById('set-prices').style.display === 'block') renderPriceGrid();
             }
-            
-            saveSettingsToCloud(); // Зберігаємо видалення в базу
-            closeGenericModal();
-            showToast("Номер успішно видалено!");
+            saveSettingsToCloud(); // Зберігаємо в Гугл Таблицю
+            closeGenericModal();   // Ховаємо вікно котеджу
+            showToast("Успішно видалено!");
         }
         
         // Функція збереження змін з модалки
@@ -2072,44 +2130,6 @@ function showPremiumTooltip(element, rowNumber) {
 
 function hidePremiumTooltip() {
     document.getElementById('premiumTooltip').classList.remove('visible');
-}
-
-        // --- ЛОГІКА КАСТОМНОГО ВИДАЛЕННЯ БРОНІ ---
-function deleteCurrentBooking() {
-    if (!editingRowNumber) return;
-    // Замість браузерного вікна викликаємо нашу красу:
-    document.getElementById('customConfirmModal').classList.add('active');
-}
-
-function closeCustomConfirm() {
-    document.getElementById('customConfirmModal').classList.remove('active');
-}
-
-async function confirmDeleteBooking() {
-    closeCustomConfirm(); // Ховаємо вікно підтвердження
-    
-    const btn = document.getElementById('adminDeleteBtn');
-    const originalText = btn.innerHTML;
-    btn.innerHTML = "Видалення...";
-    btn.disabled = true;
-
-    try {
-        let res = await fetch(API_URL, {
-            method: 'POST',
-            headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-            body: JSON.stringify({ action: 'deleteBooking', row: editingRowNumber })
-        });
-        
-        closeDrawer(); // Закриваємо велику панель
-        showToast("Бронювання успішно видалено");
-        await initApp(); // Оновлюємо шахматку
-    } catch (error) {
-        console.error("Помилка видалення:", error);
-        alert("Помилка видалення!");
-    } finally {
-        btn.innerHTML = originalText;
-        btn.disabled = false;
-    }
 }
 
         // --- ЛОГІКА КАСТОМНИХ СПИСКІВ ---
