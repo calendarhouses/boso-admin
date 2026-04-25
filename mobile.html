@@ -3,1102 +3,1329 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>BOSO | Мобільна панель</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script>if(window.innerWidth>=768)window.location.href='index.html';</script>
+    <title>BOSO | Mobile</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+    
     <style>
+        /* --- МОБІЛЬНА ПРЕМІУМ-ПАЛІТРА ТА БАЗА --- */
         :root {
-            --bg: #F5F4F2;
-            --card: #FFFFFF;
-            --accent: #556B2F;
-            --accent-light: rgba(85,107,47,0.1);
-            --accent-hover: #4B5D28;
-            --text: #1A1A1A;
-            --muted: #757575;
-            --border: #E8E6E1;
-            --success: #059669;
-            --warning: #B45309;
-            --danger: #DC2626;
-            --nav-h: 68px;
-            --header-h: 60px;
-            --radius: 16px;
+            --bg-color: #F9FAFB; 
+            --card-bg: #FFFFFF;
+            --text-main: #111827; 
+            --text-muted: #6B7280;
+            --accent: #556B2F; 
+            --accent-hover: #4B5D28; 
+            --success: #059669; 
+            --warning: #D97706; 
+            --danger: #DC2626; 
+            --nav-bg: #FFFFFF;
+            --safe-bottom: env(safe-area-inset-bottom, 16px);
         }
 
-        * { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
-        body { font-family:'Inter',sans-serif; background:var(--bg); color:var(--text); height:100dvh; overflow:hidden; display:flex; flex-direction:column; }
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Inter', sans-serif; -webkit-tap-highlight-color: transparent; }
+        body { display: flex; flex-direction: column; height: 100vh; height: 100dvh; background-color: var(--bg-color); color: var(--text-main); overflow: hidden; overscroll-behavior-y: none; }
 
-        /* ── HEADER ── */
-        .top-header {
-            height: var(--header-h);
-            background: var(--card);
-            border-bottom: 1px solid var(--border);
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            padding: 0 16px;
+        /* --- ВЕРХНЯ ПАНЕЛЬ (TOP BAR) --- */
+        .top-bar { 
+            height: 60px; 
+            background: var(--card-bg); 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; 
+            padding: 0 16px; 
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05); 
+            z-index: 50; 
             flex-shrink: 0;
-            position: relative;
-            z-index: 10;
         }
-        .logo-mobile { font-size: 20px; font-weight: 700; letter-spacing: 1px; }
-        .logo-mobile span { color: var(--accent); }
-        .header-title { font-size: 17px; font-weight: 600; }
-        .header-action {
-            width: 36px; height: 36px; background: var(--accent); border-radius: 10px;
-            display: flex; align-items: center; justify-content: center; cursor: pointer;
-            box-shadow: 0 3px 8px rgba(85,107,47,0.3);
-        }
-        .header-action svg { stroke: white; fill: none; }
-
-        /* ── MAIN SCROLL AREA ── */
-        .main-area {
-            flex: 1;
-            overflow-y: auto;
-            overflow-x: hidden;
-            -webkit-overflow-scrolling: touch;
-            padding-bottom: calc(var(--nav-h) + 8px);
+        .top-logo { font-size: 20px; font-weight: 800; letter-spacing: 0.5px; }
+        .top-logo span { color: var(--accent); }
+        .top-title { font-size: 16px; font-weight: 700; color: var(--text-main); text-align: center; position: absolute; left: 50%; transform: translateX(-50%); }
+        .top-action-btn { 
+            width: 38px; height: 38px; 
+            background: var(--accent); 
+            color: white; 
+            border-radius: 10px; 
+            display: flex; align-items: center; justify-content: center; 
+            border: none; cursor: pointer; box-shadow: 0 2px 6px rgba(85, 107, 47, 0.3); 
         }
 
-        /* ── BOTTOM NAV ── */
-        .bottom-nav {
-            position: fixed;
-            bottom: 0; left: 0; right: 0;
-            height: var(--nav-h);
-            background: var(--card);
-            border-top: 1px solid var(--border);
-            display: flex;
-            align-items: center;
-            z-index: 100;
-            padding-bottom: env(safe-area-inset-bottom);
+        /* --- НИЖНЯ НАВІГАЦІЯ (BOTTOM NAV) --- */
+        .bottom-nav { 
+            height: calc(60px + var(--safe-bottom)); 
+            background: var(--nav-bg); 
+            display: flex; 
+            justify-content: space-around; 
+            align-items: flex-start; 
+            padding: 8px 0 var(--safe-bottom) 0; 
+            box-shadow: 0 -2px 10px rgba(0,0,0,0.05); 
+            z-index: 50; 
+            flex-shrink: 0;
+            border-top: 1px solid #E5E7EB;
         }
-        .nav-item {
-            flex: 1; display: flex; flex-direction: column; align-items: center;
-            justify-content: center; gap: 4px; padding: 8px 0;
-            cursor: pointer; color: var(--muted); transition: color 0.2s;
-            -webkit-user-select: none; user-select: none;
+        .nav-item { 
+            display: flex; flex-direction: column; align-items: center; gap: 4px; 
+            color: #9CA3AF; width: 20%; cursor: pointer; transition: 0.2s; 
         }
-        .nav-item svg { width: 22px; height: 22px; stroke: currentColor; fill: none; stroke-width: 1.8; }
-        .nav-item span { font-size: 10px; font-weight: 600; }
         .nav-item.active { color: var(--accent); }
-        .nav-item.active svg { stroke: var(--accent); }
+        .nav-icon { width: 24px; height: 24px; stroke: currentColor; fill: none; stroke-width: 1.5; }
+        .nav-text { font-size: 10px; font-weight: 600; }
 
-        /* ── SECTION PAGES ── */
-        .page { display: none; }
-        .page.active { display: block; }
-
-        /* ── BOOKING CARDS ── */
-        .section-pad { padding: 16px; }
-        .filter-tabs {
-            display: flex; gap: 8px; padding: 12px 16px 4px;
-            overflow-x: auto; -webkit-overflow-scrolling: touch;
+        /* --- ОСНОВНИЙ КОНТЕНТ --- */
+        .main-content { 
+            flex: 1; 
+            overflow-y: auto; 
+            overflow-x: hidden;
+            padding: 16px; 
+            display: flex; 
+            flex-direction: column; 
         }
-        .filter-tabs::-webkit-scrollbar { display: none; }
-        .ftab {
-            flex-shrink: 0; padding: 7px 16px; border-radius: 20px;
-            font-size: 13px; font-weight: 600; cursor: pointer;
-            background: var(--card); border: 1px solid var(--border);
-            color: var(--muted); transition: 0.2s;
+        
+        /* Ховаємо десктопні заголовки, бо є Top Bar */
+        .header { display: none !important; }
+
+        /* --- КАРТКИ ЗАМІСТЬ ТАБЛИЦЬ (MOBILE TABLES) --- */
+        table { width: 100%; display: block; border: none; }
+        thead { display: none; }
+        tbody { display: block; width: 100%; }
+        tr { 
+            display: flex; flex-direction: column; 
+            background: var(--card-bg); 
+            border-radius: 16px; 
+            padding: 16px; 
+            margin-bottom: 12px; 
+            box-shadow: 0 2px 6px rgba(0,0,0,0.04); 
+            border: 1px solid #E5E7EB; 
+            gap: 8px;
         }
-        .ftab.active { background: var(--accent); color: #fff; border-color: var(--accent); }
+        td { display: flex; justify-content: space-between; align-items: center; padding: 4px 0; border: none !important; font-size: 13px; }
+        td:first-child { font-size: 15px; border-bottom: 1px solid #F3F4F6 !important; padding-bottom: 10px; margin-bottom: 4px;}
+        
+        .badge { padding: 4px 10px; border-radius: 20px; font-size: 11px; font-weight: 700; display: inline-flex; align-items: center; gap: 6px; }
+        .badge.new { background-color: #DBEAFE; color: #1E40AF; }
+        .badge.confirmed { background-color: #D1FAE5; color: #065F46; }
+        .badge.cancelled { background-color: #FEE2E2; color: #991B1B; }
 
-        .booking-card {
-            background: var(--card); border-radius: var(--radius);
-            padding: 16px; margin: 8px 16px; border: 1px solid var(--border);
-            box-shadow: 0 2px 8px rgba(0,0,0,0.04);
-            cursor: pointer; transition: transform 0.15s, box-shadow 0.15s;
-            active: scale(0.98);
+        /* --- КНОПКИ --- */
+        .btn-primary, .btn-secondary, .btn-outline-danger, .btn-success {
+            padding: 12px 16px; border-radius: 12px; font-size: 14px; font-weight: 600; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%; text-align: center; border: none;
         }
-        .booking-card:active { transform: scale(0.98); box-shadow: 0 1px 4px rgba(0,0,0,0.06); }
-        .bc-top { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px; }
-        .bc-name { font-size: 15px; font-weight: 700; }
-        .bc-cottage { font-size: 12px; color: var(--muted); margin-top: 2px; }
-        .bc-row { display: flex; align-items: center; gap: 12px; font-size: 13px; color: #4B5563; }
-        .bc-row + .bc-row { margin-top: 6px; }
-        .bc-ico { width: 14px; height: 14px; stroke: var(--muted); fill: none; flex-shrink: 0; }
-        .bc-footer { display: flex; justify-content: space-between; align-items: center; margin-top: 12px; padding-top: 10px; border-top: 1px solid var(--border); }
-        .badge { padding: 5px 10px; border-radius: 20px; font-size: 11px; font-weight: 700; }
-        .badge.new { background: #DBEAFE; color: #1E40AF; }
-        .badge.confirmed { background: #D1FAE5; color: #065F46; }
-        .badge.cancelled { background: #FEE2E2; color: #991B1B; }
-        .badge.checkout { background: #FEF3C7; color: #92400E; }
-        .bc-price { font-size: 13px; font-weight: 700; color: var(--text); }
-        .bc-balance { font-size: 11px; font-weight: 600; }
-        .bc-balance.paid { color: var(--success); }
-        .bc-balance.debt { color: var(--danger); }
+        .btn-primary { background: var(--accent); color: white; box-shadow: 0 4px 8px rgba(85, 107, 47, 0.2); }
+        .btn-secondary { background: white; border: 1px solid #D1D5DB; color: var(--text-main); }
+        .btn-outline-danger { background: #FEF2F2; color: var(--danger); border: 1px solid #FECACA; }
+        .btn-success { background: var(--success); color: white; }
+        .btn-action { background: #F3F4F6; color: #374151; border: none; padding: 8px 16px; border-radius: 8px; font-size: 13px; font-weight: 600; display: inline-flex; align-items: center; gap: 6px;}
 
-        /* ── TIMELINE (ШАХМАТКА) ── */
-        .timeline-page { display: flex; flex-direction: column; height: calc(100dvh - var(--header-h) - var(--nav-h)); overflow: hidden; }
-        .tl-toolbar { padding: 10px 16px; display: flex; align-items: center; justify-content: space-between; background: var(--card); border-bottom: 1px solid var(--border); flex-shrink: 0; }
-        .tl-nav { display: flex; align-items: center; gap: 8px; }
-        .tl-nav-btn { width: 34px; height: 34px; background: var(--bg); border: 1px solid var(--border); border-radius: 10px; display: flex; align-items: center; justify-content: center; cursor: pointer; }
-        .tl-nav-btn svg { width: 16px; height: 16px; stroke: #4B5563; fill: none; stroke-width: 2; }
-        .tl-month { font-size: 14px; font-weight: 700; min-width: 110px; text-align: center; text-transform: capitalize; }
-        .tl-today-btn { padding: 6px 12px; background: var(--accent-light); color: var(--accent); font-size: 12px; font-weight: 700; border-radius: 8px; cursor: pointer; }
+        /* --- МОБІЛЬНА ШАХМАТКА --- */
+        .timeline-toolbar { display: flex; flex-direction: column; gap: 12px; margin-bottom: 16px; }
+        .timeline-nav-row { display: flex; justify-content: space-between; align-items: center; width: 100%; }
+        .timeline-nav { display: flex; align-items: center; gap: 8px; background: white; padding: 6px 10px; border-radius: 10px; border: 1px solid #E5E7EB; }
+        .btn-icon { background: #F9FAFB; border: 1px solid #E5E7EB; padding: 6px; border-radius: 8px; color: #4B5563; display: flex; align-items: center; justify-content: center;}
+        .timeline-month-label { font-weight: 700; font-size: 13px; min-width: 110px; text-align: center; }
+        
+        .mode-toggle { display: flex; background: #E5E7EB; padding: 3px; border-radius: 10px; width: 100%;}
+        .mode-btn { flex: 1; padding: 8px; font-size: 13px; font-weight: 600; color: #6B7280; text-align: center; border-radius: 8px; transition: 0.2s;}
+        .mode-btn.active { background: #FFFFFF; color: #111827; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
 
-        .tl-wrapper { flex: 1; display: flex; overflow: hidden; }
-        .tl-rooms { width: 90px; flex-shrink: 0; border-right: 1px solid var(--border); background: #FAFAF9; overflow: hidden; display: flex; flex-direction: column; }
-        .tl-room-header { height: 64px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px; }
-        .tl-room-cell { height: 60px; border-bottom: 1px solid var(--border); display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 4px; text-align: center; }
-        .tl-room-name { font-size: 11px; font-weight: 700; color: var(--text); }
-        .tl-room-desc { font-size: 10px; color: var(--muted); margin-top: 2px; }
+        .timeline-wrapper { display: flex; border: 1px solid #E5E7EB; border-radius: 12px; overflow: hidden; background: white; box-shadow: 0 2px 8px rgba(0,0,0,0.04); height: 60vh; min-height: 400px;}
+        .timeline-sidebar { width: 85px; flex-shrink: 0; border-right: 1px solid #E5E7EB; background: #F9FAFB; display: flex; flex-direction: column; z-index: 10; }
+        .timeline-sidebar-header { height: 70px; border-bottom: 1px solid #E5E7EB; display: flex; align-items: center; justify-content: center; padding: 0 5px; font-weight: 700; color: #9CA3AF; font-size: 10px; text-transform: uppercase;}
+        .timeline-room { height: 50px; border-bottom: 1px solid #E5E7EB; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; padding: 0 4px; font-size: 11px; font-weight: 700; color: #111827; line-height: 1.1;}
+        .timeline-room span { font-size: 9px; font-weight: 500; color: #6B7280; margin-top: 2px; }
+        
+        .timeline-grid-container { flex: 1; overflow-x: auto; position: relative; display: flex; flex-direction: column; -webkit-overflow-scrolling: touch;}
+        .timeline-months { display: flex; height: 20px; background: #F9FAFB; border-bottom: 1px solid #E5E7EB; width: max-content;}
+        .timeline-month-cell { display: flex; align-items: center; padding-left: 10px; font-size: 10px; font-weight: 700; color: #6B7280; border-right: 1px solid #E5E7EB; text-transform: uppercase;}
+        
+        .timeline-dates { display: flex; height: 50px; border-bottom: 1px solid #E5E7EB; background: white; width: max-content; }
+        .timeline-date { width: 46px; flex-shrink: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; border-right: 1px solid #F3F4F6; font-size: 13px; font-weight: 700; }
+        .timeline-date span { font-size: 10px; font-weight: 500; color: #9CA3AF; }
+        .timeline-date.today { color: var(--accent); background: #F0FDF4; }
+        .timeline-date.today span { color: var(--accent); }
+        .timeline-date.weekend { background: #FEF2F2; color: #DC2626; }
 
-        .tl-scroll-area { flex: 1; overflow-x: auto; overflow-y: hidden; -webkit-overflow-scrolling: touch; display: flex; flex-direction: column; }
-        .tl-scroll-area::-webkit-scrollbar { display: none; }
-        .tl-dates-row { display: flex; height: 64px; background: var(--card); border-bottom: 1px solid var(--border); width: max-content; flex-shrink: 0; }
-        .tl-date-cell {
-            width: 48px; flex-shrink: 0; display: flex; flex-direction: column;
-            align-items: center; justify-content: center; border-right: 1px solid #F0EDE8;
-            font-size: 13px; font-weight: 600; cursor: pointer;
+        .timeline-rows { position: relative; width: max-content; }
+        .timeline-row-bg { display: flex; height: 50px; border-bottom: 1px solid #E5E7EB; position: relative; }
+        .timeline-cell { width: 46px; flex-shrink: 0; border-right: 1px solid #F3F4F6; }
+        .timeline-cell.weekend { background: #F9FAFB; }
+
+        .booking-block { 
+            position: absolute; height: 36px; top: 7px; border-radius: 6px; padding: 4px 6px; 
+            font-size: 11px; font-weight: 600; display: flex; flex-direction: column; justify-content: center; 
+            overflow: hidden; white-space: nowrap; box-shadow: 0 2px 4px rgba(0,0,0,0.1); z-index: 100;
         }
-        .tl-date-cell span { font-size: 10px; font-weight: 500; color: var(--muted); text-transform: uppercase; }
-        .tl-date-cell.today { background: var(--accent-light); color: var(--accent); }
-        .tl-date-cell.today span { color: var(--accent); }
-        .tl-date-cell.weekend { color: #EF4444; background: #FAFAFA; }
+        .booking-block.status-new { background: linear-gradient(135deg, #DEB887 0%, #CDA062 100%); color: #1A1A1A; }
+        .booking-block.status-confirmed { background: linear-gradient(135deg, #6B8E23 0%, #4B5D28 100%); color: #FFFFFF; }
+        .booking-block.status-cancelled { background: #F9FAFB; color: #9CA3AF; border: 1px dashed #D1D5DB; }
 
-        .tl-grid-rows { width: max-content; position: relative; }
-        .tl-grid-row { height: 60px; display: flex; border-bottom: 1px solid var(--border); position: relative; }
-        .tl-grid-cell { width: 48px; flex-shrink: 0; border-right: 1px solid #F0EDE8; }
-        .tl-grid-cell.weekend { background: #FAFAF9; }
-
-        .tl-booking-block {
-            position: absolute; height: 44px; top: 8px;
-            border-radius: 8px; padding: 4px 8px; font-size: 11px; font-weight: 700;
-            display: flex; flex-direction: column; justify-content: center;
-            overflow: hidden; cursor: pointer; z-index: 10;
-            box-shadow: 0 2px 6px rgba(0,0,0,0.12);
+        /* --- МОБІЛЬНІ ШТОРКИ (BOTTOM SHEETS) --- */
+        .drawer-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(17,24,39,0.5); backdrop-filter: blur(4px); z-index: 1000; opacity: 0; pointer-events: none; transition: 0.3s; }
+        .drawer-overlay.active { opacity: 1; pointer-events: all; }
+        .drawer { 
+            position: absolute; bottom: -100%; left: 0; width: 100%; max-height: 90vh; 
+            background: #FFF; border-radius: 24px 24px 0 0; display: flex; flex-direction: column; transition: 0.4s cubic-bezier(0.175, 0.885, 0.32, 1); 
         }
-        .tl-booking-block.status-new { background: linear-gradient(135deg,#DEB887,#CDA062); color: #1A1A1A; }
-        .tl-booking-block.status-confirmed { background: linear-gradient(135deg,#6B8E23,#4B5D28); color: #fff; }
-        .tl-booking-block.status-cancelled { background: #F0EDE8; color: #9CA3AF; border: 1px dashed #D1D5DB; text-decoration: line-through; box-shadow: none; }
-        .tl-block-name { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-        .tl-block-tag { font-size: 9px; font-weight: 600; margin-top: 2px; opacity: 0.85; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .drawer-overlay.active .drawer { bottom: 0; }
+        .drawer-header { padding: 20px; border-bottom: 1px solid #E5E7EB; display: flex; justify-content: space-between; align-items: center; }
+        .drawer-header h2 { font-size: 18px; font-weight: 700; margin: 0; }
+        .drawer-body { padding: 20px; overflow-y: auto; flex: 1; padding-bottom: 40px;}
+        .drawer-footer { padding: 16px 20px calc(16px + var(--safe-bottom)); border-top: 1px solid #E5E7EB; display: flex; flex-direction: column; gap: 10px; background: #FFF; }
+        
+        .close-btn { background: #F3F4F6; border: none; width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; }
 
-        /* ── GUESTS ── */
-        .search-bar { margin: 12px 16px; position: relative; }
-        .search-bar input { width: 100%; padding: 11px 16px 11px 40px; border: 1px solid var(--border); border-radius: 12px; font-size: 14px; background: var(--card); font-family: inherit; outline: none; }
-        .search-bar input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-light); }
-        .search-ico { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); width: 18px; height: 18px; stroke: var(--muted); fill: none; }
+        /* Універсальна Модалка для мобілки */
+        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(17,24,39,0.6); z-index: 2000; opacity: 0; pointer-events: none; transition: 0.3s; display: flex; align-items: flex-end; }
+        .modal-overlay.active { opacity: 1; pointer-events: all; }
+        .modal-box { background: #FFF; border-radius: 24px 24px 0 0; width: 100%; max-height: 90vh; transform: translateY(100%); transition: 0.3s cubic-bezier(0.175, 0.885, 0.32, 1); display: flex; flex-direction: column;}
+        .modal-overlay.active .modal-box { transform: translateY(0); }
+        .modal-header { padding: 20px; border-bottom: 1px solid #E5E7EB; display: flex; justify-content: space-between; align-items: center; font-size: 18px; font-weight: 700; }
+        .modal-body { padding: 20px; overflow-y: auto; display: flex; flex-direction: column; gap: 16px; }
+        .modal-footer { padding: 16px 20px calc(16px + var(--safe-bottom)); border-top: 1px solid #E5E7EB; display: flex; gap: 10px; background: #FFF; }
 
-        .guest-card { background: var(--card); border-radius: var(--radius); padding: 14px 16px; margin: 6px 16px; border: 1px solid var(--border); display: flex; align-items: center; gap: 12px; }
-        .guest-avatar { width: 44px; height: 44px; border-radius: 50%; background: var(--accent-light); display: flex; align-items: center; justify-content: center; font-size: 16px; font-weight: 700; color: var(--accent); flex-shrink: 0; }
-        .guest-info { flex: 1; min-width: 0; }
-        .guest-name { font-size: 14px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-        .guest-phone { font-size: 12px; color: var(--muted); margin-top: 2px; }
-        .guest-stat { font-size: 11px; background: #DBEAFE; color: #1E40AF; padding: 3px 8px; border-radius: 12px; font-weight: 700; flex-shrink: 0; cursor: pointer; }
-        .guest-actions { display: flex; gap: 6px; margin-top: 8px; }
-        .ga-btn { padding: 5px 10px; border-radius: 8px; font-size: 11px; font-weight: 700; color: #fff; cursor: pointer; text-decoration: none; }
-        .ga-btn.tg { background: #28A8E9; }
-        .ga-btn.wa { background: #25D366; }
+        /* --- ФОРМИ ТА КНОПКИ --- */
+        .form-section { border: 1px solid #E5E7EB; border-radius: 16px; padding: 16px; margin-bottom: 20px; }
+        .form-section-title { font-size: 11px; font-weight: 800; color: #9CA3AF; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 12px; display: block; }
+        .form-group { margin-bottom: 16px; }
+        .form-group label { display: block; font-size: 13px; font-weight: 600; color: #4B5563; margin-bottom: 8px; }
+        .form-group input, .form-group select { width: 100%; padding: 14px 16px; border: 1px solid #D1D5DB; border-radius: 12px; font-size: 15px; background: #F9FAFB; outline: none; }
+        .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
 
-        /* ── SETTINGS ── */
-        .settings-group { margin: 12px 16px; background: var(--card); border-radius: var(--radius); border: 1px solid var(--border); overflow: hidden; }
-        .settings-group-title { padding: 14px 16px; font-size: 12px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px; border-bottom: 1px solid var(--border); background: #FAFAF9; }
-        .settings-row { display: flex; align-items: center; justify-content: space-between; padding: 14px 16px; border-bottom: 1px solid var(--border); cursor: pointer; }
-        .settings-row:last-child { border-bottom: none; }
-        .settings-row-left { display: flex; flex-direction: column; gap: 2px; }
-        .settings-row-name { font-size: 14px; font-weight: 600; }
-        .settings-row-sub { font-size: 12px; color: var(--muted); }
-        .settings-row-right { display: flex; align-items: center; gap: 8px; }
-        .pill { padding: 4px 10px; border-radius: 20px; font-size: 11px; font-weight: 700; }
-        .pill.on { background: #D1FAE5; color: #065F46; }
-        .pill.off { background: #FEE2E2; color: #991B1B; }
-        .chev { width: 16px; height: 16px; stroke: var(--muted); fill: none; stroke-width: 2; }
+        /* --- ПРЕМІУМ КНОПКИ (CHIPS) --- */
+        .chips-container { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 6px; }
+        .chip-btn { padding: 10px 16px; background: #FFFFFF; border: 1px solid #D1D5DB; border-radius: 12px; font-size: 13px; font-weight: 600; color: #6B7280; display: inline-flex; align-items: center; justify-content: center; }
+        .chip-btn.active { background: #F0FDF4; border-color: var(--success); color: #059669; box-shadow: 0 4px 12px rgba(5, 150, 105, 0.15); }
 
-        /* ── REPORTS ── */
-        .empty-state { text-align: center; padding: 60px 30px; }
-        .empty-icon { width: 72px; height: 72px; background: #E5E7EB; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 20px; }
-        .empty-icon svg { width: 36px; height: 36px; stroke: #4B5563; fill: none; }
-        .empty-title { font-size: 18px; font-weight: 700; color: #374151; margin-bottom: 8px; }
-        .empty-sub { font-size: 14px; color: var(--muted); line-height: 1.5; }
+        .pet-btn, .room-status-btn { flex: 1; display: flex !important; align-items: center; justify-content: center; font-size: 14px; font-weight: 600; border-radius: 10px; padding: 10px 4px !important; margin: 0 !important; border: 1px solid transparent; color: #6B7280; }
+        .pet-btn.active[data-val="Ні"], .room-status-btn.active[data-val="false"] { background: #FEF2F2 !important; color: #DC2626 !important; border-color: #FECACA !important; }
+        .pet-btn.active[data-val="Так"], .room-status-btn.active[data-val="true"] { background: #F0FDF4 !important; color: #059669 !important; border-color: #A7F3D0 !important; }
 
-        /* ── FULL-SCREEN SHEET (БРОНЬ) ── */
-        .sheet-overlay { position: fixed; inset: 0; background: rgba(17,24,39,0.5); z-index: 200; opacity: 0; pointer-events: none; transition: opacity 0.3s; }
-        .sheet-overlay.active { opacity: 1; pointer-events: all; }
-        .sheet { position: absolute; bottom: -100%; left: 0; right: 0; background: var(--card); border-radius: 20px 20px 0 0; max-height: 94dvh; display: flex; flex-direction: column; transition: bottom 0.35s cubic-bezier(0.32, 0.72, 0, 1); }
-        .sheet-overlay.active .sheet { bottom: 0; }
-        .sheet-handle { width: 40px; height: 4px; background: #D1D5DB; border-radius: 2px; margin: 10px auto 0; flex-shrink: 0; }
-        .sheet-header { padding: 14px 20px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; flex-shrink: 0; }
-        .sheet-title { font-size: 17px; font-weight: 700; }
-        .sheet-close { width: 30px; height: 30px; background: #E5E7EB; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 16px; color: #4B5563; }
-        .sheet-body { overflow-y: auto; -webkit-overflow-scrolling: touch; flex: 1; padding: 16px; }
-        .sheet-footer { padding: 12px 16px; border-top: 1px solid var(--border); display: flex; gap: 10px; flex-shrink: 0; padding-bottom: calc(12px + env(safe-area-inset-bottom)); background: var(--card); }
+        /* --- Вкладки налаштувань (Скролл) --- */
+        .mobile-settings-tabs { display: flex; overflow-x: auto; gap: 8px; padding-bottom: 12px; border-bottom: 1px solid #E5E7EB; margin-bottom: 16px; -webkit-overflow-scrolling: touch; }
+        .mobile-settings-tabs::-webkit-scrollbar { display: none; }
+        .m-tab { padding: 8px 16px; background: #F3F4F6; border-radius: 20px; font-size: 13px; font-weight: 600; color: #6B7280; white-space: nowrap; }
+        .m-tab.active { background: var(--accent); color: white; }
 
-        /* ── FORM STYLES ── */
-        .fsection { border: 1px solid var(--border); border-radius: 12px; padding: 16px; margin-bottom: 16px; }
-        .fsection-title { font-size: 11px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 14px; display: block; }
-        .fgroup { margin-bottom: 14px; }
-        .fgroup:last-child { margin-bottom: 0; }
-        .fgroup label { display: block; font-size: 13px; font-weight: 600; color: #4B5563; margin-bottom: 6px; }
-        .fgroup input, .fgroup select { width: 100%; padding: 12px 14px; border: 1px solid var(--border); border-radius: 10px; font-size: 15px; font-family: inherit; background: #FAFAF9; outline: none; transition: 0.2s; }
-        .fgroup input:focus, .fgroup select:focus { border-color: var(--accent); background: #fff; box-shadow: 0 0 0 3px var(--accent-light); }
-        .fgrid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+        /* --- ВИПАДАЮЧІ СПИСКИ (CUSTOM SELECT) --- */
+        .custom-select-wrapper { position: relative; width: 100%; }
+        .custom-select-trigger { display: flex; justify-content: space-between; align-items: center; padding: 14px 16px; background: #F9FAFB; border: 1px solid #D1D5DB; border-radius: 12px; font-size: 15px; font-weight: 500; }
+        .custom-select-options { position: absolute; display: block; top: 100%; left: 0; right: 0; background: #FFF; border: 1px solid #E5E7EB; border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); margin-top: 8px; z-index: 999; opacity: 0; visibility: hidden; transform: translateY(-10px); transition: all 0.2s ease; max-height: 220px; overflow-y: auto; padding: 6px; }
+        .custom-select-wrapper.open .custom-select-options { opacity: 1; visibility: visible; transform: translateY(0); }
+        .custom-option { padding: 12px 14px; font-size: 14px; font-weight: 500; border-radius: 8px; display: flex; justify-content: space-between; }
+        .custom-option.selected { background: #F0FDF4; color: #059669; font-weight: 700; }
 
-        .status-toggle { display: flex; background: #F3F4F6; padding: 3px; border-radius: 12px; margin-bottom: 16px; gap: 2px; }
-        .stbtn { flex: 1; padding: 8px 4px; text-align: center; font-size: 11px; font-weight: 600; color: #6B7280; cursor: pointer; border-radius: 9px; transition: 0.2s; display: flex; align-items: center; justify-content: center; gap: 4px; }
-        .stdot { width: 7px; height: 7px; border-radius: 50%; background: #D1D5DB; }
-        .stbtn.active { background: #fff; color: var(--text); box-shadow: 0 1px 4px rgba(0,0,0,0.08); }
-        .stbtn.active[data-status="Нова бронь"] .stdot { background: #3B82F6; }
-        .stbtn.active[data-status="Підтверджено"] .stdot { background: var(--success); }
-        .stbtn.active[data-status="Виїхав"] .stdot { background: var(--warning); }
-        .stbtn.active[data-status="Скасовано"] .stdot { background: var(--danger); }
+        /* СТАТУСИ */
+        .status-toggle { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; background: none; margin-bottom: 20px;}
+        .status-btn { padding: 10px; font-size: 12px; border-radius: 12px; background: #F3F4F6; border: 1px solid #E5E7EB; }
+        .status-btn.active { background: #FFF; border-color: var(--accent); box-shadow: 0 2px 8px rgba(85,107,47,0.15); }
+        .status-dot { width: 8px; height: 8px; border-radius: 50%; background: #D1D5DB; margin-right: 6px; display: inline-block;}
+        .status-btn.active[data-status="Нова бронь"] { color: var(--accent); } .status-btn.active[data-status="Нова бронь"] .status-dot { background: var(--accent); }
+        .status-btn.active[data-status="Підтверджено"] { color: var(--success); } .status-btn.active[data-status="Підтверджено"] .status-dot { background: var(--success); }
+        .status-btn.active[data-status="Виїхав"] { color: var(--warning); } .status-btn.active[data-status="Виїхав"] .status-dot { background: var(--warning); }
+        .status-btn.active[data-status="Скасовано"] { color: var(--danger); } .status-btn.active[data-status="Скасовано"] .status-dot { background: var(--danger); }
 
-        .counter-row { display: flex; align-items: center; gap: 8px; }
-        .cnt-btn { width: 44px; height: 44px; border-radius: 10px; border: none; font-size: 22px; font-weight: 600; cursor: pointer; display: flex; align-items: center; justify-content: center; }
-        .cnt-btn.minus { background: #FEE2E2; color: var(--danger); }
-        .cnt-btn.plus { background: #D1FAE5; color: var(--success); }
-        .cnt-input { flex: 1; text-align: center; font-size: 18px; font-weight: 700; }
+        input[type="number"]::-webkit-inner-spin-button { -webkit-appearance: none; }
 
-        .pet-toggle { display: flex; background: #F3F4F6; padding: 3px; border-radius: 10px; gap: 3px; height: 44px; }
-        .pet-btn { flex: 1; font-size: 13px; font-weight: 700; cursor: pointer; border-radius: 8px; display: flex; align-items: center; justify-content: center; transition: 0.2s; color: #6B7280; }
-        .pet-btn.active { background: #fff; box-shadow: 0 1px 4px rgba(0,0,0,0.08); }
-        .pet-btn.active[data-val="Ні"] { color: var(--danger); }
-        .pet-btn.active[data-val="Так"] { color: var(--success); }
+        /* ПРІЛОАДЕР */
+        #preloader { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--bg-color); z-index: 99999; display: flex; align-items: center; justify-content: center; transition: opacity 0.5s ease; }
+        .pulse-logo { font-size: 48px; font-weight: 800; color: var(--text-main); animation: pulseAnim 1.5s infinite; }
+        .pulse-logo span { color: var(--accent); }
+        @keyframes pulseAnim { 0% { transform: scale(1); opacity: 1; } 50% { transform: scale(1.05); opacity: 0.7; } 100% { transform: scale(1); opacity: 1; } }
 
-        /* CALCULATOR */
-        .calc-box { background: linear-gradient(135deg, #F0F4E8, #E8EFD8); border: 1px solid #C5D5A0; border-radius: 12px; padding: 16px; margin-bottom: 16px; }
-        .calc-title { font-size: 11px; font-weight: 700; color: var(--accent); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 12px; }
-        .calc-row { display: flex; justify-content: space-between; font-size: 13px; color: #4B5563; margin-bottom: 6px; }
-        .calc-row.discount { color: var(--danger); }
-        .calc-total-row { display: flex; justify-content: space-between; align-items: center; border-top: 1px solid #C5D5A0; padding-top: 10px; margin-top: 4px; }
-        .calc-total-label { font-size: 13px; font-weight: 600; color: var(--accent); }
-        .calc-total-val { font-size: 18px; font-weight: 800; color: var(--accent); }
-
-        .paid-section { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 12px; }
-        .paid-box { background: #fff; border-radius: 10px; padding: 12px; border: 1px solid var(--border); }
-        .paid-label { font-size: 11px; font-weight: 600; color: var(--muted); margin-bottom: 6px; }
-        .paid-input { width: 100%; border: none; background: transparent; font-size: 16px; font-weight: 700; font-family: inherit; outline: none; color: var(--text); }
-        .balance-box { background: #FEE2E2; border: 1px solid #FECACA; }
-        .balance-box .paid-input { color: var(--danger); }
-        .balance-box.paid-full { background: #D1FAE5; border-color: #A7F3D0; }
-        .balance-box.paid-full .paid-input { color: var(--success); }
-
-        .quick-pay { display: flex; gap: 6px; margin-top: 8px; }
-        .qpbtn { flex: 1; padding: 8px; background: #fff; border: 1px solid var(--border); border-radius: 8px; font-size: 12px; font-weight: 700; text-align: center; cursor: pointer; transition: 0.2s; color: #4B5563; }
-        .qpbtn:active { background: var(--accent-light); border-color: var(--accent); color: var(--accent); }
-
-        /* OVERLAP WARNING */
-        .overlap-warn { background: #FEF2F2; border: 1px solid #EF4444; border-radius: 12px; padding: 16px; text-align: center; color: var(--danger); font-weight: 700; font-size: 14px; margin-bottom: 16px; }
-
-        /* BUTTONS */
-        .btn-primary { background: var(--accent); color: #fff; border: none; border-radius: 12px; padding: 14px; font-size: 15px; font-weight: 700; cursor: pointer; flex: 1; font-family: inherit; box-shadow: 0 3px 8px rgba(85,107,47,0.25); transition: 0.2s; }
-        .btn-primary:active { transform: scale(0.98); }
-        .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
-        .btn-secondary { background: var(--card); color: #374151; border: 1px solid var(--border); border-radius: 12px; padding: 14px; font-size: 15px; font-weight: 600; cursor: pointer; flex: 1; font-family: inherit; }
-        .btn-danger { background: #FEE2E2; color: var(--danger); border: 1px solid #FECACA; border-radius: 12px; padding: 14px; font-size: 15px; font-weight: 700; cursor: pointer; font-family: inherit; }
-
-        /* CONFIRM MODAL */
-        .confirm-overlay { position: fixed; inset: 0; background: rgba(17,24,39,0.5); z-index: 300; opacity: 0; pointer-events: none; transition: 0.2s; display: flex; align-items: center; justify-content: center; padding: 20px; }
-        .confirm-overlay.active { opacity: 1; pointer-events: all; }
-        .confirm-box { background: var(--card); border-radius: 20px; padding: 28px 24px; text-align: center; width: 100%; max-width: 320px; transform: scale(0.9); transition: 0.2s; }
-        .confirm-overlay.active .confirm-box { transform: scale(1); }
-        .confirm-icon { width: 60px; height: 60px; background: #FEE2E2; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 16px; }
-        .confirm-icon svg { width: 28px; height: 28px; stroke: var(--danger); fill: none; }
-        .confirm-title { font-size: 17px; font-weight: 700; margin-bottom: 8px; }
-        .confirm-sub { font-size: 13px; color: var(--muted); line-height: 1.5; margin-bottom: 24px; }
-        .confirm-btns { display: flex; gap: 10px; }
-
-        /* TOAST */
-        #toast { position: fixed; bottom: calc(var(--nav-h) + 16px); left: 50%; transform: translateX(-50%) translateY(20px); background: #111827; color: #fff; padding: 12px 20px; border-radius: 20px; font-size: 13px; font-weight: 600; z-index: 500; opacity: 0; transition: 0.3s; white-space: nowrap; pointer-events: none; }
-        #toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
-
-        /* SECTION LABEL */
-        .section-label { padding: 12px 16px 4px; font-size: 12px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px; }
-
-        /* remove number arrows */
-        input[type=number]::-webkit-inner-spin-button,
-        input[type=number]::-webkit-outer-spin-button { -webkit-appearance: none; }
-        input[type=number] { -moz-appearance: textfield; }
-
-        /* flatpickr mobile fix */
-        .flatpickr-calendar { font-size: 14px !important; }
+        #toast-container { position: fixed; top: 20px; left: 50%; transform: translateX(-50%); z-index: 9999; display: flex; flex-direction: column; gap: 10px; width: 90%; }
+        .toast { background: #111827; color: white; padding: 14px 20px; border-radius: 12px; font-size: 13px; box-shadow: 0 10px 20px rgba(0,0,0,0.2); opacity: 0; transform: translateY(-20px); transition: 0.4s; text-align: center;}
+        .toast.show { opacity: 1; transform: translateY(0); }
     </style>
 </head>
 <body>
-
-<!-- ── HEADER ── -->
-<div class="top-header">
-    <div class="logo-mobile">BOSO<span>.</span></div>
-    <div class="header-title" id="headerTitle">Бронювання</div>
-    <div class="header-action" onclick="openNewSheet()" id="headerActionBtn">
-        <svg width="18" height="18" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4.5v15m7.5-7.5h-15"/></svg>
-    </div>
-</div>
-
-<!-- ── MAIN AREA ── -->
-<div class="main-area" id="mainArea">
-
-    <!-- БРОНЮВАННЯ -->
-    <div class="page active" id="page-list">
-        <div class="filter-tabs">
-            <div class="ftab active" onclick="filterList('all',this)">Всі</div>
-            <div class="ftab" onclick="filterList('future',this)">Майбутні</div>
-            <div class="ftab" onclick="filterList('cancelled',this)">Скасовані</div>
-        </div>
-        <div id="bookingCards" style="padding-top:8px;"></div>
+    <div id="preloader">
+        <div class="pulse-logo">BOSO<span>.</span></div>
     </div>
 
-    <!-- ШАХМАТКА -->
-    <div class="page" id="page-grid" style="height:calc(100dvh - var(--header-h) - var(--nav-h)); overflow:hidden; display:none; flex-direction:column;">
-        <div class="tl-toolbar">
-            <div class="tl-nav">
-                <div class="tl-nav-btn" onclick="shiftTL(-1)">
-                    <svg viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/></svg>
-                </div>
-                <div class="tl-month" id="tlMonthLabel">Квітень 2026</div>
-                <div class="tl-nav-btn" onclick="shiftTL(1)">
-                    <svg viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
-                </div>
+    <div class="top-bar">
+        <div class="top-logo">BOSO<span>.</span></div>
+        <div class="top-title" id="mobileTopTitle">Шахматка</div>
+        <button class="top-action-btn" id="mainActionButton" onclick="openNewBookingDrawer()">
+            <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15"></path></svg>
+        </button>
+    </div>
+
+    <div class="main-content">
+        
+        <div id="view-list" style="display: none;">
+            <div class="mobile-settings-tabs" id="bookingsTabs">
+                <div class="m-tab active" onclick="filterBookings('all', this)">Всі броні</div>
+                <div class="m-tab" onclick="filterBookings('future', this)">Майбутні</div>
+                <div class="m-tab" onclick="filterBookings('cancelled', this)">Скасовані</div>
             </div>
-            <div class="tl-today-btn" onclick="resetTLToToday()">Сьогодні</div>
-        </div>
-        <div class="tl-wrapper">
-            <div class="tl-rooms">
-                <div class="tl-room-header">Номери</div>
-                <div id="tlRooms"></div>
-            </div>
-            <div class="tl-scroll-area" id="tlScroll">
-                <div class="tl-dates-row" id="tlDates"></div>
-                <div class="tl-grid-rows" id="tlGrid"></div>
-            </div>
-        </div>
-    </div>
-
-    <!-- ГОСТІ -->
-    <div class="page" id="page-guests">
-        <div class="search-bar">
-            <svg class="search-ico" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
-            <input type="text" id="guestSearch" placeholder="Ім'я або телефон..." oninput="renderGuests(this.value)">
-        </div>
-        <div id="guestCards"></div>
-    </div>
-
-    <!-- НАЛАШТУВАННЯ -->
-    <div class="page" id="page-settings">
-        <div style="padding:12px 0 80px;">
-            <div class="section-label">Номери</div>
-            <div class="settings-group" id="settingsRoomsGroup"></div>
-
-            <div class="section-label" style="margin-top:8px;">Знижки</div>
-            <div class="settings-group" id="settingsDiscountsGroup"></div>
-
-            <div class="section-label" style="margin-top:8px;">Додаткові послуги</div>
-            <div class="settings-group" id="settingsServicesGroup"></div>
-        </div>
-    </div>
-
-    <!-- ЗВІТИ -->
-    <div class="page" id="page-reports">
-        <div class="empty-state">
-            <div class="empty-icon">
-                <svg viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
-            </div>
-            <div class="empty-title">Розділ у розробці</div>
-            <div class="empty-sub">Тут буде статистика, фінансові звіти та аналітика по всіх бронюваннях за обраний період.</div>
-        </div>
-    </div>
-
-</div>
-
-<!-- ── BOTTOM NAV ── -->
-<nav class="bottom-nav">
-    <div class="nav-item active" id="nav-list" onclick="switchPage('list')">
-        <svg viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M8.25 6.75h12M8.25 12h12m-12 5.25h12M3.75 6.75h.007v.008H3.75V6.75Zm.375 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0ZM3.75 12h.007v.008H3.75V12Zm.375 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Zm-.375 5.25h.007v.008H3.75v-.008Zm.375 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Z"/></svg>
-        <span>Броні</span>
-    </div>
-    <div class="nav-item" id="nav-grid" onclick="switchPage('grid')">
-        <svg viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 0 1 2.25-2.25h13.5A2.25 2.25 0 0 1 21 7.5v11.25m-18 0A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75m-18 0v-7.5A2.25 2.25 0 0 1 5.25 9h13.5A2.25 2.25 0 0 1 21 11.25v7.5"/></svg>
-        <span>Шахматка</span>
-    </div>
-    <div class="nav-item" id="nav-guests" onclick="switchPage('guests')">
-        <svg viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19.128a9.38 9.38 0 0 0 2.625.372 9.337 9.337 0 0 0 4.121-.952 4.125 4.125 0 0 0-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 0 1 8.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0 1 11.964-3.07M12 6.375a3.375 3.375 0 1 1-6.75 0 3.375 3.375 0 0 1 6.75 0Zm8.25 2.25a2.625 2.625 0 1 1-5.25 0 2.625 2.625 0 0 1 5.25 0Z"/></svg>
-        <span>Гості</span>
-    </div>
-    <div class="nav-item" id="nav-settings" onclick="switchPage('settings')">
-        <svg viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9.594 3.94c.09-.542.56-.94 1.11-.94h2.593c.55 0 1.02.398 1.11.94l.213 1.281c.063.374.313.686.645.87.074.04.147.083.22.127.325.196.72.257 1.075.124l1.217-.456a1.125 1.125 0 0 1 1.37.49l1.296 2.247a1.125 1.125 0 0 1-.26 1.431l-1.003.827c-.293.241-.438.613-.43.992a7.723 7.723 0 0 1 0 .255c-.008.378.137.75.43.991l1.004.827c.424.35.534.955.26 1.43l-1.298 2.247a1.125 1.125 0 0 1-1.369.491l-1.217-.456c-.355-.133-.75-.072-1.076.124a6.47 6.47 0 0 1-.22.128c-.331.183-.581.495-.644.869l-.213 1.281c-.09.543-.56.94-1.11.94h-2.594c-.55 0-1.019-.398-1.11-.94l-.213-1.281c-.062-.374-.312-.686-.644-.87a6.52 6.52 0 0 1-.22-.127c-.325-.196-.72-.257-1.076-.124l-1.217.456a1.125 1.125 0 0 1-1.369-.49l-1.297-2.247a1.125 1.125 0 0 1 .26-1.431l1.004-.827c.292-.24.437-.613.43-.991a6.932 6.932 0 0 1 0-.255c.007-.38-.138-.751-.43-.992l-1.004-.827a1.125 1.125 0 0 1-.26-1.43l1.297-2.247a1.125 1.125 0 0 1 1.37-.491l1.216.456c.356.133.751.072 1.076-.124.072-.044.146-.086.22-.128.332-.183.582-.495.644-.869l.214-1.28Z"/><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z"/></svg>
-        <span>Налашт.</span>
-    </div>
-    <div class="nav-item" id="nav-reports" onclick="switchPage('reports')">
-        <svg viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
-        <span>Звіти</span>
-    </div>
-</nav>
-
-<!-- ── BOOKING SHEET ── -->
-<div class="sheet-overlay" id="sheetOverlay" onclick="handleOverlayClick(event)">
-    <div class="sheet" id="bookingSheet">
-        <div class="sheet-handle"></div>
-        <div class="sheet-header">
-            <div class="sheet-title" id="sheetTitle">Нове бронювання</div>
-            <div class="sheet-close" onclick="closeSheet()">✕</div>
-        </div>
-        <div class="sheet-body">
-            <!-- Статус -->
-            <div class="status-toggle">
-                <div class="stbtn active" data-status="Нова бронь"><div class="stdot"></div> Нова</div>
-                <div class="stbtn" data-status="Підтверджено"><div class="stdot"></div> Заїхав</div>
-                <div class="stbtn" data-status="Виїхав"><div class="stdot"></div> Виїхав</div>
-                <div class="stbtn" data-status="Скасовано"><div class="stdot"></div> Скасов.</div>
+            
+            <div id="guestFilterTab" style="display: none; background: #FFF; padding: 12px; border-radius: 12px; margin-bottom: 16px; border: 1px dashed #D1D5DB; text-align: center;">
+                <div style="font-size: 13px; color: #6B7280; margin-bottom: 8px;">Броні клієнта: <strong id="filterGuestName" style="color: var(--accent);"></strong></div>
+                <button class="btn-secondary" style="padding: 6px 12px; font-size: 12px;" onclick="resetGuestFilter()">✕ Скинути</button>
             </div>
 
-            <div class="fsection">
-                <span class="fsection-title">Гість</span>
-                <div class="fgroup">
-                    <label>Ім'я та Прізвище</label>
-                    <input type="text" id="mName" placeholder="Іван Петренко">
-                </div>
-                <div class="fgroup">
-                    <label>Телефон</label>
-                    <input type="tel" id="mPhone" placeholder="+380...">
-                </div>
-                <div class="fgroup">
-                    <label>Джерело</label>
-                    <select id="mSource">
-                        <option>Instagram</option>
-                        <option>Telegram Бот</option>
-                        <option>Сайт</option>
-                        <option>Телефон</option>
-                    </select>
-                </div>
-            </div>
+            <table id="bookingsTableMobile">
+                <tbody id="bookingsTableBody"></tbody>
+            </table>
+        </div>
 
-            <div class="fsection">
-                <span class="fsection-title">Заїзд</span>
-                <div class="fgroup">
-                    <label>Номер</label>
-                    <select id="mCottage" onchange="updateCalc()"></select>
-                </div>
-                <div class="fgrid2">
-                    <div class="fgroup">
-                        <label>Заїзд</label>
-                        <input type="text" id="mCheckIn" placeholder="дд.мм.рр">
+        <div id="view-grid" style="display: flex; flex-direction: column;">
+            <div class="timeline-toolbar">
+                <div class="timeline-nav-row">
+                    <div class="timeline-nav">
+                        <button class="btn-icon" onclick="shiftTimeline(-1)"><svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg></button>
+                        <span class="timeline-month-label" id="timelineMonthLabel">Квітень 2026</span>
+                        <button class="btn-icon" onclick="shiftTimeline(1)"><svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg></button>
                     </div>
-                    <div class="fgroup">
-                        <label>Виїзд</label>
-                        <input type="text" id="mCheckOut" placeholder="дд.мм.рр">
+                    <button class="btn-secondary" onclick="resetTimelineToToday()" style="padding: 6px 12px; font-size: 12px; width: auto;">Сьогодні</button>
+                </div>
+                
+                <div class="mode-toggle">
+                    <div id="mode-month" class="mode-btn active" onclick="setTimelineMode('month')">Місяць</div>
+                    <div id="mode-cont" class="mode-btn" onclick="setTimelineMode('continuous')">35 Днів</div>
+                </div>
+            </div>
+            
+            <div class="timeline-wrapper">
+                <div class="timeline-sidebar">
+                    <div class="timeline-sidebar-header">Номери</div>
+                    <div id="timelineRooms"></div>
+                </div>
+                <div class="timeline-grid-container" id="timelineScroll">
+                    <div class="timeline-months" id="timelineMonths"></div>
+                    <div class="timeline-dates" id="timelineDates"></div>
+                    <div class="timeline-rows" id="timelineGrid"></div>
+                </div>
+            </div>
+        </div>
+
+        <div id="view-guests" style="display: none;">
+            <input type="text" id="guestSearch" placeholder="Пошук за ім'ям або телефоном..." style="width: 100%; padding: 14px; border-radius: 12px; border: 1px solid #D1D5DB; margin-bottom: 16px; font-size: 14px; background: #FFF;">
+            <table id="guestsTableMobile">
+                <tbody id="guestsTableBody"></tbody>
+            </table>
+        </div>
+
+        <div id="view-settings" style="display: none; flex-direction: column;">
+            <div class="mobile-settings-tabs">
+                <div class="m-tab active" onclick="switchSettingsTab('rooms', this)">Номери</div>
+                <div class="m-tab" onclick="switchSettingsTab('prices', this)">Ціни</div>
+                <div class="m-tab" onclick="switchSettingsTab('discounts', this)">Знижки</div>
+                <div class="m-tab" onclick="switchSettingsTab('services', this)">Послуги</div>
+            </div>
+
+            <div id="set-rooms" class="settings-tab-content">
+                <button class="btn-primary" style="margin-bottom: 16px;" onclick="openGenericModal('room')">+ Додати номер</button>
+                <table><tbody id="settingsRoomsTableBody"></tbody></table>
+            </div>
+
+            <div id="set-prices" class="settings-tab-content" style="display: none;">
+                <div class="form-grid" style="margin-bottom: 16px;">
+                    <button class="btn-primary" onclick="openGenericModal('price')">Конструктор</button>
+                    <button class="btn-outline-danger" onclick="clearPricesAlert()">Очистити</button>
+                </div>
+                <div class="timeline-nav-row" style="margin-bottom: 12px;">
+                    <div class="timeline-nav">
+                        <button class="btn-icon" onclick="shiftPriceTimeline(-1)"><svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-width="2" d="M15 19l-7-7 7-7"></path></svg></button>
+                        <span class="timeline-month-label" id="priceMonthLabel">Березень</span>
+                        <button class="btn-icon" onclick="shiftPriceTimeline(1)"><svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-width="2" d="M9 5l7 7-7 7"></path></svg></button>
                     </div>
                 </div>
-                <div class="fgroup">
-                    <label>Дорослих</label>
-                    <div class="counter-row">
-                        <button class="cnt-btn minus" onclick="changeCount(-1)">−</button>
-                        <input type="number" id="mGuests" class="cnt-input fgroup input" value="2" min="1" onchange="updateCalc()">
-                        <button class="cnt-btn plus" onclick="changeCount(1)">+</button>
+                <div class="timeline-wrapper" style="height: 40vh; min-height: 300px;">
+                    <div class="timeline-sidebar">
+                        <div class="timeline-sidebar-header">Номери</div>
+                        <div id="priceRoomsList"></div>
                     </div>
-                </div>
-                <div class="fgroup">
-                    <label>Тварини</label>
-                    <div class="pet-toggle">
-                        <div class="pet-btn active" data-val="Ні" onclick="togglePet('Ні')">Ні</div>
-                        <div class="pet-btn" data-val="Так" onclick="togglePet('Так')">Так</div>
+                    <div class="timeline-grid-container" id="priceScroll">
+                        <div class="timeline-months" id="priceMonths"></div>
+                        <div class="timeline-dates" id="priceDates"></div>
+                        <div class="timeline-rows" id="priceGrid"></div>
                     </div>
-                    <input type="hidden" id="mPets" value="Ні">
                 </div>
             </div>
+            
+            <div id="set-discounts" class="settings-tab-content" style="display: none;"> 
+                <button class="btn-primary" style="margin-bottom: 16px;" onclick="openGenericModal('discount')">+ Додати знижку</button> 
+                <table><tbody id="settingsDiscountsTableBody"></tbody></table> 
+            </div> 
 
-            <div id="calcContainer"></div>
+            <div id="set-services" class="settings-tab-content" style="display: none;"> 
+                <h3 style="font-size: 15px; margin-bottom: 12px;">Системні послуги</h3>
+                <table style="margin-bottom: 24px;"><tbody id="settingsSysServicesTableBody"></tbody></table> 
+                
+                <h3 style="font-size: 15px; margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center;">Ваші послуги <button class="btn-success" style="width: auto; padding: 6px 12px; font-size: 12px;" onclick="openGenericModal('customService')">+ Додати</button></h3>
+                <table><tbody id="settingsServicesTableBody"></tbody></table> 
+            </div> 
         </div>
-        <div class="sheet-footer">
-            <button class="btn-danger" id="deleteBtn" onclick="deleteCurrent()" style="display:none; padding:14px 16px;">
-                <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
-            </button>
-            <button class="btn-secondary" onclick="closeSheet()">Закрити</button>
-            <button class="btn-primary" id="saveBtn" onclick="saveBooking()">Зберегти</button>
+
+        <div id="view-reports" style="display: none; height: 100%; justify-content: center; align-items: center;">
+            <div style="text-align: center; color: #6B7280;"> 
+                <div style="background: #E5E7EB; width: 64px; height: 64px; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 16px;"> 
+                    <svg width="32" height="32" fill="none" stroke="#4B5563" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg> 
+                </div> 
+                <h3 style="font-size: 18px; font-weight: 700; color: #374151; margin-bottom: 8px;">Розділ у розробці</h3> 
+                <p style="font-size: 13px;">Мобільна аналітика з'явиться незабаром.</p> 
+            </div> 
+        </div>
+
+    </div>
+
+    <div class="bottom-nav">
+        <div class="nav-item" id="nav-list" onclick="switchView('list')">
+            <svg class="nav-icon" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M8.25 6.75h12M8.25 12h12m-12 5.25h12M3.75 6.75h.007v.008H3.75V6.75Zm.375 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0ZM3.75 12h.007v.008H3.75V12Zm.375 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Zm-.375 5.25h.007v.008H3.75v-.008Zm.375 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Z" /></svg>
+            <span class="nav-text">Броні</span>
+        </div>
+        <div class="nav-item active" id="nav-grid" onclick="switchView('grid')">
+            <svg class="nav-icon" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 0 1 2.25-2.25h13.5A2.25 2.25 0 0 1 21 7.5v11.25m-18 0A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75m-18 0v-7.5A2.25 2.25 0 0 1 5.25 9h13.5A2.25 2.25 0 0 1 21 11.25v7.5m-9-6h.008v.008H12v-.008ZM12 15h.008v.008H12V15Zm0 2.25h.008v.008H12v-.008ZM9.75 15h.008v.008H9.75V15Zm0 2.25h.008v.008H9.75v-.008ZM7.5 15h.008v.008H7.5V15Zm0 2.25h.008v.008H7.5v-.008Zm6.75-4.5h.008v.008h-.008v-.008Zm0 2.25h.008v.008h-.008V15Zm0 2.25h.008v.008h-.008v-.008Zm2.25-4.5h.008v.008H16.5v-.008Zm0 2.25h.008v.008H16.5V15Z" /></svg>
+            <span class="nav-text">Шахматка</span>
+        </div>
+        <div class="nav-item" id="nav-guests" onclick="switchView('guests')">
+            <svg class="nav-icon" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19.128a9.38 9.38 0 0 0 2.625.372 9.337 9.337 0 0 0 4.121-.952 4.125 4.125 0 0 0-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 0 1 8.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0 1 11.964-3.07M12 6.375a3.375 3.375 0 1 1-6.75 0 3.375 3.375 0 0 1 6.75 0Zm8.25 2.25a2.625 2.625 0 1 1-5.25 0 2.625 2.625 0 0 1 5.25 0Z" /></svg>
+            <span class="nav-text">Гості</span>
+        </div>
+        <div class="nav-item" id="nav-settings" onclick="switchView('settings')">
+            <svg class="nav-icon" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M10.343 3.94c.09-.542.56-.94 1.11-.94h1.093c.55 0 1.02.398 1.11.94l.149.894c.07.424.384.764.78.93.398.164.855.142 1.205-.108l.737-.527a1.125 1.125 0 0 1 1.45.12l.773.774c.39.389.44 1.002.12 1.45l-.527.737c-.25.35-.272.806-.107 1.204.165.397.505.71.93.78l.893.15c.543.09.94.56.94 1.109v1.094c0 .55-.397 1.02-.94 1.11l-.893.149c-.425.07-.765.383-.93.78-.165.398-.143.854.107 1.204l.527.738c.32.447.269 1.06-.12 1.45l-.774.773a1.125 1.125 0 0 1-1.449.12l-.738-.527c-.35-.25-.806-.272-1.203-.107-.397.165-.71.505-.781.929l-.149.894c-.09.542-.56.94-1.11.94h-1.094c-.55 0-1.019-.398-1.11-.94l-.148-.894c-.071-.424-.384-.764-.781-.93-.398-.164-.854-.142-1.204.108l-.738.527c-.447.32-1.06.269-1.45-.12l-.773-.774a1.125 1.125 0 0 1-.12-1.45l.527-.737c.25-.35.273-.806.108-1.204-.165-.397-.505-.71-.93-.78l-.894-.15c-.542-.09-.94-.56-.94-1.109v-1.094c0-.55.398-1.02.94-1.11l.894-.149c.424-.07.765-.383.93-.78.165-.398.143-.854-.107-1.204l-.527-.738a1.125 1.125 0 0 1 .12-1.45l.773-.773a1.125 1.125 0 0 1 1.45-.12l.737.527c.35.25.807.272 1.204.107.397-.165.71-.505.78-.929l.15-.894Z" /><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" /></svg>
+            <span class="nav-text">Налашт.</span>
+        </div>
+        <div class="nav-item" id="nav-reports" onclick="switchView('reports')">
+            <svg class="nav-icon" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 0 1 3 19.875v-6.75ZM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 0 1-1.125-1.125V8.625ZM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 0 1-1.125-1.125V4.125Z" /></svg>
+            <span class="nav-text">Звіти</span>
         </div>
     </div>
-</div>
 
-<!-- ── CONFIRM DELETE ── -->
-<div class="confirm-overlay" id="confirmOverlay">
-    <div class="confirm-box">
-        <div class="confirm-icon">
-            <svg viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+    <div id="genericModal" class="modal-overlay">
+        <div class="modal-box">
+            <div class="modal-header">
+                <span id="gModalTitle">Налаштування</span>
+                <button class="close-btn" onclick="closeGenericModal()">✕</button>
+            </div>
+            <div class="modal-body" id="gModalBody"></div>
+            <div class="modal-footer">
+                <button class="btn-outline-danger" id="modalDeleteBtn" onclick="deleteGenericItem()" style="display: none; padding: 12px; width: 48px;"><svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg></button>
+                <button class="btn-secondary" onclick="closeGenericModal()">Скасувати</button>
+                <button class="btn-primary" onclick="saveGenericModal()">Зберегти</button>
+            </div>
         </div>
-        <div class="confirm-title">Видалити бронювання?</div>
-        <div class="confirm-sub">Цю дію неможливо скасувати. Бронь буде назавжди видалена.</div>
-        <div class="confirm-btns">
-            <button class="btn-secondary" onclick="closeConfirm()">Скасувати</button>
-            <button class="btn-primary" onclick="confirmDelete()" style="background: var(--danger); box-shadow:0 3px 8px rgba(220,38,38,0.25);">Видалити</button>
+    </div> 
+    
+    <div id="customConfirmModal" class="modal-overlay" style="z-index: 3000;">
+        <div class="modal-box" style="padding-bottom: 20px;">
+            <div style="padding: 20px; text-align: center;">
+                <div style="background: #FEE2E2; color: #DC2626; width: 56px; height: 56px; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 16px;">
+                    <svg width="28" height="28" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+                </div>
+                <h3 id="confirmModalTitle" style="font-size: 18px; font-weight: 700; margin-bottom: 8px;">Видалити?</h3>
+                <p id="confirmModalDesc" style="font-size: 13px; color: #6B7280; margin-bottom: 20px;">Цю дію неможливо скасувати.</p>
+                <div style="display: flex; gap: 12px;">
+                    <button class="btn-secondary" onclick="closeCustomConfirm()">Скасувати</button>
+                    <button id="confirmModalActionBtn" class="btn-primary" style="background: #DC2626;">Видалити</button>
+                </div>
+            </div>
         </div>
     </div>
-</div>
+    
+    <div id="bookingDrawer" class="drawer-overlay">
+        <div class="drawer">
+            <div class="drawer-header">
+                <h2 id="drawerTitle">Бронювання</h2>
+                <button class="close-btn" onclick="closeDrawer()">✕</button>
+            </div>
+            <div class="drawer-body">
+                <div class="status-toggle">
+                    <div class="status-btn active" data-status="Нова бронь"><span class="status-dot"></span> Нова</div>
+                    <div class="status-btn" data-status="Підтверджено"><span class="status-dot"></span> Заїхав</div>
+                    <div class="status-btn" data-status="Виїхав"><span class="status-dot"></span> Виїхав</div>
+                    <div class="status-btn" data-status="Скасовано"><span class="status-dot"></span> Скасовано</div>
+                </div>
+                <form id="adminBookingForm">
+                    <div class="form-section">
+                        <span class="form-section-title">Гість</span>
+                        <div class="form-group"><label>Ім'я та Прізвище:</label><input type="text" id="adminName" required></div>
+                        <div class="form-grid">
+                            <div class="form-group"><label>Телефон:</label><input type="tel" id="adminPhone" required></div>
+                            <div class="form-group">
+                                <label>Джерело:</label>
+                                <div class="custom-select-wrapper" id="sourceWrapper">
+                                    <div class="custom-select-trigger" onclick="toggleCustomSelect('sourceWrapper')">
+                                        <span id="sourceSelectedText">Instagram</span>
+                                        <svg width="14" height="14" fill="none" stroke="#6B7280" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                                    </div>
+                                    <div class="custom-select-options">
+                                        <div class="custom-option selected" onclick="selectOption('sourceWrapper', 'adminSource', 'Instagram', this)">Instagram</div>
+                                        <div class="custom-option" onclick="selectOption('sourceWrapper', 'adminSource', 'Telegram', this)">Telegram</div>
+                                        <div class="custom-option" onclick="selectOption('sourceWrapper', 'adminSource', 'Сайт', this)">Сайт</div>
+                                        <div class="custom-option" onclick="selectOption('sourceWrapper', 'adminSource', 'Телефон', this)">Телефон</div>
+                                    </div>
+                                </div>
+                                <input type="hidden" id="adminSource" value="Instagram">
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="form-section">
+                        <span class="form-section-title">Заїзд</span>
+                        <div class="form-group">
+                            <label>Котедж:</label>
+                            <div class="custom-select-wrapper" id="cottageWrapper">
+                                <div class="custom-select-trigger" onclick="toggleCustomSelect('cottageWrapper')">
+                                    <span id="cottageSelectedText">Оберіть номер</span>
+                                    <svg width="14" height="14" fill="none" stroke="#6B7280" viewBox="0 0 24 24"><path d="M19 9l-7 7-7-7"></path></svg>
+                                </div>
+                                <div class="custom-select-options" id="cottageOptions"></div>
+                            </div>
+                            <input type="hidden" id="adminCottage" value="">
+                        </div>
+                        <div class="form-grid">
+                            <div class="form-group"><label>Заїзд:</label><input type="text" id="adminCheckIn" required></div>
+                            <div class="form-group"><label>Виїзд:</label><input type="text" id="adminCheckOut" required></div>
+                        </div>
+                        <div class="form-grid">
+                            <div class="form-group">
+                                <label>Дорослих:</label>
+                                <div style="display: flex; align-items: center; gap: 4px;">
+                                    <button type="button" onclick="changeGuests(-1)" style="width: 40px; height: 40px; background: #FEF2F2; color: #DC2626; border: 1px solid #FECACA; border-radius: 10px; font-size: 18px; font-weight: bold; cursor: pointer;">-</button>
+                                    <input type="number" id="adminGuests" value="2" min="1" style="text-align: center; width: 100%; padding: 10px 0;">
+                                    <button type="button" onclick="changeGuests(1)" style="width: 40px; height: 40px; background: #D1FAE5; color: #059669; border: 1px solid #A7F3D0; border-radius: 10px; font-size: 18px; font-weight: bold; cursor: pointer;">+</button>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label>Тварини:</label>
+                                <div style="display: flex; background: #F3F4F6; border-radius: 10px; padding: 3px; height: 40px;">
+                                    <div class="pet-btn active" data-val="Ні" onclick="togglePet('Ні')">Ні</div>
+                                    <div class="pet-btn" data-val="Так" onclick="togglePet('Так')">Так</div>
+                                </div>
+                                <input type="hidden" id="adminPets" value="Ні">
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div id="liveCalculatorContainer"></div>
+                </form>
+            </div>
+            <div class="drawer-footer">
+                <button type="submit" class="btn-primary" form="adminBookingForm" id="adminSubmitBtn">Зберегти бронь</button>
+                <button type="button" class="btn-outline-danger" id="adminDeleteBtn" onclick="deleteCurrentBooking()" style="display: none;">Видалити</button>
+            </div>
+        </div>
+    </div>
 
-<div id="toast">✓ Збережено</div>
+    <div id="toast-container"></div>
 
-<script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
-<script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/l10n/uk.js"></script>
-<script>
-// ─── CONFIG ───────────────────────────────────────────────────
-// Перенаправлення на десктоп якщо вікно > 768px
-if (window.innerWidth >= 768) window.location.href = 'index.html';
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/l10n/uk.js"></script>
 
-const API_URL = "https://script.google.com/macros/s/AKfycbx1RYoMJySplZ18Wv54PQjxzHnZqIb3Wsw63oG-PAOKMvuXEym8Y7aFS-L_pxvfX6o4DQ/exec";
+    <script>
+        // ВАЖЛИВО: ВСТАВ СВОЄ ПОСИЛАННЯ З GOOGLE SCRIPT!
+        const API_URL = "https://script.google.com/macros/s/AKfycbx1RYoMJySplZ18Wv54PQjxzHnZqIb3Wsw63oG-PAOKMvuXEym8Y7aFS-L_pxvfX6o4DQ/exec";
+        
+        function getGuestWord(count) { let n = Math.abs(parseInt(count)) % 100; let n1 = n % 10; if (n > 10 && n < 20) return "гостей"; if (n1 > 1 && n1 < 5) return "гості"; if (n1 === 1) return "гість"; return "гостей"; }
+        function getVisitWord(count) { let n = Math.abs(parseInt(count)) % 100; let n1 = n % 10; if (n > 10 && n < 20) return "заїздів"; if (n1 > 1 && n1 < 5) return "заїзди"; if (n1 === 1) return "заїзд"; return "заїздів"; }
+        
+        let allBookings = [];
+        let editingRowNumber = null;
 
-// ─── STATE ────────────────────────────────────────────────────
-let allBookings = [];
-let editingRow = null;
-let customPrices = {};
-let roomsList = [
-    { id:1, name:"Номер 1", short:"Номер 1", desc:"Двомісний", capacity:2, maxCapacity:4, priceWeekday:4000, priceWeekend:5000, active:true },
-    { id:2, name:"Номер 2", short:"Номер 2", desc:"Сімейний",  capacity:4, maxCapacity:7, priceWeekday:6500, priceWeekend:7500, active:true },
-    { id:3, name:"Номер 3", short:"Номер 3", desc:"Люкс",      capacity:4, maxCapacity:7, priceWeekday:6500, priceWeekend:7500, active:true },
-    { id:4, name:"Номер 4", short:"Номер 4", desc:"Стандарт",  capacity:4, maxCapacity:7, priceWeekday:6500, priceWeekend:7500, active:false }
-];
-let discountsList = [
-    { id:1, condition:"Діб: 2+", discount:"15%", rooms:"Всі номери" },
-    { id:2, condition:"Діб: 3+", discount:"20%", rooms:"Всі номери" }
-];
-let customServicesList = [
-    { id:1, name:"Додаткові гості", rooms:"Всі", price:2000, perDay:"Так", perGuest:"Так", active:true }
-];
+        let roomsList = [
+            { id: 1, name: "JUNIOR 1", short: "JUNIOR 1", desc: "Котедж для двох", capacity: 2, maxCapacity: 4, extraGuestPrice: 2500, priceWeekday: 4000, priceWeekend: 5000, active: true },
+            { id: 2, name: "FAMILY №2", short: "FAMILY 2", desc: "Сімейний котедж", capacity: 4, maxCapacity: 7, extraGuestPrice: 2500, priceWeekday: 6500, priceWeekend: 7500, active: true },
+            { id: 3, name: "FAMILY №3", short: "FAMILY 3", desc: "Сімейний котедж", capacity: 4, maxCapacity: 7, extraGuestPrice: 2500, priceWeekday: 6500, priceWeekend: 7500, active: true },
+            { id: 4, name: "FAMILY №4", short: "FAMILY 4", desc: "Сімейний котедж", capacity: 4, maxCapacity: 7, extraGuestPrice: 2500, priceWeekday: 6500, priceWeekend: 7500, active: true }
+        ];
+        let discountsList = [];
+        let customServicesList = [];
+        let sysServicesList = [];
+        let customPrices = {}; 
+        
+        async function initApp() {
+            try {
+                const t = new Date().getTime();
+                const [bookingsRes, settingsRes] = await Promise.all([
+                    fetch(API_URL + "?t=" + t), fetch(API_URL + "?action=settings&t=" + t)
+                ]);
+                allBookings = await bookingsRes.json();
+                const settingsData = await settingsRes.json();
+                
+                if (settingsData && Object.keys(settingsData).length > 0) {
+                    if (settingsData.roomsList) roomsList = settingsData.roomsList;
+                    if (settingsData.discountsList) discountsList = settingsData.discountsList;
+                    if (settingsData.customServicesList) customServicesList = settingsData.customServicesList;
+                    if (settingsData.sysServicesList) sysServicesList = settingsData.sysServicesList;
+                    if (settingsData.customPrices) customPrices = settingsData.customPrices; 
+                }
 
-let tlBase = new Date(); tlBase.setDate(1);
+                if (document.getElementById('view-grid').style.display === 'flex') { renderTimeline(); } 
+                else if (document.getElementById('view-guests').style.display === 'block') { renderGuests(document.getElementById('guestSearch').value); } 
+                else { renderTable(allBookings); }
+                
+                renderSettingsRooms(); renderSettingsDiscounts(); renderSettingsServices();
 
-// ─── INIT ─────────────────────────────────────────────────────
-async function init() {
-    try {
-        const t = Date.now();
-        const [bRes, sRes] = await Promise.all([
-            fetch(API_URL + "?t=" + t),
-            fetch(API_URL + "?action=settings&t=" + t)
-        ]);
-        allBookings = await bRes.json();
-        const sd = await sRes.json();
-        if (sd.roomsList) roomsList = sd.roomsList;
-        if (sd.discountsList) discountsList = sd.discountsList;
-        if (sd.customServicesList) customServicesList = sd.customServicesList;
-        if (sd.customPrices) customPrices = sd.customPrices;
-    } catch(e) { console.error(e); }
-
-    renderList(allBookings);
-    renderGuests();
-    renderSettings();
-    populateCottageSelect();
-}
-
-// ─── PAGE SWITCHING ───────────────────────────────────────────
-const pageNames = { list:'Бронювання', grid:'Шахматка', guests:'База гостей', settings:'Налаштування', reports:'Звіти' };
-let currentPage = 'list';
-
-function switchPage(name) {
-    document.querySelectorAll('.page').forEach(p => { p.style.display='none'; p.classList.remove('active'); });
-    document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
-
-    const page = document.getElementById('page-' + name);
-    if (name === 'grid') { page.style.display = 'flex'; }
-    else { page.style.display = 'block'; }
-    page.classList.add('active');
-
-    document.getElementById('nav-' + name).classList.add('active');
-    document.getElementById('headerTitle').innerText = pageNames[name];
-    currentPage = name;
-
-    // Show/hide + button
-    document.getElementById('headerActionBtn').style.display = (name === 'list' || name === 'grid') ? 'flex' : 'none';
-
-    if (name === 'grid') renderTimeline();
-    if (name === 'guests') renderGuests(document.getElementById('guestSearch').value);
-    if (name === 'settings') renderSettings();
-    if (name === 'list') renderList(allBookings);
-}
-
-// ─── BOOKING LIST ─────────────────────────────────────────────
-function filterList(type, el) {
-    document.querySelectorAll('.ftab').forEach(t => t.classList.remove('active'));
-    el.classList.add('active');
-    const today = new Date(); today.setHours(0,0,0,0);
-    let data = allBookings;
-    if (type === 'future') data = allBookings.filter(b => new Date(b.checkIn) >= today && !String(b.status).toLowerCase().includes('скас'));
-    if (type === 'cancelled') data = allBookings.filter(b => String(b.status).toLowerCase().includes('скас'));
-    renderList(data);
-}
-
-function renderList(data) {
-    const cont = document.getElementById('bookingCards');
-    if (!data || !data.length) {
-        cont.innerHTML = `<div style="text-align:center; padding:50px 20px; color:var(--muted); font-size:14px;">Нічого не знайдено</div>`;
-        return;
-    }
-    cont.innerHTML = data.map(b => {
-        const inD = new Date(b.checkIn), outD = new Date(b.checkOut);
-        const nights = Math.round((outD - inD) / 86400000) || 0;
-        const inStr = inD.toLocaleDateString('uk-UA', {day:'numeric', month:'short'});
-        const outStr = outD.toLocaleDateString('uk-UA', {day:'numeric', month:'short'});
-        const name = String(b.name).replace(' (Ручна бронь)','');
-        const phone = '+' + fmtPhone(b.phone);
-        const total = Number(b.totalPrice)||0, paid = Number(b.paidAmount)||0;
-        const balance = total - paid;
-
-        let s = String(b.status).toLowerCase();
-        let badgeClass = 'new';
-        if (s.includes('підтвердж') || s.includes('заїхав')) badgeClass = 'confirmed';
-        if (s.includes('скас')) badgeClass = 'cancelled';
-        if (s.includes('виїхав')) badgeClass = 'checkout';
-
-        let balHtml = '';
-        if (total > 0) {
-            if (balance <= 0) balHtml = `<span class="bc-balance paid">✓ Оплачено</span>`;
-            else balHtml = `<span class="bc-balance debt">Борг: ${balance} грн</span>`;
+                const preloader = document.getElementById('preloader');
+                if (preloader) { preloader.style.opacity = '0'; setTimeout(() => preloader.style.display = 'none', 500); }
+            } catch (error) { console.error(error); showToast("Помилка завантаження!"); }
         }
 
-        return `<div class="booking-card" onclick="openDetails(${b.row})">
-            <div class="bc-top">
-                <div>
-                    <div class="bc-name">${name}</div>
-                    <div class="bc-cottage">${b.cottage}</div>
-                </div>
-                <span class="badge ${badgeClass}">${b.status}</span>
-            </div>
-            <div class="bc-row">
-                <svg class="bc-ico" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 0 1 2.25-2.25h13.5A2.25 2.25 0 0 1 21 7.5v11.25m-18 0A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75"/></svg>
-                ${inStr} → ${outStr} · ${nights} ночей
-            </div>
-            <div class="bc-row">
-                <svg class="bc-ico" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.25 6.75c0 8.284 6.716 15 15 15h2.25a2.25 2.25 0 0 0 2.25-2.25v-1.372c0-.516-.351-.966-.852-1.091l-4.423-1.106c-.44-.11-.902.055-1.173.417l-.97 1.293c-.282.376-.769.542-1.21.38a12.035 12.035 0 0 1-7.143-7.143c-.162-.441.004-.928.38-1.21l1.293-.97c.363-.271.527-.734.417-1.173L6.963 3.102a1.125 1.125 0 0 0-1.091-.852H4.5A2.25 2.25 0 0 0 2.25 4.5v2.25Z"/></svg>
-                ${phone}
-            </div>
-            <div class="bc-footer">
-                ${total > 0 ? `<div class="bc-price">${total} грн</div>` : '<div style="color:var(--muted);font-size:13px;">Ціна не вказана</div>'}
-                ${balHtml}
-            </div>
-        </div>`;
-    }).join('');
-}
-
-// ─── TIMELINE ─────────────────────────────────────────────────
-function shiftTL(d) { tlBase.setDate(1); tlBase.setMonth(tlBase.getMonth() + d); renderTimeline(); }
-function resetTLToToday() { tlBase = new Date(); tlBase.setDate(1); renderTimeline(); }
-
-function renderTimeline() {
-    const datesEl = document.getElementById('tlDates');
-    const gridEl = document.getElementById('tlGrid');
-    const roomsEl = document.getElementById('tlRooms');
-    datesEl.innerHTML = ''; gridEl.innerHTML = ''; roomsEl.innerHTML = '';
-
-    const start = new Date(tlBase);
-    const days = new Date(start.getFullYear(), start.getMonth()+1, 0).getDate();
-    const CW = 48;
-    const dNames = ['Нд','Пн','Вт','Ср','Чт','Пт','Сб'];
-    const today = new Date(); today.setHours(0,0,0,0);
-
-    document.getElementById('tlMonthLabel').innerText = start.toLocaleString('uk-UA', {month:'long', year:'numeric'});
-
-    for (let i=0; i<days; i++) {
-        const d = new Date(start); d.setDate(start.getDate()+i);
-        const isToday = d.toDateString() === today.toDateString();
-        const isWE = d.getDay()===0||d.getDay()===6;
-        datesEl.innerHTML += `<div class="tl-date-cell ${isToday?'today':''} ${isWE?'weekend':''}" onclick="openNewSheet('',${JSON.stringify(d.toISOString().slice(0,10))})">
-            ${d.getDate()}<span>${dNames[d.getDay()]}</span>
-        </div>`;
-    }
-
-    roomsList.forEach((room, ri) => {
-        roomsEl.innerHTML += `<div class="tl-room-cell">
-            <div class="tl-room-name">${room.short}</div>
-            <div class="tl-room-desc">${room.desc}</div>
-        </div>`;
-
-        let rowHtml = `<div class="tl-grid-row" id="tlRow-${ri}" style="width:${days*CW}px; position:relative;">`;
-        for (let i=0; i<days; i++) {
-            const d = new Date(start); d.setDate(start.getDate()+i);
-            const isWE = d.getDay()===0||d.getDay()===6;
-            rowHtml += `<div class="tl-grid-cell ${isWE?'weekend':''}"></div>`;
+        async function saveSettingsToCloud() {
+            const settingsToSave = { roomsList, discountsList, customServicesList, sysServicesList, customPrices };
+            try { await fetch(API_URL, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify({ action: 'saveSettings', settings: settingsToSave }) });
+            } catch (error) { alert("Помилка збереження!"); }
         }
-        rowHtml += `</div>`;
-        gridEl.innerHTML += rowHtml;
 
-        const rowEl = document.getElementById(`tlRow-${ri}`);
-        allBookings.forEach(b => {
-            if (!String(b.cottage||'').includes(room.short)) return;
-            const inD = new Date(b.checkIn); inD.setHours(0,0,0,0);
-            const outD = new Date(b.checkOut); outD.setHours(0,0,0,0);
-            const tlStart = new Date(start); tlStart.setHours(0,0,0,0);
-            const off = Math.round((inD - tlStart)/86400000);
-            const dur = Math.round((outD - inD)/86400000);
-            if (off+dur<=0 || off>=days) return;
+        let currentEditType = null; let currentEditId = null;
 
-            let sc = 'status-new';
-            let sv = String(b.status).toLowerCase();
-            if (sv.includes('підтвердж')||sv.includes('заїхав')) sc='status-confirmed';
-            if (sv.includes('скас')) sc='status-cancelled';
+        function formatPhone(phoneStr) {
+            let clean = String(phoneStr || '').replace(/\D/g, '');
+            if (clean.length === 9) clean = '380' + clean; 
+            if (clean.length === 10 && clean.startsWith('0')) clean = '38' + clean; 
+            return clean; 
+        }
 
-            let left = off*CW, width = dur*CW;
-            if (off<0) { width=(dur+off)*CW; left=0; }
-            if (off+dur>days) width=(days-Math.max(off,0))*CW;
+        function showToast(message) {
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div'); toast.className = 'toast';
+            toast.innerHTML = message;
+            container.appendChild(toast);
+            setTimeout(() => toast.classList.add('show'), 10);
+            setTimeout(() => { toast.classList.remove('show'); setTimeout(() => toast.remove(), 400); }, 3000);
+        }
 
-            const name = String(b.name).replace(' (Ручна бронь)','');
-            const total=Number(b.totalPrice)||0, paid=Number(b.paidAmount)||0;
-            let tag = total===0 ? '—' : paid>=total ? '✓ Оплачено' : `Борг: ${total-paid}`;
+        // МОБІЛЬНА ЛОГІКА ПЕРЕМИКАННЯ МЕНЮ
+        function switchView(viewName) {
+            document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+            document.getElementById('nav-' + viewName).classList.add('active');
 
-            rowEl.innerHTML += `<div class="tl-booking-block ${sc}" style="left:${left}px; width:${width}px;" onclick="openDetails(${b.row})">
-                <div class="tl-block-name">${name}</div>
-                <div class="tl-block-tag">${tag}</div>
-            </div>`;
-        });
-    });
+            document.getElementById('view-list').style.display = 'none';
+            document.getElementById('view-grid').style.display = 'none';
+            document.getElementById('view-guests').style.display = 'none';
+            document.getElementById('view-settings').style.display = 'none';
+            document.getElementById('view-reports').style.display = 'none'; 
+            document.getElementById('mainActionButton').style.display = 'flex';
 
-    // Auto-scroll to today
-    const todayOff = today.getDate() - 1;
-    if (today.getMonth()===start.getMonth() && today.getFullYear()===start.getFullYear()) {
-        document.getElementById('tlScroll').scrollLeft = Math.max(0,(todayOff-1)*CW);
-    } else {
-        document.getElementById('tlScroll').scrollLeft = 0;
-    }
-}
+            const topTitle = document.getElementById('mobileTopTitle');
 
-// ─── GUESTS ──────────────────────────────────────────────────
-function renderGuests(search='') {
-    const map = {};
-    allBookings.forEach(b => {
-        const pk = fmtPhone(b.phone); if (!pk) return;
-        const nm = String(b.name||'').replace(' (Ручна бронь)','').trim();
-        if (!map[pk]) map[pk] = {name:nm, phone:pk, count:0, last:new Date(0)};
-        if (!String(b.status).toLowerCase().includes('скас')) map[pk].count++;
-        const ci = new Date(b.checkIn);
-        if (ci>map[pk].last) { map[pk].last=ci; if(nm) map[pk].name=nm; }
-    });
-    let guests = Object.values(map);
-    if (search) {
-        const t = search.toLowerCase();
-        guests = guests.filter(g => g.name.toLowerCase().includes(t)||g.phone.includes(t));
-    }
-    guests.sort((a,b)=>b.last-a.last);
-    const cont = document.getElementById('guestCards');
-    if (!guests.length) { cont.innerHTML=`<div style="text-align:center;padding:40px 20px;color:var(--muted);">Нічого не знайдено</div>`; return; }
-    cont.innerHTML = guests.map(g => {
-        const initials = g.name.split(' ').map(w=>w[0]||'').join('').slice(0,2).toUpperCase();
-        const visits = visitWord(g.count);
-        return `<div class="guest-card">
-            <div class="guest-avatar">${initials||'?'}</div>
-            <div class="guest-info">
-                <div class="guest-name">${g.name||'Без імені'}</div>
-                <div class="guest-phone">+${g.phone}</div>
-                <div class="guest-actions">
-                    <a href="https://t.me/+${g.phone}" class="ga-btn tg">Telegram</a>
-                    <a href="https://wa.me/${g.phone}" class="ga-btn wa">WhatsApp</a>
-                </div>
-            </div>
-            <span class="guest-stat" onclick="filterByGuest('${g.phone}','${g.name}')">${g.count} ${visits}</span>
-        </div>`;
-    }).join('');
-}
-
-function filterByGuest(phone, name) {
-    switchPage('list');
-    const filtered = allBookings.filter(b => fmtPhone(b.phone)===phone);
-    renderList(filtered);
-    document.getElementById('headerTitle').innerText = name;
-}
-
-// ─── SETTINGS ─────────────────────────────────────────────────
-function renderSettings() {
-    // Rooms
-    const rg = document.getElementById('settingsRoomsGroup');
-    rg.innerHTML = roomsList.map(r => `
-        <div class="settings-row">
-            <div class="settings-row-left">
-                <div class="settings-row-name">${r.name}</div>
-                <div class="settings-row-sub">${r.desc} · до ${r.maxCapacity||r.capacity} осіб</div>
-            </div>
-            <div class="settings-row-right">
-                <span class="pill ${r.active?'on':'off'}">${r.active?'Увімк.':'Вимк.'}</span>
-                <svg class="chev" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
-            </div>
-        </div>`).join('');
-
-    // Discounts
-    const dg = document.getElementById('settingsDiscountsGroup');
-    dg.innerHTML = discountsList.map(d => `
-        <div class="settings-row">
-            <div class="settings-row-left">
-                <div class="settings-row-name">${d.condition}</div>
-                <div class="settings-row-sub">${d.rooms}</div>
-            </div>
-            <div class="settings-row-right">
-                <span class="pill on">${d.discount}</span>
-            </div>
-        </div>`).join('');
-    if (!discountsList.length) dg.innerHTML = `<div style="padding:16px;color:var(--muted);font-size:14px;text-align:center;">Немає знижок</div>`;
-
-    // Services
-    const sg = document.getElementById('settingsServicesGroup');
-    sg.innerHTML = customServicesList.map(s => `
-        <div class="settings-row">
-            <div class="settings-row-left">
-                <div class="settings-row-name">${s.name}</div>
-                <div class="settings-row-sub">${s.price} грн</div>
-            </div>
-            <div class="settings-row-right">
-                <span class="pill ${s.active?'on':'off'}">${s.active?'Активна':'Неактивна'}</span>
-            </div>
-        </div>`).join('');
-    if (!customServicesList.length) sg.innerHTML = `<div style="padding:16px;color:var(--muted);font-size:14px;text-align:center;">Немає послуг</div>`;
-}
-
-// ─── SHEET OPEN/CLOSE ─────────────────────────────────────────
-function openNewSheet(prefillRoom='', prefillDate='') {
-    editingRow = null;
-    document.getElementById('sheetTitle').innerText = 'Нове бронювання';
-    document.getElementById('deleteBtn').style.display = 'none';
-    document.getElementById('mName').value = '';
-    document.getElementById('mPhone').value = '';
-    document.getElementById('mSource').value = 'Instagram';
-    document.getElementById('mGuests').value = 2;
-    document.getElementById('mPets').value = 'Ні';
-    document.getElementById('calcContainer').innerHTML = '';
-    document.querySelectorAll('.stbtn').forEach(b=>b.classList.remove('active'));
-    document.querySelector('.stbtn[data-status="Нова бронь"]').classList.add('active');
-    document.querySelectorAll('.pet-btn').forEach(b=>{b.classList.remove('active'); if(b.dataset.val==='Ні') b.classList.add('active');});
-
-    populateCottageSelect();
-    if (prefillRoom) document.getElementById('mCottage').value = prefillRoom;
-
-    if (prefillDate) {
-        inPicker.setDate(prefillDate);
-        const next = new Date(prefillDate); next.setDate(next.getDate()+1);
-        outPicker.setDate(next);
-    } else { inPicker.clear(); outPicker.clear(); }
-
-    setTimeout(updateCalc, 100);
-    document.getElementById('sheetOverlay').classList.add('active');
-}
-
-function openDetails(rowNum) {
-    const b = allBookings.find(x=>x.row==rowNum);
-    if (!b) return;
-    editingRow = rowNum;
-    document.getElementById('sheetTitle').innerText = `Бронь ${b.id||''}`;
-    document.getElementById('deleteBtn').style.display = 'flex';
-    document.getElementById('mName').value = String(b.name).replace(' (Ручна бронь)','');
-    document.getElementById('mPhone').value = '+'+fmtPhone(b.phone);
-    document.getElementById('mGuests').value = b.guests||2;
-    document.getElementById('mSource').value = b.source||'Instagram';
-
-    populateCottageSelect();
-    document.getElementById('mCottage').value = b.cottage;
-
-    inPicker.setDate(b.checkIn);
-    outPicker.setDate(b.checkOut);
-
-    const petsVal = (b.pets==='Так'||b.pets===true) ? 'Так' : 'Ні';
-    document.getElementById('mPets').value = petsVal;
-    document.querySelectorAll('.pet-btn').forEach(btn => {
-        btn.classList.toggle('active', btn.dataset.val===petsVal);
-    });
-
-    document.querySelectorAll('.stbtn').forEach(btn=>{
-        btn.classList.toggle('active', btn.dataset.status===b.status);
-    });
-    if (!document.querySelector('.stbtn.active')) document.querySelector('.stbtn[data-status="Нова бронь"]').classList.add('active');
-
-    setTimeout(()=>{
-        updateCalc();
-        setTimeout(()=>{
-            if (document.getElementById('mTotalPrice')) {
-                document.getElementById('mTotalPrice').value = b.totalPrice||0;
-                document.getElementById('mPaidAmount').value = b.paidAmount||0;
-                calcBalance();
+            if(viewName === 'list') {
+                document.getElementById('view-list').style.display = 'block';
+                topTitle.innerText = 'Бронювання';
+                renderTable(allBookings); resetGuestFilter();
+            } else if(viewName === 'grid') {
+                document.getElementById('view-grid').style.display = 'flex';
+                topTitle.innerText = 'Шахматка';
+                renderTimeline();
+            } else if(viewName === 'guests') {
+                document.getElementById('view-guests').style.display = 'block';
+                topTitle.innerText = 'База гостей';
+                renderGuests(); 
+            } else if(viewName === 'settings') {
+                document.getElementById('view-settings').style.display = 'flex';
+                topTitle.innerText = 'Налаштування';
+                document.getElementById('mainActionButton').style.display = 'none'; 
+                // Відкриваємо першу вкладку налаштувань
+                const firstSubItem = document.querySelector('.m-tab');
+                switchSettingsTab('rooms', firstSubItem);
+            } else if(viewName === 'reports') {
+                document.getElementById('view-reports').style.display = 'flex';
+                topTitle.innerText = 'Звіти';
+                document.getElementById('mainActionButton').style.display = 'none'; 
             }
-        },60);
-    },100);
-
-    document.getElementById('sheetOverlay').classList.add('active');
-}
-
-function closeSheet() { document.getElementById('sheetOverlay').classList.remove('active'); }
-function handleOverlayClick(e) { if(e.target===document.getElementById('sheetOverlay')) closeSheet(); }
-
-// ─── COTTAGE SELECT ───────────────────────────────────────────
-function populateCottageSelect() {
-    const sel = document.getElementById('mCottage');
-    sel.innerHTML = roomsList.map(r=>`<option value="${r.name}">${r.name} — ${r.desc}</option>`).join('');
-}
-
-// ─── FLATPICKR ────────────────────────────────────────────────
-const outPicker = flatpickr("#mCheckOut", { locale:"uk", dateFormat:"Y-m-d", altInput:true, altFormat:"d.m.Y", onChange: updateCalc });
-const inPicker  = flatpickr("#mCheckIn",  { locale:"uk", dateFormat:"Y-m-d", altInput:true, altFormat:"d.m.Y", onChange: function(s,d){ outPicker.set("minDate",d); updateCalc(); }});
-
-// ─── COUNTERS ─────────────────────────────────────────────────
-function changeCount(delta) {
-    const inp = document.getElementById('mGuests');
-    const v = Math.max(1,(parseInt(inp.value)||1)+delta);
-    inp.value = v; updateCalc();
-}
-function togglePet(val) {
-    document.getElementById('mPets').value = val;
-    document.querySelectorAll('.pet-btn').forEach(b=>b.classList.toggle('active',b.dataset.val===val));
-    updateCalc();
-}
-document.querySelectorAll('.stbtn').forEach(b=>b.addEventListener('click',function(){
-    document.querySelectorAll('.stbtn').forEach(x=>x.classList.remove('active')); this.classList.add('active');
-}));
-
-// ─── CALCULATOR ───────────────────────────────────────────────
-function updateCalc() {
-    const ciStr = document.getElementById('mCheckIn').value;
-    const coStr = document.getElementById('mCheckOut').value;
-    const roomName = document.getElementById('mCottage').value;
-    const guests = parseInt(document.getElementById('mGuests').value)||2;
-    const pets = document.getElementById('mPets').value;
-    const cont = document.getElementById('calcContainer');
-
-    let savedPaid = 0;
-    if (document.getElementById('mPaidAmount')) savedPaid = Number(document.getElementById('mPaidAmount').value)||0;
-
-    if (!ciStr||!coStr||!roomName) { cont.innerHTML=''; return; }
-
-    const d1 = new Date(ciStr.includes('.')?ciStr.split('.').reverse().join('-'):ciStr);
-    const d2 = new Date(coStr.includes('.')?coStr.split('.').reverse().join('-'):coStr);
-    let nights = Math.round((d2-d1)/86400000);
-    if (nights<1||isNaN(nights)) nights=1;
-
-    const room = roomsList.find(r=>r.name===roomName);
-    if (!room) { cont.innerHTML=''; return; }
-
-    // Overlap check
-    let overlap = false;
-    for (let b of allBookings) {
-        if (editingRow && b.row==editingRow) continue;
-        if (String(b.status).toLowerCase().includes('скас')) continue;
-        if (b.cottage===roomName) {
-            let ei=new Date(b.checkIn); ei.setHours(0,0,0,0);
-            let eo=new Date(b.checkOut); eo.setHours(0,0,0,0);
-            let ci=new Date(d1); ci.setHours(0,0,0,0);
-            let co=new Date(d2); co.setHours(0,0,0,0);
-            if (ci<eo && co>ei) { overlap=true; break; }
         }
-    }
 
-    const saveBtn = document.getElementById('saveBtn');
-    if (overlap) {
-        saveBtn.disabled=true; saveBtn.style.opacity='0.5';
-        cont.innerHTML=`<div class="overlap-warn">⚠️ УВАГА: ОВЕРБУКІНГ!<br><span style="font-size:12px;font-weight:500;">Ці дати вже зайняті іншим гостем</span></div>`;
-        return;
-    } else { saveBtn.disabled=false; saveBtn.style.opacity='1'; }
+        function switchSettingsTab(tabName, el) {
+            document.querySelectorAll('.m-tab').forEach(nav => nav.classList.remove('active'));
+            el.classList.add('active');
+            document.querySelectorAll('.settings-tab-content').forEach(content => content.style.display = 'none');
+            document.getElementById('set-' + tabName).style.display = 'block';
+            if(tabName === 'rooms') renderSettingsRooms();
+            if(tabName === 'prices') renderPriceGrid();
+            if(tabName === 'discounts') renderSettingsDiscounts();
+            if(tabName === 'services') renderSettingsServices();
+        }
 
-    let base=0;
-    for (let i=0;i<nights;i++){
-        const d=new Date(d1); d.setDate(d.getDate()+i);
-        const ds=`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
-        const isWE=(d.getDay()===0||d.getDay()===6);
-        let dp=isWE?room.priceWeekend:room.priceWeekday;
-        if(customPrices[room.id]&&customPrices[room.id][ds]) dp=customPrices[room.id][ds];
-        base+=dp;
-    }
-    const extraGuests=Math.max(0,guests-room.capacity);
-    const extraFee=extraGuests*2500*nights;
-    const petFee=pets==='Так'?(500+200*nights):0;
-    let discPct=0;
-    if(nights>=30) discPct=0.73;
-    else if(nights>=14) discPct=0.57;
-    else if(nights>=7) discPct=0.43;
-    else if(nights>=3) discPct=0.20;
-    else if(nights>=2) discPct=0.15;
-    const discAmt=Math.round((base+extraFee)*discPct);
-    const total=base+extraFee-discAmt+petFee;
+        function renderSettingsRooms() {
+            const tbody = document.getElementById('settingsRoomsTableBody'); tbody.innerHTML = '';
+            roomsList.forEach(r => {
+                let badge = r.active ? `<span class="badge confirmed" style="font-size:10px;">Увімкнено</span>` : `<span class="badge cancelled" style="font-size:10px;">Вимкнено</span>`;
+                tbody.innerHTML += `<tr>
+                    <td><strong>${r.name}</strong></td>
+                    <td style="flex-direction: row; font-size:12px; color:#6B7280;">${r.capacity} (до ${r.maxCapacity || r.capacity}) осіб <span>${badge}</span></td>
+                    <td style="justify-content: flex-end; gap:8px;">
+                        <button class="btn-action" style="padding:6px 12px; border-radius:8px;" onclick="openGenericModal('room', ${r.id})">Редагувати</button>
+                    </td>
+                </tr>`;
+            });
+        }
 
-    cont.innerHTML=`
-        <div class="calc-box">
-            <div class="calc-title">Розшифровка (${nights} ночей)</div>
-            <div class="calc-row"><span>Базова вартість:</span><span>${base} грн</span></div>
-            ${extraFee>0?`<div class="calc-row"><span>Дод. гості (${extraGuests}):</span><span>+${extraFee} грн</span></div>`:''}
-            ${petFee>0?`<div class="calc-row"><span>Тварини:</span><span>+${petFee} грн</span></div>`:''}
-            ${discAmt>0?`<div class="calc-row discount"><span>Знижка:</span><span>−${discAmt} грн</span></div>`:''}
-            <div class="calc-total-row">
-                <span class="calc-total-label">До сплати:</span>
-                <span class="calc-total-val">${total} грн</span>
-            </div>
-        </div>
-        <div class="fsection" style="padding:14px;">
-            <span class="fsection-title">Оплата</span>
-            <div class="paid-section">
-                <div class="paid-box">
-                    <div class="paid-label">Загальна сума</div>
-                    <input type="number" class="paid-input" id="mTotalPrice" value="${total}" oninput="calcBalance()">
+        function renderSettingsDiscounts() {
+            const tbody = document.getElementById('settingsDiscountsTableBody'); tbody.innerHTML = '';
+            discountsList.forEach(d => {
+                tbody.innerHTML += `<tr>
+                    <td><strong>${d.condition}</strong></td>
+                    <td style="flex-direction:row; font-size:12px;"><span class="badge confirmed">${d.discount}</span><span style="color:#6B7280; font-size:11px;">${d.rooms}</span></td>
+                    <td style="justify-content: flex-end;"><button class="btn-action" style="padding:6px 12px;" onclick="openGenericModal('discount', ${d.id})">Редагувати</button></td>
+                </tr>`;
+            });
+        }
+
+        function renderSettingsServices() {
+            const sysBody = document.getElementById('settingsSysServicesTableBody'); sysBody.innerHTML = '';
+            sysServicesList.forEach(s => {
+                let badge = s.active ? `<span class="badge confirmed" style="font-size:10px;">Активна</span>` : `<span class="badge cancelled" style="font-size:10px;">Не активна</span>`;
+                sysBody.innerHTML += `<tr><td><strong>${s.name}</strong></td><td style="flex-direction:row; font-size:12px;">${s.price} грн ${badge}</td>
+                <td style="justify-content: flex-end;"><button class="btn-action" style="padding:6px 12px;" onclick="openGenericModal('sysService', ${s.id})">Редаг.</button></td></tr>`;
+            });
+            const custBody = document.getElementById('settingsServicesTableBody'); custBody.innerHTML = '';
+            customServicesList.forEach(s => {
+                let badge = s.active ? `<span class="badge confirmed" style="font-size:10px;">Активна</span>` : `<span class="badge cancelled" style="font-size:10px;">Не активна</span>`;
+                custBody.innerHTML += `<tr><td><strong>${s.name}</strong></td><td style="flex-direction:row; font-size:12px;">${s.price} грн ${badge}</td>
+                <td style="justify-content: flex-end;"><button class="btn-action" style="padding:6px 12px;" onclick="openGenericModal('customService', ${s.id})">Редаг.</button></td></tr>`;
+            });
+        }
+        
+        function clearPricesAlert() { openCustomConfirm("Очистити ціни?", "Ви впевнені, що хочете скинути всі налаштовані ціни?", confirmClearPrices); }
+        function confirmClearPrices() {
+            closeCustomConfirm(); roomsList.forEach(r => { r.priceWeekday = 0; r.priceWeekend = 0; });
+            customPrices = {}; renderPriceGrid(); saveSettingsToCloud(); showToast("Ціни очищено!");
+        }
+
+        function openGenericModal(type, id = null) {
+            currentEditType = type; currentEditId = id;
+            document.getElementById('modalDeleteBtn').style.display = id ? 'flex' : 'none';
+            const title = document.getElementById('gModalTitle'); const body = document.getElementById('gModalBody');
+            
+            if (type === 'room') {
+                title.innerText = id ? 'Редагувати номер' : 'Додати номер';
+                let r = id ? roomsList.find(x => x.id === id) : {name: '', desc: '', capacity: 2, maxCapacity: 4, extraGuestPrice: 2500, active: true};
+                let currentExtraPrice = r.extraGuestPrice !== undefined ? r.extraGuestPrice : 2500;
+
+                body.innerHTML = `
+                    <div class="form-group"><label>Назва номеру:</label><input type="text" id="mRoomName" value="${r.name}" placeholder="Напр. FAMILY №5"></div>
+                    <div class="form-group"><label>Опис (Коротка назва):</label><input type="text" id="mRoomDesc" value="${r.desc}" placeholder="Сімейний котедж"></div>
+                    <div class="form-grid">
+                        <div class="form-group"><label>Базова містк.:</label><input type="number" id="mRoomCap" value="${r.capacity}" min="1"></div>
+                        <div class="form-group"><label>Макс. містк.:</label><input type="number" id="mRoomMaxCap" value="${r.maxCapacity || r.capacity}" min="1"></div>
+                    </div>
+                    <div class="form-grid">
+                        <div class="form-group"><label>Ціна дод. гостя:</label><input type="number" id="mRoomExtraPrice" value="${currentExtraPrice}" min="0"></div>
+                        <div class="form-group"><label>Доступність:</label>
+                            <div style="display: flex; background: #F3F4F6; border-radius: 10px; padding: 3px; height: 44px;">
+                                <div class="room-status-btn ${r.active ? 'active' : ''}" data-val="true" onclick="toggleRoomStatus('true')">Увімкн</div>
+                                <div class="room-status-btn ${!r.active ? 'active' : ''}" data-val="false" onclick="toggleRoomStatus('false')">Вимкн</div>
+                            </div>
+                            <input type="hidden" id="mRoomStatus" value="${r.active ? 'true' : 'false'}">
+                        </div>
+                    </div>
+                `;
+            } else if (type === 'price') {
+                title.innerText = 'Конструктор цін';
+                let roomsChips = `<div class="chip-btn" id="chip-room-all" onclick="toggleAllRoomsChip()">Усі номери</div>`;
+                roomsChips += roomsList.map(r => `<div class="chip-btn room-chip" data-id="${r.id}" onclick="toggleSingleRoomChip(this)">${r.name}</div>`).join('');
+
+                body.innerHTML = `
+                    <div class="form-group"><label>Оберіть номери:</label><div class="chips-container">${roomsChips}</div></div>
+                    <div class="form-group"><label>Встановіть ціну (грн):</label><input type="number" id="mPriceAmount" placeholder="0" min="0"></div>
+                    <div class="form-group"><label>Оберіть період:</label>
+                        <div class="chips-container" id="periodChipsContainer">
+                            <div class="chip-btn active period-chip" data-val="1" onclick="selectPeriodChip(this)">Поточний місяць</div>
+                            <div class="chip-btn period-chip" data-val="3" onclick="selectPeriodChip(this)">3 місяці</div>
+                            <div class="chip-btn period-chip" data-val="12" onclick="selectPeriodChip(this)">12 міс</div>
+                        </div>
+                        <input type="hidden" id="mPricePeriod" value="1">
+                    </div>
+                    <div class="form-group" style="margin-bottom: 0;"><label>Оберіть дні тижня:</label>
+                        <div class="chips-container" id="daysChipsContainer">
+                            <div class="chip-btn active day-chip" data-val="all" onclick="selectDayChip(this)">Усі дні</div>
+                            <div class="chip-btn day-chip" data-val="weekdays" onclick="selectDayChip(this)">Будні</div>
+                            <div class="chip-btn day-chip" data-val="weekends" onclick="selectDayChip(this)">Вихідні</div>
+                        </div><input type="hidden" id="mPriceDays" value="all">
+                    </div>
+                `;
+            } else if (type === 'discount') {
+                title.innerText = id ? 'Редагувати знижку' : 'Додати знижку';
+                let d = id ? discountsList.find(x => x.id === id) : {condition: "Діб в бронюванні: 2", discount: "15%", rooms: "Не обрано", roomsIds: []};
+                let condVal = parseInt(String(d.condition).replace(/\D/g,'')) || 2; let discVal = parseInt(String(d.discount).replace(/\D/g,'')) || 15;
+                let selectedIds = d.roomsIds || []; if (id && selectedIds.length === 0 && d.rooms === "Всі номери") selectedIds = ["all"];
+                let isAllSelected = selectedIds.includes("all");
+
+                let roomsChips = `<div class="chip-btn ${isAllSelected ? 'active' : ''}" id="chip-disc-room-all" onclick="toggleAllDiscRooms()">Усі номери</div>`;
+                roomsChips += roomsList.map(r => { let isActive = isAllSelected || selectedIds.includes(String(r.id)); return `<div class="chip-btn disc-room-chip ${isActive ? 'active' : ''}" data-id="${r.id}" onclick="toggleSingleDiscRoom(this)">${r.name}</div>`; }).join('');
+
+                body.innerHTML = `
+                    <div class="form-grid">
+                        <div class="form-group"><label>К-сть діб від:</label><input type="number" id="mDiscDays" value="${condVal}" min="1"></div>
+                        <div class="form-group"><label>Знижка (%):</label><input type="number" id="mDiscPercent" value="${discVal}" min="1" max="100"></div>
+                    </div>
+                    <div class="form-group" style="margin-bottom: 0;"><label>Номери:</label><div class="chips-container">${roomsChips}</div></div>
+                `;
+            } else if (type === 'customService') {
+                title.innerText = id ? 'Редагувати послугу' : 'Додати послугу';
+                let s = id ? customServicesList.find(x => x.id === id) : {name: '', price: 0, perDay: 'Ні', perGuest: 'Ні', active: true};
+                body.innerHTML = `
+                    <div class="form-group"><label>Назва:</label><input type="text" id="mServName" value="${s.name}"></div>
+                    <div class="form-group"><label>Ціна (грн):</label><input type="number" id="mServPrice" value="${s.price}"></div>
+                    <div class="form-grid">
+                        <div class="form-group"><label>Подобова:</label><select id="mServDay"><option value="Так" ${s.perDay==='Так'?'selected':''}>Так</option><option value="Ні" ${s.perDay==='Ні'?'selected':''}>Ні</option></select></div>
+                        <div class="form-group"><label>За гостя:</label><select id="mServGuest"><option value="Так" ${s.perGuest==='Так'?'selected':''}>Так</option><option value="Ні" ${s.perGuest==='Ні'?'selected':''}>Ні</option></select></div>
+                    </div>
+                    <div class="form-group"><label>Статус:</label><select id="mServStatus"><option value="true" ${s.active?'selected':''}>Активна</option><option value="false" ${!s.active?'selected':''}>Не активна</option></select></div>
+                `;
+            } else if (type === 'sysService') {
+                title.innerText = 'Системна послуга';
+                let ss = sysServicesList.find(x => x.id === id);
+                body.innerHTML = `
+                    <div class="form-group"><label>Назва:</label><input type="text" value="${ss.name}" disabled style="background:#E5E7EB; color:#6B7280;"></div>
+                    <div class="form-grid">
+                        <div class="form-group"><label>Ціна:</label><input type="number" id="mSysPrice" value="${ss.price}" min="0"></div>
+                        <div class="form-group"><label>Статус:</label><select id="mSysStatus"><option value="true" ${ss.active?'selected':''}>Активна</option><option value="false" ${!ss.active?'selected':''}>Вимкнена</option></select></div>
+                    </div>
+                `;
+            }
+            document.getElementById('genericModal').classList.add('active');
+        }
+
+        function closeGenericModal() { document.getElementById('genericModal').classList.remove('active'); }
+
+        function openCustomConfirm(title, desc, actionFunction) {
+            document.getElementById('confirmModalTitle').innerText = title; document.getElementById('confirmModalDesc').innerText = desc;
+            document.getElementById('confirmModalActionBtn').onclick = actionFunction; document.getElementById('customConfirmModal').classList.add('active');
+        }
+        function closeCustomConfirm() { document.getElementById('customConfirmModal').classList.remove('active'); }
+
+        function deleteCurrentBooking() { if (!editingRowNumber) return; openCustomConfirm("Видалити бронь?", "Цю дію неможливо скасувати.", confirmDeleteBooking); }
+        async function confirmDeleteBooking() {
+            closeCustomConfirm(); const btn = document.getElementById('adminDeleteBtn'); const originalText = btn.innerHTML; btn.innerHTML = "Видал..."; btn.disabled = true;
+            try { await fetch(API_URL, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify({ action: 'deleteBooking', row: editingRowNumber }) });
+                closeDrawer(); showToast("Успішно видалено"); await initApp(); 
+            } catch (error) { alert("Помилка!"); } finally { btn.innerHTML = originalText; btn.disabled = false; }
+        }
+
+        function deleteGenericItem(type = null, id = null) {
+            if (type && id) { currentEditType = type; currentEditId = id; }
+            openCustomConfirm(`Видалити?`, "Цю дію неможливо скасувати.", confirmDeleteGenericItem);
+        }
+        function confirmDeleteGenericItem() {
+            closeCustomConfirm(); 
+            if (currentEditType === 'room') { roomsList = roomsList.filter(r => r.id !== currentEditId); renderSettingsRooms(); if(document.getElementById('set-prices').style.display === 'block') renderPriceGrid(); } 
+            else if (currentEditType === 'discount') { discountsList = discountsList.filter(d => d.id !== currentEditId); renderSettingsDiscounts(); } 
+            else if (currentEditType === 'service') { customServicesList = customServicesList.filter(s => s.id !== currentEditId); renderSettingsServices(); }
+            saveSettingsToCloud(); closeGenericModal(); showToast("Видалено!");
+        }
+        
+        function saveGenericModal() { 
+            if (currentEditType === 'room') {
+                const name = document.getElementById('mRoomName').value || 'Новий номер'; const desc = document.getElementById('mRoomDesc').value;
+                const cap = parseInt(document.getElementById('mRoomCap').value) || 2; const maxCap = parseInt(document.getElementById('mRoomMaxCap').value) || cap;
+                const extraPrice = parseInt(document.getElementById('mRoomExtraPrice').value) || 0; const active = document.getElementById('mRoomStatus').value === 'true';
+                if (currentEditId) { let r = roomsList.find(x => x.id === currentEditId); r.name = name; r.short = name; r.desc = desc; r.capacity = cap; r.maxCapacity = maxCap; r.extraGuestPrice = extraPrice; r.active = active; } 
+                else { roomsList.push({ id: Date.now(), name: name, short: name, desc: desc, capacity: cap, maxCapacity: maxCap, extraGuestPrice: extraPrice, priceWeekday: 4000, priceWeekend: 5000, active: active }); }
+                renderSettingsRooms(); if(document.getElementById('set-prices').style.display === 'block') renderPriceGrid();
+            } else if (currentEditType === 'discount') {
+                const days = document.getElementById('mDiscDays').value || 2; const pct = document.getElementById('mDiscPercent').value || 15;
+                const allBtn = document.getElementById('chip-disc-room-all'); let savedIds = []; let displayRoomsText = "";
+                if (allBtn && allBtn.classList.contains('active')) { savedIds = ["all"]; displayRoomsText = "Всі номери"; } 
+                else { const activeChips = document.querySelectorAll('.disc-room-chip.active'); let names = []; activeChips.forEach(chip => { savedIds.push(chip.getAttribute('data-id')); names.push(chip.innerText); }); displayRoomsText = names.length > 0 ? names.join(', ') : "Не обрано"; }
+                if (currentEditId) { let d = discountsList.find(x => x.id === currentEditId); d.condition = `Діб в бронюванні: ${days}`; d.discount = `${pct}%`; d.roomsIds = savedIds; d.rooms = displayRoomsText; } 
+                else { discountsList.push({ id: Date.now(), condition: `Діб в бронюванні: ${days}`, discount: `${pct}%`, roomsIds: savedIds, rooms: displayRoomsText }); }
+                renderSettingsDiscounts();
+            } else if (currentEditType === 'customService') {
+                const name = document.getElementById('mServName').value || 'Нова послуга'; const price = document.getElementById('mServPrice').value || 0;
+                const pDay = document.getElementById('mServDay').value; const pGuest = document.getElementById('mServGuest').value; const active = document.getElementById('mServStatus').value === 'true';
+                if (currentEditId) { let s = customServicesList.find(x => x.id === currentEditId); s.name = name; s.price = price; s.perDay = pDay; s.perGuest = pGuest; s.active = active; } 
+                else { customServicesList.push({ id: Date.now(), name: name, price: price, perDay: pDay, perGuest: pGuest, rooms: "Всі", active: active }); }
+                renderSettingsServices();
+            } else if (currentEditType === 'sysService') {
+                const price = document.getElementById('mSysPrice').value || 0; const active = document.getElementById('mSysStatus').value === 'true';
+                let ss = sysServicesList.find(x => x.id === currentEditId); if(ss) { ss.price = price; ss.active = active; }
+                renderSettingsServices();
+            } else if (currentEditType === 'price') {
+                const selectedRooms = Array.from(document.querySelectorAll('.room-chip.active')).map(chip => chip.getAttribute('data-id'));
+                const amount = parseInt(document.getElementById('mPriceAmount').value) || 0; const periodMonths = parseInt(document.getElementById('mPricePeriod').value) || 1; const dayType = document.getElementById('mPriceDays').value; 
+                if (amount > 0 && selectedRooms.length > 0) {
+                    const startDate = new Date(priceTimelineBaseDate); const endDate = new Date(startDate); endDate.setMonth(endDate.getMonth() + periodMonths); const daysCount = Math.round((endDate - startDate) / (1000 * 60 * 60 * 24));
+                    roomsList.forEach(r => {
+                        if (selectedRooms.includes(String(r.id))) {
+                            if (!customPrices[r.id]) customPrices[r.id] = {};
+                            for (let i = 0; i < daysCount; i++) {
+                                let d = new Date(startDate); d.setDate(startDate.getDate() + i); let isWeekend = (d.getDay() === 0 || d.getDay() === 6);
+                                if (dayType === 'weekdays' && isWeekend) continue; if (dayType === 'weekends' && !isWeekend) continue; 
+                                let dateStr = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+                                customPrices[r.id][dateStr] = amount;
+                            }
+                        }
+                    });
+                }
+                renderPriceGrid();
+            }
+            saveSettingsToCloud(); closeGenericModal(); showToast("Збережено!"); 
+        }
+
+        function renderGuests(searchTerm = "") {
+            const tbody = document.getElementById('guestsTableBody'); tbody.innerHTML = '';
+            const guestsMap = {};
+            allBookings.forEach(b => {
+                const rawPhone = String(b.phone || "").trim(); if (!rawPhone) return;
+                const phoneKey = formatPhone(rawPhone); const name = String(b.name || "").replace(' (Ручна бронь)', '').trim();
+                if (!guestsMap[phoneKey]) guestsMap[phoneKey] = { name: name, phone: phoneKey, count: 0, lastVisit: new Date(0) };
+                if (!String(b.status).toLowerCase().includes('скас')) guestsMap[phoneKey].count++;
+                const currentCheckIn = new Date(b.checkIn);
+                if (currentCheckIn > guestsMap[phoneKey].lastVisit) { guestsMap[phoneKey].lastVisit = currentCheckIn; if (name) guestsMap[phoneKey].name = name; }
+            });
+            let guests = Object.values(guestsMap);
+            if (searchTerm) { const term = searchTerm.toLowerCase(); guests = guests.filter(g => g.name.toLowerCase().includes(term) || g.phone.includes(term)); }
+            guests.sort((a, b) => b.lastVisit - a.lastVisit);
+            guests.forEach(g => {
+                const dateStr = g.lastVisit.getFullYear() > 2000 ? g.lastVisit.toLocaleDateString('uk-UA', { day: 'numeric', month: 'short' }) : '-';
+                tbody.innerHTML += `<tr>
+                    <td><strong>${g.name}</strong></td>
+                    <td style="flex-direction:row; font-size:12px;"><span style="color:#6B7280;">+${g.phone}</span> <span class="badge new" onclick="showGuestBookings('${g.phone}', '${g.name}')">${g.count} заїзд.</span></td>
+                    <td style="justify-content: flex-end; gap:8px;">
+                        <a href="https://t.me/+${g.phone}" target="_blank" class="btn-action" style="padding:6px; background:#28A8E9; color:white; border-radius:8px;">TG</a>
+                        <a href="https://wa.me/${g.phone}" target="_blank" class="btn-action" style="padding:6px; background:#25D366; color:white; border-radius:8px;">WA</a>
+                    </td>
+                </tr>`;
+            });
+        }
+        document.getElementById('guestSearch').addEventListener('input', (e) => renderGuests(e.target.value));
+
+        function renderTable(data) {
+            const tbody = document.getElementById('bookingsTableBody'); tbody.innerHTML = '';
+            if (!data || data.length === 0) { tbody.innerHTML = '<tr><td style="text-align:center; padding: 20px; color: #9CA3AF;">Немає броней</td></tr>'; return; }
+            data.forEach((b) => {
+                const inDate = new Date(b.checkIn); const outDate = new Date(b.checkOut);
+                const nights = Math.round((outDate - inDate) / (1000 * 60 * 60 * 24)) || 0;
+                const dateStr = `${inDate.toLocaleDateString('uk-UA', { day: 'numeric', month: 'short' })} - ${outDate.toLocaleDateString('uk-UA', { day: 'numeric', month: 'short' })}`;
+                let badgeClass = 'new'; let s = String(b.status).toLowerCase();
+                if(s.includes('підтвердж') || s.includes('заїхав')) badgeClass = 'confirmed';
+                if(s.includes('скас')) badgeClass = 'cancelled';
+                const cleanPhone = formatPhone(b.phone);
+                tbody.innerHTML += `<tr>
+                    <td><strong>${String(b.name).replace(' (Ручна бронь)', '')}</strong></td>
+                    <td style="flex-direction: row; font-size:12px; color:#6B7280;">${dateStr} (${nights}н) <span>${b.cottage}</span></td>
+                    <td style="flex-direction: row; justify-content:space-between; border-top:1px solid #F3F4F6; margin-top:4px; padding-top:8px;">
+                        <span class="badge ${badgeClass}">${b.status}</span>
+                        <button class="btn-action" style="padding:6px 12px; border-radius:8px;" onclick="openDetailsByRow(${b.row})">Деталі</button>
+                    </td>
+                </tr>`;
+            });
+        }
+
+        function filterBookings(filterType, element) {
+            document.querySelectorAll('#bookingsTabs .m-tab').forEach(t => t.classList.remove('active'));
+            if(element) element.classList.add('active');
+            let filtered = allBookings; const today = new Date(); today.setHours(0,0,0,0); 
+            if (filterType === 'future') { filtered = allBookings.filter(b => new Date(b.checkIn) >= today && !String(b.status).toLowerCase().includes('скас')); } 
+            else if (filterType === 'cancelled') { filtered = allBookings.filter(b => String(b.status).toLowerCase().includes('скас')); }
+            renderTable(filtered);
+        }
+
+        function showGuestBookings(phone, name) {
+            switchView('list'); 
+            document.getElementById('bookingsTabs').style.display = 'none';
+            document.getElementById('guestFilterTab').style.display = 'block';
+            document.getElementById('filterGuestName').innerText = name;
+            const filteredBookings = allBookings.filter(b => formatPhone(b.phone) === phone);
+            renderTable(filteredBookings);
+        }
+
+        function resetGuestFilter() {
+            document.getElementById('bookingsTabs').style.display = 'flex';
+            document.getElementById('guestFilterTab').style.display = 'none';
+            filterBookings('all', document.querySelector('#bookingsTabs .m-tab'));
+        }
+
+        /* --- МОБІЛЬНА ШАХМАТКА --- */
+        let timelineMode = 'month'; let timelineBaseDate = new Date(); timelineBaseDate.setDate(1); 
+        
+        function setTimelineMode(mode) {
+            timelineMode = mode;
+            document.getElementById('mode-month').classList.toggle('active', mode === 'month');
+            document.getElementById('mode-cont').classList.toggle('active', mode === 'continuous');
+            resetTimelineToToday();
+        }
+
+        function shiftTimeline(months) { 
+            if (timelineMode === 'continuous') { timelineBaseDate.setDate(timelineBaseDate.getDate() + (months > 0 ? 14 : -14)); } 
+            else { timelineBaseDate.setDate(1); timelineBaseDate.setMonth(timelineBaseDate.getMonth() + months); }
+            renderTimeline(); 
+        }
+        
+        function resetTimelineToToday() { 
+            timelineBaseDate = new Date(); 
+            if (timelineMode === 'month') { timelineBaseDate.setDate(1); } 
+            else { timelineBaseDate.setDate(timelineBaseDate.getDate() - 3); }
+            renderTimeline(); 
+        }
+
+        function renderTimeline() {
+            const monthsContainer = document.getElementById('timelineMonths'); const datesContainer = document.getElementById('timelineDates');
+            const gridContainer = document.getElementById('timelineGrid'); const roomsContainer = document.getElementById('timelineRooms');
+            monthsContainer.innerHTML = ''; datesContainer.innerHTML = ''; gridContainer.innerHTML = ''; roomsContainer.innerHTML = '';
+
+            const startDate = new Date(timelineBaseDate); 
+            let daysCount = 35; 
+            if (timelineMode === 'month') { daysCount = new Date(startDate.getFullYear(), startDate.getMonth() + 1, 0).getDate(); }
+
+            // Для мобільного екрану робимо клітинку вужчою (46px)
+            const cellWidth = 46; 
+            const daysArr = ['Нд', 'Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб'];
+            const today = new Date();
+            
+            document.getElementById('timelineMonthLabel').innerText = startDate.toLocaleString('uk-UA', { month: 'short', year: 'numeric' });
+
+            let currentMonth = startDate.getMonth(); let monthName = startDate.toLocaleString('uk-UA', { month: 'short' }); let daysInCurrentMonth = 0;
+
+            for (let i = 0; i < daysCount; i++) {
+                const d = new Date(startDate); d.setDate(startDate.getDate() + i);
+                if (d.getMonth() !== currentMonth) {
+                    monthsContainer.innerHTML += `<div class="timeline-month-cell" style="width: ${daysInCurrentMonth * cellWidth}px">${monthName}</div>`;
+                    currentMonth = d.getMonth(); monthName = d.toLocaleString('uk-UA', { month: 'short' }); daysInCurrentMonth = 1;
+                } else { daysInCurrentMonth++; }
+                
+                const isToday = d.toDateString() === today.toDateString(); const isWeekend = d.getDay() === 0 || d.getDay() === 6;
+                datesContainer.innerHTML += `<div class="timeline-date ${isToday ? 'today' : ''} ${isWeekend ? 'weekend' : ''}">${d.getDate()} <span>${daysArr[d.getDay()]}</span></div>`;
+            }
+            monthsContainer.innerHTML += `<div class="timeline-month-cell" style="width: ${daysInCurrentMonth * cellWidth}px">${monthName}</div>`;
+
+            roomsList.filter(r => r.active).forEach((room, roomIndex) => {
+                roomsContainer.innerHTML += `<div class="timeline-room">${room.short}<span>${room.desc}</span></div>`;
+                let rowHtml = `<div class="timeline-row-bg" id="grid-row-${roomIndex}" style="position: relative;">`;
+                for (let i = 0; i < daysCount; i++) {
+                    const d = new Date(startDate); d.setDate(startDate.getDate() + i);
+                    const isWeekend = d.getDay() === 0 || d.getDay() === 6;
+                    const dateString = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+                    rowHtml += `<div class="timeline-cell ${isWeekend ? 'weekend' : ''}" onclick="openNewBookingDrawer('${room.name}', '${dateString}')"></div>`;
+                }
+                rowHtml += `</div>`; gridContainer.innerHTML += rowHtml;
+                
+                const currentRow = document.getElementById(`grid-row-${roomIndex}`);
+                
+                allBookings.forEach((b) => {
+                    if (String(b.status).toLowerCase().includes('скас')) return;
+                    let cottageStr = String(b.cottage || '');
+                    if (cottageStr.includes(room.short) || (room.id === 3 && cottageStr.includes("Люкс")) || (room.id === 2 && cottageStr.includes("Сімейний"))) {
+                        const inDate = new Date(b.checkIn); const outDate = new Date(b.checkOut);
+                        inDate.setHours(0,0,0,0); outDate.setHours(0,0,0,0);
+                        const timelineStart = new Date(startDate); timelineStart.setHours(0,0,0,0);
+                        const offsetDays = Math.round((inDate - timelineStart) / (1000 * 60 * 60 * 24));
+                        const durationDays = Math.round((outDate - inDate) / (1000 * 60 * 60 * 24));
+                        
+                        if (offsetDays + durationDays > 0 && offsetDays < daysCount) {
+                            let statusClass = 'status-new'; let s = String(b.status).toLowerCase();
+                            if (s.includes('підтвердж') || s.includes('заїхав')) statusClass = 'status-confirmed';
+                            
+                            let blockLeft = offsetDays * cellWidth; let blockWidth = durationDays * cellWidth; 
+                            if (offsetDays < 0) { blockWidth = (durationDays + offsetDays) * cellWidth; blockLeft = 0; }
+                            if (offsetDays + durationDays > daysCount) { blockWidth = (daysCount - offsetDays) * cellWidth; }
+
+                            let total = Number(b.totalPrice) || 0; let paid = Number(b.paidAmount) || 0; let balance = total - paid;
+                            let finText = ""; let badgeBg = ""; let badgeColor = "#FFFFFF";
+                            if (total === 0) { finText = "Без ціни"; badgeBg = "rgba(255,255,255,0.3)"; badgeColor = "#1A1A1A"; } 
+                            else if (paid === 0) { finText = "Очікує опл."; badgeBg = "#F59E0B"; } 
+                            else if (balance <= 0) { finText = "Оплачено"; badgeBg = "#10B981"; } 
+                            else { finText = `Борг:${balance}`; badgeBg = "#EF4444"; }
+
+                            let guestName = String(b.name).replace(' (Ручна бронь)', '');
+
+                            currentRow.innerHTML += `
+                                <div class="booking-block ${statusClass}" style="left: ${blockLeft}px; width: ${blockWidth}px;" onclick="openDetailsByRow(${b.row})">
+                                    <div style="font-size: 11px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; line-height: 1;">${guestName}</div>
+                                    <div style="margin-top: 3px; display: flex; overflow: hidden;">
+                                        <span style="background: ${badgeBg}; color: ${badgeColor}; font-size: 8px; padding: 2px 4px; border-radius: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${finText}</span>
+                                    </div>
+                                </div>`;
+                        }
+                    }
+                });
+            });
+            
+            if (timelineMode === 'month') {
+                if (timelineBaseDate.getMonth() === today.getMonth() && timelineBaseDate.getFullYear() === today.getFullYear()) {
+                    document.getElementById('timelineScroll').scrollLeft = Math.max(0, (today.getDate() - 2) * cellWidth); 
+                } else { document.getElementById('timelineScroll').scrollLeft = 0; }
+            } else if (timelineMode === 'continuous') { document.getElementById('timelineScroll').scrollLeft = 0; }
+        }
+
+        /* --- СІТКА ЦІН --- */
+        let priceTimelineBaseDate = new Date(); priceTimelineBaseDate.setDate(1);
+        function shiftPriceTimeline(months) { priceTimelineBaseDate.setMonth(priceTimelineBaseDate.getMonth() + months); renderPriceGrid(); }
+        function resetPriceTimelineToToday() { priceTimelineBaseDate = new Date(); priceTimelineBaseDate.setDate(1); renderPriceGrid(); }
+
+        function renderPriceGrid() {
+            const monthsContainer = document.getElementById('priceMonths'); const datesContainer = document.getElementById('priceDates');
+            const gridContainer = document.getElementById('priceGrid'); const roomsContainer = document.getElementById('priceRoomsList');
+            if(!monthsContainer) return;
+            monthsContainer.innerHTML = ''; datesContainer.innerHTML = ''; gridContainer.innerHTML = ''; roomsContainer.innerHTML = '';
+
+            const startDate = new Date(priceTimelineBaseDate);
+            const daysCount = new Date(startDate.getFullYear(), startDate.getMonth() + 1, 0).getDate(); 
+            const cellWidth = 46; const daysArr = ['Нд', 'Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб'];
+            document.getElementById('priceMonthLabel').innerText = startDate.toLocaleString('uk-UA', { month: 'short' });
+            
+            let monthName = startDate.toLocaleString('uk-UA', { month: 'short' });
+            monthsContainer.innerHTML = `<div class="timeline-month-cell" style="width: ${daysCount * cellWidth}px">${monthName}</div>`;
+
+            for (let i = 0; i < daysCount; i++) {
+                const d = new Date(startDate); d.setDate(startDate.getDate() + i); const isWeekend = d.getDay() === 0 || d.getDay() === 6;
+                datesContainer.innerHTML += `<div class="timeline-date ${isWeekend ? 'weekend' : ''}" style="height: 50px;">${d.getDate()} <span>${daysArr[d.getDay()]}</span></div>`;
+            }
+
+            roomsList.filter(r => r.active).forEach((room, roomIndex) => {
+                roomsContainer.innerHTML += `<div class="timeline-room" style="height: 50px;">${room.short}</div>`;
+                let rowHtml = `<div class="timeline-row-bg" style="height: 50px; position: relative;">`;
+                for (let i = 0; i < daysCount; i++) {
+                    const d = new Date(startDate); d.setDate(startDate.getDate() + i); const isWeekend = d.getDay() === 0 || d.getDay() === 6;
+                    const dateStr = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+                    let price = isWeekend ? room.priceWeekend : room.priceWeekday;
+                    if (customPrices[room.id] && customPrices[room.id][dateStr]) { price = customPrices[room.id][dateStr]; }
+                    rowHtml += `<div class="timeline-cell ${isWeekend ? 'weekend' : ''}" style="display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:#6B7280;" onclick="openGenericModal('price')">${price}</div>`;
+                }
+                rowHtml += `</div>`; gridContainer.innerHTML += rowHtml;
+            });
+        } 
+
+        function togglePet(val) {
+            document.getElementById('adminPets').value = val;
+            document.querySelectorAll('.pet-btn').forEach(btn => { btn.classList.toggle('active', btn.getAttribute('data-val') === val); });
+            updatePricePreview();
+        }
+        function toggleRoomStatus(val) {
+            document.getElementById('mRoomStatus').value = val;
+            document.querySelectorAll('.room-status-btn').forEach(btn => { btn.classList.toggle('active', btn.getAttribute('data-val') === val); });
+        }
+
+        function updatePricePreview() {
+            const checkInStr = document.getElementById('adminCheckIn').value; const checkOutStr = document.getElementById('adminCheckOut').value;
+            const roomName = document.getElementById('adminCottage').value; const guests = parseInt(document.getElementById('adminGuests').value) || 2;
+            const petsSelect = document.getElementById('adminPets'); const pets = petsSelect ? petsSelect.value : "Ні";
+            const cont = document.getElementById('liveCalculatorContainer');
+
+            if (!checkInStr || !checkOutStr || !roomName) { cont.innerHTML = ''; return; }
+
+            let savedPaidAmount = 0;
+            if (document.getElementById('adminPaidAmount')) { savedPaidAmount = Number(document.getElementById('adminPaidAmount').value) || 0; }
+
+            let safeIn = checkInStr.includes('.') ? checkInStr.split('.').reverse().join('-') : checkInStr;
+            let safeOut = checkOutStr.includes('.') ? checkOutStr.split('.').reverse().join('-') : checkOutStr;
+
+            const d1 = new Date(safeIn); const d2 = new Date(safeOut);
+            let nights = Math.round((d2 - d1) / (1000 * 60 * 60 * 24)); if (nights < 1 || isNaN(nights)) nights = 1;
+
+            const room = roomsList.find(r => r.name === roomName); if (!room) { cont.innerHTML = ''; return; }
+            
+            let isOverlap = false;
+            for (let b of allBookings) {
+                if (editingRowNumber && b.row == editingRowNumber) continue; 
+                if (String(b.status).toLowerCase().includes('скас')) continue; 
+                if (b.cottage === roomName) {
+                    let exIn = new Date(b.checkIn); exIn.setHours(0,0,0,0); let exOut = new Date(b.checkOut); exOut.setHours(0,0,0,0);
+                    let currentIn = new Date(d1); currentIn.setHours(0,0,0,0); let currentOut = new Date(d2); currentOut.setHours(0,0,0,0);
+                    if (currentIn < exOut && currentOut > exIn) { isOverlap = true; break; }
+                }
+            }
+
+            const submitBtn = document.getElementById('adminSubmitBtn');
+            if (isOverlap) {
+                submitBtn.disabled = true; submitBtn.style.opacity = '0.5';
+                cont.innerHTML = `<div class="form-section" style="background:#FEF2F2; border-color: #EF4444; padding: 20px;"><div style="color: #DC2626; font-weight: bold; font-size: 13px; text-align: center;">ОБЕРЕЖНО: ОВЕРБУКІНГ! Дати зайняті.</div></div>`;
+                return;
+            } else { submitBtn.disabled = false; submitBtn.style.opacity = '1'; }
+
+            let basePriceTotal = 0;
+            for (let i = 0; i < nights; i++) {
+                let curr = new Date(d1); curr.setDate(curr.getDate() + i);
+                let ds = `${curr.getFullYear()}-${String(curr.getMonth()+1).padStart(2,'0')}-${String(curr.getDate()).padStart(2,'0')}`;
+                let isWeekend = (curr.getDay() === 0 || curr.getDay() === 6);
+                let dp = isWeekend ? room.priceWeekend : room.priceWeekday;
+                if (customPrices[room.id] && customPrices[room.id][ds]) dp = customPrices[room.id][ds];
+                basePriceTotal += dp;
+            }
+
+            let extraGuests = Math.max(0, guests - room.capacity);
+            let dynamicExtraPrice = room.extraGuestPrice !== undefined ? room.extraGuestPrice : 2500;
+            let extraGuestFee = extraGuests * dynamicExtraPrice * nights;
+            let petFee = (pets === "Так") ? (500 + 200 * nights) : 0;
+
+            let discountPercent = 0;
+            const currentRoomId = String(room.id);
+            if (typeof discountsList !== 'undefined') {
+                discountsList.forEach(d => {
+                    const condNights = parseInt(String(d.condition).replace(/\D/g,'')) || 0;
+                    const dPct = parseInt(String(d.discount).replace(/\D/g,'')) / 100;
+                    if (nights >= condNights) {
+                        const appliesToRoom = d.roomsIds && (d.roomsIds.includes("all") || d.roomsIds.includes(currentRoomId));
+                        if (appliesToRoom && dPct > discountPercent) { discountPercent = dPct; }
+                    }
+                });
+            }
+
+            let amountToDiscount = basePriceTotal + extraGuestFee;
+            let discountAmount = Math.round(amountToDiscount * discountPercent);
+            let totalPrice = amountToDiscount - discountAmount + petFee;
+
+            cont.innerHTML = `
+                <div class="form-section" style="background:#FDFCFB; border-color: var(--accent); padding: 16px;">
+                    <span class="form-section-title" style="color:var(--accent);">Розшифровка (${nights} ночей)</span>
+                    <div style="font-size: 13px; color: #4B5563; margin-bottom: 12px;">
+                        <div style="display:flex; justify-content:space-between; margin-bottom:4px;"><span>Базова:</span><span>${basePriceTotal} грн</span></div>
+                        ${extraGuestFee > 0 ? `<div style="display:flex; justify-content:space-between; margin-bottom:4px;"><span>Дод. гості:</span><span>+${extraGuestFee} грн</span></div>` : ''}
+                        ${petFee > 0 ? `<div style="display:flex; justify-content:space-between; margin-bottom:4px;"><span>Тварини:</span><span>+${petFee} грн</span></div>` : ''}
+                        ${discountAmount > 0 ? `<div style="display:flex; justify-content:space-between; margin-bottom:4px; color:var(--danger);"><span>Знижка:</span><span>-${discountAmount} грн</span></div>` : ''}
+                    </div>
+                    <div style="border-top: 1px solid #E5E7EB; padding-top: 12px;">
+                        <div class="form-group" style="margin-bottom: 12px;">
+                            <label style="color: var(--accent); font-weight: 700;">До сплати:</label>
+                            <input type="number" id="adminTotalPrice" value="${totalPrice}" style="font-weight:bold; font-size: 16px; border-color: var(--accent); background: #FFF;">
+                        </div>
+                        <div class="form-group" style="margin-bottom: 0;">
+                            <label>Аванс:</label>
+                            <div style="position: relative; display: flex; align-items: center;">
+                                <input type="number" id="adminPaidAmount" value="${savedPaidAmount}" placeholder="0" style="padding-right: 90px; width: 100%;">
+                                <div style="position: absolute; right: 6px; display: flex; gap: 4px;">
+                                    <div onclick="setHalfPrepayment()" style="background: #F3F4F6; color: #4B5563; font-size: 11px; font-weight: 700; padding: 6px; border-radius: 8px; cursor: pointer;">50%</div>
+                                    <div onclick="setFullPrepayment()" style="background: #D1FAE5; color: #065F46; font-size: 11px; font-weight: 700; padding: 6px; border-radius: 8px; cursor: pointer;">100%</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div style="margin-top: 12px; padding: 10px; font-size: 14px; font-weight: bold; border-radius: 10px; text-align: center;" id="adminBalance">0 грн</div>
+                    </div>
                 </div>
-                <div class="paid-box" id="balanceBox">
-                    <div class="paid-label" id="balanceLabel">Залишок</div>
-                    <input type="number" class="paid-input" id="mBalanceDisp" value="0" readonly>
-                </div>
-            </div>
-            <div class="paid-section" style="margin-top:10px;">
-                <div class="paid-box">
-                    <div class="paid-label">Внесено (аванс)</div>
-                    <input type="number" class="paid-input" id="mPaidAmount" value="${savedPaid}" placeholder="0" oninput="calcBalance()">
-                </div>
-            </div>
-            <div class="quick-pay">
-                <div class="qpbtn" onclick="setHalf()">50% (${Math.round(total/2)} грн)</div>
-                <div class="qpbtn" onclick="setFull()" style="color:var(--success);">Оплачено повністю</div>
-            </div>
-        </div>`;
-    calcBalance();
-}
+            `;
+            document.getElementById('adminTotalPrice').addEventListener('input', calculateBalanceLive);
+            document.getElementById('adminPaidAmount').addEventListener('input', calculateBalanceLive);
+            calculateBalanceLive();
+        }
 
-function calcBalance(){
-    const t=Number(document.getElementById('mTotalPrice')?.value)||0;
-    const p=Number(document.getElementById('mPaidAmount')?.value)||0;
-    const bal=t-p;
-    const bd=document.getElementById('mBalanceDisp');
-    const bb=document.getElementById('balanceBox');
-    const bl=document.getElementById('balanceLabel');
-    if(!bd||!bb) return;
-    bd.value=bal<=0?0:bal;
-    if(bal<=0){ bb.className='paid-box balance-box paid-full'; bl.innerText='Оплачено'; bd.value='✓'; }
-    else { bb.className='paid-box balance-box'; bl.innerText='Залишок'; bd.value=bal+' грн'; }
-}
+        function setHalfPrepayment() { let t = document.getElementById('adminTotalPrice'); let p = document.getElementById('adminPaidAmount'); if (t && p) { p.value = Math.round(Number(t.value) / 2); calculateBalanceLive(); } }
+        function setFullPrepayment() { let t = document.getElementById('adminTotalPrice'); let p = document.getElementById('adminPaidAmount'); if (t && p) { p.value = Number(t.value) || 0; calculateBalanceLive(); } }
+        function changeGuests(amount) { let input = document.getElementById('adminGuests'); let newVal = (parseInt(input.value) || 1) + amount; if (newVal >= 1) { input.value = newVal; updatePricePreview(); } }
+        
+        function calculateBalanceLive() {
+            let total = Number(document.getElementById('adminTotalPrice').value) || 0; let paid = Number(document.getElementById('adminPaidAmount').value) || 0;
+            let balance = total - paid; let balEl = document.getElementById('adminBalance');
+            if (balance <= 0) { balEl.innerText = "Оплачено (0 грн)"; balEl.style.color = "#059669"; balEl.style.background = "#D1FAE5"; balEl.style.border = "1px solid #A7F3D0"; } 
+            else { balEl.innerText = `Борг: ${balance} грн`; balEl.style.color = "#DC2626"; balEl.style.background = "#FEE2E2"; balEl.style.border = "1px solid #FECACA"; }
+        }
+        
+        const checkOutPicker = flatpickr("#adminCheckOut", { locale: "uk", dateFormat: "Y-m-d", altInput: true, altFormat: "d.m.Y", disableMobile: "true", onChange: updatePricePreview });
+        const checkInPicker = flatpickr("#adminCheckIn", { locale: "uk", dateFormat: "Y-m-d", altInput: true, altFormat: "d.m.Y", disableMobile: "true", onChange: function(s, d) { checkOutPicker.set("minDate", d); updatePricePreview(); }});
 
-function setHalf(){ const t=Number(document.getElementById('mTotalPrice')?.value)||0; if(document.getElementById('mPaidAmount')) document.getElementById('mPaidAmount').value=Math.round(t/2); calcBalance(); }
-function setFull(){ const t=Number(document.getElementById('mTotalPrice')?.value)||0; if(document.getElementById('mPaidAmount')) document.getElementById('mPaidAmount').value=t; calcBalance(); }
+        document.querySelectorAll('.status-btn').forEach(btn => { btn.addEventListener('click', function() { document.querySelectorAll('.status-btn').forEach(b => b.classList.remove('active')); this.classList.add('active'); }); });
+        document.getElementById('adminGuests').addEventListener('input', updatePricePreview);
+        document.getElementById('adminGuests').addEventListener('change', updatePricePreview);
 
-// ─── SAVE BOOKING ─────────────────────────────────────────────
-async function saveBooking() {
-    const btn = document.getElementById('saveBtn');
-    btn.innerText='Збереження...'; btn.disabled=true;
-    const data = {
-        checkIn: document.getElementById('mCheckIn').value,
-        checkOut: document.getElementById('mCheckOut').value,
-        cottage: document.getElementById('mCottage').value,
-        name: document.getElementById('mName').value,
-        phone: document.getElementById('mPhone').value,
-        guests: document.getElementById('mGuests').value,
-        pets: document.getElementById('mPets').value,
-        status: document.querySelector('.stbtn.active')?.dataset.status||'Нова бронь',
-        totalPrice: document.getElementById('mTotalPrice')?.value||0,
-        paidAmount: document.getElementById('mPaidAmount')?.value||0
-    };
-    if (editingRow!==null) data.row=editingRow;
-    try {
-        const res=await fetch(API_URL,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(data)});
-        const json=await res.json();
-        if(json.error==='OVERLAP'){ alert('❌ Ці дати щойно зайняті!'); return; }
-        closeSheet(); showToast('Бронь збережена! ✓'); await init();
-        renderList(allBookings);
-    } catch(e){ alert('Помилка збереження!'); }
-    finally { btn.innerText='Зберегти'; btn.disabled=false; }
-}
+        function openNewBookingDrawer(prefillRoom = null, prefillDate = null) {
+            editingRowNumber = null; document.getElementById('drawerTitle').innerText = 'Нова бронь'; 
+            document.getElementById('adminBookingForm').reset(); document.getElementById('adminDeleteBtn').style.display = 'none';
+            document.getElementById('liveCalculatorContainer').innerHTML = '';
+            document.querySelectorAll('.status-btn').forEach(b => b.classList.remove('active'));
+            document.querySelector('.status-btn[data-status="Нова бронь"]').classList.add('active');
+            if(document.getElementById('adminPets')) togglePet('Ні');
+            
+            const activeRooms = roomsList.filter(r => r.active);
+            const cottageOptions = document.getElementById('cottageOptions');
+            cottageOptions.innerHTML = activeRooms.map(r => `<div class="custom-option" onclick="selectOption('cottageWrapper', 'adminCottage', '${r.name}', this, '${r.name} (${r.desc})')"><div>${r.name} <span style="font-size:11px; color:#9CA3AF; display:block;">${r.desc}</span></div></div>`).join('');
 
-// ─── DELETE ───────────────────────────────────────────────────
-function deleteCurrent(){ document.getElementById('confirmOverlay').classList.add('active'); }
-function closeConfirm(){ document.getElementById('confirmOverlay').classList.remove('active'); }
-async function confirmDelete(){
-    closeConfirm();
-    try{
-        await fetch(API_URL,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({action:'deleteBooking',row:editingRow})});
-        closeSheet(); showToast('Бронювання видалено'); await init(); renderList(allBookings);
-    }catch(e){ alert('Помилка!'); }
-}
+            let defaultRoom = prefillRoom || (activeRooms[0] ? activeRooms[0].name : "");
+            let defaultDesc = activeRooms.find(r => r.name === defaultRoom)?.desc || "";
+            document.getElementById('adminCottage').value = defaultRoom;
+            document.getElementById('cottageSelectedText').innerText = defaultRoom ? `${defaultRoom} (${defaultDesc})` : "Оберіть номер";
+            document.getElementById('adminSource').value = "Instagram"; document.getElementById('sourceSelectedText').innerText = "Instagram";
 
-// ─── UTILS ────────────────────────────────────────────────────
-function fmtPhone(p){ let c=String(p||'').replace(/\D/g,''); if(c.length===9)c='380'+c; if(c.length===10&&c.startsWith('0'))c='38'+c; return c; }
-function visitWord(n){ let v=Math.abs(n)%100, v1=v%10; if(v>10&&v<20)return'заїздів'; if(v1>1&&v1<5)return'заїзди'; if(v1===1)return'заїзд'; return'заїздів'; }
+            if (prefillDate) {
+                checkInPicker.setDate(prefillDate); let nextDay = new Date(prefillDate); nextDay.setDate(nextDay.getDate() + 1); checkOutPicker.setDate(nextDay);
+            } else { checkInPicker.clear(); checkOutPicker.clear(); }
+            setTimeout(updatePricePreview, 100); document.getElementById('bookingDrawer').classList.add('active');
+        }
 
-function showToast(msg){
-    const t=document.getElementById('toast'); t.innerText=msg;
-    t.classList.add('show'); setTimeout(()=>t.classList.remove('show'),2500);
-}
+        function openDetailsByRow(rowNumber) {
+            const booking = allBookings.find(b => b.row == rowNumber); if (!booking) return;
+            editingRowNumber = rowNumber; document.getElementById('drawerTitle').innerText = `Деталі броні`;
+            document.getElementById('adminDeleteBtn').style.display = 'flex';
+            document.getElementById('adminName').value = String(booking.name).replace(' (Ручна бронь)', '');
+            document.getElementById('adminPhone').value = '+' + formatPhone(booking.phone);
+            document.getElementById('adminGuests').value = booking.guests || 2;
+            
+            const availableRooms = roomsList.filter(r => r.active || r.name === booking.cottage);
+            const cottageOptions = document.getElementById('cottageOptions');
+            cottageOptions.innerHTML = availableRooms.map(r => `<div class="custom-option" onclick="selectOption('cottageWrapper', 'adminCottage', '${r.name}', this, '${r.name} (${r.desc})')"><div>${r.name} <span style="font-size:11px; color:#9CA3AF; display:block;">${r.desc}</span></div></div>`).join('');
 
-// ─── START ────────────────────────────────────────────────────
-window.onload = init;
-</script>
+            let savedRoom = roomsList.some(r => r.name === booking.cottage) ? booking.cottage : (availableRooms[0] ? availableRooms[0].name : "");
+            let savedDesc = roomsList.find(r => r.name === savedRoom)?.desc || "";
+            document.getElementById('adminCottage').value = savedRoom;
+            document.getElementById('cottageSelectedText').innerText = savedRoom ? `${savedRoom} (${savedDesc})` : "Оберіть номер";
+            checkInPicker.setDate(booking.checkIn); checkOutPicker.setDate(booking.checkOut);
+            
+            if (document.getElementById('adminPets')) { togglePet((booking.pets === "Так" || booking.pets === true) ? "Так" : "Ні"); }
+            
+            document.querySelectorAll('.status-btn').forEach(b => b.classList.remove('active'));
+            let matched = Array.from(document.querySelectorAll('.status-btn')).find(b => b.getAttribute('data-status') === booking.status);
+            if(matched) matched.classList.add('active'); else document.querySelector('.status-btn[data-status="Нова бронь"]').classList.add('active');
+
+            setTimeout(() => {
+                updatePricePreview();
+                setTimeout(() => {
+                    if(document.getElementById('adminTotalPrice')) {
+                        document.getElementById('adminTotalPrice').value = booking.totalPrice || 0;
+                        document.getElementById('adminPaidAmount').value = booking.paidAmount || 0;
+                        calculateBalanceLive(); 
+                    }
+                }, 50);
+            }, 100);
+            document.getElementById('bookingDrawer').classList.add('active');
+        }
+
+        function closeDrawer() { document.getElementById('bookingDrawer').classList.remove('active'); }
+
+        document.getElementById('adminBookingForm').addEventListener('submit', async function(e) {
+            e.preventDefault(); const btn = document.getElementById('adminSubmitBtn'); const originalText = btn.innerText; btn.innerText = "Збереження..."; btn.disabled = true;
+            const bookingData = { 
+                checkIn: document.getElementById('adminCheckIn').value, checkOut: document.getElementById('adminCheckOut').value, cottage: document.getElementById('adminCottage').value, 
+                name: document.getElementById('adminName').value, phone: document.getElementById('adminPhone').value, guests: document.getElementById('adminGuests').value,
+                pets: document.getElementById('adminPets').value, status: document.querySelector('.status-btn.active').getAttribute('data-status'),
+                totalPrice: document.getElementById('adminTotalPrice').value, paidAmount: document.getElementById('adminPaidAmount').value
+            };
+            if (editingRowNumber !== null) bookingData.row = editingRowNumber;
+            try { 
+                let res = await fetch(API_URL, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify(bookingData) }); 
+                let json = await res.json();
+                if (json.error === "OVERLAP") { alert("❌ ПОМИЛКА: Ці дати щойно були зайняті."); return; }
+                closeDrawer(); showToast("Збережено!"); await initApp(); 
+            } catch (error) { alert("Помилка збереження!"); } finally { btn.innerText = originalText; btn.disabled = false; }
+        });
+
+        // CUSTOM SELECT ЛОГІКА
+        function toggleCustomSelect(wrapperId) {
+            document.querySelectorAll('.custom-select-wrapper').forEach(w => { if(w.id !== wrapperId) w.classList.remove('open'); });
+            document.getElementById(wrapperId).classList.toggle('open');
+        }
+        function selectOption(wrapperId, inputId, value, element = null, displayText = null) {
+            document.getElementById(inputId).value = value; document.getElementById(wrapperId).querySelector('span').innerText = displayText || value;
+            document.getElementById(wrapperId).classList.remove('open');
+            if (element) { let opts = document.getElementById(wrapperId).querySelectorAll('.custom-option'); opts.forEach(opt => opt.classList.remove('selected')); element.classList.add('selected'); }
+            if (inputId === 'adminCottage') updatePricePreview(); 
+        }
+        document.addEventListener('click', function(e) { if (!e.target.closest('.custom-select-wrapper')) { document.querySelectorAll('.custom-select-wrapper').forEach(w => w.classList.remove('open')); } });
+
+        // ЛОГІКА ЧІПСІВ (КНОПОК)
+        function toggleAllRoomsChip() {
+            const allBtn = document.getElementById('chip-room-all'); const isActive = !allBtn.classList.contains('active');
+            if (isActive) { allBtn.classList.add('active'); document.querySelectorAll('.room-chip').forEach(c => c.classList.add('active')); } 
+            else { allBtn.classList.remove('active'); document.querySelectorAll('.room-chip').forEach(c => c.classList.remove('active')); }
+        }
+        function toggleSingleRoomChip(el) {
+            el.classList.toggle('active'); const allChips = document.querySelectorAll('.room-chip'); const activeChips = document.querySelectorAll('.room-chip.active');
+            const allBtn = document.getElementById('chip-room-all'); if (allChips.length === activeChips.length) { allBtn.classList.add('active'); } else { allBtn.classList.remove('active'); }
+        }
+        function selectDayChip(el) { document.querySelectorAll('.day-chip').forEach(c => c.classList.remove('active')); el.classList.add('active'); document.getElementById('mPriceDays').value = el.getAttribute('data-val'); }
+        function selectPeriodChip(el) { document.querySelectorAll('.period-chip').forEach(c => c.classList.remove('active')); el.classList.add('active'); document.getElementById('mPricePeriod').value = el.getAttribute('data-val'); }
+        
+        function toggleAllDiscRooms() {
+            const allBtn = document.getElementById('chip-disc-room-all'); const isActive = !allBtn.classList.contains('active');
+            if (isActive) { allBtn.classList.add('active'); document.querySelectorAll('.disc-room-chip').forEach(c => c.classList.add('active')); } 
+            else { allBtn.classList.remove('active'); document.querySelectorAll('.disc-room-chip').forEach(c => c.classList.remove('active')); }
+        }
+        function toggleSingleDiscRoom(el) {
+            el.classList.toggle('active'); const allChips = document.querySelectorAll('.disc-room-chip'); const activeChips = document.querySelectorAll('.disc-room-chip.active');
+            const allBtn = document.getElementById('chip-disc-room-all'); if (allChips.length === activeChips.length) { allBtn.classList.add('active'); } else { allBtn.classList.remove('active'); }
+        }
+
+        window.onload = () => { switchView('grid'); initApp(); };
+    </script>
 </body>
 </html>
