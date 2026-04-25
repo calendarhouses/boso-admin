@@ -1358,7 +1358,7 @@ if (document.getElementById('view-grid').style.display === 'flex') {
                 const desc = document.getElementById('mRoomDesc').value;
                 const cap = parseInt(document.getElementById('mRoomCap').value) || 2;
                 const maxCap = parseInt(document.getElementById('mRoomMaxCap').value) || cap;
-                const extraPrice = parseInt(document.getElementById('mRoomExtraPrice').value) || 0; // Зчитуємо ціну за гостя
+                const extraPrice = parseInt(document.getElementById('mRoomExtraPrice').value) || 0;
                 const active = document.getElementById('mRoomStatus').value === 'true';
                 
                 if (currentEditId) {
@@ -1369,7 +1369,6 @@ if (document.getElementById('view-grid').style.display === 'flex') {
                 }
                 renderSettingsRooms();
                 if(document.getElementById('set-prices').style.display === 'block') renderPriceGrid();
-            }
 
             } else if (currentEditType === 'discount') {
                 const days = document.getElementById('mDiscDays').value || 2;
@@ -1397,8 +1396,8 @@ if (document.getElementById('view-grid').style.display === 'flex') {
                     let d = discountsList.find(x => x.id === currentEditId);
                     d.condition = `Діб в бронюванні: ${days}`; 
                     d.discount = `${pct}%`;
-                    d.roomsIds = savedIds; // Зберігаємо масив ID для модалки
-                    d.rooms = displayRoomsText; // Зберігаємо красивий текст для таблиці
+                    d.roomsIds = savedIds; 
+                    d.rooms = displayRoomsText; 
                 } else {
                     discountsList.push({ 
                         id: Date.now(), 
@@ -1409,6 +1408,7 @@ if (document.getElementById('view-grid').style.display === 'flex') {
                     });
                 }
                 renderSettingsDiscounts();
+
             } else if (currentEditType === 'customService') {
                 const name = document.getElementById('mServName').value || 'Нова послуга';
                 const price = document.getElementById('mServPrice').value || 0;
@@ -1431,13 +1431,12 @@ if (document.getElementById('view-grid').style.display === 'flex') {
                 renderSettingsServices();
 
             } else if (currentEditType === 'price') {
-                // Збираємо ID всіх номерів, які зараз світяться зеленим (мають клас active)
                 const selectedRooms = Array.from(document.querySelectorAll('.room-chip.active'))
                                            .map(chip => chip.getAttribute('data-id'));
                                            
                 const amount = parseInt(document.getElementById('mPriceAmount').value) || 0;
                 const periodMonths = parseInt(document.getElementById('mPricePeriod').value) || 1;
-                const dayType = document.getElementById('mPriceDays').value; // Беремо значення з прихованого поля
+                const dayType = document.getElementById('mPriceDays').value; 
                 
                 if (amount > 0 && selectedRooms.length > 0) {
                     const startDate = new Date(priceTimelineBaseDate); 
