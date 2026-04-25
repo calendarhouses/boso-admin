@@ -1138,14 +1138,51 @@ if (document.getElementById('view-grid').style.display === 'flex') {
                 `;
             } else if (type === 'price') {
                 title.innerText = 'Конструктор цін';
-                let roomOptions = `<option value="all">Усі номери</option>` + roomsList.map(r => `<option value="${r.id}">${r.name}</option>`).join('');
+                
+                // Формуємо красивий список номерів
+                let roomOptionsHtml = `<div class="custom-option selected" onclick="selectOption('mPriceRoomWrapper', 'mPriceRoom', 'all', this, 'Усі номери')">Усі номери</div>`;
+                roomOptionsHtml += roomsList.map(r => `<div class="custom-option" onclick="selectOption('mPriceRoomWrapper', 'mPriceRoom', '${r.id}', this, '${r.name}')">${r.name}</div>`).join('');
+
                 body.innerHTML = `
-                    <div class="form-group"><label>Оберіть номери:</label><select id="mPriceRoom">${roomOptions}</select></div>
-                    <div class="form-group"><label>Встановіть ціну:</label><input type="number" id="mPriceAmount" placeholder="0" min="0"></div>
-                    <div class="form-group"><label>Оберіть період:</label><select><option>Поточний місяць</option></select></div>
-                    <div class="form-group" style="margin-bottom: 0;"><label>Оберіть дні тижня:</label>
-                        <div class="checkbox-group">
-                            <label class="custom-checkbox"><input type="checkbox" id="mPriceDaysAll" checked> Усі дні</label>
+                    <div class="form-group">
+                        <label>Оберіть номери:</label>
+                        <div class="custom-select-wrapper" id="mPriceRoomWrapper">
+                            <div class="custom-select-trigger" onclick="toggleCustomSelect('mPriceRoomWrapper')">
+                                <span id="mPriceRoomText">Усі номери</span>
+                                <svg width="16" height="16" fill="none" stroke="#6B7280" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                            </div>
+                            <div class="custom-select-options">${roomOptionsHtml}</div>
+                        </div>
+                        <input type="hidden" id="mPriceRoom" value="all">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Встановіть ціну (грн):</label>
+                        <input type="number" id="mPriceAmount" placeholder="0" min="0">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Оберіть період:</label>
+                        <div class="custom-select-wrapper" id="mPricePeriodWrapper">
+                            <div class="custom-select-trigger" onclick="toggleCustomSelect('mPricePeriodWrapper')">
+                                <span id="mPricePeriodText">Поточний місяць</span>
+                                <svg width="16" height="16" fill="none" stroke="#6B7280" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                            </div>
+                            <div class="custom-select-options">
+                                <div class="custom-option selected" onclick="selectOption('mPricePeriodWrapper', 'mPricePeriod', '1', this, 'Поточний місяць')">Поточний місяць</div>
+                                <div class="custom-option" onclick="selectOption('mPricePeriodWrapper', 'mPricePeriod', '3', this, 'Наступні 3 місяці')">Наступні 3 місяці</div>
+                                <div class="custom-option" onclick="selectOption('mPricePeriodWrapper', 'mPricePeriod', '12', this, 'Наступний рік (12 міс)')">Наступний рік (12 міс)</div>
+                            </div>
+                        </div>
+                        <input type="hidden" id="mPricePeriod" value="1">
+                    </div>
+                    
+                    <div class="form-group" style="margin-bottom: 0;">
+                        <label>Оберіть дні тижня:</label>
+                        <div class="checkbox-group" style="flex-direction: row; gap: 20px;">
+                            <label class="custom-checkbox"><input type="radio" name="priceDays" value="all" checked style="width:16px;height:16px;"> Усі дні</label>
+                            <label class="custom-checkbox"><input type="radio" name="priceDays" value="weekdays" style="width:16px;height:16px;"> Будні</label>
+                            <label class="custom-checkbox"><input type="radio" name="priceDays" value="weekends" style="width:16px;height:16px;"> Вихідні</label>
                         </div>
                     </div>
                 `;
@@ -1327,17 +1364,34 @@ if (document.getElementById('view-grid').style.display === 'flex') {
             } else if (currentEditType === 'price') {
                 const roomSel = document.getElementById('mPriceRoom').value;
                 const amount = parseInt(document.getElementById('mPriceAmount').value) || 0;
+                const periodMonths = parseInt(document.getElementById('mPricePeriod').value) || 1;
+                const dayType = document.querySelector('input[name="priceDays"]:checked').value;
                 
                 if (amount > 0) {
-                    const startDate = new Date(priceTimelineBaseDate);
-                    const daysCount = new Date(startDate.getFullYear(), startDate.getMonth() + 1, 0).getDate();
+                    // Точка старту - 1-ше число місяця, який зараз відкрито в шахматці
+                    const startDate = new Date(priceTimelineBaseDate); 
+                    
+                    // Визначаємо кінцеву дату на основі вибору (1, 3 або 12 місяців)
+                    const endDate = new Date(startDate);
+                    endDate.setMonth(endDate.getMonth() + periodMonths);
+                    
+                    // Рахуємо загальну кількість днів у періоді
+                    const daysCount = Math.round((endDate - startDate) / (1000 * 60 * 60 * 24));
                     
                     roomsList.forEach(r => {
                         if (roomSel === 'all' || r.id == roomSel) {
                             if (!customPrices[r.id]) customPrices[r.id] = {};
-                            // Записуємо ціну на кожен день обраного місяця
-                            for (let i = 1; i <= daysCount; i++) {
-                                let d = new Date(startDate.getFullYear(), startDate.getMonth(), i);
+                            
+                            // Проходимось по кожному дню з обраного періоду
+                            for (let i = 0; i < daysCount; i++) {
+                                let d = new Date(startDate); 
+                                d.setDate(startDate.getDate() + i);
+                                let isWeekend = (d.getDay() === 0 || d.getDay() === 6); // 0 - Неділя, 6 - Субота
+                                
+                                // Фільтруємо по днях тижня
+                                if (dayType === 'weekdays' && isWeekend) continue; // Пропускаємо вихідні, якщо обрано "Будні"
+                                if (dayType === 'weekends' && !isWeekend) continue; // Пропускаємо будні, якщо обрано "Вихідні"
+                                
                                 let dateStr = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
                                 customPrices[r.id][dateStr] = amount;
                             }
