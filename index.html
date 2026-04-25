@@ -1076,21 +1076,6 @@ if (document.getElementById('view-grid').style.display === 'flex') {
                 </tr>`;
             });
         }
-
-        function deleteItem(type, id) {
-            let itemStr = type === 'discount' ? 'знижку' : 'послугу';
-            openCustomConfirm(
-                `Видалити ${itemStr}?`,
-                "Цю дію неможливо скасувати.",
-                function() {
-                    closeCustomConfirm();
-                    if(type === 'discount') { discountsList = discountsList.filter(d => d.id !== id); renderSettingsDiscounts(); }
-                    if(type === 'service') { customServicesList = customServicesList.filter(s => s.id !== id); renderSettingsServices(); }
-                    saveSettingsToCloud();
-                    showToast("Успішно видалено");
-                }
-            );
-        }
         
         function clearPricesAlert() {
             if(confirm("Ви впевнені, що хочете видалити всі ціни?")) {
@@ -1217,25 +1202,45 @@ if (document.getElementById('view-grid').style.display === 'flex') {
             }
         }
 
-        // --- ВИДАЛЕННЯ КОТЕДЖІВ (З МОДАЛКИ НАЛАШТУВАНЬ) ---
-        function deleteGenericItem() {
-            let itemType = currentEditType === 'room' ? 'котедж' : 'елемент';
+        // --- УНІВЕРСАЛЬНЕ ВИДАЛЕННЯ (НОМЕРИ, ЗНИЖКИ, ПОСЛУГИ) ---
+        function deleteGenericItem(type = null, id = null) {
+            // Якщо ми видаляємо з таблиці (Знижки/Послуги) - ставимо змінні
+            if (type && id) {
+                currentEditType = type;
+                currentEditId = id;
+            }
+
+            let itemType = 'елемент';
+            if (currentEditType === 'room') itemType = 'котедж';
+            if (currentEditType === 'discount') itemType = 'знижку';
+            if (currentEditType === 'service') itemType = 'послугу';
+
             openCustomConfirm(
-                `Видалити цей ${itemType}?`,
-                "Ви впевнені, що хочете назавжди видалити його? Всі прив'язані до нього налаштування зникнуть.",
+                `Видалити ${itemType}?`,
+                "Ви впевнені? Цю дію неможливо скасувати.",
                 confirmDeleteGenericItem
             );
         }
 
         function confirmDeleteGenericItem() {
             closeCustomConfirm(); // Ховаємо червоне вікно
+            
             if (currentEditType === 'room') {
                 roomsList = roomsList.filter(r => r.id !== currentEditId);
                 renderSettingsRooms();
                 if(document.getElementById('set-prices').style.display === 'block') renderPriceGrid();
+            } 
+            else if (currentEditType === 'discount') {
+                discountsList = discountsList.filter(d => d.id !== currentEditId);
+                renderSettingsDiscounts();
+            } 
+            else if (currentEditType === 'service') {
+                customServicesList = customServicesList.filter(s => s.id !== currentEditId);
+                renderSettingsServices();
             }
+
             saveSettingsToCloud(); // Зберігаємо в Гугл Таблицю
-            closeGenericModal();   // Ховаємо вікно котеджу
+            closeGenericModal();   // Ховаємо вікно налаштувань (якщо відкрито)
             showToast("Успішно видалено!");
         }
         
