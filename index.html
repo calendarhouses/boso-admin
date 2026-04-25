@@ -668,11 +668,15 @@ input[type="number"] {
             </div>
             <div class="modal-body" id="gModalBody">
                 </div>
-            <div class="modal-footer" style="display: flex; gap: 12px; justify-content: flex-end; align-items: stretch;">
-                <button class="btn-secondary" onclick="closeGenericModal()" style="height: 46px; margin: 0; display: flex; align-items: center;">Скасувати</button>
-                <button class="btn-primary" onclick="saveGenericModal()" style="height: 46px; margin: 0; display: flex; align-items: center;">Зберегти</button>
+            <div class="modal-footer" style="display: flex; justify-content: space-between; align-items: stretch; width: 100%;">
+                <button class="btn-outline-danger" id="modalDeleteBtn" onclick="deleteGenericItem()" style="display: none; height: 46px; margin: 0; padding: 0 16px;">
+                    <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                </button>
+                <div style="display: flex; gap: 12px; justify-content: flex-end; flex: 1;">
+                    <button class="btn-secondary" onclick="closeGenericModal()" style="height: 46px; margin: 0; display: flex; align-items: center;">Скасувати</button>
+                    <button class="btn-primary" onclick="saveGenericModal()" style="height: 46px; margin: 0; display: flex; align-items: center;">Зберегти</button>
+                </div>
             </div>
-        </div>
     </div>
 
 <div id="customConfirmModal" class="modal-overlay">
@@ -1094,6 +1098,7 @@ if (document.getElementById('view-grid').style.display === 'flex') {
         // --- УНІВЕРСАЛЬНА МОДАЛКА (Динамічна генерація полів) ---
         function openGenericModal(type, id = null) {
             currentEditType = type; currentEditId = id;
+            document.getElementById('modalDeleteBtn').style.display = id ? 'flex' : 'none';
             const title = document.getElementById('gModalTitle');
             const body = document.getElementById('gModalBody');
             
@@ -1160,6 +1165,22 @@ if (document.getElementById('view-grid').style.display === 'flex') {
 
         function closeGenericModal() { document.getElementById('genericModal').classList.remove('active'); }
 
+        function deleteGenericItem() {
+            if (!confirm("Ви впевнені, що хочете назавжди видалити цей номер?")) return;
+            
+            if (currentEditType === 'room') {
+                roomsList = roomsList.filter(r => r.id !== currentEditId);
+                renderSettingsRooms();
+                
+                // Якщо відкрита сітка цін — оновлюємо і її
+                if(document.getElementById('set-prices').style.display === 'block') renderPriceGrid();
+            }
+            
+            saveSettingsToCloud(); // Зберігаємо видалення в базу
+            closeGenericModal();
+            showToast("Номер успішно видалено!");
+        }
+        
         // Функція збереження змін з модалки
         function saveGenericModal() { 
             if (currentEditType === 'room') {
