@@ -3,6 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-title" content="BOSO">
+
     <script>if(window.innerWidth>=768)window.location.href='index.html';</script>
     <title>BOSO | Mobile</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -25,8 +30,11 @@
         }
 
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Inter', sans-serif; -webkit-tap-highlight-color: transparent; }
-        body { display: flex; flex-direction: column; height: 100vh; height: 100dvh; background-color: var(--bg-color); color: var(--text-main); overflow: hidden; overscroll-behavior-y: none; }
-
+        
+        /* Вбиваємо системні свайпи Safari (Назад/Вперед) */
+        html, body { overscroll-behavior-x: none; overscroll-behavior-y: none; } 
+        
+        body { display: flex; flex-direction: column; height: 100vh; height: 100dvh; background-color: var(--bg-color); color: var(--text-main); overflow: hidden; }
         /* --- ВЕРХНЯ ПАНЕЛЬ (TOP BAR) --- */
         .top-bar { 
             height: 60px; 
@@ -116,7 +124,9 @@
         .btn-outline-danger { background: #FEF2F2; color: var(--danger); border: 1px solid #FECACA; }
         .btn-success { background: var(--success); color: white; }
         .btn-action { background: #F3F4F6; color: #374151; border: none; padding: 8px 16px; border-radius: 8px; font-size: 13px; font-weight: 600; display: inline-flex; align-items: center; gap: 6px;}
-
+/* Ефект натискання для мобільних кнопок */
+        .tap-btn { transition: transform 0.1s, opacity 0.1s; }
+        .tap-btn:active { transform: scale(0.95); opacity: 0.8; }
         /* --- МОБІЛЬНА ШАХМАТКА --- */
         .timeline-toolbar { display: flex; flex-direction: column; gap: 12px; margin-bottom: 16px; }
         .timeline-nav-row { display: flex; justify-content: space-between; align-items: center; width: 100%; }
@@ -1185,14 +1195,13 @@
                             <label style="color: var(--accent); font-weight: 700;">До сплати:</label>
                             <input type="number" id="adminTotalPrice" value="${totalPrice}" style="font-weight:bold; font-size: 16px; border-color: var(--accent); background: #FFF;">
                         </div>
-                        <div class="form-group" style="margin-bottom: 0;">
-                            <label>Аванс:</label>
-                            <div style="position: relative; display: flex; align-items: center;">
-                                <input type="number" id="adminPaidAmount" value="${savedPaidAmount}" placeholder="0" style="padding-right: 90px; width: 100%;">
-                                <div style="position: absolute; right: 6px; display: flex; gap: 4px;">
-                                    <div onclick="setHalfPrepayment()" style="background: #F3F4F6; color: #4B5563; font-size: 11px; font-weight: 700; padding: 6px; border-radius: 8px; cursor: pointer;">50%</div>
-                                    <div onclick="setFullPrepayment()" style="background: #D1FAE5; color: #065F46; font-size: 11px; font-weight: 700; padding: 6px; border-radius: 8px; cursor: pointer;">100%</div>
-                                </div>
+                       <div class="form-group" style="margin-bottom: 0;">
+                            <label style="color: var(--text-main); font-weight: 700;">Внесено (Аванс):</label>
+                            <input type="number" id="adminPaidAmount" value="${savedPaidAmount}" placeholder="0" style="width: 100%; margin-bottom: 12px; font-weight: bold; font-size: 16px;">
+                            
+                            <div style="display: flex; gap: 10px;">
+                                <button type="button" class="tap-btn" onclick="setHalfPrepayment()" style="flex: 1; padding: 14px; background: #F3F4F6; color: #4B5563; font-size: 14px; font-weight: 700; border-radius: 12px; border: none; outline: none;">50% Аванс</button>
+                                <button type="button" class="tap-btn" onclick="setFullPrepayment()" style="flex: 1; padding: 14px; background: #D1FAE5; color: #065F46; font-size: 14px; font-weight: 700; border-radius: 12px; border: none; outline: none;">100% Оплата</button>
                             </div>
                         </div>
                         <div style="margin-top: 12px; padding: 10px; font-size: 14px; font-weight: bold; border-radius: 10px; text-align: center;" id="adminBalance">0 грн</div>
