@@ -2205,7 +2205,10 @@ function showGuestBookings(phone, name) {
 }
         
         // Запуск системи при завантаженні сторінки
-        window.onload = initApp;
+        window.onload = () => {
+            switchView('grid'); // Одразу відкриваємо Шахматку
+            initApp();          // Підтягуємо дані з бази
+        };
     </script>
 </body>
 </html>
