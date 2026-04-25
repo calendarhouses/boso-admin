@@ -308,6 +308,25 @@
         #toast-container { position: fixed; top: 20px; left: 50%; transform: translateX(-50%); z-index: 9999; display: flex; flex-direction: column; gap: 10px; width: 90%; }
         .toast { background: #111827; color: white; padding: 14px 20px; border-radius: 12px; font-size: 13px; box-shadow: 0 10px 20px rgba(0,0,0,0.2); opacity: 0; transform: translateY(-20px); transition: 0.4s; text-align: center;}
         .toast.show { opacity: 1; transform: translateY(0); }
+
+        /* --- ПРЕМІУМ КАРТКА ПРИ ДОВГОМУ НАТИСКАННІ --- */
+        .premium-tooltip { 
+            position: fixed; pointer-events: none; z-index: 99999; 
+            background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(12px); 
+            border: 1px solid #E5E7EB; border-radius: 16px; padding: 16px; 
+            box-shadow: 0 15px 30px rgba(0, 0, 0, 0.15), 0 4px 8px rgba(0, 0, 0, 0.05); 
+            opacity: 0; transform: translateY(15px); transition: opacity 0.2s ease, transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275); 
+            width: 260px; /* Фіксована ідеальна ширина для телефону */
+        }
+        .premium-tooltip.visible { opacity: 1; transform: translateY(0); }
+        .tt-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #F3F4F6; padding-bottom: 10px; margin-bottom: 12px; }
+        .tt-name { font-weight: 800; font-size: 15px; color: #111827; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 150px;}
+        .tt-guests { font-size: 11px; color: #6B7280; font-weight: 700; background: #F3F4F6; padding: 4px 8px; border-radius: 8px; }
+        .tt-body { font-size: 13px; color: #4B5563; display: flex; flex-direction: column; gap: 8px; }
+        .tt-row { display: flex; justify-content: space-between; align-items: center;}
+        .tt-label { color: #6B7280; font-weight: 500;}
+        .tt-value { font-weight: 700; color: #111827; }
+        .tt-status { margin-top: 10px; display: flex; align-items: center; justify-content: center; padding: 8px; border-radius: 10px; font-size: 12px; font-weight: 800; text-align: center; border: 1px solid rgba(0,0,0,0.05);}
     </style>
 </head>
 <body>
@@ -1443,17 +1462,27 @@
                 </div>
             `;
 
+            // МАГІЯ ПОЗИЦІОНУВАННЯ ДЛЯ МОБІЛКИ
             const rect = element.getBoundingClientRect();
-            let top = rect.top - tooltip.offsetHeight - 15;
-            let left = rect.left + (rect.width / 2) - (tooltip.offsetWidth / 2);
+            
+            // Центруємо рівно по центру екрану по горизонталі
+            let left = (window.innerWidth - tooltip.offsetWidth) / 2;
+            
+            // Ставимо вище пальця (над броНню)
+            let top = rect.top - tooltip.offsetHeight - 20;
 
-            if (top < 10) top = rect.bottom + 15;
-            if (left < 10) left = 10;
-            if (left + tooltip.offsetWidth > window.innerWidth - 10) left = window.innerWidth - tooltip.offsetWidth - 10;
+            // Якщо зверху мало місця (бронь в самому верху екрану) - кидаємо картку під палець
+            if (top < 40) {
+                top = rect.bottom + 20;
+            }
 
             tooltip.style.top = top + 'px';
             tooltip.style.left = left + 'px';
-            tooltip.classList.add('visible');
+            
+            // Запускаємо анімацію
+            requestAnimationFrame(() => {
+                tooltip.classList.add('visible');
+            });
         }
 
         function hidePremiumTooltip() {
