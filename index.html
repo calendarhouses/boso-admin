@@ -436,9 +436,21 @@ input[type="number"] {
 .custom-option { padding: 10px 12px; font-size: 14px; font-weight: 500; color: #4B5563; cursor: pointer; transition: 0.2s; border-radius: 8px; display: flex; align-items: center; justify-content: space-between;}
 .custom-option:hover { background: #F3F4F6; color: #111827; }
 .custom-option.selected { background: #F0FDF4; color: #059669; font-weight: 600; }
+    /* --- ПРІЛОАДЕР --- */
+        #preloader { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--bg-color); z-index: 99999; display: flex; align-items: center; justify-content: center; transition: opacity 0.5s ease; }
+        .pulse-logo { font-size: 56px; font-weight: 700; color: var(--text-main); letter-spacing: 2px; animation: pulseAnim 1.5s infinite; }
+        .pulse-logo span { color: var(--accent); }
+        @keyframes pulseAnim { 
+            0% { transform: scale(1); opacity: 1; } 
+            50% { transform: scale(1.05); opacity: 0.7; } 
+            100% { transform: scale(1); opacity: 1; } 
+        }
     </style>
 </head>
 <body>
+    <div id="preloader">
+        <div class="pulse-logo">BOSO<span>.</span></div>
+    </div>
 
     <div class="sidebar">
         <div class="logo">BOSO<span>.</span></div>
@@ -881,7 +893,14 @@ if (document.getElementById('view-grid').style.display === 'flex') {
                 renderSettingsDiscounts();
                 renderSettingsServices();
 
-            } catch (error) { 
+                // Ховаємо прілоадер плавно
+                const preloader = document.getElementById('preloader');
+                if (preloader) {
+                    preloader.style.opacity = '0';
+                    setTimeout(() => preloader.style.display = 'none', 500);
+                }
+
+            } catch (error) {
                 console.error("Помилка завантаження даних:", error); 
                 showToast("Помилка завантаження з бази!");
             }
@@ -1419,38 +1438,27 @@ if (document.getElementById('view-grid').style.display === 'flex') {
 
         // --- ВІДКРИТТЯ БРОНЮВАНЬ КОНКРЕТНОГО ГОСТЯ ---
         function showGuestBookings(phone, name) {
-            switchView('list'); // Переходимо на сторінку списку
+            switchView('list'); 
             
-            // 1. ХОВАЄМО вкладки "Всі броні, Майбутні, Скасовані"
+            // ЖОРСТКО ХОВАЄМО ВКЛАДКИ
             document.getElementById('bookingsTabs').style.display = 'none';
+            document.getElementById('guestFilterTab').style.display = 'flex';
+            document.getElementById('filterGuestName').innerText = name;
             
-            // 2. Ховаємо стару плашку (щоб не заважала, якщо вона ще є в HTML)
-            let oldFilterTab = document.getElementById('guestFilterTab');
-            if (oldFilterTab) oldFilterTab.style.display = 'none';
+            document.getElementById('pageTitle').innerText = 'Бронювання';
             
-            // 3. Робимо красивий заголовок з іменем і кнопкою "Скинути"
-            document.getElementById('pageTitle').innerHTML = `
-                Бронювання: <span style="color: var(--accent); font-weight: 700;">${name}</span>
-                <button class="btn-secondary" style="display: inline-flex; padding: 6px 12px; font-size: 13px; margin-left: 16px; height: auto;" onclick="resetGuestFilter()">✕ Скинути фільтр</button>
-            `;
-            
-            // 4. Фільтруємо і малюємо таблицю
             const filteredBookings = allBookings.filter(b => formatPhone(b.phone) === phone);
             renderTable(filteredBookings);
         }
 
         // --- СКИНУТИ ФІЛЬТР ГОСТЯ ---
         function resetGuestFilter() {
-            // 1. Повертаємо вкладки на місце
-            let tabs = document.getElementById('bookingsTabs');
-            if (tabs) tabs.style.display = 'flex';
-            
-            // 2. Повертаємо стандартний заголовок
+            document.getElementById('bookingsTabs').style.display = 'flex';
+            document.getElementById('guestFilterTab').style.display = 'none';
             document.getElementById('pageTitle').innerText = 'Бронювання';
             
-            // 3. Активуємо вкладку "Всі броні" і показуємо весь список
             let allTab = document.querySelector('#bookingsTabs .tab');
-            if (allTab) filterBookings('all', allTab);
+            filterBookings('all', allTab);
         }
 
         // --- ШАХМАТКА БРОНЮВАНЬ ---
@@ -2185,24 +2193,6 @@ document.addEventListener('click', function(e) {
         document.querySelectorAll('.custom-select-wrapper').forEach(w => w.classList.remove('open'));
     }
 });
-
-        // --- ФУНКЦІЯ: ВІДКРИТТЯ БРОНЮВАНЬ КОНКРЕТНОГО ГОСТЯ ---
-function showGuestBookings(phone, name) {
-    // 1. Переходимо на вкладку списку
-    switchView('list');
-    
-    // 2. Фільтруємо всі броні, залишаємо тільки ті, де телефон збігається
-    const filteredBookings = allBookings.filter(b => formatPhone(b.phone) === phone);
-    
-    // 3. Змінюємо заголовок сторінки, щоб було видно фільтр
-    document.getElementById('pageTitle').innerHTML = `
-        Бронювання: <span style="color: var(--accent); font-weight: 700;">${name}</span>
-        <button class="btn-secondary" style="display: inline-flex; padding: 6px 12px; font-size: 12px; margin-left: 16px; height: auto;" onclick="switchView('list')">✕ Скинути фільтр</button>
-    `;
-    
-    // 4. Малюємо таблицю тільки з цими бронями
-    renderTable(filteredBookings);
-}
         
         // Запуск системи при завантаженні сторінки
         window.onload = () => {
