@@ -1613,8 +1613,8 @@ if (document.getElementById('view-grid').style.display === 'flex') {
             }
             monthsContainer.innerHTML += `<div class="timeline-month-cell" style="width: ${daysInCurrentMonth * cellWidth}px">${monthName}</div>`;
 
-            // Малюємо сітку та броні
-            roomsList.forEach((room, roomIndex) => {
+            // Малюємо сітку та броні тільки для АКТИВНИХ номерів
+            roomsList.filter(r => r.active).forEach((room, roomIndex) => {
                 roomsContainer.innerHTML += `<div class="timeline-room">${room.short}<span>${room.desc}</span></div>`;
                 let rowHtml = `<div class="timeline-row-bg" id="grid-row-${roomIndex}" style="position: relative;">`;
                 for (let i = 0; i < daysCount; i++) {
@@ -1744,7 +1744,7 @@ currentRow.innerHTML += `
                 datesContainer.innerHTML += `<div class="timeline-date ${isWeekend ? 'weekend' : ''}" style="height: 50px;">${d.getDate()} <span>${daysArr[d.getDay()]}</span></div>`;
             }
 
-           roomsList.forEach((room, roomIndex) => {
+           roomsList.filter(r => r.active).forEach((room, roomIndex) => {
                 roomsContainer.innerHTML += `<div class="timeline-room" style="height: 50px;">${room.short}<span>${room.desc}</span></div>`;
                 let rowHtml = `<div class="timeline-row-bg" style="height: 50px; position: relative;">`;
                 
@@ -2034,16 +2034,18 @@ document.getElementById('adminGuests').addEventListener('change', updatePricePre
             document.querySelector('.status-btn[data-status="Нова бронь"]').classList.add('active');
             if(document.getElementById('adminPets')) togglePet('Ні');
             
-            // Динамічно формуємо красивий список номерів
+           // Динамічно формуємо список ТІЛЬКИ АКТИВНИХ номерів
+    const activeRooms = roomsList.filter(r => r.active);
     const cottageOptions = document.getElementById('cottageOptions');
-    cottageOptions.innerHTML = roomsList.map(r => `
+    
+    cottageOptions.innerHTML = activeRooms.map(r => `
         <div class="custom-option" onclick="selectOption('cottageWrapper', 'adminCottage', '${r.name}', this, '${r.name} (${r.desc})')">
             ${r.name} <span style="font-size:12px; color:#9CA3AF;">${r.desc}</span>
         </div>
     `).join('');
 
-    let defaultRoom = prefillRoom || (roomsList[0] ? roomsList[0].name : "");
-    let defaultDesc = roomsList.find(r => r.name === defaultRoom)?.desc || "";
+    let defaultRoom = prefillRoom || (activeRooms[0] ? activeRooms[0].name : "");
+    let defaultDesc = activeRooms.find(r => r.name === defaultRoom)?.desc || "";
     
     document.getElementById('adminCottage').value = defaultRoom;
     document.getElementById('cottageSelectedText').innerText = defaultRoom ? `${defaultRoom} (${defaultDesc})` : "Оберіть номер";
@@ -2085,15 +2087,17 @@ document.getElementById('adminGuests').addEventListener('change', updatePricePre
             document.getElementById('adminPhone').value = '+' + formatPhone(booking.phone);
             document.getElementById('adminGuests').value = booking.guests || 2;
             
-            // Динамічно формуємо красивий список номерів
+            // Беремо активні номери + ТОЙ НОМЕР, який вже обраний у цій броні (навіть якщо він зараз вимкнений)
+    const availableRooms = roomsList.filter(r => r.active || r.name === booking.cottage);
     const cottageOptions = document.getElementById('cottageOptions');
-    cottageOptions.innerHTML = roomsList.map(r => `
+    
+    cottageOptions.innerHTML = availableRooms.map(r => `
         <div class="custom-option" onclick="selectOption('cottageWrapper', 'adminCottage', '${r.name}', this, '${r.name} (${r.desc})')">
             ${r.name} <span style="font-size:12px; color:#9CA3AF;">${r.desc}</span>
         </div>
     `).join('');
 
-    let savedRoom = roomsList.some(r => r.name === booking.cottage) ? booking.cottage : (roomsList[0] ? roomsList[0].name : "");
+    let savedRoom = roomsList.some(r => r.name === booking.cottage) ? booking.cottage : (availableRooms[0] ? availableRooms[0].name : "");
     let savedDesc = roomsList.find(r => r.name === savedRoom)?.desc || "";
     
     document.getElementById('adminCottage').value = savedRoom;
