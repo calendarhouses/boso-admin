@@ -276,64 +276,52 @@
         .form-group input:focus, .form-group select:focus, .form-group textarea:focus { background: #FFF; border-color: var(--accent); box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.1); }
         .form-group select { appearance: none; -webkit-appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%236B7280'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 16px center; background-size: 16px; padding-right: 40px; cursor: pointer; }
         
-        /* --- ПРЕМІУМ ЧЕКБОКСИ ТА РАДІО КНОПКИ --- */
+        /* --- ПРЕМІУМ ЧЕКБОКСИ ТА РАДІО КНОПКИ (ВИПРАВЛЕНІ) --- */
         .checkbox-group { display: flex; flex-direction: column; gap: 10px; margin-top: 8px; }
         
         .custom-checkbox { 
             display: inline-flex; 
             align-items: center; 
-            gap: 10px; 
+            gap: 8px; 
             font-size: 14px; 
             color: #4B5563; 
             cursor: pointer; 
             font-weight: 500; 
-            line-height: 1; /* Жорстко фіксуємо висоту для ідеального центрування */
             user-select: none;
         }
         
         .custom-checkbox input {
-            appearance: none; /* Відключаємо страшний стандартний дизайн */
+            appearance: none; 
             -webkit-appearance: none;
             width: 20px; 
             height: 20px;
-            margin: 0; /* Вбиваємо приховані відступи браузера */
+            margin: 0; 
             border: 2px solid #D1D5DB;
             background-color: #FAFAFA;
             cursor: pointer;
-            transition: all 0.2s ease;
-            display: flex;
-            align-items: center;
-            justify-content: center;
+            transition: 0.2s ease;
             flex-shrink: 0;
+            box-sizing: border-box;
         }
 
-        .custom-checkbox input[type="radio"] { border-radius: 50%; } /* Круглі для радіо */
-        .custom-checkbox input[type="checkbox"] { border-radius: 6px; } /* Закруглений квадрат для галочок */
+        .custom-checkbox input[type="radio"] { border-radius: 50%; } 
+        .custom-checkbox input[type="checkbox"] { border-radius: 6px; } 
 
         .custom-checkbox input:hover { border-color: var(--success); }
 
-        .custom-checkbox input:checked {
+        /* Ідеальна галочка для чекбоксу (SVG) */
+        .custom-checkbox input[type="checkbox"]:checked {
             background-color: var(--success);
             border-color: var(--success);
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='20 6 9 17 4 12'%3E%3C/polyline%3E%3C/svg%3E");
+            background-size: 12px;
+            background-position: center;
+            background-repeat: no-repeat;
         }
 
-        /* Саморобна плавна галочка для чекбоксу */
-        .custom-checkbox input[type="checkbox"]:checked::after {
-            content: '';
-            width: 5px;
-            height: 10px;
-            border: solid white;
-            border-width: 0 2px 2px 0;
-            transform: rotate(45deg);
-            margin-bottom: 2px; 
-        }
-
-        /* Крапочка по центру для радіо-кнопки */
-        .custom-checkbox input[type="radio"]:checked::after {
-            content: '';
-            width: 8px;
-            height: 8px;
-            border-radius: 50%;
+        /* Ідеальна крапка для радіо-кнопки */
+        .custom-checkbox input[type="radio"]:checked {
+            border: 6px solid var(--success);
             background-color: white;
         }
         .status-toggle { display: flex; background: #F3F4F6; padding: 4px; border-radius: 12px; margin-bottom: 24px; }
