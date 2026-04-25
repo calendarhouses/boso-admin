@@ -208,10 +208,25 @@
         .timeline-cell.weekend { background: #F9FAFB; }
 
         /* ЗБІЛЬШЕНО: Висота блоку броні 46px */
+        /* Збільшено висоту блоку броні 46px */
         .booking-block { 
             position: absolute; height: 46px; top: 7px; border-radius: 8px; padding: 6px 8px; 
             font-size: 12px; font-weight: 600; display: flex; flex-direction: column; justify-content: center; 
             overflow: hidden; white-space: nowrap; box-shadow: 0 2px 4px rgba(0,0,0,0.1); z-index: 100;
+            
+            /* ЗАХИСТ ВІД СИСТЕМНОГО МЕНЮ iOS ПРИ ДОВГОМУ НАТИСКАННІ */
+            -webkit-user-select: none; 
+            user-select: none;
+            -webkit-touch-callout: none;
+            transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.2s;
+        }
+
+        /* ЕФЕКТ КОЛИ ПАЛЕЦЬ ЗАТИСНУВ КАРТКУ */
+        .booking-block.pressing {
+            transform: scale(1.06) translateY(-2px) !important;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.25) !important;
+            z-index: 120 !important; /* Підіймаємо над усіма */
+            opacity: 0.95;
         }
         .booking-block.status-new { background: linear-gradient(135deg, #DEB887 0%, #CDA062 100%); color: #1A1A1A; }
         .booking-block.status-confirmed { background: linear-gradient(135deg, #6B8E23 0%, #4B5D28 100%); color: #FFFFFF; }
@@ -1076,7 +1091,12 @@
                             let guestName = String(b.name).replace(' (Ручна бронь)', '');
 
                             currentRow.innerHTML += `
-                                <div class="booking-block ${statusClass}" style="left: ${blockLeft}px; width: ${blockWidth}px;" onclick="openDetailsByRow(${b.row})">
+                                <div class="booking-block ${statusClass}" style="left: ${blockLeft}px; width: ${blockWidth}px;" 
+                                     ontouchstart="handleTouchStart(event, this, ${b.row})"
+                                     ontouchend="handleTouchEnd(event, this, ${b.row})"
+                                     ontouchmove="handleTouchMove(event, this)"
+                                     oncontextmenu="event.preventDefault();">
+                                     
                                     <div style="font-size: 11px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; line-height: 1;">${guestName}</div>
                                     <div style="margin-top: 3px; display: flex; overflow: hidden;">
                                         <span style="background: ${badgeBg}; color: ${badgeColor}; font-size: 8px; padding: 2px 4px; border-radius: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${finText}</span>
@@ -1376,7 +1396,49 @@
             el.classList.toggle('active'); const allChips = document.querySelectorAll('.disc-room-chip'); const activeChips = document.querySelectorAll('.disc-room-chip.active');
             const allBtn = document.getElementById('chip-disc-room-all'); if (allChips.length === activeChips.length) { allBtn.classList.add('active'); } else { allBtn.classList.remove('active'); }
         }
+// --- ЛОГІКА ДОВГОГО НАТИСКАННЯ (HAPTIC TOUCH) ---
+        let pressTimer;
+        let isLongPress = false;
 
+        function handleTouchStart(e, element, rowNumber) {
+            isLongPress = false;
+            element.classList.add('pressing'); // Картка підстрибує
+            hidePremiumTooltip(); // Ховаємо старий тултіп, якщо був
+            
+            // Запускаємо таймер. Якщо палець тримають 400 мілісекунд - це Long Press
+            pressTimer = setTimeout(() => {
+                isLongPress = true;
+                if (navigator.vibrate) navigator.vibrate(40); // Легка тактильна вібрація на Android/деяких iOS
+                showPremiumTooltip(element, rowNumber); // Показуємо інфу
+            }, 400); 
+        }
+
+        function handleTouchEnd(e, element, rowNumber) {
+            clearTimeout(pressTimer);
+            element.classList.remove('pressing'); // Картка опускається
+            
+            if (isLongPress) {
+                // Якщо це було довге затискання - блокуємо відкриття шторки
+                if (e.cancelable) e.preventDefault(); 
+            } else {
+                // Якщо палець відпустили швидко - це звичайний тап, відкриваємо шторку
+                openDetailsByRow(rowNumber); 
+            }
+        }
+
+        function handleTouchMove(e, element) {
+            // Якщо під час утримання палець поїхав убік (свайп екрану) - скасовуємо таймер
+            clearTimeout(pressTimer); 
+            element.classList.remove('pressing');
+        }
+
+        // Закриваємо тултіп, якщо клікнули будь-де в іншому місці екрану
+        document.addEventListener('touchstart', function(e) {
+            if (!e.target.closest('.booking-block') && !e.target.closest('.premium-tooltip')) {
+                hidePremiumTooltip();
+            }
+        });
+        
         window.onload = () => { switchView('grid'); initApp(); };
     </script>
 </body>
