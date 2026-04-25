@@ -276,30 +276,40 @@
         .form-group input:focus, .form-group select:focus, .form-group textarea:focus { background: #FFF; border-color: var(--accent); box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.1); }
         .form-group select { appearance: none; -webkit-appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%236B7280'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 16px center; background-size: 16px; padding-right: 40px; cursor: pointer; }
         
-      /* --- ПРЕМІУМ КНОПКИ-ПЕРЕМИКАЧІ (ЗАМІСТЬ ЧЕКБОКСІВ) --- */
+      /* --- ПРЕМІУМ КНОПКИ-ПЕРЕМИКАЧІ (CHIPS) --- */
         .chips-container { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 6px; }
         
         .chip-btn {
             padding: 8px 16px;
-            background: #F3F4F6;
-            border: 1px solid #E5E7EB;
-            border-radius: 10px;
+            background: #FFFFFF;
+            border: 1px solid #D1D5DB;
+            border-radius: 12px; /* Більш сучасне заокруглення */
             font-size: 13px;
             font-weight: 600;
-            color: #4B5563;
+            color: #6B7280;
             cursor: pointer;
-            transition: all 0.2s ease;
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1); /* Дорога плавна анімація */
             user-select: none;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
         }
         
-        .chip-btn:hover { background: #E5E7EB; }
+        .chip-btn:hover { 
+            background: #F9FAFB; 
+            border-color: #9CA3AF;
+            color: #374151;
+            transform: translateY(-1px); /* Мікро-ефект натискання */
+        }
         
-        /* Зелений активний стан */
+        /* Зелений активний стан (Світіння) */
         .chip-btn.active {
             background: #F0FDF4;
             border-color: var(--success);
             color: #059669;
-            box-shadow: 0 2px 4px rgba(5, 150, 105, 0.1);
+            /* Легка тінь + кольорова аура навколо кнопки */
+            box-shadow: 0 4px 12px rgba(5, 150, 105, 0.15), 0 0 0 2px rgba(5, 150, 105, 0.1);
+            transform: translateY(-1px);
         }
         .status-toggle { display: flex; background: #F3F4F6; padding: 4px; border-radius: 12px; margin-bottom: 24px; }
         .status-btn { flex: 1; padding: 10px; text-align: center; font-size: 13px; font-weight: 600; color: #6B7280; cursor: pointer; border-radius: 8px; transition: 0.2s; user-select: none; display: flex; align-items: center; justify-content: center; gap: 6px;}
@@ -1160,10 +1170,10 @@ if (document.getElementById('view-grid').style.display === 'flex') {
             } else if (type === 'price') {
                 title.innerText = 'Конструктор цін';
                 
-                // Генеруємо кнопочки для номерів (всі активні за замовчуванням)
-                let roomsChips = `<div class="chip-btn active" id="chip-room-all" onclick="toggleAllRoomsChip()">Усі номери</div>`;
+                // 1. Номери (ЗА ЗАМОВЧУВАННЯМ УСІ СІРІ - без класу active)
+                let roomsChips = `<div class="chip-btn" id="chip-room-all" onclick="toggleAllRoomsChip()">Усі номери</div>`;
                 roomsChips += roomsList.map(r => 
-                    `<div class="chip-btn room-chip active" data-id="${r.id}" onclick="toggleSingleRoomChip(this)">${r.name}</div>`
+                    `<div class="chip-btn room-chip" data-id="${r.id}" onclick="toggleSingleRoomChip(this)">${r.name}</div>`
                 ).join('');
 
                 body.innerHTML = `
@@ -1181,16 +1191,10 @@ if (document.getElementById('view-grid').style.display === 'flex') {
                     
                     <div class="form-group">
                         <label>Оберіть період:</label>
-                        <div class="custom-select-wrapper" id="mPricePeriodWrapper">
-                            <div class="custom-select-trigger" onclick="toggleCustomSelect('mPricePeriodWrapper')">
-                                <span id="mPricePeriodText">Поточний місяць</span>
-                                <svg width="16" height="16" fill="none" stroke="#6B7280" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
-                            </div>
-                            <div class="custom-select-options">
-                                <div class="custom-option selected" onclick="selectOption('mPricePeriodWrapper', 'mPricePeriod', '1', this, 'Поточний місяць')">Поточний місяць</div>
-                                <div class="custom-option" onclick="selectOption('mPricePeriodWrapper', 'mPricePeriod', '3', this, 'Наступні 3 місяці')">Наступні 3 місяці</div>
-                                <div class="custom-option" onclick="selectOption('mPricePeriodWrapper', 'mPricePeriod', '12', this, 'Наступний рік (12 міс)')">Наступний рік (12 міс)</div>
-                            </div>
+                        <div class="chips-container" id="periodChipsContainer">
+                            <div class="chip-btn active period-chip" data-val="1" onclick="selectPeriodChip(this)">Поточний місяць</div>
+                            <div class="chip-btn period-chip" data-val="3" onclick="selectPeriodChip(this)">Наступні 3 місяці</div>
+                            <div class="chip-btn period-chip" data-val="12" onclick="selectPeriodChip(this)">Наступний рік (12 міс)</div>
                         </div>
                         <input type="hidden" id="mPricePeriod" value="1">
                     </div>
@@ -2306,6 +2310,13 @@ document.addEventListener('click', function(e) {
             el.classList.add('active');
             // Зберігаємо вибір у приховане поле
             document.getElementById('mPriceDays').value = el.getAttribute('data-val');
+        }
+        
+        // 4. Клік по періоду (тільки ОДИН можливий вибір)
+        function selectPeriodChip(el) {
+            document.querySelectorAll('.period-chip').forEach(c => c.classList.remove('active'));
+            el.classList.add('active');
+            document.getElementById('mPricePeriod').value = el.getAttribute('data-val');
         }
         
         // Запуск системи при завантаженні сторінки
