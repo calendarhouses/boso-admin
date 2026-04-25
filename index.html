@@ -1211,16 +1211,19 @@ if (document.getElementById('view-grid').style.display === 'flex') {
                 `;
             } else if (type === 'discount') {
                 title.innerText = id ? 'Редагувати знижку' : 'Додати знижку';
-                let d = id ? discountsList.find(x => x.id === id) : {condition: "Діб в бронюванні: 2", discount: "15%", rooms: "Всі номери", roomsIds: ["all"]};
+                
+                // 1. МАГІЯ ТУТ: Для нової знижки ставимо порожній масив roomsIds: []
+                let d = id ? discountsList.find(x => x.id === id) : {condition: "Діб в бронюванні: 2", discount: "15%", rooms: "Не обрано", roomsIds: []};
+                
                 let condVal = parseInt(String(d.condition).replace(/\D/g,'')) || 2;
                 let discVal = parseInt(String(d.discount).replace(/\D/g,'')) || 15;
 
-                // Читаємо збережені номери (підтримка старих записів)
+                // 2. Читаємо збережені номери (Залишив перевірку "id &&", щоб старі створені знижки не злетіли)
                 let selectedIds = d.roomsIds || [];
-                if (selectedIds.length === 0 && d.rooms === "Всі номери") selectedIds = ["all"];
+                if (id && selectedIds.length === 0 && d.rooms === "Всі номери") selectedIds = ["all"];
                 let isAllSelected = selectedIds.includes("all");
 
-                // Генеруємо кнопочки
+                // 3. Генеруємо кнопочки
                 let roomsChips = `<div class="chip-btn ${isAllSelected ? 'active' : ''}" id="chip-disc-room-all" onclick="toggleAllDiscRooms()">Усі номери</div>`;
                 roomsChips += roomsList.map(r => {
                     let isActive = isAllSelected || selectedIds.includes(String(r.id));
