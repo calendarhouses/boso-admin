@@ -59,52 +59,55 @@
             border: none; cursor: pointer; box-shadow: 0 2px 6px rgba(85, 107, 47, 0.3); 
         }
 
-        /* --- НИЖНЯ НАВІГАЦІЯ (ЗБІЛЬШЕНА) --- */
+        /* --- НИЖНЯ НАВІГАЦІЯ (МАКСИМАЛЬНИЙ КОМФОРТ) --- */
         .bottom-nav { 
-            /* Збільшуємо загальну висоту до 80px + відступ під підборіддя */
-            height: calc(75px + var(--safe-bottom)); 
+            /* Збільшуємо загальну висоту до 90px, щоб підняти контент вище */
+            height: calc(85px + var(--safe-bottom)); 
             background: var(--nav-bg); 
             display: flex; 
             justify-content: space-around; 
             align-items: flex-start; 
-            /* Додаємо більше падінгу зверху, щоб кнопки були вище від краю */
-            padding: 12px 0 var(--safe-bottom) 0; 
-            box-shadow: 0 -4px 15px rgba(0,0,0,0.08); 
+            /* Додаємо великий відступ знизу (18px), щоб букви не різало закругленням */
+            padding: 12px 0 calc(18px + var(--safe-bottom)) 0; 
+            box-shadow: 0 -5px 20px rgba(0,0,0,0.08); 
             z-index: 50; 
             flex-shrink: 0;
             border-top: 1px solid #E5E7EB;
         }
+
         .nav-item { 
             display: flex; 
             flex-direction: column; 
             align-items: center; 
-            gap: 6px; /* Більше місця між іконкою і текстом */
+            /* Збільшений проміжок між іконкою та текстом для кращої читабельності */
+            gap: 7px; 
             color: #9CA3AF; 
             width: 20%; 
             cursor: pointer; 
-            transition: 0.2s; 
-            padding: 4px 0;
+            transition: 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            padding: 5px 0;
         }
         
         .nav-item.active { 
             color: var(--accent); 
-            transform: scale(1.05); /* Легкий акцент на активній кнопці */
+            /* Мікро-збільшення активної іконки */
+            transform: scale(1.08) translateY(-2px); 
         }
 
         .nav-icon { 
-            /* Збільшуємо розмір іконок з 24px до 28px */
             width: 28px; 
             height: 28px; 
             stroke: currentColor; 
             fill: none; 
-            stroke-width: 1.8; /* Робимо лінії іконок трохи товстішими для чіткості */
+            stroke-width: 1.8; 
         }
 
         .nav-text { 
-            /* Збільшуємо шрифт підписів */
             font-size: 11px; 
             font-weight: 700; 
             letter-spacing: 0.2px;
+            /* Гарантуємо, що текст не притиснутий */
+            line-height: 1; 
         }
 
         /* --- ОСНОВНИЙ КОНТЕНТ --- */
