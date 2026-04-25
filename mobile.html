@@ -59,26 +59,53 @@
             border: none; cursor: pointer; box-shadow: 0 2px 6px rgba(85, 107, 47, 0.3); 
         }
 
-        /* --- НИЖНЯ НАВІГАЦІЯ (BOTTOM NAV) --- */
+        /* --- НИЖНЯ НАВІГАЦІЯ (ЗБІЛЬШЕНА) --- */
         .bottom-nav { 
-            height: calc(60px + var(--safe-bottom)); 
+            /* Збільшуємо загальну висоту до 80px + відступ під підборіддя */
+            height: calc(75px + var(--safe-bottom)); 
             background: var(--nav-bg); 
             display: flex; 
             justify-content: space-around; 
             align-items: flex-start; 
-            padding: 8px 0 var(--safe-bottom) 0; 
-            box-shadow: 0 -2px 10px rgba(0,0,0,0.05); 
+            /* Додаємо більше падінгу зверху, щоб кнопки були вище від краю */
+            padding: 12px 0 var(--safe-bottom) 0; 
+            box-shadow: 0 -4px 15px rgba(0,0,0,0.08); 
             z-index: 50; 
             flex-shrink: 0;
             border-top: 1px solid #E5E7EB;
         }
         .nav-item { 
-            display: flex; flex-direction: column; align-items: center; gap: 4px; 
-            color: #9CA3AF; width: 20%; cursor: pointer; transition: 0.2s; 
+            display: flex; 
+            flex-direction: column; 
+            align-items: center; 
+            gap: 6px; /* Більше місця між іконкою і текстом */
+            color: #9CA3AF; 
+            width: 20%; 
+            cursor: pointer; 
+            transition: 0.2s; 
+            padding: 4px 0;
         }
-        .nav-item.active { color: var(--accent); }
-        .nav-icon { width: 24px; height: 24px; stroke: currentColor; fill: none; stroke-width: 1.5; }
-        .nav-text { font-size: 10px; font-weight: 600; }
+        
+        .nav-item.active { 
+            color: var(--accent); 
+            transform: scale(1.05); /* Легкий акцент на активній кнопці */
+        }
+
+        .nav-icon { 
+            /* Збільшуємо розмір іконок з 24px до 28px */
+            width: 28px; 
+            height: 28px; 
+            stroke: currentColor; 
+            fill: none; 
+            stroke-width: 1.8; /* Робимо лінії іконок трохи товстішими для чіткості */
+        }
+
+        .nav-text { 
+            /* Збільшуємо шрифт підписів */
+            font-size: 11px; 
+            font-weight: 700; 
+            letter-spacing: 0.2px;
+        }
 
         /* --- ОСНОВНИЙ КОНТЕНТ --- */
         .main-content { 
