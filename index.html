@@ -276,64 +276,89 @@
         .form-group input:focus, .form-group select:focus, .form-group textarea:focus { background: #FFF; border-color: var(--accent); box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.1); }
         .form-group select { appearance: none; -webkit-appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%236B7280'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 16px center; background-size: 16px; padding-right: 40px; cursor: pointer; }
         
-      /* --- ІДЕАЛЬНІ ПРЕМІУМ ЧЕКБОКСИ (ФІНАЛ - БЕЗ БАГІВ) --- */
+      /* --- АБСОЛЮТНО НОВІ ПРЕМІУМ ЧЕКБОКСИ (СИСТЕМА BOSO) --- */
         .checkbox-group { display: flex; flex-direction: column; gap: 10px; margin-top: 8px; }
         
-        .custom-checkbox { 
-            display: inline-flex; 
-            align-items: center; 
-            gap: 10px; 
-            font-size: 14px; 
-            color: #374151; 
-            cursor: pointer; 
-            font-weight: 500; 
+        .boso-checkbox {
+            display: flex;
+            align-items: center;
+            position: relative;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            color: #374151;
             user-select: none;
+            gap: 10px;
             margin: 0;
-            line-height: 20px; /* Висота рядка тексту тепер ідеально дорівнює висоті іконки */
+        }
+
+        /* 1. Повністю ховаємо стандартний системний інпут */
+        .boso-checkbox input {
+            position: absolute;
+            opacity: 0;
+            cursor: pointer;
+            height: 0;
+            width: 0;
+            margin: 0;
+        }
+
+        /* 2. Малюємо наш власний ідеальний квадратик / кружечок (Браузер не має над ним влади) */
+        .boso-mark {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 20px;
+            width: 20px;
+            min-width: 20px;
+            background-color: #FFF;
+            border: 2px solid #D1D5DB;
+            border-radius: 6px; /* Квадрат для чекбокса */
+            transition: all 0.2s ease;
         }
         
-        .custom-checkbox input[type="checkbox"],
-        .custom-checkbox input[type="radio"] {
-            appearance: none !important; 
-            -webkit-appearance: none !important;
-            /* Жорстко бетонуємо розмір 20x20, щоб браузер не робив овали */
-            width: 20px !important; 
-            height: 20px !important;
-            min-width: 20px !important;
-            min-height: 20px !important;
-            max-width: 20px !important;
-            max-height: 20px !important;
-            flex: 0 0 20px !important; 
-            margin: 0 !important; 
-            padding: 0 !important;
-            border: 2px solid #D1D5DB;
-            background-color: #FFF;
-            cursor: pointer;
-            transition: all 0.2s ease;
-            box-sizing: border-box !important;
-            transform: translateY(1px); /* МАГІЯ: мікро-зсув вниз для ідеального центрування з текстом */
+        .boso-radio {
+            border-radius: 50%; /* Коло для радіо-кнопки */
         }
 
-        .custom-checkbox input[type="radio"] { border-radius: 50% !important; } 
-        .custom-checkbox input[type="checkbox"] { border-radius: 6px !important; } 
+        /* 3. Ефекти при наведенні і кліку */
+        .boso-checkbox:hover input ~ .boso-mark { border-color: var(--success); }
 
-        .custom-checkbox input:hover { border-color: var(--success); }
-
-        /* Ідеальна галочка по центру */
-        .custom-checkbox input[type="checkbox"]:checked {
-            background-color: var(--success) !important;
-            border-color: var(--success) !important;
-            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='20 6 9 17 4 12'%3E%3C/polyline%3E%3C/svg%3E") !important;
-            background-size: 12px 12px !important;
-            background-position: center !important;
-            background-repeat: no-repeat !important;
+        .boso-checkbox input:checked ~ .boso-mark {
+            background-color: var(--success);
+            border-color: var(--success);
         }
 
-        /* Ідеальна крапка в центрі радіо-кнопки */
-        .custom-checkbox input[type="radio"]:checked {
-            border-color: var(--success) !important;
-            border-width: 6px !important; 
-            background-color: #FFF !important;
+        /* 4. Малюємо саму галочку/крапку (прихована за замовчуванням) */
+        .boso-mark::after {
+            content: "";
+            display: none;
+        }
+
+        .boso-checkbox input:checked ~ .boso-mark::after {
+            display: block;
+        }
+
+        /* SVG Галочка */
+        .boso-mark:not(.boso-radio)::after {
+            width: 12px;
+            height: 12px;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='20 6 9 17 4 12'%3E%3C/polyline%3E%3C/svg%3E");
+            background-size: contain;
+            background-repeat: no-repeat;
+        }
+
+        /* Біла крапочка для радіо */
+        .boso-radio::after {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background-color: white;
+        }
+        
+        /* Вирівнюємо текст окремо */
+        .boso-text {
+            line-height: 1;
+            padding-top: 1px; /* Оптичне вирівнювання */
         }
         .status-toggle { display: flex; background: #F3F4F6; padding: 4px; border-radius: 12px; margin-bottom: 24px; }
         .status-btn { flex: 1; padding: 10px; text-align: center; font-size: 13px; font-weight: 600; color: #6B7280; cursor: pointer; border-radius: 8px; transition: 0.2s; user-select: none; display: flex; align-items: center; justify-content: center; gap: 6px;}
@@ -1194,18 +1219,22 @@ if (document.getElementById('view-grid').style.display === 'flex') {
             } else if (type === 'price') {
                 title.innerText = 'Конструктор цін';
                 
-                // Формуємо список з ЧЕКБОКСАМИ (Мульти-вибір)
+                // Формуємо список з НОВИМИ ПРЕМІУМ-ЧЕКБОКСАМИ
                 let roomOptionsHtml = `
                     <div class="custom-option" style="padding: 8px 12px;">
-                        <label class="custom-checkbox" style="width: 100%; cursor: pointer;">
-                            <input type="checkbox" id="mPriceRoomAll" checked onchange="toggleAllPriceRooms(this)"> Усі номери
+                        <label class="boso-checkbox" style="width: 100%;">
+                            <input type="checkbox" id="mPriceRoomAll" checked onchange="toggleAllPriceRooms(this)">
+                            <span class="boso-mark"></span>
+                            <span class="boso-text">Усі номери</span>
                         </label>
                     </div>
                 `;
                 roomOptionsHtml += roomsList.map(r => `
                     <div class="custom-option" style="padding: 8px 12px;">
-                        <label class="custom-checkbox" style="width: 100%; cursor: pointer;">
-                            <input type="checkbox" class="price-room-cb" value="${r.id}" checked onchange="updatePriceRoomText()"> ${r.name}
+                        <label class="boso-checkbox" style="width: 100%;">
+                            <input type="checkbox" class="price-room-cb" value="${r.id}" checked onchange="updatePriceRoomText()">
+                            <span class="boso-mark"></span>
+                            <span class="boso-text">${r.name}</span>
                         </label>
                     </div>
                 `).join('');
@@ -1248,9 +1277,21 @@ if (document.getElementById('view-grid').style.display === 'flex') {
                     <div class="form-group" style="margin-bottom: 0;">
                         <label>Оберіть дні тижня:</label>
                         <div class="checkbox-group" style="flex-direction: row; gap: 20px;">
-                            <label class="custom-checkbox"><input type="radio" name="priceDays" value="all" checked> Усі дні</label>
-                            <label class="custom-checkbox"><input type="radio" name="priceDays" value="weekdays"> Будні</label>
-                            <label class="custom-checkbox"><input type="radio" name="priceDays" value="weekends"> Вихідні</label>
+                            <label class="boso-checkbox">
+                                <input type="radio" name="priceDays" value="all" checked>
+                                <span class="boso-mark boso-radio"></span>
+                                <span class="boso-text">Усі дні</span>
+                            </label>
+                            <label class="boso-checkbox">
+                                <input type="radio" name="priceDays" value="weekdays">
+                                <span class="boso-mark boso-radio"></span>
+                                <span class="boso-text">Будні</span>
+                            </label>
+                            <label class="boso-checkbox">
+                                <input type="radio" name="priceDays" value="weekends">
+                                <span class="boso-mark boso-radio"></span>
+                                <span class="boso-text">Вихідні</span>
+                            </label>
                         </div>
                     </div>
                 `;
