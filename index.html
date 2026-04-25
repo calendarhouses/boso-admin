@@ -1155,7 +1155,11 @@ if (document.getElementById('view-grid').style.display === 'flex') {
             
             if (type === 'room') {
                 title.innerText = id ? 'Редагувати номер' : 'Додати номер';
-                let r = id ? roomsList.find(x => x.id === id) : {name: '', desc: '', capacity: 2, maxCapacity: 4, active: true};
+                let r = id ? roomsList.find(x => x.id === id) : {name: '', desc: '', capacity: 2, maxCapacity: 4, extraGuestPrice: 2500, active: true};
+                
+                // Якщо це старий номер без збереженої ціни за гостя — ставимо базові 2500
+                let currentExtraPrice = r.extraGuestPrice !== undefined ? r.extraGuestPrice : 2500;
+
                 body.innerHTML = `
                     <div class="form-group"><label>Назва номеру:</label><input type="text" id="mRoomName" value="${r.name}" placeholder="Напр. Номер 5"></div>
                     <div class="form-group"><label>Опис (Коротка назва):</label><input type="text" id="mRoomDesc" value="${r.desc}" placeholder="Напр. Стандарт"></div>
@@ -1163,8 +1167,11 @@ if (document.getElementById('view-grid').style.display === 'flex') {
                         <div class="form-group"><label>Базова місткість (входить в ціну):</label><input type="number" id="mRoomCap" value="${r.capacity}" min="1"></div>
                         <div class="form-group"><label>Максимальна місткість:</label><input type="number" id="mRoomMaxCap" value="${r.maxCapacity || r.capacity}" min="1"></div>
                     </div>
-                    <div class="form-group"><label>Доступність:</label>
-                        <select id="mRoomStatus"><option value="true" ${r.active?'selected':''}>Увімкнено</option><option value="false" ${!r.active?'selected':''}>Вимкнено</option></select>
+                    <div class="form-grid">
+                        <div class="form-group"><label>Ціна за дод. гостя (грн):</label><input type="number" id="mRoomExtraPrice" value="${currentExtraPrice}" min="0"></div>
+                        <div class="form-group"><label>Доступність:</label>
+                            <select id="mRoomStatus"><option value="true" ${r.active?'selected':''}>Увімкнено</option><option value="false" ${!r.active?'selected':''}>Вимкнено</option></select>
+                        </div>
                     </div>
                 `;
             } else if (type === 'price') {
@@ -1340,13 +1347,14 @@ if (document.getElementById('view-grid').style.display === 'flex') {
                 const desc = document.getElementById('mRoomDesc').value;
                 const cap = parseInt(document.getElementById('mRoomCap').value) || 2;
                 const maxCap = parseInt(document.getElementById('mRoomMaxCap').value) || cap;
+                const extraPrice = parseInt(document.getElementById('mRoomExtraPrice').value) || 0; // Зчитуємо ціну за гостя
                 const active = document.getElementById('mRoomStatus').value === 'true';
                 
                 if (currentEditId) {
                     let r = roomsList.find(x => x.id === currentEditId);
-                    r.name = name; r.short = name; r.desc = desc; r.capacity = cap; r.maxCapacity = maxCap; r.active = active;
+                    r.name = name; r.short = name; r.desc = desc; r.capacity = cap; r.maxCapacity = maxCap; r.extraGuestPrice = extraPrice; r.active = active;
                 } else {
-                    roomsList.push({ id: Date.now(), name: name, short: name, desc: desc, capacity: cap, maxCapacity: maxCap, priceWeekday: 4000, priceWeekend: 5000, active: active });
+                    roomsList.push({ id: Date.now(), name: name, short: name, desc: desc, capacity: cap, maxCapacity: maxCap, extraGuestPrice: extraPrice, priceWeekday: 4000, priceWeekend: 5000, active: active });
                 }
                 renderSettingsRooms();
                 if(document.getElementById('set-prices').style.display === 'block') renderPriceGrid();
@@ -1860,7 +1868,9 @@ currentRow.innerHTML += `
     }
 
     let extraGuests = Math.max(0, guests - room.capacity);
-    let extraGuestFee = extraGuests * 2500 * nights;
+    // Беремо ціну за гостя з налаштувань котеджу (або 2500, якщо це старий запис без налаштування)
+    let dynamicExtraPrice = room.extraGuestPrice !== undefined ? room.extraGuestPrice : 2500;
+    let extraGuestFee = extraGuests * dynamicExtraPrice * nights;
     let petFee = (pets === "Так") ? (500 + 200 * nights) : 0;
 
     let discountPercent = 0;
