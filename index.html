@@ -1554,6 +1554,9 @@ if (document.getElementById('view-grid').style.display === 'flex') {
                 const currentRow = document.getElementById(`grid-row-${roomIndex}`);
                 
                 allBookings.forEach((b) => {
+                    // НОВИЙ РЯДОК: Ігноруємо скасовані броні для шахматки
+                    if (String(b.status).toLowerCase().includes('скас')) return;
+
                     let cottageStr = String(b.cottage || '');
                     if (cottageStr.includes(room.short) || (room.id === 3 && cottageStr.includes("Люкс")) || (room.id === 2 && cottageStr.includes("Сімейний"))) {
                         const inDate = new Date(b.checkIn); const outDate = new Date(b.checkOut);
