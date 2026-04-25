@@ -276,15 +276,15 @@
         .form-group input:focus, .form-group select:focus, .form-group textarea:focus { background: #FFF; border-color: var(--accent); box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.1); }
         .form-group select { appearance: none; -webkit-appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%236B7280'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 16px center; background-size: 16px; padding-right: 40px; cursor: pointer; }
         
-       /* --- ІДЕАЛЬНІ ПРЕМІУМ ЧЕКБОКСИ (ФІКС ДЛЯ ВСІХ БРАУЗЕРІВ) --- */
+      /* --- ІДЕАЛЬНІ ПРЕМІУМ ЧЕКБОКСИ (АБСОЛЮТНИЙ ЦЕНТР) --- */
         .checkbox-group { display: flex; flex-direction: column; gap: 10px; margin-top: 8px; }
         
         .custom-checkbox { 
             display: inline-flex; 
             align-items: center; 
-            justify-content: flex-start;
             gap: 10px; 
             font-size: 14px; 
+            line-height: 1; /* Жорстко вбиваємо всі невидимі відступи тексту зверху і знизу */
             color: #374151; 
             cursor: pointer; 
             font-weight: 500; 
@@ -292,13 +292,13 @@
             margin: 0;
         }
         
-        /* Жорстко фіксуємо розмір, забороняємо браузеру їх розтягувати */
         .custom-checkbox input[type="checkbox"],
         .custom-checkbox input[type="radio"] {
+            display: block !important; /* Перетворюємо на блок, щоб браузер не рівняв його по буквах */
             appearance: none !important; 
             -webkit-appearance: none !important;
             -moz-appearance: none !important;
-            flex: 0 0 20px !important; /* Ніколи не розтягувати і не стискати! */
+            flex: 0 0 20px !important; /* Жорсткий розмір 20x20 */
             width: 20px !important; 
             height: 20px !important;
             margin: 0 !important; 
@@ -315,7 +315,7 @@
 
         .custom-checkbox input:hover { border-color: var(--success); }
 
-        /* Ідеально рівна SVG галочка по центру */
+        /* Ідеальна галочка */
         .custom-checkbox input[type="checkbox"]:checked {
             background-color: var(--success);
             border-color: var(--success);
@@ -325,10 +325,10 @@
             background-repeat: no-repeat;
         }
 
-        /* Акуратна біла крапка в центрі радіо-кнопки */
+        /* Ідеальна крапка */
         .custom-checkbox input[type="radio"]:checked {
             border-color: var(--success);
-            border-width: 6px; 
+            border-width: 6px !important; 
         }
         .status-toggle { display: flex; background: #F3F4F6; padding: 4px; border-radius: 12px; margin-bottom: 24px; }
         .status-btn { flex: 1; padding: 10px; text-align: center; font-size: 13px; font-weight: 600; color: #6B7280; cursor: pointer; border-radius: 8px; transition: 0.2s; user-select: none; display: flex; align-items: center; justify-content: center; gap: 6px;}
