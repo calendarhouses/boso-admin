@@ -543,6 +543,10 @@
                                 <input type="hidden" id="adminSource" value="Instagram">
                             </div>
                         </div>
+                        <div class="form-group" style="margin-top: 12px;">
+            <label>Коментар клієнта:</label>
+            <textarea id="adminComment" placeholder="Немає коментарів..." style="width: 100%; padding: 14px 16px; border: 1px solid #D1D5DB; border-radius: 12px; font-size: 15px; background: #F9FAFB; outline: none; min-height: 80px; font-family: inherit;"></textarea>
+        </div>
                     </div>
                     
                     <div class="form-section">
@@ -622,11 +626,13 @@
         async function initApp() {
             try {
                 const t = new Date().getTime();
-                const [bookingsRes, settingsRes] = await Promise.all([
-                    fetch(API_URL + "?t=" + t), fetch(API_URL + "?action=settings&t=" + t)
-                ]);
-                allBookings = await bookingsRes.json();
-                const settingsData = await settingsRes.json();
+                
+                // 🚀 ОДИН СУПЕР-ЗАПИТ ЗАМІСТЬ ДВОХ
+                const res = await fetch(API_URL + "?action=initData&t=" + t);
+                const data = await res.json();
+                
+                allBookings = data.bookings || [];
+                const settingsData = data.settings || {};
                 
                 if (settingsData && Object.keys(settingsData).length > 0) {
                     if (settingsData.roomsList) roomsList = settingsData.roomsList;
@@ -644,8 +650,10 @@
 
                 const preloader = document.getElementById('preloader');
                 if (preloader) { preloader.style.opacity = '0'; setTimeout(() => preloader.style.display = 'none', 500); }
-            } catch (error) { console.error(error); showToast("Помилка завантаження!"); }
-        }
+            } catch (error) { 
+                console.error("Помилка завантаження даних:", error); 
+                showToast("Помилка завантаження!"); 
+            }
 
         async function saveSettingsToCloud() {
             const settingsToSave = { roomsList, discountsList, customServicesList, sysServicesList, customPrices };
@@ -1305,6 +1313,7 @@
             editingRowNumber = null; document.getElementById('drawerTitle').innerText = 'Нова бронь'; 
             document.getElementById('adminBookingForm').reset(); document.getElementById('adminDeleteBtn').style.display = 'none';
             document.getElementById('liveCalculatorContainer').innerHTML = '';
+            if(document.getElementById('adminComment')) document.getElementById('adminComment').value = "";
             document.querySelectorAll('.status-btn').forEach(b => b.classList.remove('active'));
             document.querySelector('.status-btn[data-status="Нова бронь"]').classList.add('active');
             if(document.getElementById('adminPets')) togglePet('Ні');
@@ -1332,6 +1341,7 @@
             document.getElementById('adminName').value = String(booking.name).replace(' (Ручна бронь)', '');
             document.getElementById('adminPhone').value = '+' + formatPhone(booking.phone);
             document.getElementById('adminGuests').value = booking.guests || 2;
+            if(document.getElementById('adminComment')) document.getElementById('adminComment').value = booking.comment || "";
             
             const availableRooms = roomsList.filter(r => r.active || r.name === booking.cottage);
             const cottageOptions = document.getElementById('cottageOptions');
@@ -1370,7 +1380,8 @@
                 checkIn: document.getElementById('adminCheckIn').value, checkOut: document.getElementById('adminCheckOut').value, cottage: document.getElementById('adminCottage').value, 
                 name: document.getElementById('adminName').value, phone: document.getElementById('adminPhone').value, guests: document.getElementById('adminGuests').value,
                 pets: document.getElementById('adminPets').value, status: document.querySelector('.status-btn.active').getAttribute('data-status'),
-                totalPrice: document.getElementById('adminTotalPrice').value, paidAmount: document.getElementById('adminPaidAmount').value
+                totalPrice: document.getElementById('adminTotalPrice').value, paidAmount: document.getElementById('adminPaidAmount').value,
+                comment: document.getElementById('adminComment').value
             };
             if (editingRowNumber !== null) bookingData.row = editingRowNumber;
             try { 
