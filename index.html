@@ -1447,7 +1447,9 @@ function getVisitWord(count) {
                             for (let i = 0; i < daysCount; i++) {
                                 let d = new Date(startDate); 
                                 d.setDate(startDate.getDate() + i);
-                                let isWeekend = (d.getDay() === 0 || d.getDay() === 6);
+                                
+                                // 🟢 ОСЬ ТУТ ДОДАНА П'ЯТНИЦЯ (5) ДЛЯ ЗБЕРЕЖЕННЯ В БАЗУ
+                                let isWeekend = (d.getDay() === 0 || d.getDay() === 5 || d.getDay() === 6);
                                 
                                 if (dayType === 'weekdays' && isWeekend) continue; 
                                 if (dayType === 'weekends' && !isWeekend) continue; 
