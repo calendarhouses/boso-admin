@@ -758,9 +758,12 @@ input[type="number"] {
         </div>
     </div>
     <input type="hidden" id="adminSource" value="Instagram">
+    </div>
+    <div class="form-group" style="grid-column: span 2;">
+        <label>Коментар клієнта / Примітки:</label>
+        <textarea id="adminComment" placeholder="Немає коментарів..." style="min-height: 80px;"></textarea>
+    </div>
 </div>
-                        </div>
-                    </div>
                    <div class="form-section">
                         <span class="form-section-title">Дані про заїзд</span>
                         <div class="form-group">
@@ -2082,6 +2085,7 @@ document.getElementById('adminGuests').addEventListener('change', updatePricePre
     editingRowNumber = null; 
     document.getElementById('drawerTitle').innerText = 'Нове бронювання'; 
     document.getElementById('adminBookingForm').reset();
+    if(document.getElementById('adminComment')) document.getElementById('adminComment').value = ""; // 🟢 ОЧИЩАЄМО
     document.getElementById('adminDeleteBtn').style.display = 'none';
             
     // --- ДОДАЙ ОСЬ ЦЕЙ РЯДОК ---
@@ -2149,6 +2153,7 @@ document.getElementById('adminGuests').addEventListener('change', updatePricePre
             document.getElementById('adminName').value = String(booking.name).replace(' (Ручна бронь)', '');
             document.getElementById('adminPhone').value = '+' + formatPhone(booking.phone);
             document.getElementById('adminGuests').value = booking.guests || 2;
+            document.getElementById('adminComment').value = booking.comment || ""; // 🟢 ПІДТЯГУЄМО КОМЕНТАР
             // 🟢 ПІДТЯГУЄМО ДЖЕРЕЛО (Сайт, Instagram і тд)
             let savedSource = booking.source || "Адмінка";
             document.getElementById('adminSource').value = savedSource;
@@ -2226,7 +2231,9 @@ document.getElementById('bookingDrawer').classList.add('active');
                 pets: document.getElementById('adminPets').value,
                 status: document.querySelector('.status-btn.active').getAttribute('data-status'),
                 totalPrice: document.getElementById('adminTotalPrice').value,
-                paidAmount: document.getElementById('adminPaidAmount').value
+                paidAmount: document.getElementById('adminPaidAmount').value,
+                source: document.getElementById('adminSource').value, // Захоплюємо джерело
+                comment: document.getElementById('adminComment').value // 🟢 ВІДПРАВЛЯЄМО КОМЕНТАР
             };
             
             if (editingRowNumber !== null) bookingData.row = editingRowNumber;
