@@ -2082,49 +2082,47 @@ document.getElementById('adminGuests').addEventListener('input', updatePricePrev
 document.getElementById('adminGuests').addEventListener('change', updatePricePreview);
 
         function openNewBookingDrawer(prefillRoom = null, prefillDate = null) {
-    editingRowNumber = null; 
-    document.getElementById('drawerTitle').innerText = 'Нове бронювання'; 
-    document.getElementById('adminBookingForm').reset();
-    if(document.getElementById('adminComment')) document.getElementById('adminComment').value = ""; // 🟢 ОЧИЩАЄМО
-    document.getElementById('adminDeleteBtn').style.display = 'none';
+            editingRowNumber = null; 
+            document.getElementById('drawerTitle').innerText = 'Нове бронювання'; 
+            document.getElementById('adminBookingForm').reset();
             
-    // --- ДОДАЙ ОСЬ ЦЕЙ РЯДОК ---
-    // Очищаємо пам'ять калькулятора від попередніх відкритих броней
-    document.getElementById('liveCalculatorContainer').innerHTML = '';
-    
-    // Скидаємо статуси та тварин
-    document.querySelectorAll('.status-btn').forEach(b => b.classList.remove('active'));
-    // ... далі йде твій старий код цієї функції
+            // ОЧИЩЕННЯ ПОЛІВ ПРИ НОВІЙ БРОНІ
+            if(document.getElementById('adminComment')) document.getElementById('adminComment').value = ""; 
+            document.getElementById('adminDeleteBtn').style.display = 'none';
+            document.getElementById('liveCalculatorContainer').innerHTML = '';
             
             // Скидаємо статуси та тварин
             document.querySelectorAll('.status-btn').forEach(b => b.classList.remove('active'));
             document.querySelector('.status-btn[data-status="Нова бронь"]').classList.add('active');
             if(document.getElementById('adminPets')) togglePet('Ні');
             
-           // Динамічно формуємо список ТІЛЬКИ АКТИВНИХ номерів
-    const activeRooms = roomsList.filter(r => r.active);
-    const cottageOptions = document.getElementById('cottageOptions');
-    
-    cottageOptions.innerHTML = activeRooms.map(r => `
-        <div class="custom-option" onclick="selectOption('cottageWrapper', 'adminCottage', '${r.name}', this, '${r.name} (${r.desc})')">
-            ${r.name} <span style="font-size:12px; color:#9CA3AF;">${r.desc}</span>
-        </div>
-    `).join('');
+            // Динамічно формуємо список ТІЛЬКИ АКТИВНИХ номерів
+            const activeRooms = roomsList.filter(r => r.active);
+            const cottageOptions = document.getElementById('cottageOptions');
+            
+            cottageOptions.innerHTML = activeRooms.map(r => `
+                <div class="custom-option" onclick="selectOption('cottageWrapper', 'adminCottage', '${r.name}', this, '${r.name} (${r.desc})')">
+                    ${r.name} <span style="font-size:12px; color:#9CA3AF;">${r.desc}</span>
+                </div>
+            `).join('');
 
-    let defaultRoom = prefillRoom || (activeRooms[0] ? activeRooms[0].name : "");
-    let defaultDesc = activeRooms.find(r => r.name === defaultRoom)?.desc || "";
-    
-    document.getElementById('adminCottage').value = defaultRoom;
-    document.getElementById('cottageSelectedText').innerText = defaultRoom ? `${defaultRoom} (${defaultDesc})` : "Оберіть номер";
-    
-    // Скидаємо джерело на дефолт
-    document.getElementById('adminSource').value = "Instagram";
-    document.getElementById('sourceSelectedText').innerText = "Instagram";
+            let defaultRoom = prefillRoom || (activeRooms[0] ? activeRooms[0].name : "");
+            let defaultDesc = activeRooms.find(r => r.name === defaultRoom)?.desc || "";
+            
+            document.getElementById('adminCottage').value = defaultRoom;
+            document.getElementById('cottageSelectedText').innerText = defaultRoom ? `${defaultRoom} (${defaultDesc})` : "Оберіть номер";
+            
+            // Скидаємо джерело на дефолт
+            document.getElementById('adminSource').value = "Instagram";
+            document.getElementById('sourceSelectedText').innerText = "Instagram";
+            document.querySelectorAll('#sourceWrapper .custom-option').forEach(opt => {
+                opt.classList.remove('selected');
+                if (opt.innerText.trim() === "Instagram") opt.classList.add('selected');
+            });
 
             // Якщо ми клікнули з шахматки - підставляємо дату
             if (prefillDate) {
                 checkInPicker.setDate(prefillDate);
-                
                 // Автоматично ставимо дату виїзду на наступний день
                 let nextDay = new Date(prefillDate);
                 nextDay.setDate(nextDay.getDate() + 1);
@@ -2140,7 +2138,7 @@ document.getElementById('adminGuests').addEventListener('change', updatePricePre
             document.getElementById('bookingDrawer').classList.add('active');
         }
 
-      // --- ВІДКРИТТЯ ДЕТАЛЕЙ ІСНУЮЧОЇ БРОНІ ---
+        // --- ВІДКРИТТЯ ДЕТАЛЕЙ ІСНУЮЧОЇ БРОНІ ---
         function openDetailsByRow(rowNumber) {
             const booking = allBookings.find(b => b.row == rowNumber);
             if (!booking) return;
@@ -2153,7 +2151,12 @@ document.getElementById('adminGuests').addEventListener('change', updatePricePre
             document.getElementById('adminName').value = String(booking.name).replace(' (Ручна бронь)', '');
             document.getElementById('adminPhone').value = '+' + formatPhone(booking.phone);
             document.getElementById('adminGuests').value = booking.guests || 2;
-            document.getElementById('adminComment').value = booking.comment || ""; // 🟢 ПІДТЯГУЄМО КОМЕНТАР
+            
+            // 🟢 ПІДТЯГУЄМО КОМЕНТАР
+            if(document.getElementById('adminComment')) {
+                document.getElementById('adminComment').value = booking.comment || ""; 
+            }
+
             // 🟢 ПІДТЯГУЄМО ДЖЕРЕЛО (Сайт, Instagram і тд)
             let savedSource = booking.source || "Адмінка";
             document.getElementById('adminSource').value = savedSource;
@@ -2164,21 +2167,22 @@ document.getElementById('adminGuests').addEventListener('change', updatePricePre
                 if (opt.innerText.trim() === savedSource) opt.classList.add('selected');
             });
             
-            // Беремо активні номери + ТОЙ НОМЕР, який вже обраний у цій броні (навіть якщо він зараз вимкнений)
-    const availableRooms = roomsList.filter(r => r.active || r.name === booking.cottage);
-    const cottageOptions = document.getElementById('cottageOptions');
-    
-    cottageOptions.innerHTML = availableRooms.map(r => `
-        <div class="custom-option" onclick="selectOption('cottageWrapper', 'adminCottage', '${r.name}', this, '${r.name} (${r.desc})')">
-            ${r.name} <span style="font-size:12px; color:#9CA3AF;">${r.desc}</span>
-        </div>
-    `).join('');
+            // Беремо активні номери + ТОЙ НОМЕР, який вже обраний у цій броні
+            const availableRooms = roomsList.filter(r => r.active || r.name === booking.cottage);
+            const cottageOptions = document.getElementById('cottageOptions');
+            
+            cottageOptions.innerHTML = availableRooms.map(r => `
+                <div class="custom-option" onclick="selectOption('cottageWrapper', 'adminCottage', '${r.name}', this, '${r.name} (${r.desc})')">
+                    ${r.name} <span style="font-size:12px; color:#9CA3AF;">${r.desc}</span>
+                </div>
+            `).join('');
 
-    let savedRoom = roomsList.some(r => r.name === booking.cottage) ? booking.cottage : (availableRooms[0] ? availableRooms[0].name : "");
-    let savedDesc = roomsList.find(r => r.name === savedRoom)?.desc || "";
-    
-    document.getElementById('adminCottage').value = savedRoom;
-    document.getElementById('cottageSelectedText').innerText = savedRoom ? `${savedRoom} (${savedDesc})` : "Оберіть номер";
+            let savedRoom = roomsList.some(r => r.name === booking.cottage) ? booking.cottage : (availableRooms[0] ? availableRooms[0].name : "");
+            let savedDesc = roomsList.find(r => r.name === savedRoom)?.desc || "";
+            
+            document.getElementById('adminCottage').value = savedRoom;
+            document.getElementById('cottageSelectedText').innerText = savedRoom ? `${savedRoom} (${savedDesc})` : "Оберіть номер";
+            
             // Дати
             checkInPicker.setDate(booking.checkIn);
             checkOutPicker.setDate(booking.checkOut);
@@ -2194,19 +2198,19 @@ document.getElementById('adminGuests').addEventListener('change', updatePricePre
             if(matched) matched.classList.add('active'); 
             else document.querySelector('.status-btn[data-status="Нова бронь"]').classList.add('active');
 
-// ВИКЛИКАЄМО ЖИВИЙ КАЛЬКУЛЯТОР 
-setTimeout(() => {
-    updatePricePreview();
-    setTimeout(() => {
-        if(document.getElementById('adminTotalPrice')) {
-            document.getElementById('adminTotalPrice').value = booking.totalPrice || 0;
-            document.getElementById('adminPaidAmount').value = booking.paidAmount || 0;
-            calculateBalanceLive(); // <--- Викликаємо функцію напряму
-        }
-    }, 50);
-}, 100);
+            // ВИКЛИКАЄМО ЖИВИЙ КАЛЬКУЛЯТОР 
+            setTimeout(() => {
+                updatePricePreview();
+                setTimeout(() => {
+                    if(document.getElementById('adminTotalPrice')) {
+                        document.getElementById('adminTotalPrice').value = booking.totalPrice || 0;
+                        document.getElementById('adminPaidAmount').value = booking.paidAmount || 0;
+                        calculateBalanceLive();
+                    }
+                }, 50);
+            }, 100);
 
-document.getElementById('bookingDrawer').classList.add('active');
+            document.getElementById('bookingDrawer').classList.add('active');
         }
 
         function closeDrawer() { 
