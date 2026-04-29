@@ -5,6 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <script>if(window.innerWidth<768)window.location.href='mobile.html';</script>
     <title>BOSO | Панель Управління</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="preconnect" href="https://cdn.jsdelivr.net">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
     
@@ -830,6 +833,9 @@ input[type="number"] {
         // ВАЖЛИВО: ВСТАВ СВОЄ ПОСИЛАННЯ З GOOGLE SCRIPT!
         const API_URL = "https://script.google.com/macros/s/AKfycbx1RYoMJySplZ18Wv54PQjxzHnZqIb3Wsw63oG-PAOKMvuXEym8Y7aFS-L_pxvfX6o4DQ/exec";
         
+        // 🚀 РАННІЙ СТАРТ: Запускаємо запит ДО того, як завантажиться сторінка
+        const initialFetchPromise = fetch(API_URL + "?action=initData&t=" + new Date().getTime()).then(res => res.json());
+
         // --- ФУНКЦІЯ ДЛЯ ПРАВИЛЬНОЇ МНОЖИНИ (1 гість, 2 гості, 5 гостей) ---
 function getGuestWord(count) {
     let n = Math.abs(parseInt(count)) % 100;
