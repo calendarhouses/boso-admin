@@ -877,46 +877,39 @@ function getVisitWord(count) {
         // --- ІНІЦІАЛІЗАЦІЯ: ЗАВАНТАЖУЄМО БРОНІ ТА НАЛАШТУВАННЯ З ХМАРИ ---
         async function initApp() {
             try {
-                // Додаємо мілісекунди, щоб посилання завжди було унікальним (анти-кеш)
                 const t = new Date().getTime();
                 
-                // Відправляємо 2 запити паралельно: за бронями і за налаштуваннями
-                const [bookingsRes, settingsRes] = await Promise.all([
-                    fetch(API_URL + "?t=" + t),
-                    fetch(API_URL + "?action=settings&t=" + t)
-                ]);
+                // 🚀 ОДИН СУПЕР-ЗАПИТ ЗАМІСТЬ ДВОХ (Вдвічі швидше!)
+                const res = await fetch(API_URL + "?action=initData&t=" + t);
+                const data = await res.json();
                 
-                allBookings = await bookingsRes.json();
-                const settingsData = await settingsRes.json();
+                allBookings = data.bookings || [];
+                const settingsData = data.settings || {};
                 
-                // Якщо в хмарі вже є збережені налаштування - замінюємо базові
                 if (settingsData && Object.keys(settingsData).length > 0) {
                     if (settingsData.roomsList) roomsList = settingsData.roomsList;
                     if (settingsData.discountsList) discountsList = settingsData.discountsList;
                     if (settingsData.customServicesList) customServicesList = settingsData.customServicesList;
                     if (settingsData.sysServicesList) sysServicesList = settingsData.sysServicesList;
-                    if (settingsData.customPrices) customPrices = settingsData.customPrices; // ДОДАНО: Читаємо ціни
+                    if (settingsData.customPrices) customPrices = settingsData.customPrices;
                 }
 
-                // Оновлюємо ту сторінку, яка зараз відкрита у користувача
-if (document.getElementById('view-grid').style.display === 'flex') {
-    renderTimeline();
-} else if (document.getElementById('view-guests').style.display === 'block') {
-    renderGuests(document.getElementById('guestSearch').value);
-} else {
-    renderTable(allBookings);
-}
+                if (document.getElementById('view-grid').style.display === 'flex') {
+                    renderTimeline();
+                } else if (document.getElementById('view-guests').style.display === 'block') {
+                    renderGuests(document.getElementById('guestSearch').value);
+                } else {
+                    renderTable(allBookings);
+                }
                 
-                // Підвантажуємо дані для налаштувань, щоб вони були готові
                 renderSettingsRooms();
                 renderSettingsDiscounts();
                 renderSettingsServices();
 
-                // Ховаємо прілоадер плавно
                 const preloader = document.getElementById('preloader');
                 if (preloader) {
                     preloader.style.opacity = '0';
-                    setTimeout(() => preloader.style.display = 'none', 500);
+                    setTimeout(() => preloader.style.display = 'none', 400); // Пришвидшили зникнення
                 }
 
             } catch (error) {
@@ -1655,7 +1648,7 @@ if (document.getElementById('view-grid').style.display === 'flex') {
                 }
                 
                 const isToday = d.toDateString() === today.toDateString(); 
-                const isWeekend = d.getDay() === 0 || d.getDay() === 6;
+                const isWeekend = d.getDay() === 0 || d.getDay() === 5 || d.getDay() === 6;
                 datesContainer.innerHTML += `<div class="timeline-date ${isToday ? 'today' : ''} ${isWeekend ? 'weekend' : ''}">${d.getDate()} <span>${daysArr[d.getDay()]}</span></div>`;
             }
             monthsContainer.innerHTML += `<div class="timeline-month-cell" style="width: ${daysInCurrentMonth * cellWidth}px">${monthName}</div>`;
@@ -1666,7 +1659,7 @@ if (document.getElementById('view-grid').style.display === 'flex') {
                 let rowHtml = `<div class="timeline-row-bg" id="grid-row-${roomIndex}" style="position: relative;">`;
                 for (let i = 0; i < daysCount; i++) {
                     const d = new Date(startDate); d.setDate(startDate.getDate() + i);
-                    const isWeekend = d.getDay() === 0 || d.getDay() === 6;
+                    const isWeekend = d.getDay() === 0 || d.getDay() === 5 || d.getDay() === 6;
                     const dateString = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
                     rowHtml += `<div class="timeline-cell ${isWeekend ? 'weekend' : ''}" onclick="openNewBookingDrawer('${room.name}', '${dateString}')"></div>`;
                 }
@@ -1787,7 +1780,7 @@ currentRow.innerHTML += `
 
             for (let i = 0; i < daysCount; i++) {
                 const d = new Date(startDate); d.setDate(startDate.getDate() + i);
-                const isWeekend = d.getDay() === 0 || d.getDay() === 6;
+                const isWeekend = d.getDay() === 0 || d.getDay() === 5 || d.getDay() === 6;
                 datesContainer.innerHTML += `<div class="timeline-date ${isWeekend ? 'weekend' : ''}" style="height: 50px;">${d.getDate()} <span>${daysArr[d.getDay()]}</span></div>`;
             }
 
@@ -1797,7 +1790,7 @@ currentRow.innerHTML += `
                 
                 for (let i = 0; i < daysCount; i++) {
                     const d = new Date(startDate); d.setDate(startDate.getDate() + i);
-                    const isWeekend = d.getDay() === 0 || d.getDay() === 6;
+                    const isWeekend = d.getDay() === 0 || d.getDay() === 5 || d.getDay() === 6;
                     
                     // 1. Створюємо рядок дати для пошуку (напр. "2026-04-19")
                     const dateStr = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
@@ -2154,6 +2147,15 @@ document.getElementById('adminGuests').addEventListener('change', updatePricePre
             document.getElementById('adminName').value = String(booking.name).replace(' (Ручна бронь)', '');
             document.getElementById('adminPhone').value = '+' + formatPhone(booking.phone);
             document.getElementById('adminGuests').value = booking.guests || 2;
+            // 🟢 ПІДТЯГУЄМО ДЖЕРЕЛО (Сайт, Instagram і тд)
+            let savedSource = booking.source || "Адмінка";
+            document.getElementById('adminSource').value = savedSource;
+            document.getElementById('sourceSelectedText').innerText = savedSource;
+            
+            document.querySelectorAll('#sourceWrapper .custom-option').forEach(opt => {
+                opt.classList.remove('selected');
+                if (opt.innerText.trim() === savedSource) opt.classList.add('selected');
+            });
             
             // Беремо активні номери + ТОЙ НОМЕР, який вже обраний у цій броні (навіть якщо він зараз вимкнений)
     const availableRooms = roomsList.filter(r => r.active || r.name === booking.cottage);
