@@ -10,6 +10,9 @@
 
     <script>if(window.innerWidth>=768)window.location.href='index.html';</script>
     <title>BOSO | Mobile</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="preconnect" href="https://cdn.jsdelivr.net">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
     
@@ -605,6 +608,9 @@
     <script>
         // ВАЖЛИВО: ВСТАВ СВОЄ ПОСИЛАННЯ З GOOGLE SCRIPT!
         const API_URL = "https://script.google.com/macros/s/AKfycbx1RYoMJySplZ18Wv54PQjxzHnZqIb3Wsw63oG-PAOKMvuXEym8Y7aFS-L_pxvfX6o4DQ/exec";
+        
+        // 🚀 РАННІЙ СТАРТ: Запускаємо запит до бази ОДРАЗУ, не чекаючи відмальовки сторінки
+        const initialFetchPromise = fetch(API_URL + "?action=initData&t=" + new Date().getTime()).then(res => res.json());
         
         function getGuestWord(count) { let n = Math.abs(parseInt(count)) % 100; let n1 = n % 10; if (n > 10 && n < 20) return "гостей"; if (n1 > 1 && n1 < 5) return "гості"; if (n1 === 1) return "гість"; return "гостей"; }
         function getVisitWord(count) { let n = Math.abs(parseInt(count)) % 100; let n1 = n % 10; if (n > 10 && n < 20) return "заїздів"; if (n1 > 1 && n1 < 5) return "заїзди"; if (n1 === 1) return "заїзд"; return "заїздів"; }
