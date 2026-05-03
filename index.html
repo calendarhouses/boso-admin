@@ -2448,15 +2448,17 @@ function bosoHover(e, rowId) {
         statusHtml = `<div class="bt-status yellow">Очікує аванс: ${Math.round(total/2)} грн</div>`;
     }
 
-    // 🚀 4. ПРЕМІУМ КОМЕНТАР (БЕЗ СМАЙЛА)
-    let rawComment = b.comment ? String(b.comment).trim() : "";
-    if (rawComment === "undefined" || rawComment === "null") rawComment = "";
-    let commentHtml = rawComment !== "" 
-        ? `<div style="margin-top: 16px; padding: 12px 14px; background: #F9FAFB; border-left: 3px solid var(--accent); border-radius: 4px 8px 8px 4px; font-size: 13px; color: #4B5563; line-height: 1.4; text-align: left;">
-             <span style="display: block; font-size: 10px; font-weight: 800; text-transform: uppercase; color: #9CA3AF; margin-bottom: 4px; letter-spacing: 0.5px;">Коментар клієнта</span>
-             ${rawComment}
-           </div>` 
-        : '';
+   // 🚀 ПРЕМІУМ КОМЕНТАР (Жорстка обрізка з крапками "...")
+        let rawComment = b.comment ? String(b.comment).trim() : "";
+        if (rawComment === "undefined" || rawComment === "null") rawComment = "";
+        let commentHtml = rawComment !== "" 
+            ? `<div style="margin-top: 16px; padding: 12px 14px; background: #F9FAFB; border-left: 3px solid var(--accent); border-radius: 4px 8px 8px 4px; font-size: 13px; color: #4B5563; line-height: 1.4; text-align: left;">
+                 <span style="display: block; font-size: 10px; font-weight: 800; text-transform: uppercase; color: #9CA3AF; margin-bottom: 4px; letter-spacing: 0.5px;">Коментар клієнта</span>
+                 <div style="display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; text-overflow: ellipsis; word-break: break-all;">
+                     ${rawComment}
+                 </div>
+               </div>` 
+            : '';
 
     // 5. Малюємо HTML
     tt.innerHTML = `
@@ -2472,29 +2474,32 @@ function bosoHover(e, rowId) {
         ${commentHtml}
     `;
 
-    // 6. Жорстка прив'язка позиції
+   // 6. Жорстка прив'язка позиції
     const targetRect = e.currentTarget.getBoundingClientRect();
     
-    // Центруємо над блоком.
-    let leftPos = targetRect.left + (targetRect.width / 2) - 130; // 130 = половина від 260px ширини
-    
-    // 🚀 ПРІОРИТЕТ 1: СТАВИМО ВГОРУ НАД БРОННЮ
-    let topPos = targetRect.top - tt.offsetHeight - 12;
+    // 🚀 МАГІЯ: Чекаємо мілісекунду, щоб браузер проковтнув текст і знав точну висоту вікна
+    requestAnimationFrame(() => {
+        // Центруємо над блоком
+        let leftPos = targetRect.left + (targetRect.width / 2) - (tt.offsetWidth / 2); 
+        
+        // 🚀 ПРІОРИТЕТ 1: СТАВИМО ВГОРУ НАД БРОННЮ
+        let topPos = targetRect.top - tt.offsetHeight - 12;
 
-    // 🚀 ПРІОРИТЕТ 2: ЯКЩО ЗВЕРХУ НЕМАЄ МІСЦЯ (ВИЛІЗАЄ ЗА ЕКРАН) - КИДАЄМО ВНИЗ
-    if (topPos < 10) {
-        topPos = targetRect.bottom + 12; 
-    }
+        // 🚀 ПРІОРИТЕТ 2: ЯКЩО ЗВЕРХУ НЕМАЄ МІСЦЯ - ПРИТИСКАЄМО ДО СТЕЛІ, ВНИЗ НЕ КИДАЄМО
+        if (topPos < 10) {
+            topPos = 10; 
+        }
 
-    // Захист від вильоту за екран по боках
-    if (leftPos < 10) leftPos = 10;
-    if (leftPos + 260 > window.innerWidth) leftPos = window.innerWidth - 270;
+        // Захист від вильоту за екран по боках
+        if (leftPos < 10) leftPos = 10;
+        if (leftPos + tt.offsetWidth > window.innerWidth) leftPos = window.innerWidth - tt.offsetWidth - 10;
 
-    tt.style.top = topPos + 'px';
-    tt.style.left = leftPos + 'px';
-    
-    // Вмикаємо!
-    tt.classList.add('show');
+        tt.style.top = topPos + 'px';
+        tt.style.left = leftPos + 'px';
+        
+        // Вмикаємо!
+        tt.classList.add('show');
+    });
 }
 
 function bosoLeave() {
