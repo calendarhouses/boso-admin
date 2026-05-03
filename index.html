@@ -1728,13 +1728,12 @@ else { finText = `Борг: ${balance} грн`; badgeBg = "#EF4444"; }
 
 let guestName = String(b.name).replace(' (Ручна бронь)', '');
 
-// Малюємо блок. Додаємо onmouseenter та onmouseleave
+// Малюємо блок без глючних mousemove
 currentRow.innerHTML += `
-   <div class="booking-block ${statusClass}" style="left: ${blockLeft}px; width: ${blockWidth}px; padding: 6px 8px; justify-content: flex-start;" 
-     onclick="openDetailsByRow(event, ${b.row})"
-     onmouseenter="showPremiumTooltip(this, ${b.row}, event)" 
-     onmousemove="showPremiumTooltip(this, ${b.row}, event)"
-     onmouseleave="hidePremiumTooltip()">
+    <div class="booking-block ${statusClass}" style="left: ${blockLeft}px; width: ${blockWidth}px; padding: 6px 8px; justify-content: flex-start;" 
+         onclick="openDetailsByRow(${b.row})"
+         onmouseenter="showPremiumTooltip(this, ${b.row})" 
+         onmouseleave="hidePremiumTooltip()">
         
         <div style="font-size: 12px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; line-height: 1.2;">
             ${guestName}
@@ -2154,10 +2153,11 @@ document.getElementById('adminGuests').addEventListener('change', updatePricePre
             document.getElementById('bookingDrawer').classList.add('active');
         }
 
-            function openDetailsByRow(event, rowNumber) { // ДОДАЛИ event
-            if (event) event.stopPropagation(); // 🚀 ЗУПИНЯЄМО КЛІК, щоб він не йшов на клітинку під бронь!
+            function openDetailsByRow(rowNumber) { 
+            // Зупиняємо клік безпечним методом
+            if (window.event) window.event.stopPropagation(); 
             
-            hidePremiumTooltip(); // 🟢 ДОДАЙ ЦЕЙ РЯДОК, щоб тултип зник при відкритті деталей
+            hidePremiumTooltip(); // Ховаємо тултип при кліку
             
             const booking = allBookings.find(b => b.row == rowNumber);
             if (!booking) return;
@@ -2291,7 +2291,7 @@ document.getElementById('adminGuests').addEventListener('change', updatePricePre
       // Додаємо маленьку пам'ять для тултипу
 let currentTooltipRow = null;
 
-function showPremiumTooltip(element, rowNumber, event) {
+function showPremiumTooltip(element, rowNumber) {
     try {
         const tooltip = document.getElementById('premiumTooltip');
         if (!tooltip) return;
@@ -2299,75 +2299,64 @@ function showPremiumTooltip(element, rowNumber, event) {
         const b = allBookings.find(x => x.row == rowNumber);
         if (!b) return;
 
-        // 1. ОНОВЛЮЄМО HTML ТІЛЬКИ ЯКЩО НАВЕЛИ НА НОВУ БРОНЬ (щоб не вішати браузер)
-        if (currentTooltipRow !== rowNumber) {
-            let inDate = "Невідомо";
-            let outDate = "Невідомо";
-            
-            if (b.checkIn) {
-                let d1 = new Date(b.checkIn);
-                if (!isNaN(d1.getTime())) inDate = d1.toLocaleDateString('uk-UA', { day: 'numeric', month: 'short' });
-            }
-            if (b.checkOut) {
-                let d2 = new Date(b.checkOut);
-                if (!isNaN(d2.getTime())) outDate = d2.toLocaleDateString('uk-UA', { day: 'numeric', month: 'short' });
-            }
+        // Безпечне форматування дат
+        const inDate = b.checkIn ? new Date(b.checkIn).toLocaleDateString('uk-UA', { day: 'numeric', month: 'short' }) : "Невідомо";
+        const outDate = b.checkOut ? new Date(b.checkOut).toLocaleDateString('uk-UA', { day: 'numeric', month: 'short' }) : "Невідомо";
+        const guestName = b.name ? String(b.name).replace(' (Ручна бронь)', '') : "Без імені";
+        const guestsCount = b.guests || 2;
+        
+        let total = Number(b.totalPrice) || 0;
+        let paid = Number(b.paidAmount) || 0;
+        let balance = total - paid;
+        
+        let finText = ""; let finColor = ""; let finBg = "";
+        let statusClass = String(b.status || "").toLowerCase();
 
-            const guestName = b.name ? String(b.name).replace(' (Ручна бронь)', '') : "Без імені";
-            const guestsCount = b.guests || 2;
-            
-            let total = Number(b.totalPrice) || 0;
-            let paid = Number(b.paidAmount) || 0;
-            let balance = total - paid;
-            
-            let finText = ""; let finColor = ""; let finBg = "";
-            let statusClass = String(b.status || "").toLowerCase();
-
-            if (statusClass.includes('скас')) {
-                finText = "Бронь скасована"; finBg = "#F3F4F6"; finColor = "#9CA3AF";
-            } else if (total === 0) {
-                finText = "Очікує ціни"; finBg = "#F3F4F6"; finColor = "#4B5563";
-            } else if (paid === 0) {
-                finText = `Очікує передплату (${Math.round(total / 2)} грн)`; finBg = "#FEF3C7"; finColor = "#B45309";
-            } else if (balance <= 0) {
-                finText = `Сплачено повністю (${total} грн)`; finBg = "#D1FAE5"; finColor = "#059669";
-            } else {
-                finText = `Залишок до сплати: ${balance} грн`; finBg = "#FEE2E2"; finColor = "#DC2626";
-            }
-
-            let paidRowHtml = paid > 0 ? `<div class="tt-row"><span class="tt-label">Внесено:</span> <span class="tt-value" style="color: #059669;">${paid} грн</span></div>` : '';
-
-            tooltip.innerHTML = `
-                <div class="tt-header">
-                    <span class="tt-name">${guestName}</span>
-                    <span class="tt-guests">${guestsCount} ${getGuestWord(guestsCount)}</span>
-                </div>
-                <div class="tt-body">
-                    <div class="tt-row"><span class="tt-label">Номер:</span> <span class="tt-value">${b.cottage || "Не вказано"}</span></div>
-                    <div class="tt-row"><span class="tt-label">Дати:</span> <span class="tt-value" style="color: var(--accent);">${inDate} — ${outDate}</span></div>
-                    <div class="tt-row"><span class="tt-label">Загальна сума:</span> <span class="tt-value">${total} грн</span></div>
-                    ${paidRowHtml}
-                    <div class="tt-status" style="background: ${finBg}; color: ${finColor};">${finText}</div>
-                </div>
-            `;
-            // Запам'ятовуємо, що ми вже намалювали цю бронь
-            currentTooltipRow = rowNumber;
+        if (statusClass.includes('скас')) {
+            finText = "Бронь скасована"; finBg = "#F3F4F6"; finColor = "#9CA3AF";
+        } else if (total === 0) {
+            finText = "Очікує ціни"; finBg = "#F3F4F6"; finColor = "#4B5563";
+        } else if (paid === 0) {
+            finText = `Очікує передплату (${Math.round(total / 2)} грн)`; finBg = "#FEF3C7"; finColor = "#B45309";
+        } else if (balance <= 0) {
+            finText = `Сплачено повністю (${total} грн)`; finBg = "#D1FAE5"; finColor = "#059669";
+        } else {
+            finText = `Залишок до сплати: ${balance} грн`; finBg = "#FEE2E2"; finColor = "#DC2626";
         }
 
-        // 2. ПЛАВНО РУХАЄМО ТУЛТИП ЗА КУРСОРОВМ (це швидка операція)
-        let mouseX = event.clientX;
-        let mouseY = event.clientY;
+        let paidRowHtml = paid > 0 ? `<div class="tt-row"><span class="tt-label">Внесено:</span> <span class="tt-value" style="color: #059669;">${paid} грн</span></div>` : '';
+        
+        // 🟢 МАГІЯ: Формуємо блок коментаря, якщо він є
+        let commentHtml = (b.comment && String(b.comment).trim() !== "") 
+            ? `<div style="margin-top: 10px; padding-top: 10px; border-top: 1px dashed #E5E7EB; font-size: 12px; color: #6B7280; font-style: italic;">📝 "${b.comment}"</div>` 
+            : '';
 
-        let left = mouseX + 15; 
-        let top = mouseY + 15;  
+        tooltip.innerHTML = `
+            <div class="tt-header">
+                <span class="tt-name">${guestName}</span>
+                <span class="tt-guests">${guestsCount} ${getGuestWord(guestsCount)}</span>
+            </div>
+            <div class="tt-body">
+                <div class="tt-row"><span class="tt-label">Номер:</span> <span class="tt-value">${b.cottage || "Не вказано"}</span></div>
+                <div class="tt-row"><span class="tt-label">Дати:</span> <span class="tt-value" style="color: var(--accent);">${inDate} — ${outDate}</span></div>
+                <div class="tt-row"><span class="tt-label">Загальна сума:</span> <span class="tt-value">${total} грн</span></div>
+                ${paidRowHtml}
+                <div class="tt-status" style="background: ${finBg}; color: ${finColor};">${finText}</div>
+                ${commentHtml}
+            </div>
+        `;
 
-        if (left + tooltip.offsetWidth > window.innerWidth) {
-            left = mouseX - tooltip.offsetWidth - 15;
-        }
+        // Залізобетонний розрахунок позиції (чітко над блоком броні)
+        const rect = element.getBoundingClientRect();
+        let top = rect.top - tooltip.offsetHeight - 15;
+        let left = rect.left + (rect.width / 2) - (tooltip.offsetWidth / 2);
 
-        if (top + tooltip.offsetHeight > window.innerHeight) {
-            top = mouseY - tooltip.offsetHeight - 15;
-        }
+        // Якщо згори мало місця — показуємо знизу
+        if (top < 10) top = rect.bottom + 15;
+        
+        // Захист від вилізання за краї екрану
+        if (left < 10) left = 10;
+        if (left + tooltip.offsetWidth > window.innerWidth - 10) left = window.innerWidth - tooltip.offsetWidth - 10;
 
         tooltip.style.left = left + 'px';
         tooltip.style.top = top + 'px';
@@ -2383,7 +2372,6 @@ function hidePremiumTooltip() {
     const tooltip = document.getElementById('premiumTooltip');
     if (tooltip) {
         tooltip.classList.remove('visible');
-        currentTooltipRow = null; // Скидаємо пам'ять при виході мишки
     }
 }
 
