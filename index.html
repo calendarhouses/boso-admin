@@ -2281,23 +2281,27 @@ function showPremiumTooltip(element, rowNumber) {
     const b = allBookings.find(x => x.row == rowNumber);
     if (!b) return;
 
-    const inDate = new Date(b.checkIn).toLocaleDateString('uk-UA', { day: 'numeric', month: 'short' });
-    const outDate = new Date(b.checkOut).toLocaleDateString('uk-UA', { day: 'numeric', month: 'short' });
-    const guestName = String(b.name).replace(' (Ручна бронь)', '');
+    // 🛡 ЗАХИСТ ВІД ПУСТИХ ДАНИХ: Перевіряємо дати перед форматуванням
+    const checkInDate = new Date(b.checkIn);
+    const checkOutDate = new Date(b.checkOut);
+    const inDate = isNaN(checkInDate) ? "Невідомо" : checkInDate.toLocaleDateString('uk-UA', { day: 'numeric', month: 'short' });
+    const outDate = isNaN(checkOutDate) ? "Невідомо" : checkOutDate.toLocaleDateString('uk-UA', { day: 'numeric', month: 'short' });
+    
+    const guestName = String(b.name || "Без імені").replace(' (Ручна бронь)', '');
+    const guestsCount = b.guests || 2; // Якщо пусто, ставимо 2 за замовчуванням
     
     let total = Number(b.totalPrice) || 0;
     let paid = Number(b.paidAmount) || 0;
     let balance = total - paid;
     
     let finText = ""; let finColor = ""; let finBg = "";
-    let statusClass = String(b.status).toLowerCase();
+    let statusClass = String(b.status || "").toLowerCase();
 
     if (statusClass.includes('скас')) {
         finText = "Бронь скасована"; finBg = "#F3F4F6"; finColor = "#9CA3AF";
     } else if (total === 0) {
         finText = "Очікує прорахунку ціни"; finBg = "#F3F4F6"; finColor = "#4B5563";
     } else if (paid === 0) {
-        // ВИПРАВЛЕНО: Тепер рахує рівно 50% від суми для підказки
         finText = `Очікує передплату (${Math.round(total / 2)} грн)`; finBg = "#FEF3C7"; finColor = "#B45309";
     } else if (balance <= 0) {
         finText = `Сплачено повністю (${total} грн)`; finBg = "#D1FAE5"; finColor = "#059669";
@@ -2305,17 +2309,15 @@ function showPremiumTooltip(element, rowNumber) {
         finText = `Залишок до сплати: ${balance} грн`; finBg = "#FEE2E2"; finColor = "#DC2626";
     }
 
-    // НОВЕ: Рядок з авансом (генерується тільки якщо людина вже щось заплатила)
     let paidRowHtml = paid > 0 ? `<div class="tt-row"><span class="tt-label">Внесено:</span> <span class="tt-value" style="color: #059669;">${paid} грн</span></div>` : '';
 
-    // Заповнюємо картку
     tooltip.innerHTML = `
         <div class="tt-header">
             <span class="tt-name">${guestName}</span>
-            <span class="tt-guests">${b.guests} ${getGuestWord(b.guests)}</span>
+            <span class="tt-guests">${guestsCount} ${getGuestWord(guestsCount)}</span>
         </div>
         <div class="tt-body">
-            <div class="tt-row"><span class="tt-label">Номер:</span> <span class="tt-value">${b.cottage}</span></div>
+            <div class="tt-row"><span class="tt-label">Номер:</span> <span class="tt-value">${b.cottage || "Не обрано"}</span></div>
             <div class="tt-row"><span class="tt-label">Дати:</span> <span class="tt-value" style="color: var(--accent);">${inDate} — ${outDate}</span></div>
             <div class="tt-row"><span class="tt-label">Загальна сума:</span> <span class="tt-value">${total} грн</span></div>
             ${paidRowHtml}
