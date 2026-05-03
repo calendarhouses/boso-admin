@@ -1730,11 +1730,11 @@ let guestName = String(b.name).replace(' (Ручна бронь)', '');
 
 // Малюємо блок. Додаємо onmouseenter та onmouseleave
 currentRow.innerHTML += `
-    <div class="booking-block ${statusClass}" style="left: ${blockLeft}px; width: ${blockWidth}px; padding: 6px 8px; justify-content: flex-start;" 
-         onclick="openDetailsByRow(${b.row})"
-         onmouseenter="showPremiumTooltip(this, ${b.row}, event)" 
-onmousemove="showPremiumTooltip(this, ${b.row}, event)"
-         onmouseleave="hidePremiumTooltip()">
+   <div class="booking-block ${statusClass}" style="left: ${blockLeft}px; width: ${blockWidth}px; padding: 6px 8px; justify-content: flex-start;" 
+     onclick="openDetailsByRow(event, ${b.row})"
+     onmouseenter="showPremiumTooltip(this, ${b.row}, event)" 
+     onmousemove="showPremiumTooltip(this, ${b.row}, event)"
+     onmouseleave="hidePremiumTooltip()">
         
         <div style="font-size: 12px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; line-height: 1.2;">
             ${guestName}
@@ -2154,8 +2154,9 @@ document.getElementById('adminGuests').addEventListener('change', updatePricePre
             document.getElementById('bookingDrawer').classList.add('active');
         }
 
-        // --- ВІДКРИТТЯ ДЕТАЛЕЙ ІСНУЮЧОЇ БРОНІ ---
-        function openDetailsByRow(rowNumber) {
+            function openDetailsByRow(event, rowNumber) { // ДОДАЛИ event
+            if (event) event.stopPropagation(); // 🚀 ЗУПИНЯЄМО КЛІК, щоб він не йшов на клітинку під бронь!
+            
             const booking = allBookings.find(b => b.row == rowNumber);
             if (!booking) return;
             editingRowNumber = rowNumber;
@@ -2285,8 +2286,7 @@ document.getElementById('adminGuests').addEventListener('change', updatePricePre
             }
         });
 
-      // Оновлена функція показу (заміни всю функцію showPremiumTooltip)
-function showPremiumTooltip(element, rowNumber, event) {
+      function showPremiumTooltip(element, rowNumber, event) {
     try {
         const tooltip = document.getElementById('premiumTooltip');
         if (!tooltip) return;
@@ -2344,42 +2344,25 @@ function showPremiumTooltip(element, rowNumber, event) {
             </div>
         `;
 
-        // 🚀 НАДІЙНЕ ПОЗИЦІОНУВАННЯ ПО КУРСОРУ МИШІ
+        // Прямо і жорстко встановлюємо координати по курсору
         let mouseX = event.clientX;
         let mouseY = event.clientY;
 
-        let left = mouseX + 15; // Трохи правіше від курсора
-        let top = mouseY + 15;  // Трохи нижче від курсора
+        let left = mouseX + 15; 
+        let top = mouseY + 15;  
 
-        // Якщо вікно вилазить за правий край
         if (left + tooltip.offsetWidth > window.innerWidth) {
             left = mouseX - tooltip.offsetWidth - 15;
         }
 
-        // Якщо вікно вилазить за нижній край
         if (top + tooltip.offsetHeight > window.innerHeight) {
             top = mouseY - tooltip.offsetHeight - 15;
         }
 
-       // 🚀 ФІКС SAFARI: Даємо браузеру 1 кадр на промальовку тексту всередині вікна, 
-        // щоб він правильно порахував offsetHeight і не ховав шар
-        requestAnimationFrame(() => {
-            const rect = element.getBoundingClientRect();
-            let top = rect.top - tooltip.offsetHeight - 15;
-            let left = rect.left + (rect.width / 2) - (tooltip.offsetWidth / 2);
-
-            // Якщо згори мало місця — показуємо знизу
-            if (top < 10) top = rect.bottom + 15;
-            
-            // Щоб не вилазило за краї екрану з боків
-            if (left < 10) left = 10;
-            if (left + tooltip.offsetWidth > window.innerWidth - 10) left = window.innerWidth - tooltip.offsetWidth - 10;
-
-            tooltip.style.top = top + 'px';
-            tooltip.style.left = left + 'px';
-            
-            tooltip.classList.add('visible');
-        });
+        tooltip.style.left = left + 'px';
+        tooltip.style.top = top + 'px';
+        
+        tooltip.classList.add('visible');
 
     } catch (error) {
         console.error("Помилка тултипу:", error);
