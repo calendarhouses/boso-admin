@@ -417,27 +417,22 @@
     z-index: 2147483647 !important; /* Поверх абсолютно всього у всесвіті */
     background: rgba(255, 255, 255, 0.95);
     backdrop-filter: blur(8px);
-    -webkit-backdrop-filter: blur(8px); /* 🚀 ЖИТТЄВО ВАЖЛИВО ДЛЯ SAFARI */
+    -webkit-backdrop-filter: blur(8px);
     border: 1px solid #E5E7EB;
     border-radius: 12px;
     padding: 14px 16px;
     box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1), 0 4px 6px rgba(0, 0, 0, 0.05);
     min-width: 220px;
     
-    /* 🚀 МАГІЯ SAFARI: Примусове апаратне прискорення (GPU), щоб шар не "засинав" */
-    visibility: hidden;
+    /* 🚀 ЧИСТИЙ ТА НАДІЙНИЙ КОД БЕЗ БАГІВ SAFARI */
     opacity: 0;
-    transform: translateY(10px) translateZ(0);
-    -webkit-transform: translateY(10px) translateZ(0);
-    will-change: opacity, transform, visibility;
-    transition: opacity 0.2s ease, transform 0.2s ease, visibility 0.2s;
+    transform: translateY(10px);
+    transition: opacity 0.2s ease, transform 0.2s ease;
 }
 
 .premium-tooltip.visible {
-    visibility: visible !important;
     opacity: 1 !important;
-    transform: translateY(0) translateZ(0) !important;
-    -webkit-transform: translateY(0) translateZ(0) !important;
+    transform: translateY(0) !important;
 }
 .tt-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #F3F4F6; padding-bottom: 8px; margin-bottom: 10px; }
 .tt-name { font-weight: 700; font-size: 15px; color: #111827; }
@@ -2326,9 +2321,12 @@ function showPremiumTooltip(element, rowNumber) {
 
         let paidRowHtml = paid > 0 ? `<div class="tt-row"><span class="tt-label">Внесено:</span> <span class="tt-value" style="color: #059669;">${paid} грн</span></div>` : '';
         
-        // 🟢 МАГІЯ: Формуємо блок коментаря, якщо він є
-        let commentHtml = (b.comment && String(b.comment).trim() !== "") 
-            ? `<div style="margin-top: 10px; padding-top: 10px; border-top: 1px dashed #E5E7EB; font-size: 12px; color: #6B7280; font-style: italic;">📝 "${b.comment}"</div>` 
+        // 🟢 Надійний вивід коментаря (захист від слова undefined)
+        let rawComment = b.comment ? String(b.comment).trim() : "";
+        if (rawComment === "undefined" || rawComment === "null") rawComment = "";
+        
+        let commentHtml = rawComment !== "" 
+            ? `<div style="margin-top: 10px; padding-top: 10px; border-top: 1px dashed #E5E7EB; font-size: 12px; color: #6B7280; font-style: italic;">📝 "${rawComment}"</div>` 
             : '';
 
         tooltip.innerHTML = `
@@ -2346,22 +2344,20 @@ function showPremiumTooltip(element, rowNumber) {
             </div>
         `;
 
-        // Залізобетонний розрахунок позиції (чітко над блоком броні)
-        const rect = element.getBoundingClientRect();
-        let top = rect.top - tooltip.offsetHeight - 15;
-        let left = rect.left + (rect.width / 2) - (tooltip.offsetWidth / 2);
+        // 🟢 МАГІЯ: Даємо браузеру мілісекунду на рендер HTML, щоб точно порахувати координати
+        requestAnimationFrame(() => {
+            const rect = element.getBoundingClientRect();
+            let top = rect.top - tooltip.offsetHeight - 15;
+            let left = rect.left + (rect.width / 2) - (tooltip.offsetWidth / 2);
 
-        // Якщо згори мало місця — показуємо знизу
-        if (top < 10) top = rect.bottom + 15;
-        
-        // Захист від вилізання за краї екрану
-        if (left < 10) left = 10;
-        if (left + tooltip.offsetWidth > window.innerWidth - 10) left = window.innerWidth - tooltip.offsetWidth - 10;
+            if (top < 10) top = rect.bottom + 15;
+            if (left < 10) left = 10;
+            if (left + tooltip.offsetWidth > window.innerWidth - 10) left = window.innerWidth - tooltip.offsetWidth - 10;
 
-        tooltip.style.left = left + 'px';
-        tooltip.style.top = top + 'px';
-        
-        tooltip.classList.add('visible');
+            tooltip.style.left = left + 'px';
+            tooltip.style.top = top + 'px';
+            tooltip.classList.add('visible');
+        });
 
     } catch (error) {
         console.error("Помилка тултипу:", error);
