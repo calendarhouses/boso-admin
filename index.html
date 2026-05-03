@@ -1715,11 +1715,12 @@ function getVisitWord(count) {
 
                             let guestName = String(b.name).replace(' (Ручна бронь)', '');
 
-                            // 🟢 НІЯКИХ onmousemove та event! Тільки чистий надійний код.
+                            // 🟢 Додали event та onmousemove для ідеального слідування за курсором
                             rowHtml += `
                                 <div class="booking-block ${statusClass}" style="left: ${blockLeft}px; width: ${blockWidth}px; padding: 6px 8px; justify-content: flex-start;" 
-                                     onclick="openDetailsByRow(${b.row})"
-                                     onmouseenter="showPremiumTooltip(this, ${b.row})" 
+                                     onclick="openDetailsByRow(event, ${b.row})"
+                                     onmouseenter="showPremiumTooltip(event, ${b.row})" 
+                                     onmousemove="showPremiumTooltip(event, ${b.row})"
                                      onmouseleave="hidePremiumTooltip()">
                                     
                                     <div style="font-size: 12px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; line-height: 1.2;">
@@ -2139,8 +2140,10 @@ document.getElementById('adminGuests').addEventListener('change', updatePricePre
             document.getElementById('bookingDrawer').classList.add('active');
         }
 
-            function openDetailsByRow(rowNumber) { 
-            if (window.event) window.event.stopPropagation(); // 🚀 Безпечна зупинка кліку
+            function openDetailsByRow(event, rowNumber) { 
+    if (event) event.stopPropagation(); // Блокуємо пробивання кліку
+    
+    hidePremiumTooltip(); // Ховаємо тултип при кліку
             
             hidePremiumTooltip(); // 🟢 Ховаємо тултип при кліку
             
@@ -2265,10 +2268,9 @@ document.getElementById('adminGuests').addEventListener('change', updatePricePre
             }
         });
 
-      // Додаємо маленьку пам'ять для тултипу
-let currentTooltipRow = null;
+ let currentTooltipRow = null;
 
-function showPremiumTooltip(element, rowNumber) {
+function showPremiumTooltip(event, rowNumber) {
     try {
         const tooltip = document.getElementById('premiumTooltip');
         if (!tooltip) return;
@@ -2276,10 +2278,20 @@ function showPremiumTooltip(element, rowNumber) {
         const b = allBookings.find(x => x.row == rowNumber);
         if (!b) return;
 
-        // ОНОВЛЮЄМО HTML ТІЛЬКИ ЯКЩО НАВЕЛИ НА НОВУ БРОНЬ
+        // ОНОВЛЮЄМО HTML ТІЛЬКИ ЯКЩО НАВЕЛИ НА НОВУ БРОНЬ (Економить ресурси)
         if (currentTooltipRow !== rowNumber) {
-            const inDate = b.checkIn ? new Date(b.checkIn).toLocaleDateString('uk-UA', { day: 'numeric', month: 'short' }) : "Невідомо";
-            const outDate = b.checkOut ? new Date(b.checkOut).toLocaleDateString('uk-UA', { day: 'numeric', month: 'short' }) : "Невідомо";
+            let inDate = "Невідомо"; let outDate = "Невідомо";
+            try {
+                if (b.checkIn) {
+                    let d1 = new Date(b.checkIn);
+                    if (!isNaN(d1)) inDate = d1.toLocaleDateString('uk-UA', { day: 'numeric', month: 'short' });
+                }
+                if (b.checkOut) {
+                    let d2 = new Date(b.checkOut);
+                    if (!isNaN(d2)) outDate = d2.toLocaleDateString('uk-UA', { day: 'numeric', month: 'short' });
+                }
+            } catch(e) {}
+
             const guestName = b.name ? String(b.name).replace(' (Ручна бронь)', '') : "Без імені";
             const guestsCount = b.guests || 2;
             
@@ -2304,10 +2316,8 @@ function showPremiumTooltip(element, rowNumber) {
 
             let paidRowHtml = paid > 0 ? `<div class="tt-row"><span class="tt-label">Внесено:</span> <span class="tt-value" style="color: #059669;">${paid} грн</span></div>` : '';
             
-            // 🟢 МАГІЯ: Формуємо блок коментаря, якщо він є
             let rawComment = b.comment ? String(b.comment).trim() : "";
             if (rawComment === "undefined" || rawComment === "null") rawComment = "";
-            
             let commentHtml = rawComment !== "" 
                 ? `<div style="margin-top: 10px; padding-top: 10px; border-top: 1px dashed #E5E7EB; font-size: 12px; color: #6B7280; font-style: italic;">📝 "${rawComment}"</div>` 
                 : '';
@@ -2326,33 +2336,29 @@ function showPremiumTooltip(element, rowNumber) {
                     ${commentHtml}
                 </div>
             `;
-            // Запам'ятовуємо, що ми вже намалювали цю бронь
             currentTooltipRow = rowNumber;
         }
 
-        // 🟢 Використовуємо requestAnimationFrame, щоб DOM оновився до розрахунку висоти
-        requestAnimationFrame(() => {
-            // Очищаємо залишки старих глючних інлайн стилів (дуже важливо!)
-            tooltip.style.visibility = '';
-            tooltip.style.opacity = '';
-            tooltip.style.transform = '';
+        // 🚀 ПРЯМО ТА ЖОРСТКО ПО КУРСОРУ МИШІ
+        let mouseX = event.clientX;
+        let mouseY = event.clientY;
 
-            const rect = element.getBoundingClientRect();
-            let top = rect.top - tooltip.offsetHeight - 15;
-            let left = rect.left + (rect.width / 2) - (tooltip.offsetWidth / 2);
+        let left = mouseX + 15;
+        let top = mouseY + 15;
 
-            // Якщо згори мало місця — показуємо знизу
-            if (top < 10) top = rect.bottom + 15;
-            
-            // Захист від вилізання за краї екрану
-            if (left < 10) left = 10;
-            if (left + tooltip.offsetWidth > window.innerWidth - 10) left = window.innerWidth - tooltip.offsetWidth - 10;
+        // Захист від вилізання за краї екрану
+        if (left + tooltip.offsetWidth > window.innerWidth - 10) {
+            left = mouseX - tooltip.offsetWidth - 15;
+        }
+        if (top + tooltip.offsetHeight > window.innerHeight - 10) {
+            top = mouseY - tooltip.offsetHeight - 15;
+        }
 
-            tooltip.style.left = left + 'px';
-            tooltip.style.top = top + 'px';
-            
-            tooltip.classList.add('visible');
-        });
+        tooltip.style.left = left + 'px';
+        tooltip.style.top = top + 'px';
+        
+        // Показуємо вікно
+        tooltip.classList.add('visible');
 
     } catch (error) {
         console.error("Помилка тултипу:", error);
