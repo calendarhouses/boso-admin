@@ -1634,7 +1634,6 @@ function getVisitWord(count) {
             const startDate = new Date(timelineBaseDate); 
             let daysCount = 35; // За замовчуванням для режиму Continuous
             
-            // Якщо режим "Місяць" — жорстко ставимо кількість днів поточного місяця
             if (timelineMode === 'month') {
                 daysCount = new Date(startDate.getFullYear(), startDate.getMonth() + 1, 0).getDate();
             }
@@ -1652,7 +1651,6 @@ function getVisitWord(count) {
             for (let i = 0; i < daysCount; i++) {
                 const d = new Date(startDate); d.setDate(startDate.getDate() + i);
                 
-                // Малюємо верхню шапку місяців (для режиму 35 днів, де можуть бути перетини)
                 if (d.getMonth() !== currentMonth) {
                     monthsContainer.innerHTML += `<div class="timeline-month-cell" style="width: ${daysInCurrentMonth * cellWidth}px">${monthName}</div>`;
                     currentMonth = d.getMonth(); 
@@ -1668,22 +1666,19 @@ function getVisitWord(count) {
             }
             monthsContainer.innerHTML += `<div class="timeline-month-cell" style="width: ${daysInCurrentMonth * cellWidth}px">${monthName}</div>`;
 
-            // Малюємо сітку та броні тільки для АКТИВНИХ номерів
+            // 🟢 МАГІЯ ТУТ: Формуємо цілий рядок ОДРАЗУ, щоб браузер не ламав події!
             roomsList.filter(r => r.active).forEach((room, roomIndex) => {
-                roomsContainer.innerHTML += `<div class="timeline-room">${room.short}<span>${room.desc}</span></div>`;
+                roomsContainer.innerHTML += `<div class="timeline-room" style="height: 50px;">${room.short}<span>${room.desc}</span></div>`;
                 let rowHtml = `<div class="timeline-row-bg" id="grid-row-${roomIndex}" style="position: relative;">`;
+                
                 for (let i = 0; i < daysCount; i++) {
                     const d = new Date(startDate); d.setDate(startDate.getDate() + i);
                     const isWeekend = d.getDay() === 0 || d.getDay() === 5 || d.getDay() === 6;
                     const dateString = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
                     rowHtml += `<div class="timeline-cell ${isWeekend ? 'weekend' : ''}" onclick="openNewBookingDrawer('${room.name}', '${dateString}')"></div>`;
                 }
-                rowHtml += `</div>`; gridContainer.innerHTML += rowHtml;
-                
-                const currentRow = document.getElementById(`grid-row-${roomIndex}`);
                 
                 allBookings.forEach((b) => {
-                    // НОВИЙ РЯДОК: Ігноруємо скасовані броні для шахматки
                     if (String(b.status).toLowerCase().includes('скас')) return;
 
                     let cottageStr = String(b.cottage || '');
@@ -1696,66 +1691,63 @@ function getVisitWord(count) {
                         const durationDays = Math.round((outDate - inDate) / (1000 * 60 * 60 * 24));
                         
                         if (offsetDays + durationDays > 0 && offsetDays < daysCount) {
-    let statusClass = 'status-new'; 
-let s = String(b.status).toLowerCase();
-if (s.includes('підтвердж') || s.includes('заїхав')) statusClass = 'status-confirmed';
-if (s.includes('скас')) statusClass = 'status-cancelled';
+                            let statusClass = 'status-new'; 
+                            let s = String(b.status).toLowerCase();
+                            if (s.includes('підтвердж') || s.includes('заїхав')) statusClass = 'status-confirmed';
+                            if (s.includes('скас')) statusClass = 'status-cancelled';
 
-let blockLeft = offsetDays * cellWidth; 
-let blockWidth = durationDays * cellWidth; 
-let paddingLeft = 12;
+                            let blockLeft = offsetDays * cellWidth; 
+                            let blockWidth = durationDays * cellWidth; 
 
-if (offsetDays < 0) { blockWidth = (durationDays + offsetDays) * cellWidth; blockLeft = 0; paddingLeft = 4; }
-if (offsetDays + durationDays > daysCount) { blockWidth = (daysCount - offsetDays) * cellWidth; }
+                            if (offsetDays < 0) { blockWidth = (durationDays + offsetDays) * cellWidth; blockLeft = 0; }
+                            if (offsetDays + durationDays > daysCount) { blockWidth = (daysCount - offsetDays) * cellWidth; }
 
-// --- МІНІ-СТАТУС ДЛЯ САМОГО БЛОКУ (Обрізаний) ---
-let total = Number(b.totalPrice) || 0;
-let paid = Number(b.paidAmount) || 0;
-let balance = total - paid;
+                            let total = Number(b.totalPrice) || 0;
+                            let paid = Number(b.paidAmount) || 0;
+                            let balance = total - paid;
 
-let finText = ""; let badgeBg = ""; let badgeColor = "#FFFFFF";
+                            let finText = ""; let badgeBg = ""; let badgeColor = "#FFFFFF";
 
-if (statusClass === 'status-cancelled') { finText = "Скасовано"; badgeBg = "rgba(0,0,0,0.05)"; badgeColor = "#9CA3AF"; } 
-else if (total === 0) { finText = "Немає ціни"; badgeBg = "rgba(255,255,255,0.3)"; badgeColor = "#1A1A1A"; } 
-else if (paid === 0) { finText = "Очікує оплату"; badgeBg = "#F59E0B"; } 
-else if (balance <= 0) { finText = "Оплачено"; badgeBg = "#10B981"; } 
-else { finText = `Борг: ${balance} грн`; badgeBg = "#EF4444"; }
+                            if (statusClass === 'status-cancelled') { finText = "Скасовано"; badgeBg = "rgba(0,0,0,0.05)"; badgeColor = "#9CA3AF"; } 
+                            else if (total === 0) { finText = "Немає ціни"; badgeBg = "rgba(255,255,255,0.3)"; badgeColor = "#1A1A1A"; } 
+                            else if (paid === 0) { finText = "Очікує оплату"; badgeBg = "#F59E0B"; } 
+                            else if (balance <= 0) { finText = "Оплачено"; badgeBg = "#10B981"; } 
+                            else { finText = `Борг: ${balance} грн`; badgeBg = "#EF4444"; }
 
-let guestName = String(b.name).replace(' (Ручна бронь)', '');
+                            let guestName = String(b.name).replace(' (Ручна бронь)', '');
 
-// Малюємо блок без глючних mousemove
-currentRow.innerHTML += `
-    <div class="booking-block ${statusClass}" style="left: ${blockLeft}px; width: ${blockWidth}px; padding: 6px 8px; justify-content: flex-start;" 
-         onclick="openDetailsByRow(${b.row})"
-         onmouseenter="showPremiumTooltip(this, ${b.row})" 
-         onmouseleave="hidePremiumTooltip()">
-        
-        <div style="font-size: 12px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; line-height: 1.2;">
-            ${guestName}
-        </div>
-        
-        <div style="margin-top: 4px; display: flex; overflow: hidden;">
-            <span style="background: ${badgeBg}; color: ${badgeColor}; font-size: 9px; font-weight: 700; padding: 2px 6px; border-radius: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; box-shadow: 0 1px 2px rgba(0,0,0,0.1);">
-                ${finText}
-            </span>
-        </div>
-    </div>`;
-}
+                            // 🟢 НІЯКИХ onmousemove та event! Тільки чистий надійний код.
+                            rowHtml += `
+                                <div class="booking-block ${statusClass}" style="left: ${blockLeft}px; width: ${blockWidth}px; padding: 6px 8px; justify-content: flex-start;" 
+                                     onclick="openDetailsByRow(${b.row})"
+                                     onmouseenter="showPremiumTooltip(this, ${b.row})" 
+                                     onmouseleave="hidePremiumTooltip()">
+                                    
+                                    <div style="font-size: 12px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; line-height: 1.2;">
+                                        ${guestName}
+                                    </div>
+                                    
+                                    <div style="margin-top: 4px; display: flex; overflow: hidden;">
+                                        <span style="background: ${badgeBg}; color: ${badgeColor}; font-size: 9px; font-weight: 700; padding: 2px 6px; border-radius: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; box-shadow: 0 1px 2px rgba(0,0,0,0.1);">
+                                            ${finText}
+                                        </span>
+                                    </div>
+                                </div>`;
+                        }
                     }
                 });
+
+                rowHtml += `</div>`; 
+                gridContainer.innerHTML += rowHtml; // Додаємо всю зібрану лінію одразу!
             });
             
-            // Розумний автоскрол при завантаженні (з фіксом для перемикання місяців)
             if (timelineMode === 'month') {
                 if (timelineBaseDate.getMonth() === today.getMonth() && timelineBaseDate.getFullYear() === today.getFullYear()) {
-                    // Якщо поточний місяць — мотаємо до сьогоднішнього дня (-3 дні для зручності)
                     document.getElementById('timelineScroll').scrollLeft = Math.max(0, (today.getDate() - 3) * cellWidth); 
                 } else {
-                    // Якщо це БУДЬ-ЯКИЙ інший місяць — жорстко відмотуємо на 1-ше число!
                     document.getElementById('timelineScroll').scrollLeft = 0;
                 }
             } else if (timelineMode === 'continuous') {
-                // Для режиму 35 днів завжди відмотуємо на початок
                 document.getElementById('timelineScroll').scrollLeft = 0; 
             }
         }
@@ -2149,10 +2141,9 @@ document.getElementById('adminGuests').addEventListener('change', updatePricePre
         }
 
             function openDetailsByRow(rowNumber) { 
-            // Зупиняємо клік безпечним методом
-            if (window.event) window.event.stopPropagation(); 
+            if (window.event) window.event.stopPropagation(); // 🚀 Безпечна зупинка кліку
             
-            hidePremiumTooltip(); // Ховаємо тултип при кліку
+            hidePremiumTooltip(); // 🟢 Ховаємо тултип при кліку
             
             const booking = allBookings.find(b => b.row == rowNumber);
             if (!booking) return;
@@ -2161,17 +2152,14 @@ document.getElementById('adminGuests').addEventListener('change', updatePricePre
             document.getElementById('drawerTitle').innerText = `Деталі броні ${booking.id || ''}`;
             document.getElementById('adminDeleteBtn').style.display = 'flex';
             
-            // Заповнюємо поля
             document.getElementById('adminName').value = String(booking.name).replace(' (Ручна бронь)', '');
             document.getElementById('adminPhone').value = '+' + formatPhone(booking.phone);
             document.getElementById('adminGuests').value = booking.guests || 2;
             
-            // 🟢 ПІДТЯГУЄМО КОМЕНТАР
             if(document.getElementById('adminComment')) {
                 document.getElementById('adminComment').value = booking.comment || ""; 
             }
 
-            // 🟢 ПІДТЯГУЄМО ДЖЕРЕЛО (Сайт, Instagram і тд)
             let savedSource = booking.source || "Адмінка";
             document.getElementById('adminSource').value = savedSource;
             document.getElementById('sourceSelectedText').innerText = savedSource;
@@ -2181,7 +2169,6 @@ document.getElementById('adminGuests').addEventListener('change', updatePricePre
                 if (opt.innerText.trim() === savedSource) opt.classList.add('selected');
             });
             
-            // Беремо активні номери + ТОЙ НОМЕР, який вже обраний у цій броні
             const availableRooms = roomsList.filter(r => r.active || r.name === booking.cottage);
             const cottageOptions = document.getElementById('cottageOptions');
             
@@ -2197,22 +2184,18 @@ document.getElementById('adminGuests').addEventListener('change', updatePricePre
             document.getElementById('adminCottage').value = savedRoom;
             document.getElementById('cottageSelectedText').innerText = savedRoom ? `${savedRoom} (${savedDesc})` : "Оберіть номер";
             
-            // Дати
             checkInPicker.setDate(booking.checkIn);
             checkOutPicker.setDate(booking.checkOut);
             
-            // Тварини (встановлюємо правильну кнопку)
             if (document.getElementById('adminPets')) {
                 togglePet((booking.pets === "Так" || booking.pets === true) ? "Так" : "Ні");
             }
             
-            // Статус
             document.querySelectorAll('.status-btn').forEach(b => b.classList.remove('active'));
             let matched = Array.from(document.querySelectorAll('.status-btn')).find(b => b.getAttribute('data-status') === booking.status);
             if(matched) matched.classList.add('active'); 
             else document.querySelector('.status-btn[data-status="Нова бронь"]').classList.add('active');
 
-            // ВИКЛИКАЄМО ЖИВИЙ КАЛЬКУЛЯТОР 
             setTimeout(() => {
                 updatePricePreview();
                 setTimeout(() => {
@@ -2294,7 +2277,6 @@ function showPremiumTooltip(element, rowNumber) {
         const b = allBookings.find(x => x.row == rowNumber);
         if (!b) return;
 
-        // Безпечне форматування дат
         const inDate = b.checkIn ? new Date(b.checkIn).toLocaleDateString('uk-UA', { day: 'numeric', month: 'short' }) : "Невідомо";
         const outDate = b.checkOut ? new Date(b.checkOut).toLocaleDateString('uk-UA', { day: 'numeric', month: 'short' }) : "Невідомо";
         const guestName = b.name ? String(b.name).replace(' (Ручна бронь)', '') : "Без імені";
@@ -2321,7 +2303,7 @@ function showPremiumTooltip(element, rowNumber) {
 
         let paidRowHtml = paid > 0 ? `<div class="tt-row"><span class="tt-label">Внесено:</span> <span class="tt-value" style="color: #059669;">${paid} грн</span></div>` : '';
         
-        // 🟢 Надійний вивід коментаря (захист від слова undefined)
+        // 🟢 МАГІЯ: Формуємо блок коментаря, якщо він є
         let rawComment = b.comment ? String(b.comment).trim() : "";
         if (rawComment === "undefined" || rawComment === "null") rawComment = "";
         
@@ -2344,20 +2326,22 @@ function showPremiumTooltip(element, rowNumber) {
             </div>
         `;
 
-        // 🟢 МАГІЯ: Даємо браузеру мілісекунду на рендер HTML, щоб точно порахувати координати
-        requestAnimationFrame(() => {
-            const rect = element.getBoundingClientRect();
-            let top = rect.top - tooltip.offsetHeight - 15;
-            let left = rect.left + (rect.width / 2) - (tooltip.offsetWidth / 2);
+        // Залізобетонний розрахунок позиції (чітко над блоком броні)
+        const rect = element.getBoundingClientRect();
+        let top = rect.top - tooltip.offsetHeight - 15;
+        let left = rect.left + (rect.width / 2) - (tooltip.offsetWidth / 2);
 
-            if (top < 10) top = rect.bottom + 15;
-            if (left < 10) left = 10;
-            if (left + tooltip.offsetWidth > window.innerWidth - 10) left = window.innerWidth - tooltip.offsetWidth - 10;
+        if (top < 10) top = rect.bottom + 15;
+        if (left < 10) left = 10;
+        if (left + tooltip.offsetWidth > window.innerWidth - 10) left = window.innerWidth - tooltip.offsetWidth - 10;
 
-            tooltip.style.left = left + 'px';
-            tooltip.style.top = top + 'px';
-            tooltip.classList.add('visible');
-        });
+        tooltip.style.left = left + 'px';
+        tooltip.style.top = top + 'px';
+        
+        // 🟢 Перебиваємо будь-які можливі глюки CSS
+        tooltip.style.visibility = 'visible';
+        tooltip.style.opacity = '1';
+        tooltip.style.transform = 'translateY(0)';
 
     } catch (error) {
         console.error("Помилка тултипу:", error);
@@ -2367,7 +2351,9 @@ function showPremiumTooltip(element, rowNumber) {
 function hidePremiumTooltip() {
     const tooltip = document.getElementById('premiumTooltip');
     if (tooltip) {
-        tooltip.classList.remove('visible');
+        tooltip.style.visibility = 'hidden';
+        tooltip.style.opacity = '0';
+        tooltip.style.transform = 'translateY(10px)';
     }
 }
 
