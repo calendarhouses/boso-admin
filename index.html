@@ -410,32 +410,29 @@
             box-shadow: 0 2px 4px rgba(5, 150, 105, 0.05) !important;
         }
 
-/* --- ПРЕМІУМ КАРТКА ПРИ НАВЕДЕННІ (TOOLTIP) --- */
-        .premium-tooltip {
-            position: fixed;
-            pointer-events: none; /* Щоб не заважала клікати на саму бронь */
-            z-index: 2147483647 !important; /* Поверх абсолютно всього у всесвіті */
-            background: rgba(255, 255, 255, 0.95);
-            backdrop-filter: blur(8px);
-            -webkit-backdrop-filter: blur(8px);
-            border: 1px solid #E5E7EB;
-            border-radius: 12px;
-            padding: 14px 16px;
-            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1), 0 4px 6px rgba(0, 0, 0, 0.05);
-            min-width: 220px;
-            
-            /* 🚀 Секрет стабільності: ховаємо через visibility, а не display */
-            visibility: hidden;
-            opacity: 0;
-            transform: translateY(10px);
-            transition: opacity 0.2s ease, transform 0.2s ease, visibility 0.2s;
-        }
+.premium-tooltip {
+    position: fixed;
+    pointer-events: none;
+    z-index: 2147483647 !important;
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    border: 1px solid #E5E7EB;
+    border-radius: 12px;
+    padding: 14px 16px;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1), 0 4px 6px rgba(0, 0, 0, 0.05);
+    min-width: 220px;
+    visibility: hidden;
+    opacity: 0;
+    transform: translateY(10px);
+    transition: opacity 0.2s ease, transform 0.2s ease, visibility 0.2s;
+}
 
-        .premium-tooltip.visible {
-            visibility: visible;
-            opacity: 1;
-            transform: translateY(0);
-        }
+.premium-tooltip.visible {
+    visibility: visible;
+    opacity: 1;
+    transform: translateY(0);
+}
 .tt-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #F3F4F6; padding-bottom: 8px; margin-bottom: 10px; }
 .tt-name { font-weight: 700; font-size: 15px; color: #111827; }
 .tt-guests { font-size: 12px; color: #6B7280; font-weight: 600; background: #F3F4F6; padding: 4px 8px; border-radius: 6px; }
