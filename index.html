@@ -928,6 +928,13 @@ function getVisitWord(count) {
             } catch (error) {
                 console.error("Помилка завантаження даних:", error); 
                 showToast("Помилка завантаження з бази!");
+            } finally {
+                // ГАРАНТОВАНО ХОВАЄМО ПРЕЛОАДЕР
+                const preloader = document.getElementById('preloader');
+                if (preloader) {
+                    preloader.style.opacity = '0';
+                    setTimeout(() => preloader.style.display = 'none', 400);
+                }
             }
         }
 
@@ -2396,8 +2403,9 @@ document.addEventListener('click', function(e) {
             switchView('grid'); // Одразу відкриваємо Шахматку
             initApp();          // Підтягуємо дані з бази
         };
-        // 🚀 НОВИЙ ЖОРСТКИЙ РЕНДЕР КАРТКИ (ТОЧНО ЯК НА СКРІНІ)
-let currentTooltipRow = null;
+
+        // 🚀 ЧИСТИЙ І ЖОРСТКИЙ РЕНДЕР КАРТКИ
+let activeBosoRow = null;
 
 function bosoHover(e, rowId) {
     let tt = document.getElementById('boso-tooltip');
@@ -2407,72 +2415,74 @@ function bosoHover(e, rowId) {
         document.body.appendChild(tt);
     }
     
-    const b = allBookings.find(x => x.row == rowId);
+    const b = allBookings.find(x => String(x.row) === String(rowId));
     if (!b) return;
 
-    let inDate = "—"; let outDate = "—";
-    try {
-        if (b.checkIn) inDate = new Date(b.checkIn).toLocaleDateString('uk-UA', {day:'numeric', month:'short'});
-        if (b.checkOut) outDate = new Date(b.checkOut).toLocaleDateString('uk-UA', {day:'numeric', month:'short'});
-    } catch(err) {}
+    if (activeBosoRow !== String(rowId)) {
+        let inDate = "—"; let outDate = "—";
+        try {
+            if (b.checkIn) inDate = new Date(b.checkIn).toLocaleDateString('uk-UA', {day:'numeric', month:'short'});
+            if (b.checkOut) outDate = new Date(b.checkOut).toLocaleDateString('uk-UA', {day:'numeric', month:'short'});
+        } catch(err) {}
 
-    const name = b.name ? String(b.name).replace(' (Ручна бронь)', '') : "Клієнт";
-    const guests = b.guests || 2;
-    const room = b.cottage || "—";
-    const total = Number(b.totalPrice) || 0;
-    const paid = Number(b.paidAmount) || 0;
-    const balance = total - paid;
+        const name = b.name ? String(b.name).replace(' (Ручна бронь)', '') : "Клієнт";
+        const guests = b.guests || 2;
+        const room = b.cottage || "—";
+        const total = Number(b.totalPrice) || 0;
+        const paid = Number(b.paidAmount) || 0;
+        const balance = total - paid;
 
-    let statusHtml = "";
-    let sClass = String(b.status).toLowerCase();
-    
-    if (sClass.includes('скас')) {
-        statusHtml = `<div class="bt-status gray">Скасовано</div>`;
-    } else if (total === 0) {
-        statusHtml = `<div class="bt-status gray">Очікує ціни</div>`;
-    } else if (balance <= 0) {
-        statusHtml = `<div class="bt-status green">Оплачено повністю</div>`;
-    } else if (paid > 0 && balance > 0) {
-        statusHtml = `<div class="bt-status red">Залишок до сплати: ${balance} грн</div>`;
-    } else {
-        statusHtml = `<div class="bt-status yellow">Очікує аванс: ${Math.round(total/2)} грн</div>`;
+        let statusHtml = "";
+        let sClass = String(b.status).toLowerCase();
+        
+        if (sClass.includes('скас')) {
+            statusHtml = `<div class="bt-status gray">Скасовано</div>`;
+        } else if (total === 0) {
+            statusHtml = `<div class="bt-status gray">Очікує ціни</div>`;
+        } else if (balance <= 0) {
+            statusHtml = `<div class="bt-status green">Оплачено повністю</div>`;
+        } else if (paid > 0 && balance > 0) {
+            statusHtml = `<div class="bt-status red">Залишок до сплати: ${balance} грн</div>`;
+        } else {
+            statusHtml = `<div class="bt-status yellow">Очікує аванс: ${Math.round(total/2)} грн</div>`;
+        }
+
+        // 🚀 ПРЕМІУМ КОМЕНТАР (Строгий дизайн)
+        let rawComment = b.comment ? String(b.comment).trim() : "";
+        if (rawComment === "undefined" || rawComment === "null") rawComment = "";
+        let commentHtml = rawComment !== "" 
+            ? `<div style="margin-top: 16px; padding: 12px 14px; background: #F9FAFB; border-left: 3px solid var(--accent); border-radius: 4px 8px 8px 4px; font-size: 13px; color: #4B5563; line-height: 1.4; text-align: left;">
+                 <span style="display: block; font-size: 10px; font-weight: 800; text-transform: uppercase; color: #9CA3AF; margin-bottom: 4px; letter-spacing: 0.5px;">Коментар клієнта</span>
+                 ${rawComment}
+               </div>` 
+            : '';
+
+        let paidRowHtml = paid > 0 ? `<div class="bt-row"><span class="bt-label">Внесено:</span> <span class="bt-val green">${paid} грн</span></div>` : '';
+
+        tt.innerHTML = `
+            <div class="bt-head">
+                <span class="bt-name">${name}</span>
+                <span class="bt-guests">${guests} ${getGuestWord(guests)}</span>
+            </div>
+            <div class="bt-row"><span class="bt-label">Номер:</span> <span class="bt-val">${room}</span></div>
+            <div class="bt-row"><span class="bt-label">Дати:</span> <span class="bt-val">${inDate} — ${outDate}</span></div>
+            <div class="bt-row"><span class="bt-label">Загальна сума:</span> <span class="bt-val">${total} грн</span></div>
+            ${paidRowHtml}
+            ${statusHtml}
+            ${commentHtml}
+        `;
+        activeBosoRow = String(rowId);
     }
 
-    // 🚀 ПРЕМІУМ КОМЕНТАР (Строгий дизайн з лінією збоку)
-    let rawComment = b.comment ? String(b.comment).trim() : "";
-    if (rawComment === "undefined" || rawComment === "null") rawComment = "";
-    let commentHtml = rawComment !== "" 
-        ? `<div style="margin-top: 16px; padding: 12px 14px; background: #F9FAFB; border-left: 3px solid var(--accent); border-radius: 4px 8px 8px 4px; font-size: 13px; color: #4B5563; line-height: 1.4; text-align: left;">
-             <span style="display: block; font-size: 10px; font-weight: 800; text-transform: uppercase; color: #9CA3AF; margin-bottom: 4px; letter-spacing: 0.5px;">Коментар клієнта</span>
-             ${rawComment}
-           </div>` 
-        : '';
-
-    let paidRowHtml = paid > 0 ? `<div class="bt-row"><span class="bt-label">Внесено:</span> <span class="bt-val green">${paid} грн</span></div>` : '';
-
-    tt.innerHTML = `
-        <div class="bt-head">
-            <span class="bt-name">${name}</span>
-            <span class="bt-guests">${guests} ${getGuestWord(guests)}</span>
-        </div>
-        <div class="bt-row"><span class="bt-label">Номер:</span> <span class="bt-val">${room}</span></div>
-        <div class="bt-row"><span class="bt-label">Дати:</span> <span class="bt-val">${inDate} — ${outDate}</span></div>
-        <div class="bt-row"><span class="bt-label">Загальна сума:</span> <span class="bt-val">${total} грн</span></div>
-        ${paidRowHtml}
-        ${statusHtml}
-        ${commentHtml}
-    `;
-
-    currentTooltipRow = String(rowId);
-
-    // 🚀 РАХУЄМО ПОЗИЦІЮ ТІЛЬКИ ПІСЛЯ ТОГО, ЯК БРАУЗЕР ВІДМАЛЮВАВ ТЕКСТ
     requestAnimationFrame(() => {
         const targetRect = e.currentTarget.getBoundingClientRect();
         
         let leftPos = targetRect.left + (targetRect.width / 2) - (tt.offsetWidth / 2); 
+        
+        // 🚀 ПРІОРИТЕТ 1: Завжди кидаємо ВГОРУ над блоком!
         let topPos = targetRect.top - tt.offsetHeight - 12;
 
-        // 🚀 ПАДАЄ ВНИЗ ТІЛЬКИ ЯКЩО РЕАЛЬНО НЕМАЄ МІСЦЯ ЗВЕРХУ (< 5px)
+        // Пріоритет 2: Тільки якщо вікно вилазить за верх екрану (менше 5px), падаємо вниз
         if (topPos < 5) {
             topPos = targetRect.bottom + 12;
         }
@@ -2482,7 +2492,6 @@ function bosoHover(e, rowId) {
 
         tt.style.left = leftPos + 'px';
         tt.style.top = topPos + 'px';
-        
         tt.classList.add('show');
     });
 }
