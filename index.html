@@ -410,28 +410,31 @@
             box-shadow: 0 2px 4px rgba(5, 150, 105, 0.05) !important;
         }
 
+/* --- ПРЕМІУМ КАРТКА ПРИ НАВЕДЕННІ (TOOLTIP) --- */
 .premium-tooltip {
     position: fixed;
     pointer-events: none;
-    z-index: 2147483647 !important;
-    background: rgba(255, 255, 255, 0.95);
+    z-index: 2147483647 !important; /* Гарантовано поверх усього */
+    background: rgba(255, 255, 255, 0.95) !important;
     backdrop-filter: blur(8px);
     -webkit-backdrop-filter: blur(8px);
-    border: 1px solid #E5E7EB;
-    border-radius: 12px;
-    padding: 14px 16px;
-    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1), 0 4px 6px rgba(0, 0, 0, 0.05);
-    min-width: 220px;
-    visibility: hidden;
-    opacity: 0;
-    transform: translateY(10px);
-    transition: opacity 0.2s ease, transform 0.2s ease, visibility 0.2s;
+    border: 1px solid #E5E7EB !important;
+    border-radius: 12px !important;
+    padding: 14px 16px !important;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15) !important;
+    min-width: 220px !important;
+    
+    /* 🚀 ЖОРСТКИЙ СХОВ */
+    opacity: 0 !important;
+    visibility: hidden !important;
+    transform: translateY(15px) !important;
+    transition: opacity 0.15s ease, transform 0.15s ease !important;
 }
 
 .premium-tooltip.visible {
-    visibility: visible;
-    opacity: 1;
-    transform: translateY(0);
+    opacity: 1 !important;
+    visibility: visible !important;
+    transform: translateY(0) !important;
 }
 .tt-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #F3F4F6; padding-bottom: 8px; margin-bottom: 10px; }
 .tt-name { font-weight: 700; font-size: 15px; color: #111827; }
@@ -2269,8 +2272,11 @@ document.getElementById('adminGuests').addEventListener('change', updatePricePre
         });
 
  let currentTooltipRow = null;
+let tooltipRAF = null; // 🚀 Глобальний оптимізатор руху миші
 
 function showPremiumTooltip(event, rowNumber) {
+    if (!event) return;
+    
     try {
         const tooltip = document.getElementById('premiumTooltip');
         if (!tooltip) return;
@@ -2278,20 +2284,11 @@ function showPremiumTooltip(event, rowNumber) {
         const b = allBookings.find(x => x.row == rowNumber);
         if (!b) return;
 
-        // ОНОВЛЮЄМО HTML ТІЛЬКИ ЯКЩО НАВЕЛИ НА НОВУ БРОНЬ (Економить ресурси)
+        // 🟢 ОНОВЛЮЄМО HTML ТІЛЬКИ ЯКЩО ЦЕ НОВА БРОНЬ (Економить ресурси)
         if (currentTooltipRow !== rowNumber) {
-            let inDate = "Невідомо"; let outDate = "Невідомо";
-            try {
-                if (b.checkIn) {
-                    let d1 = new Date(b.checkIn);
-                    if (!isNaN(d1)) inDate = d1.toLocaleDateString('uk-UA', { day: 'numeric', month: 'short' });
-                }
-                if (b.checkOut) {
-                    let d2 = new Date(b.checkOut);
-                    if (!isNaN(d2)) outDate = d2.toLocaleDateString('uk-UA', { day: 'numeric', month: 'short' });
-                }
-            } catch(e) {}
-
+            let inDate = b.checkIn ? new Date(b.checkIn).toLocaleDateString('uk-UA', { day: 'numeric', month: 'short' }) : "Невідомо";
+            let outDate = b.checkOut ? new Date(b.checkOut).toLocaleDateString('uk-UA', { day: 'numeric', month: 'short' }) : "Невідомо";
+            
             const guestName = b.name ? String(b.name).replace(' (Ручна бронь)', '') : "Без імені";
             const guestsCount = b.guests || 2;
             
@@ -2302,25 +2299,17 @@ function showPremiumTooltip(event, rowNumber) {
             let finText = ""; let finColor = ""; let finBg = "";
             let statusClass = String(b.status || "").toLowerCase();
 
-            if (statusClass.includes('скас')) {
-                finText = "Бронь скасована"; finBg = "#F3F4F6"; finColor = "#9CA3AF";
-            } else if (total === 0) {
-                finText = "Очікує ціни"; finBg = "#F3F4F6"; finColor = "#4B5563";
-            } else if (paid === 0) {
-                finText = `Очікує передплату (${Math.round(total / 2)} грн)`; finBg = "#FEF3C7"; finColor = "#B45309";
-            } else if (balance <= 0) {
-                finText = `Сплачено повністю (${total} грн)`; finBg = "#D1FAE5"; finColor = "#059669";
-            } else {
-                finText = `Залишок до сплати: ${balance} грн`; finBg = "#FEE2E2"; finColor = "#DC2626";
-            }
+            if (statusClass.includes('скас')) { finText = "Скасовано"; finBg = "#F3F4F6"; finColor = "#9CA3AF"; } 
+            else if (total === 0) { finText = "Очікує ціни"; finBg = "#F3F4F6"; finColor = "#4B5563"; } 
+            else if (paid === 0) { finText = `Очікує аванс (${Math.round(total / 2)} грн)`; finBg = "#FEF3C7"; finColor = "#B45309"; } 
+            else if (balance <= 0) { finText = `Оплачено (${total} грн)`; finBg = "#D1FAE5"; finColor = "#059669"; } 
+            else { finText = `Борг: ${balance} грн`; finBg = "#FEE2E2"; finColor = "#DC2626"; }
 
             let paidRowHtml = paid > 0 ? `<div class="tt-row"><span class="tt-label">Внесено:</span> <span class="tt-value" style="color: #059669;">${paid} грн</span></div>` : '';
             
             let rawComment = b.comment ? String(b.comment).trim() : "";
             if (rawComment === "undefined" || rawComment === "null") rawComment = "";
-            let commentHtml = rawComment !== "" 
-                ? `<div style="margin-top: 10px; padding-top: 10px; border-top: 1px dashed #E5E7EB; font-size: 12px; color: #6B7280; font-style: italic;">📝 "${rawComment}"</div>` 
-                : '';
+            let commentHtml = rawComment !== "" ? `<div style="margin-top: 10px; padding-top: 10px; border-top: 1px dashed #E5E7EB; font-size: 12px; color: #6B7280; font-style: italic;">📝 "${rawComment}"</div>` : '';
 
             tooltip.innerHTML = `
                 <div class="tt-header">
@@ -2339,26 +2328,25 @@ function showPremiumTooltip(event, rowNumber) {
             currentTooltipRow = rowNumber;
         }
 
-        // 🚀 ПРЯМО ТА ЖОРСТКО ПО КУРСОРУ МИШІ
-        let mouseX = event.clientX;
-        let mouseY = event.clientY;
-
-        let left = mouseX + 15;
-        let top = mouseY + 15;
-
-        // Захист від вилізання за краї екрану
-        if (left + tooltip.offsetWidth > window.innerWidth - 10) {
-            left = mouseX - tooltip.offsetWidth - 15;
-        }
-        if (top + tooltip.offsetHeight > window.innerHeight - 10) {
-            top = mouseY - tooltip.offsetHeight - 15;
-        }
-
-        tooltip.style.left = left + 'px';
-        tooltip.style.top = top + 'px';
+        // 🚀 ЖОРСТКА ОПТИМІЗАЦІЯ РУХУ (Браузер більше не "захлинеться")
+        if (tooltipRAF) cancelAnimationFrame(tooltipRAF);
         
-        // Показуємо вікно
-        tooltip.classList.add('visible');
+        tooltipRAF = requestAnimationFrame(() => {
+            let mouseX = event.clientX;
+            let mouseY = event.clientY;
+
+            // Відступ від курсора, щоб мишка не перекривала вікно і не "збивала" hover
+            let left = mouseX + 15;
+            let top = mouseY + 15;
+
+            // Захист від вильоту за екран (ширина картки ~260px)
+            if (left + 260 > window.innerWidth) left = mouseX - 260 - 15; 
+            if (top + tooltip.offsetHeight > window.innerHeight) top = mouseY - tooltip.offsetHeight - 15;
+
+            tooltip.style.left = left + 'px';
+            tooltip.style.top = top + 'px';
+            tooltip.classList.add('visible');
+        });
 
     } catch (error) {
         console.error("Помилка тултипу:", error);
@@ -2369,7 +2357,6 @@ function hidePremiumTooltip() {
     const tooltip = document.getElementById('premiumTooltip');
     if (tooltip) {
         tooltip.classList.remove('visible');
-        // НЕ скидаємо currentTooltipRow, щоб не перемальовувати HTML при повторному наведенні на ту ж бронь
     }
 }
 
