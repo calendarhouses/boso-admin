@@ -411,29 +411,31 @@
         }
 
 /* --- ПРЕМІУМ КАРТКА ПРИ НАВЕДЕННІ (TOOLTIP) --- */
-.premium-tooltip {
-    position: fixed;
-    pointer-events: none; /* Щоб не заважала клікати на саму бронь */
-    z-index: 2147483647 !important; /* Поверх абсолютно всього у всесвіті */
-    background: rgba(255, 255, 255, 0.95);
-    backdrop-filter: blur(8px);
-    -webkit-backdrop-filter: blur(8px);
-    border: 1px solid #E5E7EB;
-    border-radius: 12px;
-    padding: 14px 16px;
-    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1), 0 4px 6px rgba(0, 0, 0, 0.05);
-    min-width: 220px;
-    
-    /* 🚀 ЧИСТИЙ ТА НАДІЙНИЙ КОД БЕЗ БАГІВ SAFARI */
-    opacity: 0;
-    transform: translateY(10px);
-    transition: opacity 0.2s ease, transform 0.2s ease;
-}
+        .premium-tooltip {
+            position: fixed;
+            pointer-events: none; /* Щоб не заважала клікати на саму бронь */
+            z-index: 2147483647 !important; /* Поверх абсолютно всього у всесвіті */
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            border: 1px solid #E5E7EB;
+            border-radius: 12px;
+            padding: 14px 16px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1), 0 4px 6px rgba(0, 0, 0, 0.05);
+            min-width: 220px;
+            
+            /* 🚀 Секрет стабільності: ховаємо через visibility, а не display */
+            visibility: hidden;
+            opacity: 0;
+            transform: translateY(10px);
+            transition: opacity 0.2s ease, transform 0.2s ease, visibility 0.2s;
+        }
 
-.premium-tooltip.visible {
-    opacity: 1 !important;
-    transform: translateY(0) !important;
-}
+        .premium-tooltip.visible {
+            visibility: visible;
+            opacity: 1;
+            transform: translateY(0);
+        }
 .tt-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #F3F4F6; padding-bottom: 8px; margin-bottom: 10px; }
 .tt-name { font-weight: 700; font-size: 15px; color: #111827; }
 .tt-guests { font-size: 12px; color: #6B7280; font-weight: 600; background: #F3F4F6; padding: 4px 8px; border-radius: 6px; }
@@ -2269,6 +2271,9 @@ document.getElementById('adminGuests').addEventListener('change', updatePricePre
       // Додаємо маленьку пам'ять для тултипу
 let currentTooltipRow = null;
 
+// Додаємо маленьку пам'ять для тултипу
+let currentTooltipRow = null;
+
 function showPremiumTooltip(element, rowNumber) {
     try {
         const tooltip = document.getElementById('premiumTooltip');
@@ -2277,71 +2282,83 @@ function showPremiumTooltip(element, rowNumber) {
         const b = allBookings.find(x => x.row == rowNumber);
         if (!b) return;
 
-        const inDate = b.checkIn ? new Date(b.checkIn).toLocaleDateString('uk-UA', { day: 'numeric', month: 'short' }) : "Невідомо";
-        const outDate = b.checkOut ? new Date(b.checkOut).toLocaleDateString('uk-UA', { day: 'numeric', month: 'short' }) : "Невідомо";
-        const guestName = b.name ? String(b.name).replace(' (Ручна бронь)', '') : "Без імені";
-        const guestsCount = b.guests || 2;
-        
-        let total = Number(b.totalPrice) || 0;
-        let paid = Number(b.paidAmount) || 0;
-        let balance = total - paid;
-        
-        let finText = ""; let finColor = ""; let finBg = "";
-        let statusClass = String(b.status || "").toLowerCase();
+        // ОНОВЛЮЄМО HTML ТІЛЬКИ ЯКЩО НАВЕЛИ НА НОВУ БРОНЬ
+        if (currentTooltipRow !== rowNumber) {
+            const inDate = b.checkIn ? new Date(b.checkIn).toLocaleDateString('uk-UA', { day: 'numeric', month: 'short' }) : "Невідомо";
+            const outDate = b.checkOut ? new Date(b.checkOut).toLocaleDateString('uk-UA', { day: 'numeric', month: 'short' }) : "Невідомо";
+            const guestName = b.name ? String(b.name).replace(' (Ручна бронь)', '') : "Без імені";
+            const guestsCount = b.guests || 2;
+            
+            let total = Number(b.totalPrice) || 0;
+            let paid = Number(b.paidAmount) || 0;
+            let balance = total - paid;
+            
+            let finText = ""; let finColor = ""; let finBg = "";
+            let statusClass = String(b.status || "").toLowerCase();
 
-        if (statusClass.includes('скас')) {
-            finText = "Бронь скасована"; finBg = "#F3F4F6"; finColor = "#9CA3AF";
-        } else if (total === 0) {
-            finText = "Очікує ціни"; finBg = "#F3F4F6"; finColor = "#4B5563";
-        } else if (paid === 0) {
-            finText = `Очікує передплату (${Math.round(total / 2)} грн)`; finBg = "#FEF3C7"; finColor = "#B45309";
-        } else if (balance <= 0) {
-            finText = `Сплачено повністю (${total} грн)`; finBg = "#D1FAE5"; finColor = "#059669";
-        } else {
-            finText = `Залишок до сплати: ${balance} грн`; finBg = "#FEE2E2"; finColor = "#DC2626";
+            if (statusClass.includes('скас')) {
+                finText = "Бронь скасована"; finBg = "#F3F4F6"; finColor = "#9CA3AF";
+            } else if (total === 0) {
+                finText = "Очікує ціни"; finBg = "#F3F4F6"; finColor = "#4B5563";
+            } else if (paid === 0) {
+                finText = `Очікує передплату (${Math.round(total / 2)} грн)`; finBg = "#FEF3C7"; finColor = "#B45309";
+            } else if (balance <= 0) {
+                finText = `Сплачено повністю (${total} грн)`; finBg = "#D1FAE5"; finColor = "#059669";
+            } else {
+                finText = `Залишок до сплати: ${balance} грн`; finBg = "#FEE2E2"; finColor = "#DC2626";
+            }
+
+            let paidRowHtml = paid > 0 ? `<div class="tt-row"><span class="tt-label">Внесено:</span> <span class="tt-value" style="color: #059669;">${paid} грн</span></div>` : '';
+            
+            // 🟢 МАГІЯ: Формуємо блок коментаря, якщо він є
+            let rawComment = b.comment ? String(b.comment).trim() : "";
+            if (rawComment === "undefined" || rawComment === "null") rawComment = "";
+            
+            let commentHtml = rawComment !== "" 
+                ? `<div style="margin-top: 10px; padding-top: 10px; border-top: 1px dashed #E5E7EB; font-size: 12px; color: #6B7280; font-style: italic;">📝 "${rawComment}"</div>` 
+                : '';
+
+            tooltip.innerHTML = `
+                <div class="tt-header">
+                    <span class="tt-name">${guestName}</span>
+                    <span class="tt-guests">${guestsCount} ${getGuestWord(guestsCount)}</span>
+                </div>
+                <div class="tt-body">
+                    <div class="tt-row"><span class="tt-label">Номер:</span> <span class="tt-value">${b.cottage || "Не вказано"}</span></div>
+                    <div class="tt-row"><span class="tt-label">Дати:</span> <span class="tt-value" style="color: var(--accent);">${inDate} — ${outDate}</span></div>
+                    <div class="tt-row"><span class="tt-label">Загальна сума:</span> <span class="tt-value">${total} грн</span></div>
+                    ${paidRowHtml}
+                    <div class="tt-status" style="background: ${finBg}; color: ${finColor};">${finText}</div>
+                    ${commentHtml}
+                </div>
+            `;
+            // Запам'ятовуємо, що ми вже намалювали цю бронь
+            currentTooltipRow = rowNumber;
         }
 
-        let paidRowHtml = paid > 0 ? `<div class="tt-row"><span class="tt-label">Внесено:</span> <span class="tt-value" style="color: #059669;">${paid} грн</span></div>` : '';
-        
-        // 🟢 МАГІЯ: Формуємо блок коментаря, якщо він є
-        let rawComment = b.comment ? String(b.comment).trim() : "";
-        if (rawComment === "undefined" || rawComment === "null") rawComment = "";
-        
-        let commentHtml = rawComment !== "" 
-            ? `<div style="margin-top: 10px; padding-top: 10px; border-top: 1px dashed #E5E7EB; font-size: 12px; color: #6B7280; font-style: italic;">📝 "${rawComment}"</div>` 
-            : '';
+        // 🟢 Використовуємо requestAnimationFrame, щоб DOM оновився до розрахунку висоти
+        requestAnimationFrame(() => {
+            // Очищаємо залишки старих глючних інлайн стилів (дуже важливо!)
+            tooltip.style.visibility = '';
+            tooltip.style.opacity = '';
+            tooltip.style.transform = '';
 
-        tooltip.innerHTML = `
-            <div class="tt-header">
-                <span class="tt-name">${guestName}</span>
-                <span class="tt-guests">${guestsCount} ${getGuestWord(guestsCount)}</span>
-            </div>
-            <div class="tt-body">
-                <div class="tt-row"><span class="tt-label">Номер:</span> <span class="tt-value">${b.cottage || "Не вказано"}</span></div>
-                <div class="tt-row"><span class="tt-label">Дати:</span> <span class="tt-value" style="color: var(--accent);">${inDate} — ${outDate}</span></div>
-                <div class="tt-row"><span class="tt-label">Загальна сума:</span> <span class="tt-value">${total} грн</span></div>
-                ${paidRowHtml}
-                <div class="tt-status" style="background: ${finBg}; color: ${finColor};">${finText}</div>
-                ${commentHtml}
-            </div>
-        `;
+            const rect = element.getBoundingClientRect();
+            let top = rect.top - tooltip.offsetHeight - 15;
+            let left = rect.left + (rect.width / 2) - (tooltip.offsetWidth / 2);
 
-        // Залізобетонний розрахунок позиції (чітко над блоком броні)
-        const rect = element.getBoundingClientRect();
-        let top = rect.top - tooltip.offsetHeight - 15;
-        let left = rect.left + (rect.width / 2) - (tooltip.offsetWidth / 2);
+            // Якщо згори мало місця — показуємо знизу
+            if (top < 10) top = rect.bottom + 15;
+            
+            // Захист від вилізання за краї екрану
+            if (left < 10) left = 10;
+            if (left + tooltip.offsetWidth > window.innerWidth - 10) left = window.innerWidth - tooltip.offsetWidth - 10;
 
-        if (top < 10) top = rect.bottom + 15;
-        if (left < 10) left = 10;
-        if (left + tooltip.offsetWidth > window.innerWidth - 10) left = window.innerWidth - tooltip.offsetWidth - 10;
-
-        tooltip.style.left = left + 'px';
-        tooltip.style.top = top + 'px';
-        
-        // 🟢 Перебиваємо будь-які можливі глюки CSS
-        tooltip.style.visibility = 'visible';
-        tooltip.style.opacity = '1';
-        tooltip.style.transform = 'translateY(0)';
+            tooltip.style.left = left + 'px';
+            tooltip.style.top = top + 'px';
+            
+            tooltip.classList.add('visible');
+        });
 
     } catch (error) {
         console.error("Помилка тултипу:", error);
@@ -2351,9 +2368,8 @@ function showPremiumTooltip(element, rowNumber) {
 function hidePremiumTooltip() {
     const tooltip = document.getElementById('premiumTooltip');
     if (tooltip) {
-        tooltip.style.visibility = 'hidden';
-        tooltip.style.opacity = '0';
-        tooltip.style.transform = 'translateY(10px)';
+        tooltip.classList.remove('visible');
+        // НЕ скидаємо currentTooltipRow, щоб не перемальовувати HTML при повторному наведенні на ту ж бронь
     }
 }
 
