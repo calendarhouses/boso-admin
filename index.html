@@ -2448,7 +2448,7 @@ function bosoHover(e, rowId) {
 
         let paidRowHtml = paid > 0 ? `<div class="bt-row"><span class="bt-label">Внесено:</span> <span class="bt-val green">${paid} грн</span></div>` : '';
         
-        // 🚀 ПРЕМІУМ КОМЕНТАР (БЕЗ ДИТЯЧОГО САДКА)
+        // Преміум коментар
         let rawComment = b.comment ? String(b.comment).trim() : "";
         if (rawComment === "undefined" || rawComment === "null") rawComment = "";
         let commentHtml = rawComment !== "" 
@@ -2464,7 +2464,7 @@ function bosoHover(e, rowId) {
                 <span class="bt-guests">${guests} ${getGuestWord(guests)}</span>
             </div>
             <div class="bt-row"><span class="bt-label">Номер:</span> <span class="bt-val">${room}</span></div>
-            <div class="bt-row"><span class="bt-label">Дати:</span> <span class="tt-val">${inDate} — ${outDate}</span></div>
+            <div class="bt-row"><span class="bt-label">Дати:</span> <span class="bt-val">${inDate} — ${outDate}</span></div>
             <div class="bt-row"><span class="bt-label">Загальна сума:</span> <span class="bt-val">${total} грн</span></div>
             ${paidRowHtml}
             ${statusHtml}
@@ -2473,14 +2473,13 @@ function bosoHover(e, rowId) {
         currentTooltipRow = String(rowId);
     }
 
-    // 🚀 ЖОРСТКО ВГОРУ (Чекаємо поки браузер "проковтне" HTML)
-    requestAnimationFrame(() => {
-        const targetRect = e.currentTarget.getBoundingClientRect();
-        
-        let leftPos = targetRect.left + (targetRect.width / 2) - (tt.offsetWidth / 2); 
-        let topPos = targetRect.top - tt.offsetHeight - 12; // Підіймаємо над бронью!
+    // 🚀 МАГІЯ ВИПРАВЛЕННЯ ТУТ: Запам'ятовуємо координати ДО requestAnimationFrame
+    const targetRect = e.currentTarget.getBoundingClientRect();
 
-        // Падаємо вниз ТІЛЬКИ якщо воно фізично вилізе за межі монітора
+    requestAnimationFrame(() => {
+        let leftPos = targetRect.left + (targetRect.width / 2) - (tt.offsetWidth / 2); 
+        let topPos = targetRect.top - tt.offsetHeight - 12;
+
         if (topPos < 5) {
             topPos = targetRect.bottom + 12;
         }
