@@ -410,11 +410,10 @@
             box-shadow: 0 2px 4px rgba(5, 150, 105, 0.05) !important;
         }
 
-/* --- ПРЕМІУМ КАРТКА ПРИ НАВЕДЕННІ (TOOLTIP) --- */
 .premium-tooltip {
     position: fixed;
-    pointer-events: none; /* Щоб не заважала клікати на саму бронь */
-    z-index: 9999;
+    pointer-events: none; 
+    z-index: 2147483647 !important; /* 🚀 НАЙБІЛЬШИЙ МОЖЛИВИЙ Z-INDEX */
     background: rgba(255, 255, 255, 0.95);
     backdrop-filter: blur(8px);
     border: 1px solid #E5E7EB;
@@ -1723,7 +1722,8 @@ let guestName = String(b.name).replace(' (Ручна бронь)', '');
 currentRow.innerHTML += `
     <div class="booking-block ${statusClass}" style="left: ${blockLeft}px; width: ${blockWidth}px; padding: 6px 8px; justify-content: flex-start;" 
          onclick="openDetailsByRow(${b.row})"
-         onmouseenter="showPremiumTooltip(this, ${b.row})" 
+         onmouseenter="showPremiumTooltip(this, ${b.row}, event)" 
+onmousemove="showPremiumTooltip(this, ${b.row}, event)"
          onmouseleave="hidePremiumTooltip()">
         
         <div style="font-size: 12px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; line-height: 1.2;">
@@ -2275,26 +2275,28 @@ document.getElementById('adminGuests').addEventListener('change', updatePricePre
             }
         });
 
-      // --- ЛОГІКА ПРЕМІУМ-КАРТКИ (TOOLTIP) ---
-function showPremiumTooltip(element, rowNumber) {
+      // Оновлена функція показу (заміни всю функцію showPremiumTooltip)
+function showPremiumTooltip(element, rowNumber, event) {
     try {
         const tooltip = document.getElementById('premiumTooltip');
-        if (!tooltip) return; // Захист, якщо раптом немає div'а
+        if (!tooltip) return;
 
         const b = allBookings.find(x => x.row == rowNumber);
         if (!b) return;
 
-        // 🛡 БРОНЕБІЙНА ОБРОБКА ДАТ: щоб скрипт ніколи не ламався
         let inDate = "Невідомо";
         let outDate = "Невідомо";
-        try {
-            const d1 = new Date(b.checkIn);
-            const d2 = new Date(b.checkOut);
-            if (!isNaN(d1)) inDate = d1.toLocaleDateString('uk-UA', { day: 'numeric', month: 'short' });
-            if (!isNaN(d2)) outDate = d2.toLocaleDateString('uk-UA', { day: 'numeric', month: 'short' });
-        } catch(e) {}
+        
+        if (b.checkIn) {
+            let d1 = new Date(b.checkIn);
+            if (!isNaN(d1.getTime())) inDate = d1.toLocaleDateString('uk-UA', { day: 'numeric', month: 'short' });
+        }
+        if (b.checkOut) {
+            let d2 = new Date(b.checkOut);
+            if (!isNaN(d2.getTime())) outDate = d2.toLocaleDateString('uk-UA', { day: 'numeric', month: 'short' });
+        }
 
-        const guestName = String(b.name || "Без імені").replace(' (Ручна бронь)', '');
+        const guestName = b.name ? String(b.name).replace(' (Ручна бронь)', '') : "Без імені";
         const guestsCount = b.guests || 2;
         
         let total = Number(b.totalPrice) || 0;
@@ -2307,7 +2309,7 @@ function showPremiumTooltip(element, rowNumber) {
         if (statusClass.includes('скас')) {
             finText = "Бронь скасована"; finBg = "#F3F4F6"; finColor = "#9CA3AF";
         } else if (total === 0) {
-            finText = "Очікує прорахунку ціни"; finBg = "#F3F4F6"; finColor = "#4B5563";
+            finText = "Очікує ціни"; finBg = "#F3F4F6"; finColor = "#4B5563";
         } else if (paid === 0) {
             finText = `Очікує передплату (${Math.round(total / 2)} грн)`; finBg = "#FEF3C7"; finColor = "#B45309";
         } else if (balance <= 0) {
@@ -2318,7 +2320,6 @@ function showPremiumTooltip(element, rowNumber) {
 
         let paidRowHtml = paid > 0 ? `<div class="tt-row"><span class="tt-label">Внесено:</span> <span class="tt-value" style="color: #059669;">${paid} грн</span></div>` : '';
 
-        // Заповнюємо картку
         tooltip.innerHTML = `
             <div class="tt-header">
                 <span class="tt-name">${guestName}</span>
@@ -2333,26 +2334,30 @@ function showPremiumTooltip(element, rowNumber) {
             </div>
         `;
 
-        // Розраховуємо ідеальну позицію над блоком
-        const rect = element.getBoundingClientRect();
-        let top = rect.top - tooltip.offsetHeight - 15;
-        let left = rect.left + (rect.width / 2) - (tooltip.offsetWidth / 2);
+        // 🚀 НАДІЙНЕ ПОЗИЦІОНУВАННЯ ПО КУРСОРУ МИШІ
+        let mouseX = event.clientX;
+        let mouseY = event.clientY;
 
-        // Якщо згори мало місця — показуємо знизу
-        if (top < 10) top = rect.bottom + 15;
-        
-        // Щоб не вилазило за краї екрану з боків
-        if (left < 10) left = 10;
-        if (left + tooltip.offsetWidth > window.innerWidth - 10) left = window.innerWidth - tooltip.offsetWidth - 10;
+        let left = mouseX + 15; // Трохи правіше від курсора
+        let top = mouseY + 15;  // Трохи нижче від курсора
 
-        tooltip.style.top = top + 'px';
+        // Якщо вікно вилазить за правий край
+        if (left + tooltip.offsetWidth > window.innerWidth) {
+            left = mouseX - tooltip.offsetWidth - 15;
+        }
+
+        // Якщо вікно вилазить за нижній край
+        if (top + tooltip.offsetHeight > window.innerHeight) {
+            top = mouseY - tooltip.offsetHeight - 15;
+        }
+
         tooltip.style.left = left + 'px';
+        tooltip.style.top = top + 'px';
         
-        // Додаємо клас для показу
         tooltip.classList.add('visible');
 
     } catch (error) {
-        console.error("Помилка тултипу:", error); // Якщо щось піде не так, ми хоча б побачимо це в консолі!
+        console.error("Помилка тултипу:", error);
     }
 }
 
