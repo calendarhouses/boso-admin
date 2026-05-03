@@ -2404,9 +2404,9 @@ document.addEventListener('click', function(e) {
             initApp();          // Підтягуємо дані з бази
         };
 
-        let currentTooltipRow = null;
-
+        // 🚀 РОБОЧИЙ РЕНДЕР КАРТКИ (ТВІЙ КОД + ПРЕМІУМ КОМЕНТАР + ПОЗИЦІЯ ВГОРУ)
 function bosoHover(e, rowId) {
+    // Шукаємо або створюємо вікно з нуля
     let tt = document.getElementById('boso-tooltip');
     if (!tt) {
         tt = document.createElement('div');
@@ -2414,83 +2414,87 @@ function bosoHover(e, rowId) {
         document.body.appendChild(tt);
     }
     
-    const b = allBookings.find(x => String(x.row) === String(rowId));
+    const b = allBookings.find(x => x.row == rowId);
     if (!b) return;
 
-    if (String(currentTooltipRow) !== String(rowId)) {
-        let inDate = "—"; let outDate = "—";
-        try {
-            if (b.checkIn) inDate = new Date(b.checkIn).toLocaleDateString('uk-UA', {day:'numeric', month:'short'});
-            if (b.checkOut) outDate = new Date(b.checkOut).toLocaleDateString('uk-UA', {day:'numeric', month:'short'});
-        } catch(err) {}
+    // 1. Форматуємо дати 
+    let inDate = "—"; let outDate = "—";
+    try {
+        if (b.checkIn) inDate = new Date(b.checkIn).toLocaleDateString('uk-UA', {day:'numeric', month:'short'});
+        if (b.checkOut) outDate = new Date(b.checkOut).toLocaleDateString('uk-UA', {day:'numeric', month:'short'});
+    } catch(err) {}
 
-        const name = b.name ? String(b.name).replace(' (Ручна бронь)', '') : "Клієнт";
-        const guests = b.guests || 2;
-        const room = b.cottage || "—";
-        const total = Number(b.totalPrice) || 0;
-        const paid = Number(b.paidAmount) || 0;
-        const balance = total - paid;
+    // 2. Інформація
+    const name = b.name ? String(b.name).replace(' (Ручна бронь)', '') : "Клієнт";
+    const guests = b.guests || 2;
+    const room = b.cottage || "—";
+    const total = Number(b.totalPrice) || 0;
+    const paid = Number(b.paidAmount) || 0;
+    const balance = total - paid;
 
-        let statusHtml = "";
-        let sClass = String(b.status).toLowerCase();
-        
-        if (sClass.includes('скас')) {
-            statusHtml = `<div class="bt-status gray">Скасовано</div>`;
-        } else if (total === 0) {
-            statusHtml = `<div class="bt-status gray">Очікує ціни</div>`;
-        } else if (balance <= 0) {
-            statusHtml = `<div class="bt-status green">Оплачено повністю</div>`;
-        } else if (paid > 0 && balance > 0) {
-            statusHtml = `<div class="bt-status red">Залишок до сплати: ${balance} грн</div>`;
-        } else {
-            statusHtml = `<div class="bt-status yellow">Очікує аванс: ${Math.round(total/2)} грн</div>`;
-        }
-
-        let paidRowHtml = paid > 0 ? `<div class="bt-row"><span class="bt-label">Внесено:</span> <span class="bt-val green">${paid} грн</span></div>` : '';
-        
-        // Преміум коментар
-        let rawComment = b.comment ? String(b.comment).trim() : "";
-        if (rawComment === "undefined" || rawComment === "null") rawComment = "";
-        let commentHtml = rawComment !== "" 
-            ? `<div style="margin-top: 16px; padding: 12px 14px; background: #F9FAFB; border-left: 3px solid var(--accent); border-radius: 4px 8px 8px 4px; font-size: 13px; color: #4B5563; line-height: 1.4; text-align: left;">
-                 <span style="display: block; font-size: 10px; font-weight: 800; text-transform: uppercase; color: #9CA3AF; margin-bottom: 4px; letter-spacing: 0.5px;">Коментар клієнта</span>
-                 ${rawComment}
-               </div>` 
-            : '';
-
-        tt.innerHTML = `
-            <div class="bt-head">
-                <span class="bt-name">${name}</span>
-                <span class="bt-guests">${guests} ${getGuestWord(guests)}</span>
-            </div>
-            <div class="bt-row"><span class="bt-label">Номер:</span> <span class="bt-val">${room}</span></div>
-            <div class="bt-row"><span class="bt-label">Дати:</span> <span class="bt-val">${inDate} — ${outDate}</span></div>
-            <div class="bt-row"><span class="bt-label">Загальна сума:</span> <span class="bt-val">${total} грн</span></div>
-            ${paidRowHtml}
-            ${statusHtml}
-            ${commentHtml}
-        `;
-        currentTooltipRow = String(rowId);
+    // 3. Статус-блок (Нижня кольорова плашка)
+    let statusHtml = "";
+    let sClass = String(b.status).toLowerCase();
+    
+    if (sClass.includes('скас')) {
+        statusHtml = `<div class="bt-status gray">Скасовано</div>`;
+    } else if (total === 0) {
+        statusHtml = `<div class="bt-status gray">Очікує ціни</div>`;
+    } else if (balance <= 0) {
+        statusHtml = `<div class="bt-status green">Оплачено повністю</div>`;
+    } else if (paid > 0 && balance > 0) {
+        statusHtml = `<div class="bt-status red">Залишок до сплати: ${balance} грн</div>`;
+    } else {
+        statusHtml = `<div class="bt-status yellow">Очікує аванс: ${Math.round(total/2)} грн</div>`;
     }
 
-    // 🚀 МАГІЯ ВИПРАВЛЕННЯ ТУТ: Запам'ятовуємо координати ДО requestAnimationFrame
+    // 🚀 4. ПРЕМІУМ КОМЕНТАР (БЕЗ СМАЙЛА)
+    let rawComment = b.comment ? String(b.comment).trim() : "";
+    if (rawComment === "undefined" || rawComment === "null") rawComment = "";
+    let commentHtml = rawComment !== "" 
+        ? `<div style="margin-top: 16px; padding: 12px 14px; background: #F9FAFB; border-left: 3px solid var(--accent); border-radius: 4px 8px 8px 4px; font-size: 13px; color: #4B5563; line-height: 1.4; text-align: left;">
+             <span style="display: block; font-size: 10px; font-weight: 800; text-transform: uppercase; color: #9CA3AF; margin-bottom: 4px; letter-spacing: 0.5px;">Коментар клієнта</span>
+             ${rawComment}
+           </div>` 
+        : '';
+
+    // 5. Малюємо HTML
+    tt.innerHTML = `
+        <div class="bt-head">
+            <span class="bt-name">${name}</span>
+            <span class="bt-guests">${guests} ${getGuestWord(guests)}</span>
+        </div>
+        <div class="bt-row"><span class="bt-label">Номер:</span> <span class="bt-val">${room}</span></div>
+        <div class="bt-row"><span class="bt-label">Дати:</span> <span class="tt-val">${inDate} — ${outDate}</span></div>
+        <div class="bt-row"><span class="bt-label">Загальна сума:</span> <span class="bt-val">${total} грн</span></div>
+        <div class="bt-row"><span class="bt-label">Внесено:</span> <span class="bt-val green">${paid} грн</span></div>
+        ${statusHtml}
+        ${commentHtml}
+    `;
+
+    // 6. Жорстка прив'язка позиції
     const targetRect = e.currentTarget.getBoundingClientRect();
+    
+    // Центруємо над блоком.
+    let leftPos = targetRect.left + (targetRect.width / 2) - 130; // 130 = половина від 260px ширини
+    
+    // 🚀 ПРІОРИТЕТ 1: СТАВИМО ВГОРУ НАД БРОННЮ
+    let topPos = targetRect.top - tt.offsetHeight - 12;
 
-    requestAnimationFrame(() => {
-        let leftPos = targetRect.left + (targetRect.width / 2) - (tt.offsetWidth / 2); 
-        let topPos = targetRect.top - tt.offsetHeight - 12;
+    // 🚀 ПРІОРИТЕТ 2: ЯКЩО ЗВЕРХУ НЕМАЄ МІСЦЯ (ВИЛІЗАЄ ЗА ЕКРАН) - КИДАЄМО ВНИЗ
+    if (topPos < 10) {
+        topPos = targetRect.bottom + 12; 
+    }
 
-        if (topPos < 5) {
-            topPos = targetRect.bottom + 12;
-        }
-        
-        if (leftPos < 10) leftPos = 10;
-        if (leftPos + tt.offsetWidth > window.innerWidth) leftPos = window.innerWidth - tt.offsetWidth - 10;
+    // Захист від вильоту за екран по боках
+    if (leftPos < 10) leftPos = 10;
+    if (leftPos + 260 > window.innerWidth) leftPos = window.innerWidth - 270;
 
-        tt.style.left = leftPos + 'px';
-        tt.style.top = topPos + 'px';
-        tt.classList.add('show');
-    });
+    tt.style.top = topPos + 'px';
+    tt.style.left = leftPos + 'px';
+    
+    // Вмикаємо!
+    tt.classList.add('show');
 }
 
 function bosoLeave() {
