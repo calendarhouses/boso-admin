@@ -410,41 +410,6 @@
             box-shadow: 0 2px 4px rgba(5, 150, 105, 0.05) !important;
         }
 
-/* --- ПРЕМІУМ КАРТКА ПРИ НАВЕДЕННІ (TOOLTIP) --- */
-.premium-tooltip {
-    position: fixed;
-    pointer-events: none;
-    z-index: 2147483647 !important; /* Гарантовано поверх усього */
-    background: rgba(255, 255, 255, 0.95) !important;
-    backdrop-filter: blur(8px);
-    -webkit-backdrop-filter: blur(8px);
-    border: 1px solid #E5E7EB !important;
-    border-radius: 12px !important;
-    padding: 14px 16px !important;
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15) !important;
-    min-width: 220px !important;
-    
-    /* 🚀 ЖОРСТКИЙ СХОВ */
-    opacity: 0 !important;
-    visibility: hidden !important;
-    transform: translateY(15px) !important;
-    transition: opacity 0.15s ease, transform 0.15s ease !important;
-}
-
-.premium-tooltip.visible {
-    opacity: 1 !important;
-    visibility: visible !important;
-    transform: translateY(0) !important;
-}
-.tt-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #F3F4F6; padding-bottom: 8px; margin-bottom: 10px; }
-.tt-name { font-weight: 700; font-size: 15px; color: #111827; }
-.tt-guests { font-size: 12px; color: #6B7280; font-weight: 600; background: #F3F4F6; padding: 4px 8px; border-radius: 6px; }
-.tt-body { font-size: 13px; color: #4B5563; display: flex; flex-direction: column; gap: 6px; }
-.tt-row { display: flex; justify-content: space-between; align-items: center;}
-.tt-label { color: #6B7280; }
-.tt-value { font-weight: 600; color: #111827; }
-.tt-status { margin-top: 8px; display: inline-flex; align-items: center; justify-content: center; padding: 6px 10px; border-radius: 8px; font-size: 12px; font-weight: 700; }
-
         /* --- ПРИБИРАЄМО СТРІЛОЧКИ В ПОЛЯХ З ЦИФРАМИ --- */
 input[type="number"]::-webkit-inner-spin-button,
 input[type="number"]::-webkit-outer-spin-button {
@@ -473,6 +438,40 @@ input[type="number"] {
             50% { transform: scale(1.05); opacity: 0.7; } 
             100% { transform: scale(1); opacity: 1; } 
         }
+        /* 🚀 НОВА КАПІТАЛЬНА КАРТКА БРОНІ (BOSO TOOLTIP) */
+#boso-tooltip {
+    position: fixed;
+    z-index: 2147483647;
+    background: #FFFFFF;
+    border-radius: 12px;
+    padding: 16px;
+    width: 260px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.12);
+    border: 1px solid #E5E7EB;
+    font-family: 'Inter', sans-serif;
+    pointer-events: none; /* ПРОБИВАЄТЬСЯ МИШКОЮ НАСКРІЗЬ */
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(10px);
+    transition: opacity 0.2s ease, transform 0.2s ease;
+}
+#boso-tooltip.show {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0);
+}
+.bt-head { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #F3F4F6; padding-bottom: 12px; margin-bottom: 12px; }
+.bt-name { font-size: 16px; font-weight: 700; color: #111827; }
+.bt-guests { font-size: 12px; font-weight: 600; color: #6B7280; background: #F3F4F6; padding: 4px 8px; border-radius: 6px; }
+.bt-row { display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 13px; line-height: 1.4; }
+.bt-label { color: #6B7280; }
+.bt-val { font-weight: 600; color: #111827; text-align: right; }
+.bt-val.green { color: #059669; }
+.bt-status { margin-top: 12px; padding: 8px; border-radius: 8px; font-size: 12px; font-weight: 700; text-align: center; }
+.bt-status.red { background: #FEE2E2; color: #DC2626; }
+.bt-status.green { background: #D1FAE5; color: #059669; }
+.bt-status.gray { background: #F3F4F6; color: #6B7280; }
+.bt-status.yellow { background: #FEF3C7; color: #B45309; }
     </style>
 </head>
 <body>
@@ -829,7 +828,6 @@ input[type="number"] {
         </div>
     </div>
 
-    <div id="premiumTooltip" class="premium-tooltip"></div>
     <div id="toast-container"></div>
 
     <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
@@ -1718,11 +1716,12 @@ function getVisitWord(count) {
 
                             let guestName = String(b.name).replace(' (Ручна бронь)', '');
 
-                           // 🟢 ЗАЛІЗОБЕТОННИЙ БЛОК БЕЗ ГЛЮЧНИХ ПОДІЙ
+                           // 🚀 ЧИСТА ПЛАШКА БЕЗ ЗАЙВИХ EVENT'ІВ
                             rowHtml += `
                                 <div class="booking-block ${statusClass}" style="left: ${blockLeft}px; width: ${blockWidth}px; padding: 6px 8px; justify-content: flex-start;" 
                                      onclick="openDetailsByRow(event, ${b.row})"
-                                     data-row="${b.row}">
+                                     onmouseenter="bosoHover(event, ${b.row})"
+                                     onmouseleave="bosoLeave()">
                                     
                                     <div style="font-size: 12px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; line-height: 1.2;">
                                         ${guestName}
@@ -2141,9 +2140,9 @@ document.getElementById('adminGuests').addEventListener('change', updatePricePre
             document.getElementById('bookingDrawer').classList.add('active');
         }
 
-            function openDetailsByRow(event, rowNumber) { 
-            if (event) event.stopPropagation(); // 🚀 Надійна зупинка кліку
-            hidePremiumTooltip(); // 🚀 Ховаємо вікно при кліку
+           function openDetailsByRow(event, rowNumber) { 
+            if (event) event.stopPropagation(); // Блокуємо пробивання кліку
+            bosoLeave(); // 🚀 ХОВАЄМО ТУЛТИП ПРИ КЛІКУ
             
             const booking = allBookings.find(b => b.row == rowNumber);
             if (!booking) return;
@@ -2287,101 +2286,6 @@ document.addEventListener('mouseout', function(e) {
     }
 });
 
-function showPremiumTooltip(element, rowNumber) {
-    try {
-        const tooltip = document.getElementById('premiumTooltip');
-        if (!tooltip) return;
-
-        const b = allBookings.find(x => String(x.row) === String(rowNumber));
-        if (!b) return;
-
-        // Рендеримо текст тільки якщо навели на нову бронь
-        if (String(currentTooltipRow) !== String(rowNumber)) {
-            let inDate = "Невідомо"; let outDate = "Невідомо";
-            try {
-                if (b.checkIn) {
-                    let d1 = new Date(b.checkIn);
-                    if (!isNaN(d1)) inDate = d1.toLocaleDateString('uk-UA', { day: 'numeric', month: 'short' });
-                }
-                if (b.checkOut) {
-                    let d2 = new Date(b.checkOut);
-                    if (!isNaN(d2)) outDate = d2.toLocaleDateString('uk-UA', { day: 'numeric', month: 'short' });
-                }
-            } catch(err) {}
-
-            const guestName = b.name ? String(b.name).replace(' (Ручна бронь)', '') : "Без імені";
-            const guestsCount = b.guests || 2;
-            
-            let total = Number(b.totalPrice) || 0;
-            let paid = Number(b.paidAmount) || 0;
-            let balance = total - paid;
-            
-            let finText = ""; let finColor = ""; let finBg = "";
-            let statusClass = String(b.status || "").toLowerCase();
-
-            if (statusClass.includes('скас')) { finText = "Скасовано"; finBg = "#F3F4F6"; finColor = "#9CA3AF"; } 
-            else if (total === 0) { finText = "Очікує ціни"; finBg = "#F3F4F6"; finColor = "#4B5563"; } 
-            else if (paid === 0) { finText = `Очікує аванс (${Math.round(total / 2)} грн)`; finBg = "#FEF3C7"; finColor = "#B45309"; } 
-            else if (balance <= 0) { finText = `Оплачено (${total} грн)`; finBg = "#D1FAE5"; finColor = "#059669"; } 
-            else { finText = `Борг: ${balance} грн`; finBg = "#FEE2E2"; finColor = "#DC2626"; }
-
-            let paidRowHtml = paid > 0 ? `<div class="tt-row"><span class="tt-label">Внесено:</span> <span class="tt-value" style="color: #059669;">${paid} грн</span></div>` : '';
-            
-            let rawComment = b.comment ? String(b.comment).trim() : "";
-            if (rawComment === "undefined" || rawComment === "null") rawComment = "";
-            let commentHtml = rawComment !== "" ? `<div style="margin-top: 10px; padding-top: 10px; border-top: 1px dashed #E5E7EB; font-size: 12px; color: #6B7280; font-style: italic;">📝 "${rawComment}"</div>` : '';
-
-            tooltip.innerHTML = `
-                <div class="tt-header">
-                    <span class="tt-name">${guestName}</span>
-                    <span class="tt-guests">${guestsCount} ${getGuestWord(guestsCount)}</span>
-                </div>
-                <div class="tt-body">
-                    <div class="tt-row"><span class="tt-label">Номер:</span> <span class="tt-value">${b.cottage || "Не вказано"}</span></div>
-                    <div class="tt-row"><span class="tt-label">Дати:</span> <span class="tt-value" style="color: var(--accent);">${inDate} — ${outDate}</span></div>
-                    <div class="tt-row"><span class="tt-label">Загальна сума:</span> <span class="tt-value">${total} грн</span></div>
-                    ${paidRowHtml}
-                    <div class="tt-status" style="background: ${finBg}; color: ${finColor};">${finText}</div>
-                    ${commentHtml}
-                </div>
-            `;
-            currentTooltipRow = String(rowNumber);
-        }
-
-        // Позиціонуємо РІВНО над блоком броні, незалежно від миші!
-        const rect = element.getBoundingClientRect();
-        let top = rect.top - tooltip.offsetHeight - 15;
-        let left = rect.left + (rect.width / 2) - (tooltip.offsetWidth / 2);
-
-        // Якщо згори мало місця — показуємо під броНню
-        if (top < 10) top = rect.bottom + 15;
-        
-        // Захист від вильоту за екран по боках
-        if (left < 10) left = 10;
-        if (left + tooltip.offsetWidth > window.innerWidth - 10) left = window.innerWidth - tooltip.offsetWidth - 10;
-
-        tooltip.style.left = left + 'px';
-        tooltip.style.top = top + 'px';
-        
-        // 🚀 ЖОРСТКО ВМИКАЄМО ВИДИМІСТЬ (ПЕРЕБИВАЄ БУДЬ-ЯКІ CSS-БАГИ SAFARI)
-        tooltip.style.opacity = '1';
-        tooltip.style.visibility = 'visible';
-        tooltip.style.transform = 'translateY(0)';
-
-    } catch (error) {
-        console.error("Помилка тултипу:", error);
-    }
-}
-
-function hidePremiumTooltip() {
-    const tooltip = document.getElementById('premiumTooltip');
-    if (tooltip) {
-        // 🚀 ЖОРСТКО ХОВАЄМО
-        tooltip.style.opacity = '0';
-        tooltip.style.visibility = 'hidden';
-        tooltip.style.transform = 'translateY(10px)';
-    }
-}
 
         // --- ЛОГІКА КАСТОМНИХ СПИСКІВ ---
 function toggleCustomSelect(wrapperId) {
@@ -2492,6 +2396,89 @@ document.addEventListener('click', function(e) {
             switchView('grid'); // Одразу відкриваємо Шахматку
             initApp();          // Підтягуємо дані з бази
         };
+        // 🚀 НОВИЙ ЖОРСТКИЙ РЕНДЕР КАРТКИ (ТОЧНО ЯК НА СКРІНІ)
+function bosoHover(e, rowId) {
+    // Шукаємо або створюємо вікно з нуля
+    let tt = document.getElementById('boso-tooltip');
+    if (!tt) {
+        tt = document.createElement('div');
+        tt.id = 'boso-tooltip';
+        document.body.appendChild(tt);
+    }
+    
+    const b = allBookings.find(x => x.row == rowId);
+    if (!b) return;
+
+    // 1. Форматуємо дати (напр. "17 квіт. — 21 квіт.")
+    let inDate = "—"; let outDate = "—";
+    try {
+        if (b.checkIn) inDate = new Date(b.checkIn).toLocaleDateString('uk-UA', {day:'numeric', month:'short'});
+        if (b.checkOut) outDate = new Date(b.checkOut).toLocaleDateString('uk-UA', {day:'numeric', month:'short'});
+    } catch(err) {}
+
+    // 2. Інформація
+    const name = b.name ? String(b.name).replace(' (Ручна бронь)', '') : "Клієнт";
+    const guests = b.guests || 2;
+    const room = b.cottage || "—";
+    const total = Number(b.totalPrice) || 0;
+    const paid = Number(b.paidAmount) || 0;
+    const balance = total - paid;
+
+    // 3. Статус-блок (Нижня кольорова плашка)
+    let statusHtml = "";
+    let sClass = String(b.status).toLowerCase();
+    
+    if (sClass.includes('скас')) {
+        statusHtml = `<div class="bt-status gray">Скасовано</div>`;
+    } else if (total === 0) {
+        statusHtml = `<div class="bt-status gray">Очікує ціни</div>`;
+    } else if (balance <= 0) {
+        statusHtml = `<div class="bt-status green">Оплачено повністю</div>`;
+    } else if (paid > 0 && balance > 0) {
+        statusHtml = `<div class="bt-status red">Залишок до сплати: ${balance} грн</div>`;
+    } else {
+        statusHtml = `<div class="bt-status yellow">Очікує аванс: ${Math.round(total/2)} грн</div>`;
+    }
+
+    let commentHtml = b.comment ? `<div style="margin-top:12px; font-size:11px; color:#9CA3AF; border-top:1px dashed #E5E7EB; padding-top:8px;">📝 ${b.comment}</div>` : '';
+
+    // 4. Малюємо HTML (ТОЧНО ПО ДИЗАЙНУ СКРІНА)
+    tt.innerHTML = `
+        <div class="bt-head">
+            <span class="bt-name">${name}</span>
+            <span class="bt-guests">${guests} ${getGuestWord(guests)}</span>
+        </div>
+        <div class="bt-row"><span class="bt-label">Номер:</span> <span class="bt-val">${room}</span></div>
+        <div class="bt-row"><span class="bt-label">Дати:</span> <span class="tt-val">${inDate} — ${outDate}</span></div>
+        <div class="bt-row"><span class="bt-label">Загальна сума:</span> <span class="bt-val">${total} грн</span></div>
+        <div class="bt-row"><span class="bt-label">Внесено:</span> <span class="bt-val green">${paid} грн</span></div>
+        ${statusHtml}
+        ${commentHtml}
+    `;
+
+    // 5. Жорстка прив'язка позиції ДО ПЛАШКИ (щоб мишка не глючила)
+    const targetRect = e.currentTarget.getBoundingClientRect();
+    
+    // Центруємо над блоком. Якщо блок вузький - вікно стане по центру над ним.
+    let leftPos = targetRect.left + (targetRect.width / 2) - 130; // 130 = половина від 260px ширини
+    let topPos = targetRect.top - tt.offsetHeight - 15;
+
+    // Захист від вильоту за екран
+    if (topPos < 10) topPos = targetRect.bottom + 15; // Якщо зверху мало місця - показуємо знизу
+    if (leftPos < 10) leftPos = 10;
+    if (leftPos + 260 > window.innerWidth) leftPos = window.innerWidth - 270;
+
+    tt.style.top = topPos + 'px';
+    tt.style.left = leftPos + 'px';
+    
+    // Вмикаємо!
+    tt.classList.add('show');
+}
+
+function bosoLeave() {
+    const tt = document.getElementById('boso-tooltip');
+    if (tt) tt.classList.remove('show');
+}
     </script>
 </body>
 </html>
