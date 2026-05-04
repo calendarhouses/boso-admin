@@ -685,13 +685,13 @@ input[type="number"] {
 
                 <div class="charts-grid">
                     <div class="chart-card">
-                        <h3 class="section-title">Броні по номерам (Популярність)</h3>
+                        <h3 class="section-title">Популярність котеджів</h3>
                         <div style="position: relative; height: 260px; width: 100%;">
                             <canvas id="roomsChart"></canvas>
                         </div>
                     </div>
                     <div class="chart-card">
-                        <h3 class="section-title">Джерела клієнтів</h3>
+                        <h3 class="section-title">Звідки гості:</h3>
                         <div style="position: relative; height: 260px; width: 100%;">
                             <canvas id="sourceChart"></canvas>
                         </div>
@@ -2801,7 +2801,7 @@ function bosoLeave() {
                 }
             });
 
-            // 4. Малюємо графік "Джерела клієнтів" (Doughnut Chart)
+            // 4. Малюємо графік "Звідки гості" (Doughnut Chart)
             const ctxSource = document.getElementById('sourceChart').getContext('2d');
             if (sourceChartInstance) sourceChartInstance.destroy();
 
