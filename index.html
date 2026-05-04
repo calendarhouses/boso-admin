@@ -637,21 +637,27 @@ input[type="number"] {
                     </div>
                 </div>
                 
-                <!-- Вибір періоду для звітів -->
-                <div class="custom-select-wrapper" id="reportPeriodWrapper" style="width: 220px;">
-                    <div class="custom-select-trigger" onclick="toggleCustomSelect('reportPeriodWrapper')">
-                        <span id="reportPeriodText">Травень 2026</span>
-                        <svg width="16" height="16" fill="none" stroke="#6B7280" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+               <div style="display: flex; gap: 12px; align-items: center;">
+                    <!-- Вибір періоду для звітів -->
+                    <div class="custom-select-wrapper" id="reportPeriodWrapper" style="width: 220px;">
+                        <div class="custom-select-trigger" onclick="toggleCustomSelect('reportPeriodWrapper')">
+                            <span id="reportPeriodText">Поточний місяць</span>
+                            <svg width="16" height="16" fill="none" stroke="#6B7280" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                        </div>
+                        <div class="custom-select-options">
+                            <div class="custom-option selected" onclick="selectOption('reportPeriodWrapper', 'reportPeriodVal', 'current', this, 'Поточний місяць')">Поточний місяць</div>
+                            <div class="custom-option" onclick="selectOption('reportPeriodWrapper', 'reportPeriodVal', 'prev', this, 'Минулий місяць')">Минулий місяць</div>
+                            <div class="custom-option" onclick="selectOption('reportPeriodWrapper', 'reportPeriodVal', 'year', this, 'За весь рік')">За весь рік</div>
+                            <div class="custom-option" onclick="selectOption('reportPeriodWrapper', 'reportPeriodVal', 'all', this, 'За весь час')">За весь час</div>
+                        </div>
                     </div>
-                    <div class="custom-select-options">
-                        <div class="custom-option selected" onclick="selectOption('reportPeriodWrapper', 'reportPeriodVal', 'current', this, 'Травень 2026')">Поточний місяць</div>
-                        <div class="custom-option" onclick="selectOption('reportPeriodWrapper', 'reportPeriodVal', 'prev', this, 'Квітень 2026')">Минулий місяць</div>
-                        <div class="custom-option" onclick="selectOption('reportPeriodWrapper', 'reportPeriodVal', 'year', this, 'За весь 2026 рік')">За весь рік</div>
-                        <div class="custom-option" onclick="selectOption('reportPeriodWrapper', 'reportPeriodVal', 'all', this, 'За весь час')">За весь час</div>
+                    <input type="hidden" id="reportPeriodVal" value="current">
+                    
+                    <!-- 🟢 НОВИЙ КАЛЕНДАРИК -->
+                    <div id="customReportRange" style="width: 44px; height: 44px; border-radius: 12px; border: 1px solid #D1D5DB; background: #FFF; display: flex; align-items: center; justify-content: center; cursor: pointer; color: #4B5563; transition: 0.2s;" onmouseover="this.style.borderColor='var(--accent)'; this.style.color='var(--accent)';" onmouseout="this.style.borderColor='#D1D5DB'; this.style.color='#4B5563';">
+                        <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 0 1 2.25-2.25h13.5A2.25 2.25 0 0 1 21 7.5v11.25m-18 0A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75m-18 0v-7.5A2.25 2.25 0 0 1 5.25 9h13.5A2.25 2.25 0 0 1 21 11.25v7.5"></path></svg>
                     </div>
                 </div>
-                <input type="hidden" id="reportPeriodVal" value="current">
-            </div>
 
             <!-- Вкладка 1: АНАЛІТИКА -->
             <div id="rep-analytics" style="display: block;">
@@ -2210,7 +2216,31 @@ if (prepayBtnText) prepayBtnText.innerText = Math.round(total / 2);
         // ОНОВЛЕНІ РЯДКИ FLATPICKR (з доданим onChange: updatePricePreview)
 const checkOutPicker = flatpickr("#adminCheckOut", { locale: "uk", dateFormat: "Y-m-d", altInput: true, altFormat: "d.m.Y", onChange: updatePricePreview });
 const checkInPicker = flatpickr("#adminCheckIn", { locale: "uk", dateFormat: "Y-m-d", altInput: true, altFormat: "d.m.Y", onChange: function(s, d) { checkOutPicker.set("minDate", d); updatePricePreview(); }});
-
+// 🟢 Ініціалізуємо календар для кастомного періоду ЗВІТІВ
+        const reportRangePicker = flatpickr("#customReportRange", { 
+            locale: "uk", 
+            mode: "range", 
+            dateFormat: "Y-m-d", 
+            onChange: function(selectedDates) {
+                // Коли обрано дві дати (початок і кінець)
+                if (selectedDates.length === 2) {
+                    // Ставимо кастомний режим у прихований інпут
+                    document.getElementById('reportPeriodVal').value = 'custom';
+                    
+                    // Форматуємо для красивого відображення (напр. "14 трав. — 20 трав.")
+                    const d1 = selectedDates[0].toLocaleDateString('uk-UA', {day: 'numeric', month: 'short'});
+                    const d2 = selectedDates[1].toLocaleDateString('uk-UA', {day: 'numeric', month: 'short'});
+                    document.getElementById('reportPeriodText').innerText = `${d1} — ${d2}`;
+                    
+                    // Знімаємо зелену підсвітку зі стандартних опцій у випадаючому списку
+                    document.querySelectorAll('#reportPeriodWrapper .custom-option').forEach(opt => opt.classList.remove('selected'));
+                    
+                    // Запускаємо перерахунок!
+                    calculateAnalytics(); 
+                }
+            } 
+        });
+        
 document.querySelectorAll('.status-btn').forEach(btn => { 
     btn.addEventListener('click', function() { document.querySelectorAll('.status-btn').forEach(b => b.classList.remove('active')); this.classList.add('active'); }); 
 });
@@ -2427,7 +2457,13 @@ function selectOption(wrapperId, inputId, value, element = null, displayText = n
     }
     
     if (inputId === 'adminCottage') updatePricePreview(); // Оновлюємо калькулятор
-    if (inputId === 'reportPeriodVal') calculateAnalytics(); // 🟢 Оновлюємо звіти
+    if (inputId === 'reportPeriodVal') {
+        // Якщо вибрали стандартний період - стираємо кастомні дати з календаря
+        if (value !== 'custom' && typeof reportRangePicker !== 'undefined') {
+            reportRangePicker.clear(); 
+        }
+        calculateAnalytics(); // 🟢 Оновлюємо звіти
+    }
 }
 
 // Закриття списків при кліку десь поза ними на екрані
@@ -2637,6 +2673,16 @@ function bosoLeave() {
             } else if (period === 'year') {
                 startDate = new Date(now.getFullYear(), 0, 1);
                 endDate = new Date(now.getFullYear(), 11, 31, 23, 59, 59);
+            } else if (period === 'custom') { 
+                // 🟢 ДОДАНО КАСТОМНИЙ РЕЖИМ
+                const dates = reportRangePicker.selectedDates;
+                if (dates.length === 2) {
+                    startDate = new Date(dates[0]); startDate.setHours(0,0,0,0);
+                    endDate = new Date(dates[1]); endDate.setHours(23,59,59,999);
+                } else {
+                    // Якщо щось пішло не так, повертаємо дефолт
+                    startDate = new Date(2000, 0, 1); endDate = new Date(2100, 0, 1);
+                }
             } else {
                 startDate = new Date(2000, 0, 1); // За весь час
                 endDate = new Date(2100, 0, 1);
