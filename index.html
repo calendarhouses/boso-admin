@@ -167,15 +167,15 @@
 
         .timeline-wrapper { display: flex; border: 1px solid #E5E7EB; border-radius: 16px; overflow: hidden; background: white; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05); align-items: flex-start;}
         .timeline-sidebar { width: 220px; flex-shrink: 0; border-right: 1px solid #E5E7EB; background: #F9FAFB; display: flex; flex-direction: column; z-index: 10; }
-        .timeline-sidebar-header { height: 90px; border-bottom: 1px solid #E5E7EB; display: flex; align-items: center; padding: 0 20px; font-weight: 700; color: #4B5563; font-size: 13px; text-transform: uppercase; letter-spacing: 0.5px; flex-shrink: 0; }
-        .timeline-room { height: 70px; border-bottom: 1px solid #E5E7EB; display: flex; flex-direction: column; justify-content: center; padding: 0 20px; font-size: 14px; font-weight: 600; color: #111827; flex-shrink: 0; }
+        .timeline-sidebar-header { height: 90px; min-height: 90px; border-bottom: 1px solid #E5E7EB; display: flex; align-items: center; padding: 0 20px; font-weight: 700; color: #4B5563; font-size: 13px; text-transform: uppercase; letter-spacing: 0.5px; flex-shrink: 0; }
+        .timeline-room { height: 70px; min-height: 70px; border-bottom: 1px solid #E5E7EB; display: flex; flex-direction: column; justify-content: center; padding: 0 20px; font-size: 14px; font-weight: 600; color: #111827; flex-shrink: 0; }
         .timeline-room span { font-size: 12px; font-weight: 400; color: #6B7280; margin-top: 4px; }
         
         .timeline-grid-container { flex: 1; overflow-x: auto; position: relative; display: flex; flex-direction: column; }
-        .timeline-months { display: flex; height: 30px; background: #F9FAFB; border-bottom: 1px solid #E5E7EB; width: max-content; flex-shrink: 0; }
+        .timeline-months { display: flex; height: 30px; min-height: 30px; background: #F9FAFB; border-bottom: 1px solid #E5E7EB; width: max-content; flex-shrink: 0; }
         .timeline-month-cell { display: flex; align-items: center; justify-content: flex-start; padding-left: 15px; font-size: 12px; font-weight: 700; color: #4B5563; border-right: 1px solid #E5E7EB; text-transform: uppercase; letter-spacing: 0.5px;}
         
-        .timeline-dates { display: flex; height: 60px; border-bottom: 1px solid #E5E7EB; background: white; width: max-content; flex-shrink: 0; }
+        .timeline-dates { display: flex; height: 60px; min-height: 60px; border-bottom: 1px solid #E5E7EB; background: white; width: max-content; flex-shrink: 0; }
         .timeline-date { width: 60px; flex-shrink: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; border-right: 1px solid #F3F4F6; font-size: 14px; font-weight: 600; }
         .timeline-date span { font-size: 11px; font-weight: 500; color: #9CA3AF; text-transform: uppercase; }
         .timeline-date.today { color: var(--accent); background: #EFF6FF; }
@@ -183,9 +183,9 @@
         .timeline-date.weekend { background: #F9FAFB; color: #EF4444; }
 
         .timeline-rows { position: relative; width: max-content; }
-        .timeline-row-bg { display: flex; height: 70px; border-bottom: 1px solid #E5E7EB; position: relative; flex-shrink: 0; }
+        .timeline-row-bg { display: flex; height: 70px; min-height: 70px; border-bottom: 1px solid #E5E7EB; position: relative; flex-shrink: 0; }
         .timeline-cell { width: 60px; flex-shrink: 0; border-right: 1px solid #F3F4F6; }
-        .timeline-cell.weekend { background: #F9FAFB; }
+        .timeline-cell.weekend { background: #F9FAFB; }}
 
         /* --- БЛОКИ БРОНЮВАННЯ НА ШАХМАТЦІ --- */
         .booking-block { 
