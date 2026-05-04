@@ -670,34 +670,19 @@ input[type="number"] {
                         <div class="metric-icon" style="background:#F0FDF4; color:#059669;"><svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg></div>
                         <span class="metric-title">Сума бронювань</span>
                         <span class="metric-val" id="metTotalSum">0 грн</span>
-                        <div style="display: flex; align-items: center; gap: 6px; margin-top: auto; padding-top: 12px;">
-    <span style="background: #D1FAE5; color: #059669; padding: 2px 6px; border-radius: 4px; font-size: 11px; font-weight: 700; display: flex; align-items: center;">
-        <svg width="10" height="10" fill="none" stroke="currentColor" stroke-width="3" viewBox="0 0 24 24" style="margin-right: 2px;"><path stroke-linecap="round" stroke-linejoin="round" d="M4.5 19.5l15-15m0 0H8.25m11.25 0v11.25"></path></svg> 12%
-    </span>
-    <span style="font-size: 11px; color: #9CA3AF; font-weight: 500;">від минулого періоду</span>
-</div>
+                        <div id="trendSum" style="display: none; align-items: center; gap: 6px; margin-top: auto; padding-top: 12px;"></div>
                     </div>
                     <div class="metric-card">
                         <div class="metric-icon" style="background:#EFF6FF; color:#2563EB;"><svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"></path></svg></div>
                         <span class="metric-title">Кількість броней</span>
                         <span class="metric-val" id="metCount">0</span>
-                        <div style="display: flex; align-items: center; gap: 6px; margin-top: auto; padding-top: 12px;">
-    <span style="background: #D1FAE5; color: #059669; padding: 2px 6px; border-radius: 4px; font-size: 11px; font-weight: 700; display: flex; align-items: center;">
-        <svg width="10" height="10" fill="none" stroke="currentColor" stroke-width="3" viewBox="0 0 24 24" style="margin-right: 2px;"><path stroke-linecap="round" stroke-linejoin="round" d="M4.5 19.5l15-15m0 0H8.25m11.25 0v11.25"></path></svg> 12%
-    </span>
-    <span style="font-size: 11px; color: #9CA3AF; font-weight: 500;">від минулого періоду</span>
-</div>
+                        <div id="trendCount" style="display: none; align-items: center; gap: 6px; margin-top: auto; padding-top: 12px;"></div>
                     </div>
                     <div class="metric-card">
                         <div class="metric-icon" style="background:#FEF3C7; color:#D97706;"><svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"></path></svg></div>
                         <span class="metric-title">Середній чек</span>
                         <span class="metric-val" id="metAvg">0 грн</span>
-                        <div style="display: flex; align-items: center; gap: 6px; margin-top: auto; padding-top: 12px;">
-    <span style="background: #D1FAE5; color: #059669; padding: 2px 6px; border-radius: 4px; font-size: 11px; font-weight: 700; display: flex; align-items: center;">
-        <svg width="10" height="10" fill="none" stroke="currentColor" stroke-width="3" viewBox="0 0 24 24" style="margin-right: 2px;"><path stroke-linecap="round" stroke-linejoin="round" d="M4.5 19.5l15-15m0 0H8.25m11.25 0v11.25"></path></svg> 12%
-    </span>
-    <span style="font-size: 11px; color: #9CA3AF; font-weight: 500;">від минулого періоду</span>
-</div>
+                        <div id="trendAvg" style="display: none; align-items: center; gap: 6px; margin-top: auto; padding-top: 12px;"></div>
                     </div>
                 </div>
 
@@ -2667,62 +2652,115 @@ function bosoLeave() {
     if (tt) tt.classList.remove('show');
 }
 
-        // --- АНАЛІТИКА (МАТЕМАТИКА) ---
+        // --- АНАЛІТИКА (МАТЕМАТИКА З ТРЕНДАМИ) ---
         function calculateAnalytics() {
             const period = document.getElementById('reportPeriodVal').value;
             const now = new Date();
             let startDate, endDate;
+            let prevStartDate, prevEndDate; // Дати для попереднього періоду
 
-            // Визначаємо межі дат залежно від вибраного періоду
+            // Визначаємо межі поточного і попереднього періодів
             if (period === 'current') {
                 startDate = new Date(now.getFullYear(), now.getMonth(), 1);
                 endDate = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59);
+                prevStartDate = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+                prevEndDate = new Date(now.getFullYear(), now.getMonth(), 0, 23, 59, 59);
             } else if (period === 'prev') {
                 startDate = new Date(now.getFullYear(), now.getMonth() - 1, 1);
                 endDate = new Date(now.getFullYear(), now.getMonth(), 0, 23, 59, 59);
+                prevStartDate = new Date(now.getFullYear(), now.getMonth() - 2, 1);
+                prevEndDate = new Date(now.getFullYear(), now.getMonth() - 1, 0, 23, 59, 59);
             } else if (period === 'year') {
                 startDate = new Date(now.getFullYear(), 0, 1);
                 endDate = new Date(now.getFullYear(), 11, 31, 23, 59, 59);
+                prevStartDate = new Date(now.getFullYear() - 1, 0, 1);
+                prevEndDate = new Date(now.getFullYear() - 1, 11, 31, 23, 59, 59);
             } else if (period === 'custom') { 
-                // 🟢 ДОДАНО КАСТОМНИЙ РЕЖИМ
                 const dates = reportRangePicker.selectedDates;
                 if (dates.length === 2) {
                     startDate = new Date(dates[0]); startDate.setHours(0,0,0,0);
                     endDate = new Date(dates[1]); endDate.setHours(23,59,59,999);
+                    // Рахуємо різницю в днях, щоб відмотати назад такий самий період
+                    const diffTime = Math.abs(endDate - startDate);
+                    prevEndDate = new Date(startDate.getTime() - (1000 * 60 * 60 * 24));
+                    prevEndDate.setHours(23,59,59,999);
+                    prevStartDate = new Date(prevEndDate.getTime() - diffTime);
+                    prevStartDate.setHours(0,0,0,0);
                 } else {
-                    // Якщо щось пішло не так, повертаємо дефолт
                     startDate = new Date(2000, 0, 1); endDate = new Date(2100, 0, 1);
                 }
             } else {
-                startDate = new Date(2000, 0, 1); // За весь час
-                endDate = new Date(2100, 0, 1);
+                startDate = new Date(2000, 0, 1); endDate = new Date(2100, 0, 1);
+                prevStartDate = null; prevEndDate = null; // Для "За весь час" немає трендів
             }
 
-            let totalSum = 0;
-            let validBookingsCount = 0;
+            let currSum = 0, currCount = 0;
+            let prevSum = 0, prevCount = 0;
 
             // Перебираємо ВСІ броні з бази
             allBookings.forEach(b => {
-                if (String(b.status).toLowerCase().includes('скас')) return; // Скасовані в дохід не йдуть
-                
+                if (String(b.status).toLowerCase().includes('скас')) return; 
                 const bDate = parseSafeDate(b.checkIn);
+                const price = Number(b.totalPrice) || 0;
                 
-                // Якщо дата заїзду потрапляє в наш період
+                // Рахуємо поточний період
                 if (bDate >= startDate && bDate <= endDate) {
-                    totalSum += Number(b.totalPrice) || 0;
-                    validBookingsCount++;
+                    currSum += price;
+                    currCount++;
+                }
+                // Рахуємо минулий період (якщо є)
+                if (prevStartDate && bDate >= prevStartDate && bDate <= prevEndDate) {
+                    prevSum += price;
+                    prevCount++;
                 }
             });
 
-            // Рахуємо середній чек
-            const avgCheck = validBookingsCount > 0 ? Math.round(totalSum / validBookingsCount) : 0;
+            const currAvg = currCount > 0 ? Math.round(currSum / currCount) : 0;
+            const prevAvg = prevCount > 0 ? Math.round(prevSum / prevCount) : 0;
 
-            // Анімовано або просто вставляємо цифри в HTML
-            document.getElementById('metTotalSum').innerText = totalSum.toLocaleString('uk-UA') + ' грн';
-            document.getElementById('metCount').innerText = validBookingsCount;
-            document.getElementById('metAvg').innerText = avgCheck.toLocaleString('uk-UA') + ' грн';
+            // Функція для відмальовки бейджа
+            function renderTrend(elId, currVal, prevVal) {
+                const el = document.getElementById(elId);
+                if (!prevStartDate || prevVal === 0) {
+                    el.style.display = 'none'; // Ховаємо, якщо нема з чим порівнювати
+                    return;
+                }
+                el.style.display = 'flex';
+                
+                const diff = currVal - prevVal;
+                const percent = Math.round((Math.abs(diff) / prevVal) * 100);
+                
+                if (diff >= 0) {
+                    el.innerHTML = `
+                        <span style="background: #D1FAE5; color: #059669; padding: 2px 6px; border-radius: 4px; font-size: 11px; font-weight: 700; display: flex; align-items: center;">
+                            <svg width="10" height="10" fill="none" stroke="currentColor" stroke-width="3" viewBox="0 0 24 24" style="margin-right: 2px;"><path stroke-linecap="round" stroke-linejoin="round" d="M4.5 19.5l15-15m0 0H8.25m11.25 0v11.25"></path></svg> 
+                            ${percent}%
+                        </span>
+                        <span style="font-size: 11px; color: #9CA3AF; font-weight: 500;">від минулого періоду</span>
+                    `;
+                } else {
+                    el.innerHTML = `
+                        <span style="background: #FEE2E2; color: #DC2626; padding: 2px 6px; border-radius: 4px; font-size: 11px; font-weight: 700; display: flex; align-items: center;">
+                            <svg width="10" height="10" fill="none" stroke="currentColor" stroke-width="3" viewBox="0 0 24 24" style="margin-right: 2px;"><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 4.5l-15 15m0 0h11.25m-11.25 0V8.25"></path></svg> 
+                            ${percent}%
+                        </span>
+                        <span style="font-size: 11px; color: #9CA3AF; font-weight: 500;">від минулого періоду</span>
+                    `;
+                }
+            }
+
+            // Оновлюємо цифри
+            document.getElementById('metTotalSum').innerText = currSum.toLocaleString('uk-UA') + ' грн';
+            document.getElementById('metCount').innerText = currCount;
+            document.getElementById('metAvg').innerText = currAvg.toLocaleString('uk-UA') + ' грн';
             
-           renderCharts(startDate, endDate);
+            // Малюємо тренди
+            renderTrend('trendSum', currSum, prevSum);
+            renderTrend('trendCount', currCount, prevCount);
+            renderTrend('trendAvg', currAvg, prevAvg);
+            
+            // Малюємо графіки
+            renderCharts(startDate, endDate);
         }
 
         // --- ГРАФІКИ (CHART.JS) ---
