@@ -185,7 +185,7 @@
         .timeline-rows { position: relative; width: max-content; padding-bottom: 16px; }
         .timeline-row-bg { display: flex; height: 70px; min-height: 70px; border-bottom: 1px solid #E5E7EB; position: relative; flex-shrink: 0; }
         .timeline-cell { width: 60px; flex-shrink: 0; border-right: 1px solid #F3F4F6; }
-        .timeline-cell.weekend { background: #F9FAFB; }}
+        .timeline-cell.weekend { background: #F9FAFB; }
 
         /* --- БЛОКИ БРОНЮВАННЯ НА ШАХМАТЦІ --- */
         .booking-block { 
@@ -982,21 +982,11 @@ function getVisitWord(count) {
         function parseSafeDate(dateStr) {
             if (!dateStr) return new Date();
             let str = String(dateStr).trim();
-            
-            // Якщо формат з крапками "06.05.2026"
             if (str.includes('.')) {
                 let parts = str.split('.');
-                if (parts.length === 3) {
-                    return new Date(`${parts[2]}-${parts[1]}-${parts[0]}T00:00:00`);
-                }
+                return new Date(`${parts[2]}-${parts[1]}-${parts[0]}T00:00:00`);
             }
-            
-            // Якщо дата прийшла з гугла як "2026-05-05T21:00:00.000Z"
-            if (str.includes('T')) {
-                str = str.split('T')[0]; // Відрізаємо все після 'T'
-            }
-            
-            // Тепер str це завжди "YYYY-MM-DD". Щоб уникнути зсуву часових поясів, додаємо фіктивний час.
+            if (str.includes('T')) str = str.split('T')[0];
             return new Date(str + "T00:00:00");
         }
 
