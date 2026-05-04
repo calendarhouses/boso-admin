@@ -978,6 +978,17 @@ function getVisitWord(count) {
             if (clean.length === 10 && clean.startsWith('0')) clean = '38' + clean; 
             return clean; 
         }
+        
+        function parseSafeDate(dateStr) {
+            if (!dateStr) return new Date();
+            let str = String(dateStr).trim();
+            // Якщо формат з крапками (06.05.2026), перевертаємо в ISO (2026-05-06)
+            if (str.includes('.')) {
+                let parts = str.split('.');
+                return new Date(`${parts[2]}-${parts[1]}-${parts[0]}T00:00:00`);
+            }
+            return new Date(str);
+        }
 
         function showToast(message) {
             const container = document.getElementById('toast-container');
@@ -1539,7 +1550,7 @@ function getVisitWord(count) {
             tbody.innerHTML = '';
             if (!data || data.length === 0) { tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; padding: 30px; color: #9CA3AF;">Нічого не знайдено</td></tr>'; return; }
             data.forEach((b) => {
-                const inDate = new Date(b.checkIn); const outDate = new Date(b.checkOut);
+               const inDate = parseSafeDate(b.checkIn); const outDate = parseSafeDate(b.checkOut);
                 const nights = Math.round((outDate - inDate) / (1000 * 60 * 60 * 24)) || 0;
                 const dateStr = `${inDate.toLocaleDateString('uk-UA', { day: 'numeric', month: 'short' })} - ${outDate.toLocaleDateString('uk-UA', { day: 'numeric', month: 'short' })}`;
                 let badgeClass = 'new'; let s = String(b.status).toLowerCase();
@@ -1690,7 +1701,7 @@ function getVisitWord(count) {
 
                     let cottageStr = String(b.cottage || '');
                     if (cottageStr.includes(room.short) || (room.id === 3 && cottageStr.includes("Люкс")) || (room.id === 2 && cottageStr.includes("Сімейний"))) {
-                        const inDate = new Date(b.checkIn); const outDate = new Date(b.checkOut);
+                        const inDate = parseSafeDate(b.checkIn); const outDate = parseSafeDate(b.checkOut);
                         inDate.setHours(0,0,0,0); outDate.setHours(0,0,0,0);
                         const timelineStart = new Date(startDate); timelineStart.setHours(0,0,0,0);
                         
@@ -2228,9 +2239,14 @@ document.getElementById('adminGuests').addEventListener('change', updatePricePre
             btn.innerText = "Збереження..."; 
             btn.disabled = true;
             
+            let safeIn = document.getElementById('adminCheckIn').value;
+            let safeOut = document.getElementById('adminCheckOut').value;
+            if (safeIn.includes('.')) safeIn = safeIn.split('.').reverse().join('-');
+            if (safeOut.includes('.')) safeOut = safeOut.split('.').reverse().join('-');
+
             const bookingData = { 
-                checkIn: document.getElementById('adminCheckIn').value, 
-                checkOut: document.getElementById('adminCheckOut').value, 
+                checkIn: safeIn, 
+                checkOut: safeOut,
                 cottage: document.getElementById('adminCottage').value, 
                 name: document.getElementById('adminName').value, 
                 phone: document.getElementById('adminPhone').value, 
@@ -2420,8 +2436,8 @@ function bosoHover(e, rowId) {
     // 1. Форматуємо дати 
     let inDate = "—"; let outDate = "—";
     try {
-        if (b.checkIn) inDate = new Date(b.checkIn).toLocaleDateString('uk-UA', {day:'numeric', month:'short'});
-        if (b.checkOut) outDate = new Date(b.checkOut).toLocaleDateString('uk-UA', {day:'numeric', month:'short'});
+        if (b.checkIn) inDate = parseSafeDate(b.checkIn).toLocaleDateString('uk-UA', {day:'numeric', month:'short'});
+        if (b.checkOut) outDate = parseSafeDate(b.checkOut).toLocaleDateString('uk-UA', {day:'numeric', month:'short'});
     } catch(err) {}
 
     // 2. Інформація
