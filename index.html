@@ -982,11 +982,14 @@ function getVisitWord(count) {
         function parseSafeDate(dateStr) {
             if (!dateStr) return new Date();
             let str = String(dateStr).trim();
-            // Якщо формат з крапками (06.05.2026), перевертаємо в ISO (2026-05-06)
-            if (str.includes('.')) {
+            
+            // 🟢 ЗАЛІЗОБЕТОННА ПЕРЕВІРКА: Реагуємо ТІЛЬКИ якщо це короткий формат "DD.MM.YYYY" (10 символів)
+            if (str.length === 10 && str.charAt(2) === '.') {
                 let parts = str.split('.');
                 return new Date(`${parts[2]}-${parts[1]}-${parts[0]}T00:00:00`);
             }
+            
+            // Всі інші гуглівські дати парсимо як є
             return new Date(str);
         }
 
