@@ -625,7 +625,7 @@ input[type="number"] {
         </div>
 
         <div id="view-reports" style="display: none; flex-direction: column; height: 100%;">
-            <div class="reports-header">
+           <div class="reports-header">
                 <div class="reports-tabs">
                     <div class="r-tab active" onclick="switchReportTab('analytics', this)">
                         <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 0 1 3 19.875v-6.75ZM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 0 1-1.125-1.125V8.625ZM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 0 1-1.125-1.125V4.125Z" /></svg>
@@ -638,12 +638,15 @@ input[type="number"] {
                 </div>
                 
                 <div style="display: flex; gap: 12px; align-items: center;">
-                    <!-- 🟢 КАЛЕНДАРИК ТЕПЕР ЗЛІВА -->
-                    <div id="customReportRange" style="width: 44px; height: 44px; border-radius: 12px; border: 1px solid #D1D5DB; background: #FFF; display: flex; align-items: center; justify-content: center; cursor: pointer; color: #4B5563; transition: 0.2s;" onmouseover="this.style.borderColor='var(--accent)'; this.style.color='var(--accent)';" onmouseout="this.style.borderColor='#D1D5DB'; this.style.color='#4B5563';">
-                        <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 0 1 2.25-2.25h13.5A2.25 2.25 0 0 1 21 7.5v11.25m-18 0A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75m-18 0v-7.5A2.25 2.25 0 0 1 5.25 9h13.5A2.25 2.25 0 0 1 21 11.25v7.5"></path></svg>
+                    <!-- 🟢 КАЛЕНДАРИК ЗЛІВА (Захований справжній input, щоб Flatpickr не ламався) -->
+                    <div style="position: relative;">
+                        <div style="width: 44px; height: 44px; border-radius: 12px; border: 1px solid #D1D5DB; background: #FFF; display: flex; align-items: center; justify-content: center; color: #4B5563; pointer-events: none;">
+                            <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 0 1 2.25-2.25h13.5A2.25 2.25 0 0 1 21 7.5v11.25m-18 0A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75m-18 0v-7.5A2.25 2.25 0 0 1 5.25 9h13.5A2.25 2.25 0 0 1 21 11.25v7.5"></path></svg>
+                        </div>
+                        <input type="text" id="customReportRange" style="position: absolute; top:0; left:0; width:100%; height:100%; opacity:0; cursor: pointer;">
                     </div>
 
-                    <!-- Вибір періоду для звітів (ТЕПЕР СПРАВА) -->
+                    <!-- ВИПАДАЮЧИЙ СПИСОК СПРАВА -->
                     <div class="custom-select-wrapper" id="reportPeriodWrapper" style="width: 220px;">
                         <div class="custom-select-trigger" onclick="toggleCustomSelect('reportPeriodWrapper')">
                             <span id="reportPeriodText">Поточний місяць</span>
@@ -658,13 +661,7 @@ input[type="number"] {
                     </div>
                     <input type="hidden" id="reportPeriodVal" value="current">
                 </div>
-            </div>
-                    
-                    <!-- 🟢 НОВИЙ КАЛЕНДАРИК -->
-                    <div id="customReportRange" style="width: 44px; height: 44px; border-radius: 12px; border: 1px solid #D1D5DB; background: #FFF; display: flex; align-items: center; justify-content: center; cursor: pointer; color: #4B5563; transition: 0.2s;" onmouseover="this.style.borderColor='var(--accent)'; this.style.color='var(--accent)';" onmouseout="this.style.borderColor='#D1D5DB'; this.style.color='#4B5563';">
-                        <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 0 1 2.25-2.25h13.5A2.25 2.25 0 0 1 21 7.5v11.25m-18 0A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75m-18 0v-7.5A2.25 2.25 0 0 1 5.25 9h13.5A2.25 2.25 0 0 1 21 11.25v7.5"></path></svg>
-                    </div>
-                </div>
+            </div> <!-- 🟢 ОСЬ ВІН! Цей закриваючий тег губився і ламав Налаштування! -->
 
             <!-- Вкладка 1: АНАЛІТИКА -->
             <div id="rep-analytics" style="display: block;">
@@ -2790,13 +2787,13 @@ function bosoLeave() {
                         backgroundColor: bosoColors[0],
                         borderRadius: 6,
                         borderSkipped: false,
-                        barPercentage: 0.5,      // Стовпчики займатимуть 50% доступної ширини
-                        categoryPercentage: 0.8  // Додасть "повітря" між групами стовпчиків
+                        maxBarThickness: 45 // 🟢 Жорстке обмеження товщини!
                     }]
                 },
                 options: {
                     responsive: true,
                     maintainAspectRatio: false,
+                    layout: { padding: { top: 20 } }, // 🟢 Відступ від заголовка
                     plugins: {
                         legend: { display: false },
                         tooltip: {
@@ -2804,7 +2801,7 @@ function bosoLeave() {
                             padding: 12,
                             cornerRadius: 8,
                             displayColors: false,
-                           callbacks: {
+                            callbacks: {
                                 label: function(context) { return ` ${context.raw} ${getBookingWord(context.raw)}`; }
                             }
                         }
@@ -2838,7 +2835,7 @@ function bosoLeave() {
                 options: {
                     responsive: true,
                     maintainAspectRatio: false,
-                    layout: { padding: 10 }, // Додаємо внутрішній відступ
+                    layout: { padding: 15 }, // 🟢 Повітря навколо бублика
                     cutout: '75%', // Робить бублик ще тоншим
                     plugins: {
                         legend: { position: 'bottom', labels: { padding: 20, usePointStyle: true, pointStyle: 'circle' } },
