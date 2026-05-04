@@ -1677,7 +1677,7 @@ function getVisitWord(count) {
                     <td><strong>${dateStr}</strong><br><span style="color: #6B7280; font-size: 12px;">${nights} ночей</span></td>
                     <td><strong>${String(b.name).replace(' (Ручна бронь)', '')}</strong><br><span style="color: #6B7280; font-size: 12px;">+${cleanPhone}</span></td>
                     <td>${b.cottage}</td><td><span class="badge ${badgeClass}">${b.status}</span></td>
-                    <td><button class="btn-action arrow" onclick="openDetailsByRow(${b.row})">Деталі <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"></path></svg></button></td>
+                    <td><button class="btn-action arrow" onclick="openDetailsByRow(event, ${b.row})">Деталі <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"></path></svg></button></td>
                 </tr>`;
             });
         }
