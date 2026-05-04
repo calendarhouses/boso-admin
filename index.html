@@ -983,14 +983,21 @@ function getVisitWord(count) {
             if (!dateStr) return new Date();
             let str = String(dateStr).trim();
             
-            // 🟢 ЗАЛІЗОБЕТОННА ПЕРЕВІРКА: Реагуємо ТІЛЬКИ якщо це короткий формат "DD.MM.YYYY" (10 символів)
-            if (str.length === 10 && str.charAt(2) === '.') {
+            // Якщо формат з крапками "06.05.2026"
+            if (str.includes('.')) {
                 let parts = str.split('.');
-                return new Date(`${parts[2]}-${parts[1]}-${parts[0]}T00:00:00`);
+                if (parts.length === 3) {
+                    return new Date(`${parts[2]}-${parts[1]}-${parts[0]}T00:00:00`);
+                }
             }
             
-            // Всі інші гуглівські дати парсимо як є
-            return new Date(str);
+            // Якщо дата прийшла з гугла як "2026-05-05T21:00:00.000Z"
+            if (str.includes('T')) {
+                str = str.split('T')[0]; // Відрізаємо все після 'T'
+            }
+            
+            // Тепер str це завжди "YYYY-MM-DD". Щоб уникнути зсуву часових поясів, додаємо фіктивний час.
+            return new Date(str + "T00:00:00");
         }
 
         function showToast(message) {
@@ -2242,14 +2249,14 @@ document.getElementById('adminGuests').addEventListener('change', updatePricePre
             btn.innerText = "Збереження..."; 
             btn.disabled = true;
             
+            // 🟢 Беремо дати прямо. Flatpickr завжди тримає YYYY-MM-DD в основному value, 
+            // навіть якщо на екрані показує з крапками (через altFormat).
             let safeIn = document.getElementById('adminCheckIn').value;
             let safeOut = document.getElementById('adminCheckOut').value;
-            if (safeIn.includes('.')) safeIn = safeIn.split('.').reverse().join('-');
-            if (safeOut.includes('.')) safeOut = safeOut.split('.').reverse().join('-');
 
             const bookingData = { 
                 checkIn: safeIn, 
-                checkOut: safeOut,
+                checkOut: safeOut, 
                 cottage: document.getElementById('adminCottage').value, 
                 name: document.getElementById('adminName').value, 
                 phone: document.getElementById('adminPhone').value, 
