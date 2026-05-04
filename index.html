@@ -476,10 +476,12 @@ input[type="number"] {
 
         /* --- ЗВІТИ ТА АНАЛІТИКА --- */
         .reports-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; }
-        .reports-tabs { display: flex; background: #F3F4F6; padding: 4px; border-radius: 12px; width: max-content; }
-        .r-tab { padding: 8px 24px; font-size: 13px; font-weight: 600; color: #6B7280; cursor: pointer; border-radius: 8px; transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1); display: flex; align-items: center; justify-content: center; }
+        .reports-tabs { display: flex; gap: 8px; background: #F3F4F6; padding: 6px; border-radius: 12px; width: max-content; }
+        .r-tab { padding: 10px 24px; font-size: 15px; font-weight: 600; color: #6B7280; cursor: pointer; border-radius: 8px; transition: all 0.2s ease; display: flex; align-items: center; gap: 8px; }
         .r-tab:hover { color: var(--text-main); }
-        .r-tab.active { background: #FFFFFF; color: var(--text-main); box-shadow: 0 1px 3px rgba(0,0,0,0.1), 0 1px 2px rgba(0,0,0,0.06); }
+        .r-tab.active { background: #FFFFFF; color: var(--success); box-shadow: 0 2px 6px rgba(0,0,0,0.08); }
+        /* Робимо іконку в активній вкладці зеленою */
+        .r-tab.active svg { stroke: var(--success); }
         
         .metrics-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 20px; margin-bottom: 24px; }
         .metric-card { background: #FFF; border: 1px solid #E5E7EB; border-radius: 16px; padding: 24px; display: flex; flex-direction: column; gap: 12px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.02); transition: 0.2s;}
@@ -617,13 +619,13 @@ input[type="number"] {
 
         <div id="view-reports" style="display: none; flex-direction: column; height: 100%;">
             <div class="reports-header">
-                <div class="reports-tabs">
+               <div class="reports-tabs">
                     <div class="r-tab active" onclick="switchReportTab('analytics', this)">
-                        <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 0 1 3 19.875v-6.75ZM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 0 1-1.125-1.125V8.625ZM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 0 1-1.125-1.125V4.125Z" /></svg>
+                        <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 0 1 3 19.875v-6.75ZM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 0 1-1.125-1.125V8.625ZM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 0 1-1.125-1.125V4.125Z" /></svg>
                         Аналітика
                     </div>
                     <div class="r-tab" onclick="switchReportTab('finance', this)">
-                        <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6v12m-3-2.818l.879.659c1.171.879 3.07.879 4.242 0 1.172-.879 1.172-2.303 0-3.182C13.536 12.219 12.768 12 12 12c-.725 0-1.45-.22-2.003-.659-1.106-.879-1.106-2.303 0-3.182s2.9-.879 4.006 0l.415.33M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                        <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6v12m-3-2.818l.879.659c1.171.879 3.07.879 4.242 0 1.172-.879 1.172-2.303 0-3.182C13.536 12.219 12.768 12 12 12c-.725 0-1.45-.22-2.003-.659-1.106-.879-1.106-2.303 0-3.182s2.9-.879 4.006 0l.415.33M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
                         Фінанси
                     </div>
                 </div>
@@ -2664,6 +2666,15 @@ function bosoLeave() {
         let roomsChartInstance = null;
         let sourceChartInstance = null;
 
+        function getBookingWord(count) {
+            let n = Math.abs(parseInt(count)) % 100;
+            let n1 = n % 10;
+            if (n > 10 && n < 20) return "броней";
+            if (n1 > 1 && n1 < 5) return "броні";
+            if (n1 === 1) return "бронь";
+            return "броней";
+        }
+        
         function renderCharts(startDate, endDate) {
             // 1. Готуємо дані (Рахуємо кількість броней по кожному номеру і джерелу)
             const roomCounts = {};
@@ -2717,8 +2728,10 @@ function bosoLeave() {
                         label: 'Кількість броней',
                         data: Object.values(roomCounts),
                         backgroundColor: bosoColors[0],
-                        borderRadius: 6, // Закруглені стовпчики
-                        borderSkipped: false
+                        borderRadius: 6,
+                        borderSkipped: false,
+                        barPercentage: 0.5,      // Стовпчики займатимуть 50% доступної ширини
+                        categoryPercentage: 0.8  // Додасть "повітря" між групами стовпчиків
                     }]
                 },
                 options: {
@@ -2731,8 +2744,8 @@ function bosoLeave() {
                             padding: 12,
                             cornerRadius: 8,
                             displayColors: false,
-                            callbacks: {
-                                label: function(context) { return context.raw + ' броней'; }
+                           callbacks: {
+                                label: function(context) { return ` ${context.raw} ${getBookingWord(context.raw)}`; }
                             }
                         }
                     },
@@ -2765,7 +2778,8 @@ function bosoLeave() {
                 options: {
                     responsive: true,
                     maintainAspectRatio: false,
-                    cutout: '70%', // Робить "бублик" тоншим і елегантнішим
+                    layout: { padding: 10 }, // Додаємо внутрішній відступ
+                    cutout: '75%', // Робить бублик ще тоншим
                     plugins: {
                         legend: { position: 'bottom', labels: { padding: 20, usePointStyle: true, pointStyle: 'circle' } },
                         tooltip: {
@@ -2773,8 +2787,8 @@ function bosoLeave() {
                             backgroundColor: '#111827',
                             padding: 12,
                             cornerRadius: 8,
-                            callbacks: {
-                                label: function(context) { return ' ' + context.raw + ' броней'; }
+                           callbacks: {
+                                label: function(context) { return ` ${context.raw} ${getBookingWord(context.raw)}`; }
                             }
                         }
                     }
