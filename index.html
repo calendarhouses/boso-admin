@@ -626,12 +626,11 @@ input[type="number"] {
 
         <div id="view-reports" style="display: none; flex-direction: column; height: 100%;">
             <div class="reports-header">
-                <div class="reports-tabs">
-                    <div class="r-tab active" onclick="switchReportTab('analytics', this)">
+                <div class="r-tab" onclick="switchReportTab('analytics', this)">
                         <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 0 1 3 19.875v-6.75ZM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 0 1-1.125-1.125V8.625ZM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 0 1-1.125-1.125V4.125Z" /></svg>
                         Аналітика
                     </div>
-                    <div class="r-tab" onclick="switchReportTab('finance', this)">
+                    <div class="r-tab active" onclick="switchReportTab('finance', this)">
                         <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6v12m-3-2.818l.879.659c1.171.879 3.07.879 4.242 0 1.172-.879 1.172-2.303 0-3.182C13.536 12.219 12.768 12 12 12c-.725 0-1.45-.22-2.003-.659-1.106-.879-1.106-2.303 0-3.182s2.9-.879 4.006 0l.415.33M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
                         Фінанси
                     </div>
@@ -664,7 +663,7 @@ input[type="number"] {
             </div>
 
             <!-- Вкладка 1: АНАЛІТИКА -->
-            <div id="rep-analytics" style="display: block;">
+            <div id="rep-analytics" style="display: none;">
                 <div class="metrics-grid">
                     <div class="metric-card">
                         <div class="metric-icon" style="background:#F0FDF4; color:#059669;"><svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg></div>
@@ -694,7 +693,7 @@ input[type="number"] {
                         </div>
                     </div>
                     <div class="chart-card">
-                        <h3 class="section-title">Звідки гості:</h3>
+                        <h3 class="section-title">Звідки гості</h3>
                         <div style="position: relative; height: 260px; width: 100%;">
                             <canvas id="sourceChart"></canvas>
                         </div>
@@ -703,7 +702,7 @@ input[type="number"] {
             </div> <!-- 🟢 ОСЬ ЦЕЙ ТЕГ ГУБИВСЯ! -->
 
             <!-- Вкладка 2: ФІНАНСИ -->
-            <div id="rep-finance" style="display: none;">
+            <div id="rep-finance" style="display: block;">
                 <div style="display: flex; justify-content: flex-end; margin-bottom: 16px;">
                     <button class="btn-primary" onclick="openGenericModal('transaction')">+ Додати транзакцію</button>
                 </div>
@@ -717,7 +716,7 @@ input[type="number"] {
                 <div class="charts-grid" style="grid-template-columns: 1fr;">
                     <div class="chart-card card" style="padding: 0; overflow: hidden;">
                         <table style="margin: 0; width: 100%;">
-                            <thead style="background: #F9FAFB;"><tr><th>Категорія</th><th>Тип</th><th>Сума</th></tr></thead>
+                            <thead style="background: #F9FAFB;"><tr><th>Категорія</th><th>Тип</th><th>Сума</th><th>Дії</th></tr></thead>
                             <tbody id="financeTableBody">
                                 <tr><td colspan="3" style="text-align: center; color: #9CA3AF; padding: 40px;">Фінансовий модуль на стадії підключення...</td></tr>
                             </tbody>
@@ -1005,6 +1004,29 @@ function getVisitWord(count) {
         ];
 
         let customPrices = {}; // Тут будуть зберігатися ціни по датах
+        let transactions = []; // База ручних транзакцій
+
+        const incomeCategories = [
+            "Плата за раннє заселення/пізнє виселення",
+            "Додаткові гості",
+            "Домашні тварини",
+            "Міні-бар",
+            "Чан",
+            "Оренда велосипедів",
+            "Інший дохід"
+        ];
+
+        const expenseCategories = [
+            "Прибирання",
+            "Прасування",
+            "Користування електроенергією",
+            "Утримання прилеглої території",
+            "Розхідні матеріали",
+            "Реклама",
+            "Адміністрування та SMM",
+            "Податки",
+            "Інші витрати"
+        ];
         
         // --- ІНІЦІАЛІЗАЦІЯ: ЗАВАНТАЖУЄМО БРОНІ ТА НАЛАШТУВАННЯ З ХМАРИ ---
         async function initApp() {
@@ -1154,8 +1176,7 @@ function getVisitWord(count) {
                 document.getElementById('view-reports').style.display = 'flex';
                 document.getElementById('pageTitle').innerText = 'Звіти та Аналітика';
                 document.getElementById('mainActionButton').style.display = 'none'; 
-                switchReportTab('analytics', document.querySelector('.r-tab')); // 🟢 ДОДАЙ ЦЕЙ РЯДОК
-            }
+                switchReportTab('finance', document.querySelectorAll('.r-tab')[1]);
         }
 
         // Логіка підменю Налаштувань
