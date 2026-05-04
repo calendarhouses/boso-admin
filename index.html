@@ -1046,7 +1046,8 @@ function getVisitWord(count) {
                     if (settingsData.customServicesList) customServicesList = settingsData.customServicesList;
                     if (settingsData.sysServicesList) sysServicesList = settingsData.sysServicesList;
                     if (settingsData.customPrices) customPrices = settingsData.customPrices;
-                }
+                    if (settingsData.transactions) transactions = settingsData.transactions;
+                }
 
                 if (document.getElementById('view-grid').style.display === 'flex') {
                     renderTimeline();
@@ -1086,8 +1087,9 @@ function getVisitWord(count) {
                 discountsList: discountsList,
                 customServicesList: customServicesList,
                 sysServicesList: sysServicesList,
-                customPrices: customPrices // ДОДАНО: Зберігаємо ціни
-            };
+                customPrices: customPrices,
+                transactions: transactions
+            };
             
             try {
                 await fetch(API_URL, { 
@@ -1109,8 +1111,9 @@ function getVisitWord(count) {
                 discountsList: discountsList,
                 customServicesList: customServicesList,
                 sysServicesList: sysServicesList,
-                customPrices: customPrices // ДОДАНО
-            };
+                customPrices: customPrices,
+                transactions: transactions
+            };
         
         // Утиліти
         function formatPhone(phoneStr) {
@@ -1423,9 +1426,43 @@ function getVisitWord(count) {
                     <div class="form-group"><label>Назва послуги:</label><input type="text" value="${ss.name}" disabled style="background:#E5E7EB;"></div>
                     <div class="form-group"><label>Ціна (грн):</label><input type="number" id="mSysPrice" value="${ss.price}" min="0"></div>
                     <div class="form-group"><label>Статус:</label><select id="mSysStatus"><option value="true" ${ss.active?'selected':''}>Активна</option><option value="false" ${!ss.active?'selected':''}>Не активна</option></select></div>
+                `;
+            } else if (type === 'transaction') {
+                title.innerText = id ? 'Редагувати транзакцію' : 'Нова транзакція';
+                let t = id ? transactions.find(x => x.id === id) : { type: 'expense', category: expenseCategories[0], amount: '', date: new Date().toISOString().split('T')[0], comment: '' };
+                let cats = t.type === 'income' ? incomeCategories : expenseCategories;
+                let catOptions = cats.map(c => `<option value="${c}" ${t.category === c ? 'selected' : ''}>${c}</option>`).join('');
+                body.innerHTML = `
+                    <div class="form-group">
+                        <label>Тип транзакції:</label>
+                        <div class="mode-toggle" style="margin: 0; width: 100%; display: flex; padding: 4px; background: #F3F4F6; border-radius: 10px; height: 42px;">
+                            <div class="mode-btn pet-btn ${t.type === 'income' ? 'active' : ''}" data-val="income" style="color: #059669;" onclick="changeTransType('income')">Дохід</div>
+                            <div class="mode-btn pet-btn ${t.type === 'expense' ? 'active' : ''}" data-val="expense" style="color: #DC2626;" onclick="changeTransType('expense')">Витрата</div>
+                        </div>
+                        <input type="hidden" id="mTransType" value="${t.type}">
+                    </div>
+                    <div class="form-group">
+                        <label>Категорія:</label>
+                        <select id="mTransCategory">${catOptions}</select>
+                    </div>
+                    <div class="form-grid">
+                        <div class="form-group"><label>Сума (грн):</label><input type="number" id="mTransAmount" value="${t.amount}" min="1" required></div>
+                        <div class="form-group"><label>Дата:</label><input type="date" id="mTransDate" value="${t.date}" required></div>
+                    </div>
+                    <div class="form-group" style="margin-bottom: 0;">
+                        <label>Коментар (необов'язково):</label>
+                        <input type="text" id="mTransComment" value="${t.comment}" placeholder="Напр., закупка миючих засобів">
+                    </div>
                 `;
+                window.changeTransType = function(newType) {
+                    document.getElementById('mTransType').value = newType;
+                    document.querySelector('.mode-btn[data-val="income"]').classList.toggle('active', newType === 'income');
+                    document.querySelector('.mode-btn[data-val="expense"]').classList.toggle('active', newType === 'expense');
+                    const newCats = newType === 'income' ? incomeCategories : expenseCategories;
+                    document.getElementById('mTransCategory').innerHTML = newCats.map(c => `<option value="${c}">${c}</option>`).join('');
+                };
             }
-            document.getElementById('genericModal').classList.add('active');
+            document.getElementById('genericModal').classList.add('active');
         }
 
         function closeGenericModal() { document.getElementById('genericModal').classList.remove('active'); }
@@ -1488,8 +1525,9 @@ function getVisitWord(count) {
             if (currentEditType === 'room') itemType = 'котедж';
             if (currentEditType === 'discount') itemType = 'знижку';
             if (currentEditType === 'service') itemType = 'послугу';
+            if (currentEditType === 'transaction') itemType = 'транзакцію';
 
-            openCustomConfirm(
+            openCustomConfirm(
                 `Видалити ${itemType}?`,
                 "Ви впевнені? Цю дію неможливо скасувати.",
                 confirmDeleteGenericItem
@@ -1509,11 +1547,15 @@ function getVisitWord(count) {
                 renderSettingsDiscounts();
             } 
             else if (currentEditType === 'service') {
-                customServicesList = customServicesList.filter(s => s.id !== currentEditId);
-                renderSettingsServices();
+                customServicesList = customServicesList.filter(s => s.id !== currentEditId);
+                renderSettingsServices();
+            }
+            else if (currentEditType === 'transaction') {
+                transactions = transactions.filter(t => t.id !== currentEditId);
+                calculateAnalytics();
             }
 
-            saveSettingsToCloud(); // Зберігаємо в Гугл Таблицю
+            saveSettingsToCloud(); // Зберігаємо в Гугл Таблицю
             closeGenericModal();   // Ховаємо вікно налаштувань (якщо відкрито)
             showToast("Успішно видалено!");
         }
@@ -1630,11 +1672,27 @@ function getVisitWord(count) {
                             }
                         }
                     });
+              }
+                renderPriceGrid();
+            } else if (currentEditType === 'transaction') {
+                const tType = document.getElementById('mTransType').value;
+                const tCat = document.getElementById('mTransCategory').value;
+                const tAmount = parseInt(document.getElementById('mTransAmount').value) || 0;
+                const tDate = document.getElementById('mTransDate').value;
+                const tComment = document.getElementById('mTransComment').value;
+
+                if (tAmount <= 0) { showToast("Сума має бути більше нуля!"); return; }
+
+                if (currentEditId) {
+                    let trans = transactions.find(x => x.id === currentEditId);
+                    trans.type = tType; trans.category = tCat; trans.amount = tAmount; trans.date = tDate; trans.comment = tComment;
+                } else {
+                    transactions.push({ id: Date.now(), type: tType, category: tCat, amount: tAmount, date: tDate, comment: tComment });
                 }
-                renderPriceGrid();
+                calculateAnalytics(); // Перераховуємо все
             }
 
-            saveSettingsToCloud(); // Зберігаємо всі зміни в Google Таблицю!
+            saveSettingsToCloud(); // Зберігаємо всі зміни в Google Таблицю!
             closeGenericModal(); 
             showToast("Збережено успішно!"); 
         }
@@ -2776,13 +2834,67 @@ function bosoLeave() {
             document.getElementById('metAvg').innerText = currAvg.toLocaleString('uk-UA') + ' грн';
             
             // Малюємо тренди
-            renderTrend('trendSum', currSum, prevSum);
-            renderTrend('trendCount', currCount, prevCount);
-            renderTrend('trendAvg', currAvg, prevAvg);
+            renderTrend('trendSum', currSum, prevSum);
+            renderTrend('trendCount', currCount, prevCount);
+            renderTrend('trendAvg', currAvg, prevAvg);
             
-            // Малюємо графіки
-            renderCharts(startDate, endDate);
-        }
+            // --- РОЗРАХУНОК ФІНАНСІВ ---
+            let totalIncome = currSum; 
+            let totalExpense = 0;
+            
+            const tbodyFinance = document.getElementById('financeTableBody');
+            tbodyFinance.innerHTML = '';
+
+            if (totalIncome > 0) {
+                tbodyFinance.innerHTML += `<tr>
+                    <td><strong>Плата за проживання</strong><br><span style="font-size:12px; color:#6B7280;">Автоматично з бронювань</span></td>
+                    <td><span class="badge confirmed" style="background:#D1FAE5; color:#059669;">Дохід</span></td>
+                    <td><strong style="color: #059669;">+${totalIncome} грн</strong></td>
+                    <td><span style="color:#9CA3AF; font-size:12px;">Системне</span></td>
+                </tr>`;
+            }
+
+            let filteredTrans = transactions.filter(t => {
+                const tDate = parseSafeDate(t.date);
+                return tDate >= startDate && tDate <= endDate;
+            }).sort((a, b) => new Date(b.date) - new Date(a.date));
+
+            filteredTrans.forEach(t => {
+                const isIncome = t.type === 'income';
+                if (isIncome) totalIncome += t.amount;
+                else totalExpense += t.amount;
+
+                const typeBadge = isIncome ? `<span class="badge confirmed" style="background:#D1FAE5; color:#059669;">Дохід</span>` : `<span class="badge cancelled" style="background:#FEE2E2; color:#DC2626;">Витрата</span>`;
+                const sign = isIncome ? '+' : '-';
+                const amountColor = isIncome ? '#059669' : '#DC2626';
+                const dateStr = parseSafeDate(t.date).toLocaleDateString('uk-UA', {day: 'numeric', month: 'short'});
+
+                tbodyFinance.innerHTML += `<tr>
+                    <td><strong>${t.category}</strong><br><span style="font-size:12px; color:#6B7280;">${t.comment || dateStr}</span></td>
+                    <td>${typeBadge}</td>
+                    <td><strong style="color: ${amountColor};">${sign}${t.amount} грн</strong></td>
+                    <td>
+                        <div style="display: flex; gap: 8px;">
+                            <button class="btn-icon-only" onclick="openGenericModal('transaction', ${t.id})"><svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg></button>
+                            <button class="btn-icon-only danger" onclick="deleteGenericItem('transaction', ${t.id})"><svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg></button>
+                        </div>
+                    </td>
+                </tr>`;
+            });
+
+            if (totalIncome === 0 && filteredTrans.length === 0) {
+                tbodyFinance.innerHTML = '<tr><td colspan="4" style="text-align: center; color: #9CA3AF; padding: 40px;">Немає фінансових операцій за цей період</td></tr>';
+            }
+
+            const profit = totalIncome - totalExpense;
+            document.getElementById('finIncome').innerText = totalIncome.toLocaleString('uk-UA') + ' грн';
+            document.getElementById('finExpense').innerText = totalExpense.toLocaleString('uk-UA') + ' грн';
+            document.getElementById('finProfit').innerText = profit.toLocaleString('uk-UA') + ' грн';
+            document.getElementById('finProfit').style.color = profit >= 0 ? 'var(--text-main)' : '#DC2626';
+            
+            // Малюємо графіки
+            renderCharts(startDate, endDate);
+        }
 
         // --- ГРАФІКИ (CHART.JS) ---
         let roomsChartInstance = null;
