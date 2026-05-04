@@ -1747,9 +1747,9 @@ function getVisitWord(count) {
                            // 🚀 ЧИСТА ПЛАШКА БЕЗ ЗАЙВИХ EVENT'ІВ
                             rowHtml += `
                                 <div class="booking-block ${statusClass}" style="left: ${blockLeft}px; width: ${blockWidth}px; padding: 6px 8px; justify-content: flex-start;" 
-                                     onclick="openDetailsByRow(event, ${b.row})"
-                                     onmouseenter="bosoHover(event, ${b.row})"
-                                     onmouseleave="bosoLeave()">
+         onclick="openDetailsByRow(event, ${b.row})"
+         onmouseenter="bosoHover(this, ${b.row})" 
+         onmouseleave="bosoLeave()">
                                     
                                     <div style="font-size: 12px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; line-height: 1.2;">
                                         ${guestName}
@@ -2298,27 +2298,6 @@ document.getElementById('adminGuests').addEventListener('change', updatePricePre
             }
         });
 
-// 🚀 ГЛОБАЛЬНІ СЛУХАЧІ МИШІ (ПРАЦЮЮТЬ 100% В УСІХ БРАУЗЕРАХ)
-let currentTooltipRow = null;
-
-document.addEventListener('mouseover', function(e) {
-    const block = e.target.closest('.booking-block');
-    if (block) {
-        const row = block.getAttribute('data-row');
-        if (row) showPremiumTooltip(block, row);
-    }
-});
-
-document.addEventListener('mouseout', function(e) {
-    const block = e.target.closest('.booking-block');
-    if (block) {
-        // Ховаємо тільки якщо мишка реально покинула блок, а не перейшла на текст всередині
-        if (!block.contains(e.relatedTarget)) {
-            hidePremiumTooltip();
-        }
-    }
-});
-
 
         // --- ЛОГІКА КАСТОМНИХ СПИСКІВ ---
 function toggleCustomSelect(wrapperId) {
@@ -2431,7 +2410,7 @@ document.addEventListener('click', function(e) {
         };
 
         // 🚀 РОБОЧИЙ РЕНДЕР КАРТКИ (ТВІЙ КОД + ПРЕМІУМ КОМЕНТАР + ПОЗИЦІЯ ВГОРУ)
-function bosoHover(e, rowId) {
+function bosoHover(element, rowId) {
     // Шукаємо або створюємо вікно з нуля
     let tt = document.getElementById('boso-tooltip');
     if (!tt) {
@@ -2474,17 +2453,17 @@ function bosoHover(e, rowId) {
         statusHtml = `<div class="bt-status yellow">Очікує аванс: ${Math.round(total/2)} грн</div>`;
     }
 
-   // 🚀 ПРЕМІУМ КОМЕНТАР (Жорстка обрізка з крапками "...")
-        let rawComment = b.comment ? String(b.comment).trim() : "";
-        if (rawComment === "undefined" || rawComment === "null") rawComment = "";
-        let commentHtml = rawComment !== "" 
-            ? `<div style="margin-top: 16px; padding: 12px 14px; background: #F9FAFB; border-left: 3px solid var(--accent); border-radius: 4px 8px 8px 4px; font-size: 13px; color: #4B5563; line-height: 1.4; text-align: left;">
-                 <span style="display: block; font-size: 10px; font-weight: 800; text-transform: uppercase; color: #9CA3AF; margin-bottom: 4px; letter-spacing: 0.5px;">Коментар клієнта</span>
-                 <div style="display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; text-overflow: ellipsis; word-break: break-all;">
-                     ${rawComment}
-                 </div>
-               </div>` 
-            : '';
+    // 🚀 ПРЕМІУМ КОМЕНТАР
+    let rawComment = b.comment ? String(b.comment).trim() : "";
+    if (rawComment === "undefined" || rawComment === "null") rawComment = "";
+    let commentHtml = rawComment !== "" 
+        ? `<div style="margin-top: 16px; padding: 12px 14px; background: #F9FAFB; border-left: 3px solid var(--accent); border-radius: 4px 8px 8px 4px; font-size: 13px; color: #4B5563; line-height: 1.4; text-align: left;">
+             <span style="display: block; font-size: 10px; font-weight: 800; text-transform: uppercase; color: #9CA3AF; margin-bottom: 4px; letter-spacing: 0.5px;">Коментар клієнта</span>
+             <div style="display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; text-overflow: ellipsis; word-break: break-all;">
+                 ${rawComment}
+             </div>
+           </div>` 
+        : '';
 
     // 5. Малюємо HTML
     tt.innerHTML = `
@@ -2493,25 +2472,25 @@ function bosoHover(e, rowId) {
             <span class="bt-guests">${guests} ${getGuestWord(guests)}</span>
         </div>
         <div class="bt-row"><span class="bt-label">Номер:</span> <span class="bt-val">${room}</span></div>
-        <div class="bt-row"><span class="bt-label">Дати:</span> <span class="tt-val">${inDate} — ${outDate}</span></div>
+        <div class="bt-row"><span class="bt-label">Дати:</span> <span class="bt-val">${inDate} — ${outDate}</span></div>
         <div class="bt-row"><span class="bt-label">Загальна сума:</span> <span class="bt-val">${total} грн</span></div>
         <div class="bt-row"><span class="bt-label">Внесено:</span> <span class="bt-val green">${paid} грн</span></div>
         ${statusHtml}
         ${commentHtml}
     `;
 
-   // 6. Жорстка прив'язка позиції
-    const targetRect = e.currentTarget.getBoundingClientRect();
+    // 6. Жорстка прив'язка позиції (без event, беремо від element)
+    const targetRect = element.getBoundingClientRect();
     
     // 🚀 МАГІЯ: Чекаємо мілісекунду, щоб браузер проковтнув текст і знав точну висоту вікна
     requestAnimationFrame(() => {
         // Центруємо над блоком
         let leftPos = targetRect.left + (targetRect.width / 2) - (tt.offsetWidth / 2); 
         
-        // 🚀 ПРІОРИТЕТ 1: СТАВИМО ВГОРУ НАД БРОННЮ
+        // ПРІОРИТЕТ 1: СТАВИМО ВГОРУ НАД БРОННЮ
         let topPos = targetRect.top - tt.offsetHeight - 12;
 
-        // 🚀 ПРІОРИТЕТ 2: ЯКЩО ЗВЕРХУ НЕМАЄ МІСЦЯ - ПРИТИСКАЄМО ДО СТЕЛІ, ВНИЗ НЕ КИДАЄМО
+        // ПРІОРИТЕТ 2: ЯКЩО ЗВЕРХУ НЕМАЄ МІСЦЯ - ПРИТИСКАЄМО ДО СТЕЛІ, ВНИЗ НЕ КИДАЄМО
         if (topPos < 10) {
             topPos = 10; 
         }
