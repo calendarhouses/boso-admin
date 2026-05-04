@@ -476,10 +476,10 @@ input[type="number"] {
 
         /* --- ЗВІТИ ТА АНАЛІТИКА --- */
         .reports-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; }
-        .reports-tabs { display: flex; gap: 8px; background: #F3F4F6; padding: 4px; border-radius: 12px; width: max-content; border: 1px solid #E5E7EB; }
-        .r-tab { padding: 10px 20px; font-size: 14px; font-weight: 600; color: #6B7280; cursor: pointer; border-radius: 10px; transition: 0.2s; display: flex; align-items: center; gap: 8px;}
+        .reports-tabs { display: flex; background: #F3F4F6; padding: 4px; border-radius: 12px; width: max-content; }
+        .r-tab { padding: 8px 24px; font-size: 13px; font-weight: 600; color: #6B7280; cursor: pointer; border-radius: 8px; transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1); display: flex; align-items: center; justify-content: center; }
         .r-tab:hover { color: var(--text-main); }
-        .r-tab.active { background: #FFF; color: var(--text-main); box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
+        .r-tab.active { background: #FFFFFF; color: var(--text-main); box-shadow: 0 1px 3px rgba(0,0,0,0.1), 0 1px 2px rgba(0,0,0,0.06); }
         
         .metrics-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 20px; margin-bottom: 24px; }
         .metric-card { background: #FFF; border: 1px solid #E5E7EB; border-radius: 16px; padding: 24px; display: flex; flex-direction: column; gap: 12px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.02); transition: 0.2s;}
@@ -618,8 +618,8 @@ input[type="number"] {
         <div id="view-reports" style="display: none; flex-direction: column; height: 100%;">
             <div class="reports-header">
                 <div class="reports-tabs">
-                    <div class="r-tab active" onclick="switchReportTab('analytics', this)">📊 Аналітика</div>
-                    <div class="r-tab" onclick="switchReportTab('finance', this)">💰 Фінанси</div>
+                    <div class="r-tab active" onclick="switchReportTab('analytics', this)">Аналітика</div>
+                    <div class="r-tab" onclick="switchReportTab('finance', this)">Фінанси</div>
                 </div>
                 
                 <!-- Вибір періоду для звітів -->
@@ -2647,8 +2647,129 @@ function bosoLeave() {
             document.getElementById('metCount').innerText = validBookingsCount;
             document.getElementById('metAvg').innerText = avgCheck.toLocaleString('uk-UA') + ' грн';
             
-            // Тут у наступному кроці ми будемо викликати відмальовку графіків Chart.js
-            // renderCharts(startDate, endDate); 
+           renderCharts(startDate, endDate);
+        }
+
+        // --- ГРАФІКИ (CHART.JS) ---
+        let roomsChartInstance = null;
+        let sourceChartInstance = null;
+
+        function renderCharts(startDate, endDate) {
+            // 1. Готуємо дані (Рахуємо кількість броней по кожному номеру і джерелу)
+            const roomCounts = {};
+            const sourceCounts = {};
+            
+            // Якщо ще немає броней — підготуємо "нульові" дані для краси
+            roomsList.forEach(r => roomCounts[r.name] = 0);
+            ['Instagram', 'Telegram Бот', 'Сайт', 'Телефон'].forEach(s => sourceCounts[s] = 0);
+
+            allBookings.forEach(b => {
+                if (String(b.status).toLowerCase().includes('скас')) return;
+                const bDate = parseSafeDate(b.checkIn);
+                
+                if (bDate >= startDate && bDate <= endDate) {
+                    // Рахуємо номери
+                    if (b.cottage) {
+                        // Знаходимо точну назву номера, навіть якщо є приписки
+                        const matchedRoom = roomsList.find(r => b.cottage.includes(r.name) || b.cottage.includes(r.short));
+                        const roomName = matchedRoom ? matchedRoom.name : b.cottage;
+                        roomCounts[roomName] = (roomCounts[roomName] || 0) + 1;
+                    }
+                    
+                    // Рахуємо джерела
+                    const src = b.source || 'Адмінка';
+                    sourceCounts[src] = (sourceCounts[src] || 0) + 1;
+                }
+            });
+
+            // 2. Налаштування загального стилю графіків (Преміум кольори BOSO)
+            Chart.defaults.font.family = "'Inter', sans-serif";
+            Chart.defaults.color = '#6B7280';
+            
+            const bosoColors = [
+                '#556B2F', // Оливка (BOSO)
+                '#D2B48C', // Пісочний
+                '#2C2C2C', // Вугілля
+                '#8FBC8F', // Світло-зелений
+                '#BC8F8F', // Пильна троянда
+                '#A9A9A9'  // Сірий
+            ];
+
+            // 3. Малюємо графік "Популярність номерів" (Bar Chart)
+            const ctxRooms = document.getElementById('roomsChart').getContext('2d');
+            if (roomsChartInstance) roomsChartInstance.destroy(); // Видаляємо старий перед малюванням нового
+            
+            roomsChartInstance = new Chart(ctxRooms, {
+                type: 'bar',
+                data: {
+                    labels: Object.keys(roomCounts),
+                    datasets: [{
+                        label: 'Кількість броней',
+                        data: Object.values(roomCounts),
+                        backgroundColor: bosoColors[0],
+                        borderRadius: 6, // Закруглені стовпчики
+                        borderSkipped: false
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            backgroundColor: '#111827',
+                            padding: 12,
+                            cornerRadius: 8,
+                            displayColors: false,
+                            callbacks: {
+                                label: function(context) { return context.raw + ' броней'; }
+                            }
+                        }
+                    },
+                    scales: {
+                        y: { beginAtZero: true, ticks: { stepSize: 1 }, grid: { borderDash: [4, 4], color: '#F3F4F6' } },
+                        x: { grid: { display: false } }
+                    }
+                }
+            });
+
+            // 4. Малюємо графік "Джерела клієнтів" (Doughnut Chart)
+            const ctxSource = document.getElementById('sourceChart').getContext('2d');
+            if (sourceChartInstance) sourceChartInstance.destroy();
+
+            // Фільтруємо джерела, де 0 броней, щоб графік був чистішим
+            const activeSources = Object.keys(sourceCounts).filter(k => sourceCounts[k] > 0);
+            const activeSourceValues = activeSources.map(k => sourceCounts[k]);
+
+            sourceChartInstance = new Chart(ctxSource, {
+                type: 'doughnut',
+                data: {
+                    labels: activeSources.length > 0 ? activeSources : ['Немає даних'],
+                    datasets: [{
+                        data: activeSources.length > 0 ? activeSourceValues : [1],
+                        backgroundColor: activeSources.length > 0 ? bosoColors : ['#F3F4F6'],
+                        borderWidth: 0,
+                        hoverOffset: 4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    cutout: '70%', // Робить "бублик" тоншим і елегантнішим
+                    plugins: {
+                        legend: { position: 'bottom', labels: { padding: 20, usePointStyle: true, pointStyle: 'circle' } },
+                        tooltip: {
+                            enabled: activeSources.length > 0,
+                            backgroundColor: '#111827',
+                            padding: 12,
+                            cornerRadius: 8,
+                            callbacks: {
+                                label: function(context) { return ' ' + context.raw + ' броней'; }
+                            }
+                        }
+                    }
+                }
+            });
         }
         
         function switchReportTab(tabName, el) {
