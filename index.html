@@ -2867,8 +2867,9 @@ function bosoLeave() {
             
             let currGuests = 0, currPets = 0;
             let currEarlyLate = 0, currVat = 0, currBikes = 0, currOther = 0;
-            let debtorsHtml = ''; // 🟢 Для списку боржників
-            let topRoomsCount = {}; // 🟢 Для AI висновку
+            
+            let debtorsHtml = ''; // Для списку боржників
+            let topRoomsCount = {}; // Для AI висновку
 
             allBookings.forEach(b => {
                 if (String(b.status).toLowerCase().includes('скас')) return; 
@@ -2881,40 +2882,12 @@ function bosoLeave() {
                     currPaid += paid;
                     currCount++;
 
-                    // 🟢 Рахуємо популярність номерів для AI
                     if (b.cottage) {
                         const matchedRoom = roomsList.find(r => b.cottage.includes(r.name) || b.cottage.includes(r.short));
                         const roomName = matchedRoom ? matchedRoom.name : b.cottage;
                         topRoomsCount[roomName] = (topRoomsCount[roomName] || 0) + 1;
                     }
 
-                    // 🟢 Збираємо боржників
-                    let balance = price - paid;
-                    if (balance > 0 && price > 0) {
-                        let cName = String(b.name).replace(' (Ручна бронь)', '');
-                        let cPhone = formatPhone(b.phone);
-                        let formattedDate = bDate.toLocaleDateString('uk-UA', { day: 'numeric', month: 'short' });
-                        debtorsHtml += `
-                            <div style="display: flex; justify-content: space-between; align-items: center; padding: 12px 20px; border-bottom: 1px solid #E5E7EB;">
-                                <div>
-                                    <div style="font-weight: 600; color: #111827; font-size: 14px;">${cName}</div>
-                                    <div style="font-size: 12px; color: #6B7280;">+${cPhone} • Заїзд: ${formattedDate}</div>
-                                </div>
-                                <div style="text-align: right;">
-                                    <div style="font-weight: 700; color: #DC2626; font-size: 14px;">${balance} грн</div>
-                                    <div style="font-size: 11px; color: #9CA3AF;">Борг</div>
-                                </div>
-                            </div>`;
-                    }
-
-                    // Рахуємо кімнати для AI
-                    if (b.cottage) {
-                        const matchedRoom = roomsList.find(r => b.cottage.includes(r.name) || b.cottage.includes(r.short));
-                        const roomName = matchedRoom ? matchedRoom.name : b.cottage;
-                        topRoomsCount[roomName] = (topRoomsCount[roomName] || 0) + 1;
-                    }
-
-                    // Збираємо боржників
                     let balance = price - paid;
                     if (balance > 0 && price > 0) {
                         let cName = String(b.name).replace(' (Ручна бронь)', '');
@@ -2966,64 +2939,16 @@ function bosoLeave() {
             });
 
             const currDebt = Math.max(0, currSum - currPaid);
-            // 🟢 Заповнюємо модалку боргів
+
+            // Заповнюємо модалку боргів
             let debtBody = document.getElementById('debtModalBody');
-            if (debtorsHtml === '') {
-                debtBody.innerHTML = '<div style="padding: 30px; text-align: center; color: #6B7280; font-size: 14px;">Немає боржників за цей період. Всі молодці! 🎉</div>';
-            } else {
-                debtBody.innerHTML = debtorsHtml;
-            }
-
-            // 🟢 ОНОВЛЕННЯ ПРОГРЕС-БАРІВ
-            let maxDetail = Math.max(currPets, currGuests, currVat, currBikes, currEarlyLate, currOther, 1);
-            if(document.getElementById('pbPets')) document.getElementById('pbPets').style.width = (currPets / maxDetail * 100) + '%';
-            if(document.getElementById('pbGuests')) document.getElementById('pbGuests').style.width = (currGuests / maxDetail * 100) + '%';
-            if(document.getElementById('pbVat')) document.getElementById('pbVat').style.width = (currVat / maxDetail * 100) + '%';
-            if(document.getElementById('pbBikes')) document.getElementById('pbBikes').style.width = (currBikes / maxDetail * 100) + '%';
-            if(document.getElementById('pbEarlyLate')) document.getElementById('pbEarlyLate').style.width = (currEarlyLate / maxDetail * 100) + '%';
-            if(document.getElementById('pbOther')) document.getElementById('pbOther').style.width = (currOther / maxDetail * 100) + '%';
-
-            // 🟢 РОЗУМНИЙ ШІ-ВИСНОВОК
-            if(document.getElementById('aiSummaryText')) {
-                let bestRoom = "не визначено";
-                let maxReservations = 0;
-                for (let r in topRoomsCount) {
-                    if (topRoomsCount[r] > maxReservations) {
-                        maxReservations = topRoomsCount[r];
-                        bestRoom = r;
-                    }
-                }
-                let extraTotal = currPets + currGuests + currVat + currBikes + currEarlyLate + currOther;
-                let text = "";
-                if (currSum === 0) {
-                    text = "За обраний період даних ще немає. Час запускати рекламу!";
+            if (debtBody) {
+                if (debtorsHtml === '') {
+                    debtBody.innerHTML = '<div style="padding: 30px; text-align: center; color: #6B7280; font-size: 14px;">Немає боржників за цей період. Всі молодці! 🎉</div>';
                 } else {
-                    if (currSum > prevSum && prevSum > 0) {
-                        text = `🔥 Чудовий результат! Дохід зріс на ${Math.round(((currSum - prevSum) / prevSum) * 100)}%. `;
-                    } else if (currSum < prevSum && prevSum > 0) {
-                        text = `📉 Дохід знизився на ${Math.round(((prevSum - currSum) / prevSum) * 100)}%. `;
-                    } else {
-                        text = `📊 Загальний дохід: ${currSum.toLocaleString('uk-UA')} грн. `;
-                    }
-                    text += `Хіт продажів — <b>${bestRoom}</b>. Додаткові послуги принесли <b>${extraTotal.toLocaleString('uk-UA')} грн</b>.`;
+                    debtBody.innerHTML = debtorsHtml;
                 }
-                document.getElementById('aiSummaryText').innerHTML = text;
             }
-
-            // 🟢 СОРТУВАННЯ КАРТОК ПОСЛУГ (Хіти продажів завжди перші)
-            const services = [
-                { id: 'metPets', val: currPets },
-                { id: 'metGuests', val: currGuests },
-                { id: 'metVat', val: currVat },
-                { id: 'metBikes', val: currBikes },
-                { id: 'metEarlyLate', val: currEarlyLate },
-                { id: 'metOther', val: currOther }
-            ];
-            services.sort((a, b) => b.val - a.val);
-            services.forEach((service, index) => {
-                let el = document.getElementById(service.id);
-                if (el && el.parentElement) el.parentElement.style.order = index;
-            });
 
             function renderTrend(elId, currVal, prevVal) {
                 const el = document.getElementById(elId);
@@ -3041,22 +2966,22 @@ function bosoLeave() {
             }
 
             // Оновлюємо HTML карток
-            document.getElementById('metTotalSum').innerText = currSum.toLocaleString('uk-UA') + ' грн';
-            document.getElementById('metPaid').innerText = currPaid.toLocaleString('uk-UA') + ' грн';
-            document.getElementById('metDebt').innerText = currDebt.toLocaleString('uk-UA') + ' грн';
-            document.getElementById('metCount').innerText = currCount;
+            if(document.getElementById('metTotalSum')) document.getElementById('metTotalSum').innerText = currSum.toLocaleString('uk-UA') + ' грн';
+            if(document.getElementById('metPaid')) document.getElementById('metPaid').innerText = currPaid.toLocaleString('uk-UA') + ' грн';
+            if(document.getElementById('metDebt')) document.getElementById('metDebt').innerText = currDebt.toLocaleString('uk-UA') + ' грн';
+            if(document.getElementById('metCount')) document.getElementById('metCount').innerText = currCount;
 
-            document.getElementById('metPets').innerText = currPets.toLocaleString('uk-UA') + ' грн';
-            document.getElementById('metGuests').innerText = currGuests.toLocaleString('uk-UA') + ' грн';
-            document.getElementById('metVat').innerText = currVat.toLocaleString('uk-UA') + ' грн';
-            document.getElementById('metBikes').innerText = currBikes.toLocaleString('uk-UA') + ' грн';
-            document.getElementById('metEarlyLate').innerText = currEarlyLate.toLocaleString('uk-UA') + ' грн';
-            document.getElementById('metOther').innerText = currOther.toLocaleString('uk-UA') + ' грн';
+            if(document.getElementById('metPets')) document.getElementById('metPets').innerText = currPets.toLocaleString('uk-UA') + ' грн';
+            if(document.getElementById('metGuests')) document.getElementById('metGuests').innerText = currGuests.toLocaleString('uk-UA') + ' грн';
+            if(document.getElementById('metVat')) document.getElementById('metVat').innerText = currVat.toLocaleString('uk-UA') + ' грн';
+            if(document.getElementById('metBikes')) document.getElementById('metBikes').innerText = currBikes.toLocaleString('uk-UA') + ' грн';
+            if(document.getElementById('metEarlyLate')) document.getElementById('metEarlyLate').innerText = currEarlyLate.toLocaleString('uk-UA') + ' грн';
+            if(document.getElementById('metOther')) document.getElementById('metOther').innerText = currOther.toLocaleString('uk-UA') + ' грн';
             
             renderTrend('trendSum', currSum, prevSum);
             renderTrend('trendCount', currCount, prevCount);
 
-            // --- СОРТУВАННЯ КАРТОК ПОСЛУГ (Flex Order) ---
+            // СОРТУВАННЯ КАРТОК ПОСЛУГ
             const services = [
                 { id: 'metPets', val: currPets },
                 { id: 'metGuests', val: currGuests },
@@ -3065,17 +2990,13 @@ function bosoLeave() {
                 { id: 'metEarlyLate', val: currEarlyLate },
                 { id: 'metOther', val: currOther }
             ];
-            // Сортуємо від найбільшого до найменшого
             services.sort((a, b) => b.val - a.val);
-            // Застосовуємо порядок CSS
             services.forEach((service, index) => {
                 let el = document.getElementById(service.id);
-                if (el && el.parentElement) {
-                    el.parentElement.style.order = index;
-                }
+                if (el && el.parentElement) el.parentElement.style.order = index;
             });
 
-            // --- ОНОВЛЕННЯ ПРОГРЕС-БАРІВ ---
+            // ОНОВЛЕННЯ ПРОГРЕС-БАРІВ
             let maxDetail = Math.max(currPets, currGuests, currVat, currBikes, currEarlyLate, currOther, 1);
             if(document.getElementById('pbPets')) document.getElementById('pbPets').style.width = (currPets / maxDetail * 100) + '%';
             if(document.getElementById('pbGuests')) document.getElementById('pbGuests').style.width = (currGuests / maxDetail * 100) + '%';
@@ -3084,9 +3005,8 @@ function bosoLeave() {
             if(document.getElementById('pbEarlyLate')) document.getElementById('pbEarlyLate').style.width = (currEarlyLate / maxDetail * 100) + '%';
             if(document.getElementById('pbOther')) document.getElementById('pbOther').style.width = (currOther / maxDetail * 100) + '%';
 
-            // --- РОЗУМНИЙ ШІ-ВИСНОВОК ---
+            // РОЗУМНИЙ ШІ-ВИСНОВОК
             if(document.getElementById('aiSummaryText')) {
-                // Знаходимо найкращий номер
                 let bestRoom = "не визначено";
                 let maxReservations = 0;
                 for (let r in topRoomsCount) {
@@ -3095,10 +3015,8 @@ function bosoLeave() {
                         bestRoom = r;
                     }
                 }
-
                 let extraTotal = currPets + currGuests + currVat + currBikes + currEarlyLate + currOther;
                 let text = "";
-
                 if (currSum === 0) {
                     text = "За обраний період даних ще немає. Час запускати рекламу!";
                 } else {
@@ -3109,10 +3027,8 @@ function bosoLeave() {
                     } else {
                         text = `📊 Загальний дохід: ${currSum.toLocaleString('uk-UA')} грн. `;
                     }
-                    
                     text += `Хіт продажів — <b>${bestRoom}</b>. Додаткові послуги принесли <b>${extraTotal.toLocaleString('uk-UA')} грн</b>.`;
                 }
-                
                 document.getElementById('aiSummaryText').innerHTML = text;
             }
 
