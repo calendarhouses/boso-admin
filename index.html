@@ -2868,8 +2868,8 @@ function bosoLeave() {
             let currGuests = 0, currPets = 0;
             let currEarlyLate = 0, currVat = 0, currBikes = 0, currOther = 0;
             
-            let debtorsHtml = ''; // Для списку боржників
-            let topRoomsCount = {}; // Для AI висновку
+            globalDebtorsHtml = ''; // 🟢 Очищаємо пам'ять боржників перед новим розрахунком
+            let topRoomsCount = {}; 
 
             allBookings.forEach(b => {
                 if (String(b.status).toLowerCase().includes('скас')) return; 
@@ -2888,12 +2888,13 @@ function bosoLeave() {
                         topRoomsCount[roomName] = (topRoomsCount[roomName] || 0) + 1;
                     }
 
+                    // 🟢 Збираємо красиві рядки боржників для модалки
                     let balance = price - paid;
                     if (balance > 0 && price > 0) {
                         let cName = String(b.name).replace(' (Ручна бронь)', '');
                         let cPhone = formatPhone(b.phone);
                         let formattedDate = bDate.toLocaleDateString('uk-UA', { day: 'numeric', month: 'short' });
-                        debtorsHtml += `
+                        globalDebtorsHtml += `
                             <div style="display: flex; justify-content: space-between; align-items: center; padding: 12px 20px; border-bottom: 1px solid #E5E7EB;">
                                 <div>
                                     <div style="font-weight: 600; color: #111827; font-size: 14px;">${cName}</div>
@@ -2940,16 +2941,6 @@ function bosoLeave() {
 
             const currDebt = Math.max(0, currSum - currPaid);
 
-            // Заповнюємо модалку боргів
-            let debtBody = document.getElementById('debtModalBody');
-            if (debtBody) {
-                if (debtorsHtml === '') {
-                    debtBody.innerHTML = '<div style="padding: 30px; text-align: center; color: #6B7280; font-size: 14px;">Немає боржників за цей період. Всі молодці! 🎉</div>';
-                } else {
-                    debtBody.innerHTML = debtorsHtml;
-                }
-            }
-
             function renderTrend(elId, currVal, prevVal) {
                 const el = document.getElementById(elId);
                 if (!el) return;
@@ -2965,23 +2956,23 @@ function bosoLeave() {
                 }
             }
 
-            // Оновлюємо HTML карток
-            if(document.getElementById('metTotalSum')) document.getElementById('metTotalSum').innerText = currSum.toLocaleString('uk-UA') + ' грн';
-            if(document.getElementById('metPaid')) document.getElementById('metPaid').innerText = currPaid.toLocaleString('uk-UA') + ' грн';
-            if(document.getElementById('metDebt')) document.getElementById('metDebt').innerText = currDebt.toLocaleString('uk-UA') + ' грн';
-            if(document.getElementById('metCount')) document.getElementById('metCount').innerText = currCount;
+            // 🚀 ЗАПУСКАЄМО АНІМАЦІЮ В УСІХ КАРТКАХ (замість моментального вписування)
+            animateValue('metTotalSum', 0, currSum, 800);
+            animateValue('metPaid', 0, currPaid, 800);
+            animateValue('metDebt', 0, currDebt, 800);
+            animateValue('metCount', 0, currCount, 800);
 
-            if(document.getElementById('metPets')) document.getElementById('metPets').innerText = currPets.toLocaleString('uk-UA') + ' грн';
-            if(document.getElementById('metGuests')) document.getElementById('metGuests').innerText = currGuests.toLocaleString('uk-UA') + ' грн';
-            if(document.getElementById('metVat')) document.getElementById('metVat').innerText = currVat.toLocaleString('uk-UA') + ' грн';
-            if(document.getElementById('metBikes')) document.getElementById('metBikes').innerText = currBikes.toLocaleString('uk-UA') + ' грн';
-            if(document.getElementById('metEarlyLate')) document.getElementById('metEarlyLate').innerText = currEarlyLate.toLocaleString('uk-UA') + ' грн';
-            if(document.getElementById('metOther')) document.getElementById('metOther').innerText = currOther.toLocaleString('uk-UA') + ' грн';
+            animateValue('metPets', 0, currPets, 800);
+            animateValue('metGuests', 0, currGuests, 800);
+            animateValue('metVat', 0, currVat, 800);
+            animateValue('metBikes', 0, currBikes, 800);
+            animateValue('metEarlyLate', 0, currEarlyLate, 800);
+            animateValue('metOther', 0, currOther, 800);
             
             renderTrend('trendSum', currSum, prevSum);
             renderTrend('trendCount', currCount, prevCount);
 
-            // СОРТУВАННЯ КАРТОК ПОСЛУГ
+            // --- СОРТУВАННЯ КАРТОК ПОСЛУГ (Flex Order) ---
             const services = [
                 { id: 'metPets', val: currPets },
                 { id: 'metGuests', val: currGuests },
@@ -2996,7 +2987,7 @@ function bosoLeave() {
                 if (el && el.parentElement) el.parentElement.style.order = index;
             });
 
-            // ОНОВЛЕННЯ ПРОГРЕС-БАРІВ
+            // --- ОНОВЛЕННЯ ПРОГРЕС-БАРІВ ---
             let maxDetail = Math.max(currPets, currGuests, currVat, currBikes, currEarlyLate, currOther, 1);
             if(document.getElementById('pbPets')) document.getElementById('pbPets').style.width = (currPets / maxDetail * 100) + '%';
             if(document.getElementById('pbGuests')) document.getElementById('pbGuests').style.width = (currGuests / maxDetail * 100) + '%';
@@ -3005,7 +2996,7 @@ function bosoLeave() {
             if(document.getElementById('pbEarlyLate')) document.getElementById('pbEarlyLate').style.width = (currEarlyLate / maxDetail * 100) + '%';
             if(document.getElementById('pbOther')) document.getElementById('pbOther').style.width = (currOther / maxDetail * 100) + '%';
 
-            // РОЗУМНИЙ ШІ-ВИСНОВОК
+            // --- РОЗУМНИЙ ШІ-ВИСНОВОК ---
             if(document.getElementById('aiSummaryText')) {
                 let bestRoom = "не визначено";
                 let maxReservations = 0;
@@ -3148,11 +3139,49 @@ function bosoLeave() {
         }
     }
 
-    function openDebtModal() {
-        document.getElementById('debtModal').classList.add('active');
+    let globalDebtorsHtml = ''; // 🟢 Глобальна пам'ять для боржників
+
+    // 🚀 ФУНКЦІЯ АНІМАЦІЇ ЦИФР (CountUp)
+    function animateValue(id, start, end, duration) {
+        const obj = document.getElementById(id);
+        if (!obj) return;
+        let startTimestamp = null;
+        const isCurrency = !id.includes('Count'); // Перевіряємо, чи це гроші, чи кількість броней
+        
+        const step = (timestamp) => {
+            if (!startTimestamp) startTimestamp = timestamp;
+            const progress = Math.min((timestamp - startTimestamp) / duration, 1);
+            // Плавне сповільнення наприкінці
+            const easeOut = 1 - Math.pow(1 - progress, 4); 
+            const current = Math.floor(easeOut * (end - start) + start);
+            
+            obj.innerText = current.toLocaleString('uk-UA') + (isCurrency ? ' грн' : '');
+            
+            if (progress < 1) {
+                window.requestAnimationFrame(step);
+            } else {
+                obj.innerText = end.toLocaleString('uk-UA') + (isCurrency ? ' грн' : '');
+            }
+        };
+        window.requestAnimationFrame(step);
     }
+
+    // 🟢 БЕЗПЕЧНЕ ВІДКРИТТЯ МОДАЛКИ БОРГІВ
+    function openDebtModal() {
+        const modal = document.getElementById('debtModal');
+        const body = document.getElementById('debtModalBody');
+        if (modal && body) {
+            // Підтягуємо імена перед відкриттям
+            body.innerHTML = globalDebtorsHtml || '<div style="padding: 30px; text-align: center; color: #6B7280; font-size: 14px;">Немає боржників за цей період. Всі молодці! 🎉</div>';
+            modal.classList.add('active');
+        } else {
+            alert("Помилка: Не знайдено вікно боржників у HTML!");
+        }
+    }
+
     function closeDebtModal() {
-        document.getElementById('debtModal').classList.remove('active');
+        const modal = document.getElementById('debtModal');
+        if (modal) modal.classList.remove('active');
     }
 
     function getBookingWord(count) {
