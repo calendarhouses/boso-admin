@@ -3083,29 +3083,28 @@ function bosoLeave() {
     }
 
     // 🚀 ФУНКЦІЯ АНІМАЦІЇ ЦИФР (CountUp)
-    function animateValue(id, start, end, duration) {
-        const obj = document.getElementById(id);
-        if (!obj) return;
-        let startTimestamp = null;
-        const isCurrency = !id.includes('Count'); // Перевіряємо, чи це гроші, чи кількість броней
-        
-        const step = (timestamp) => {
-            if (!startTimestamp) startTimestamp = timestamp;
-            const progress = Math.min((timestamp - startTimestamp) / duration, 1);
-            // Плавне сповільнення наприкінці
-            const easeOut = 1 - Math.pow(1 - progress, 4); 
-            const current = Math.floor(easeOut * (end - start) + start);
+        function animateValue(id, start, end, duration) {
+            const obj = document.getElementById(id);
+            if (!obj) return;
+            let startTimestamp = null;
+            const isCurrency = !id.includes('Count');
             
-            obj.innerText = current.toLocaleString('uk-UA') + (isCurrency ? ' грн' : '');
-            
-            if (progress < 1) {
-                window.requestAnimationFrame(step);
-            } else {
-                obj.innerText = end.toLocaleString('uk-UA') + (isCurrency ? ' грн' : '');
-            }
-        };
-        window.requestAnimationFrame(step);
-    }
+            const step = (timestamp) => {
+                if (!startTimestamp) startTimestamp = timestamp;
+                const progress = Math.min((timestamp - startTimestamp) / duration, 1);
+                const easeOut = 1 - Math.pow(1 - progress, 4); 
+                const current = Math.floor(easeOut * (end - start) + start);
+                
+                obj.innerText = current.toLocaleString('uk-UA') + (isCurrency ? ' грн' : '');
+                
+                if (progress < 1) {
+                    window.requestAnimationFrame(step);
+                } else {
+                    obj.innerText = end.toLocaleString('uk-UA') + (isCurrency ? ' грн' : '');
+                }
+            };
+            window.requestAnimationFrame(step);
+        }
 
         // 🟢 Глобальна пам'ять для ВСІХ деталей аналітики
         window.bosoDetails = { sum: [], paid: [], debt: [], count: [], pets: [], guests: [], vat: [], bikes: [], earlyLate: [], other: [] };
@@ -3133,18 +3132,16 @@ function bosoLeave() {
             } else {
                 data.forEach(item => {
                     let initial = item.name.charAt(0).toUpperCase();
-                    if(!initial || initial === '+' || initial === 'І') initial = '👤'; // І - Інший дохід
+                    if(!initial || initial === '+' || initial === 'І') initial = '👤';
 
-                    // Форматуємо суму по-багатому (наприклад: 26 300 грн)
                     let amountHtml = item.amount > 0 ? `${item.amount.toLocaleString('uk-UA')} грн` : '—';
                     let labelHtml = valLabel ? `<div style="font-size: 10px; color: ${colorHex}; text-transform: uppercase; font-weight: 700; letter-spacing: 0.5px; opacity: 0.8;">${valLabel}</div>` : '';
 
-                    // Якщо це ручна транзакція, відкриваємо її редагування. Якщо бронь — відкриваємо бронь.
                     let actionBtn = item.isTrans 
-                        ? `<button onclick="document.getElementById('uniDetailsModal').classList.remove('active'); openGenericModal('transaction', ${item.id});" style="flex: 1; background: #FFFFFF; color: #374151; border: 1px solid #D1D5DB; padding: 8px; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer; transition: 0.2s;">Редагувати запис</button>`
-                        : `<button onclick="document.getElementById('uniDetailsModal').classList.remove('active'); openDetailsByRow(event, ${item.row});" style="flex: 1; background: #FFFFFF; color: #374151; border: 1px solid #D1D5DB; padding: 8px; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer; transition: 0.2s;">Відкрити бронь</button>`;
+                        ? `<button onclick="document.getElementById('uniDetailsModal').classList.remove('active'); openGenericModal('transaction', ${item.id});" style="flex: 1; background: #FFFFFF; color: #374151; border: 1px solid #D1D5DB; padding: 8px; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer; transition: 0.2s;" onmouseover="this.style.background='#F9FAFB'" onmouseout="this.style.background='#FFFFFF'">Редагувати запис</button>`
+                        : `<button onclick="document.getElementById('uniDetailsModal').classList.remove('active'); openDetailsByRow(event, ${item.row});" style="flex: 1; background: #FFFFFF; color: #374151; border: 1px solid #D1D5DB; padding: 8px; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer; transition: 0.2s;" onmouseover="this.style.background='#F9FAFB'" onmouseout="this.style.background='#FFFFFF'">Відкрити бронь</button>`;
 
-                    let tgBtn = item.phone ? `<a href="https://t.me/+${item.phone}" target="_blank" style="flex: 1; background: #EFF6FF; color: #2563EB; border: 1px solid #BFDBFE; padding: 8px; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer; transition: 0.2s; text-decoration: none; display: flex; align-items: center; justify-content: center; gap: 6px;"><svg width="16" height="16" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm4.64 6.8c-.15 1.58-.8 5.42-1.13 7.19-.14.75-.42 1-.68 1.03-.58.05-1.02-.38-1.58-.75-.88-.58-1.38-.94-2.23-1.5-.99-.65-.35-1.01.22-1.59.15-.15 2.71-2.48 2.76-2.69a.2.2 0 00-.05-.18c-.06-.05-.14-.03-.21-.02-.09.02-1.46.93-4.12 2.73-.39.27-.74.4-1.05.39-.34-.01-1-.19-1.48-.35-.6-.19-.11-.29.31-.48 1.18-.54 3.93-1.68 5.25-2.24 2.5-.1 3.02-1.28 3.12-1.3.02 0 .06-.01.1 0 .04.01.07.03.08.06.01.03.02.08.01.14z"/></svg> Telegram</a>` : '';
+                    let tgBtn = item.phone ? `<a href="https://t.me/+${item.phone}" target="_blank" style="flex: 1; background: #EFF6FF; color: #2563EB; border: 1px solid #BFDBFE; padding: 8px; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer; transition: 0.2s; text-decoration: none; display: flex; align-items: center; justify-content: center; gap: 6px;" onmouseover="this.style.background='#DBEAFE'" onmouseout="this.style.background='#EFF6FF'"><svg width="16" height="16" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm4.64 6.8c-.15 1.58-.8 5.42-1.13 7.19-.14.75-.42 1-.68 1.03-.58.05-1.02-.38-1.58-.75-.88-.58-1.38-.94-2.23-1.5-.99-.65-.35-1.01.22-1.59.15-.15 2.71-2.48 2.76-2.69a.2.2 0 00-.05-.18c-.06-.05-.14-.03-.21-.02-.09.02-1.46.93-4.12 2.73-.39.27-.74.4-1.05.39-.34-.01-1-.19-1.48-.35-.6-.19-.11-.29.31-.48 1.18-.54 3.93-1.68 5.25-2.24 2.5-.1 3.02-1.28 3.12-1.3.02 0 .06-.01.1 0 .04.01.07.03.08.06.01.03.02.08.01.14z"/></svg> Telegram</a>` : '';
 
                     html += `
                     <div style="display: flex; flex-direction: column; padding: 16px; background: #FFFFFF; border: 1px solid #E5E7EB; border-radius: 12px; margin: 16px 20px; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.03); transition: 0.2s;" onmouseover="this.style.borderColor='${colorHex}'; this.style.boxShadow='0 10px 15px -3px rgba(0,0,0,0.08)'" onmouseout="this.style.borderColor='#E5E7EB'; this.style.boxShadow='0 4px 6px -1px rgba(0, 0, 0, 0.03)'">
@@ -3176,6 +3173,7 @@ function bosoLeave() {
             modal.classList.add('active');
         }
 
+        // --- ГОЛОВНИЙ ПРОЦЕСОР АНАЛІТИКИ ---
         function calculateAnalytics() {
             const period = document.getElementById('reportPeriodVal').value;
             const now = new Date();
@@ -3217,10 +3215,15 @@ function bosoLeave() {
             let currSum = 0, currCount = 0, currPaid = 0, prevSum = 0, prevCount = 0;
             let currGuests = 0, currPets = 0, currEarlyLate = 0, currVat = 0, currBikes = 0, currOther = 0;
             let topRoomsCount = {}; 
+            
+            let totalIncome = 0; 
+            let totalExpense = 0;
+            let incomeBreakdown = { base: 0, guests: 0, pets: 0 };
 
-            // 🟢 Очищаємо деталі перед новим підрахунком
+            // Очищаємо деталі перед підрахунком
             window.bosoDetails = { sum: [], paid: [], debt: [], count: [], pets: [], guests: [], vat: [], bikes: [], earlyLate: [], other: [] };
 
+            // 1. Аналіз бронювань
             allBookings.forEach(b => {
                 if (String(b.status).toLowerCase().includes('скас')) return; 
                 const bDate = parseSafeDate(b.checkIn);
@@ -3238,15 +3241,17 @@ function bosoLeave() {
                         topRoomsCount[roomName] = (topRoomsCount[roomName] || 0) + 1;
                     }
 
-                    // 🟢 ЗБИРАЄМО ДАНІ ДЛЯ КАРТОК
                     let cName = String(b.name).replace(' (Ручна бронь)', '').trim() || "Клієнт";
                     let cPhone = formatPhone(b.phone);
                     let fDate = bDate.toLocaleDateString('uk-UA', { day: 'numeric', month: 'short' });
                     let baseObj = { name: cName, phone: cPhone, date: fDate, row: b.row, isTrans: false };
 
                     if (price > 0) window.bosoDetails.sum.push({...baseObj, amount: price});
-                    if (paid > 0) window.bosoDetails.paid.push({...baseObj, amount: paid});
-                    window.bosoDetails.count.push({...baseObj, amount: 0}); // Для списку всіх броней
+                    if (paid > 0) {
+                        window.bosoDetails.paid.push({...baseObj, amount: paid});
+                        totalIncome += paid;
+                    }
+                    window.bosoDetails.count.push({...baseObj, amount: 0});
                     
                     let balance = price - paid;
                     if (balance > 0 && price > 0) window.bosoDetails.debt.push({...baseObj, amount: balance});
@@ -3261,15 +3266,23 @@ function bosoLeave() {
                     
                     let extraGuests = Math.max(0, (parseInt(b.guests) || 2) - cap);
                     let feeGuests = extraGuests * extraPrice * nights;
+                    let feePets = (b.pets === "Так" || b.pets === true) ? (500 + 200 * nights) : 0;
+
                     if (feeGuests > 0) {
                         currGuests += feeGuests;
                         window.bosoDetails.guests.push({...baseObj, amount: feeGuests});
                     }
-                    
-                    if (b.pets === "Так" || b.pets === true) {
-                        let feePets = 500 + 200 * nights;
+                    if (feePets > 0) {
                         currPets += feePets;
                         window.bosoDetails.pets.push({...baseObj, amount: feePets});
+                    }
+
+                    // Розбивка фінансів
+                    if (paid > 0) {
+                        let ratio = (price > 0) ? (paid / price) : 1;
+                        incomeBreakdown.pets += (feePets * ratio);
+                        incomeBreakdown.guests += (feeGuests * ratio);
+                        incomeBreakdown.base += (paid - (feePets * ratio) - (feeGuests * ratio));
                     }
                 }
                 
@@ -3278,20 +3291,30 @@ function bosoLeave() {
                 }
             });
 
-            transactions.forEach(t => {
+            // 2. Аналіз ручних транзакцій
+            let filteredTrans = transactions.filter(t => {
                 const tDate = parseSafeDate(t.date);
-                if (tDate >= startDate && tDate <= endDate && t.type === 'income') {
+                return tDate >= startDate && tDate <= endDate;
+            }).sort((a, b) => new Date(b.date) - new Date(a.date));
+
+            filteredTrans.forEach(t => {
+                const tDate = parseSafeDate(t.date);
+                if (t.type === 'income') {
+                    totalIncome += t.amount;
                     let tObj = { name: t.comment || "Додано вручну", phone: "", date: tDate.toLocaleDateString('uk-UA', { day: 'numeric', month: 'short' }), row: null, amount: t.amount, isTrans: true, id: t.id };
                     
                     if (t.category === "Плата за раннє заселення/пізнє виселення") { currEarlyLate += t.amount; window.bosoDetails.earlyLate.push(tObj); }
                     else if (t.category === "Чан") { currVat += t.amount; window.bosoDetails.vat.push(tObj); }
                     else if (t.category === "Оренда велосипедів") { currBikes += t.amount; window.bosoDetails.bikes.push(tObj); }
                     else if (t.category === "Інший дохід" || t.category === "Міні-бар") { currOther += t.amount; window.bosoDetails.other.push(tObj); }
+                } else {
+                    totalExpense += t.amount;
                 }
             });
 
             const currDebt = Math.max(0, currSum - currPaid);
 
+            // Оновлення Трендів
             function renderTrend(elId, currVal, prevVal) {
                 const el = document.getElementById(elId);
                 if (!el) return;
@@ -3322,7 +3345,7 @@ function bosoLeave() {
             renderTrend('trendSum', currSum, prevSum);
             renderTrend('trendCount', currCount, prevCount);
 
-            // --- СОРТУВАННЯ КАРТОК ПОСЛУГ (Flex Order) ---
+            // Сортування карток послуг
             const services = [
                 { id: 'cardPets', val: currPets },
                 { id: 'cardGuests', val: currGuests },
@@ -3337,7 +3360,7 @@ function bosoLeave() {
                 if (el) el.style.order = index;
             });
 
-            // --- РОЗУМНИЙ ШІ-ВИСНОВОК ---
+            // Оновлення AI висновку
             if(document.getElementById('aiSummaryText')) {
                 let bestRoom = "не визначено";
                 let maxReservations = 0;
@@ -3364,139 +3387,190 @@ function bosoLeave() {
                 document.getElementById('aiSummaryText').innerHTML = text;
             }
 
-            // (Далі йде розрахунок фінансів і виклик графіків - залишаємо як було)
-            let totalIncome = 0; 
-            let totalExpense = 0;
-            // ... тут твій існуючий код розрахунку фінансів, не видаляй його!
+            // Таблиця Фінансів
+            const tbodyFinance = document.getElementById('financeTableBody');
+            if(tbodyFinance) {
+                tbodyFinance.innerHTML = '';
 
-    function closeDebtModal() {
-        const modal = document.getElementById('debtModal');
-        if (modal) modal.classList.remove('active');
-    }
+                function renderFinRow(title, desc, amount, type, isSystem, id = null) {
+                    if (Math.round(amount) <= 0) return '';
+                    const isInc = type === 'income';
+                    const badge = isInc ? `<span class="badge confirmed" style="background:#D1FAE5; color:#059669;">Дохід</span>` : `<span class="badge cancelled" style="background:#FEE2E2; color:#DC2626;">Витрата</span>`;
+                    const sign = isInc ? '+' : '-';
+                    const color = isInc ? '#059669' : '#DC2626';
+                    const actions = isSystem ? `<span style="color:#9CA3AF; font-size:12px; font-weight:700; padding:4px 8px; background:#F3F4F6; border-radius:6px;">Auto</span>` : `
+                        <div style="display: flex; gap: 8px;">
+                            <button class="btn-icon-only" onclick="openGenericModal('transaction', ${id})"><svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg></button>
+                            <button class="btn-icon-only danger" onclick="deleteGenericItem('transaction', ${id})"><svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg></button>
+                        </div>`;
 
-    function getBookingWord(count) {
-        let n = Math.abs(parseInt(count)) % 100;
-        let n1 = n % 10;
-        if (n > 10 && n < 20) return "броней";
-        if (n1 > 1 && n1 < 5) return "броні";
-        if (n1 === 1) return "бронь";
-        return "броней";
-    }
-    
-    function renderCharts(startDate, endDate) {
-        globalRoomCounts = {};
-        globalRoomMoney = {};
-        const sourceCounts = {};
-        const revenueTimeline = {}; 
-        
-        roomsList.forEach(r => { globalRoomCounts[r.name] = 0; globalRoomMoney[r.name] = 0; });
-        ['Instagram', 'Telegram Бот', 'Сайт', 'Телефон'].forEach(s => sourceCounts[s] = 0);
+                    return `<tr>
+                        <td><strong>${title}</strong><br><span style="font-size:12px; color:#6B7280;">${desc}</span></td>
+                        <td>${badge}</td>
+                        <td><strong style="color: ${color};">${sign}${Math.round(amount).toLocaleString('uk-UA')} грн</strong></td>
+                        <td>${actions}</td>
+                    </tr>`;
+                }
 
-        allBookings.forEach(b => {
-            if (String(b.status).toLowerCase().includes('скас')) return;
-            const bDate = parseSafeDate(b.checkIn);
+                tbodyFinance.innerHTML += renderFinRow("Оренда котеджів", "Оплачена базова вартість", incomeBreakdown.base, 'income', true);
+                tbodyFinance.innerHTML += renderFinRow("Додаткові гості", "Оплати за додаткові місця", incomeBreakdown.guests, 'income', true);
+                tbodyFinance.innerHTML += renderFinRow("Тварини", "Оплати за розміщення улюбленців", incomeBreakdown.pets, 'income', true);
+
+                filteredTrans.forEach(t => {
+                    const dateStr = parseSafeDate(t.date).toLocaleDateString('uk-UA', {day: 'numeric', month: 'short'});
+                    tbodyFinance.innerHTML += renderFinRow(t.category, t.comment || dateStr, t.amount, t.type, false, t.id);
+                });
+
+                if (totalIncome === 0 && filteredTrans.length === 0) {
+                    tbodyFinance.innerHTML = '<tr><td colspan="4" style="text-align: center; color: #9CA3AF; padding: 40px;">Немає фінансових операцій за цей період</td></tr>';
+                }
+            }
+
+            const finIncEl = document.getElementById('finIncome');
+            const finExpEl = document.getElementById('finExpense');
+            const finProfEl = document.getElementById('finProfit');
             
-            if (bDate >= startDate && bDate <= endDate) {
-                if (b.cottage) {
-                    const matchedRoom = roomsList.find(r => b.cottage.includes(r.name) || b.cottage.includes(r.short));
-                    const roomName = matchedRoom ? matchedRoom.name : b.cottage;
-                    globalRoomCounts[roomName] = (globalRoomCounts[roomName] || 0) + 1;
-                    globalRoomMoney[roomName] = (globalRoomMoney[roomName] || 0) + Number(b.totalPrice || 0);
-                }
-                const src = b.source || 'Адмінка';
-                sourceCounts[src] = (sourceCounts[src] || 0) + 1;
-
-                // Використовуємо формат YYYY-MM-DD як ключ для правильного сортування
-                let rawDateKey = `${bDate.getFullYear()}-${String(bDate.getMonth() + 1).padStart(2, '0')}-${String(bDate.getDate()).padStart(2, '0')}`;
-                revenueTimeline[rawDateKey] = (revenueTimeline[rawDateKey] || 0) + Number(b.totalPrice || 0);
+            if(finIncEl && finExpEl && finProfEl) {
+                const profit = totalIncome - totalExpense;
+                finIncEl.innerText = Math.round(totalIncome).toLocaleString('uk-UA') + ' грн';
+                finExpEl.innerText = Math.round(totalExpense).toLocaleString('uk-UA') + ' грн';
+                finProfEl.innerText = Math.round(profit).toLocaleString('uk-UA') + ' грн';
+                finProfEl.style.color = profit >= 0 ? 'var(--text-main)' : '#DC2626';
             }
-        });
+            
+            renderCharts(startDate, endDate);
+        }
 
-        Chart.defaults.font.family = "'Inter', sans-serif";
-        Chart.defaults.color = '#6B7280';
-        const bosoColors = ['#556B2F', '#D2B48C', '#2C2C2C', '#8FBC8F', '#BC8F8F', '#A9A9A9'];
-
-        // 1. Графік номерів
-        const ctxRooms = document.getElementById('roomsChart').getContext('2d');
-        if (roomsChartInstance) roomsChartInstance.destroy(); 
+        // --- ГРАФІКИ (CHART.JS) ---
+        let roomsChartInstance = null;
+        let sourceChartInstance = null;
+        let revenueLineChartInstance = null;
         
-        roomsChartInstance = new Chart(ctxRooms, {
-            type: 'bar',
-            data: {
-                labels: Object.keys(globalRoomCounts),
-                datasets: [{
-                    label: currentChartMode === 'count' ? 'Кількість броней' : 'Дохід (грн)',
-                    data: currentChartMode === 'count' ? Object.values(globalRoomCounts) : Object.values(globalRoomMoney),
-                    backgroundColor: bosoColors[0],
-                    borderRadius: 6,
-                    borderSkipped: false,
-                    maxBarThickness: 28 
-                }]
-            },
-            options: {
-                responsive: true, maintainAspectRatio: false, layout: { padding: { top: 20 } }, 
-                plugins: { legend: { display: false }, tooltip: { backgroundColor: '#111827', padding: 12, cornerRadius: 8, displayColors: false } },
-                scales: {
-                    y: { beginAtZero: true, ticks: { padding: 10, color: '#9CA3AF' }, grid: { display: false, drawBorder: false } },
-                    x: { ticks: { color: '#9CA3AF' }, grid: { display: false, drawBorder: false } }
+        let currentChartMode = 'count'; 
+        let globalRoomCounts = {};
+        let globalRoomMoney = {};
+
+        function toggleRoomsChart(mode) {
+            currentChartMode = mode;
+            document.getElementById('chartModeCount').classList.toggle('active', mode === 'count');
+            document.getElementById('chartModeMoney').classList.toggle('active', mode === 'money');
+
+            if (roomsChartInstance) {
+                roomsChartInstance.data.datasets[0].data = mode === 'count' ? Object.values(globalRoomCounts) : Object.values(globalRoomMoney);
+                roomsChartInstance.data.datasets[0].label = mode === 'count' ? 'Кількість броней' : 'Дохід (грн)';
+                roomsChartInstance.update();
+            }
+        }
+
+        function renderCharts(startDate, endDate) {
+            globalRoomCounts = {};
+            globalRoomMoney = {};
+            const sourceCounts = {};
+            const revenueTimeline = {}; 
+            
+            roomsList.forEach(r => { globalRoomCounts[r.name] = 0; globalRoomMoney[r.name] = 0; });
+            ['Instagram', 'Telegram Бот', 'Сайт', 'Телефон'].forEach(s => sourceCounts[s] = 0);
+
+            allBookings.forEach(b => {
+                if (String(b.status).toLowerCase().includes('скас')) return;
+                const bDate = parseSafeDate(b.checkIn);
+                
+                if (bDate >= startDate && bDate <= endDate) {
+                    if (b.cottage) {
+                        const matchedRoom = roomsList.find(r => b.cottage.includes(r.name) || b.cottage.includes(r.short));
+                        const roomName = matchedRoom ? matchedRoom.name : b.cottage;
+                        globalRoomCounts[roomName] = (globalRoomCounts[roomName] || 0) + 1;
+                        globalRoomMoney[roomName] = (globalRoomMoney[roomName] || 0) + Number(b.totalPrice || 0);
+                    }
+                    const src = b.source || 'Адмінка';
+                    sourceCounts[src] = (sourceCounts[src] || 0) + 1;
+
+                    let rawDateKey = `${bDate.getFullYear()}-${String(bDate.getMonth() + 1).padStart(2, '0')}-${String(bDate.getDate()).padStart(2, '0')}`;
+                    revenueTimeline[rawDateKey] = (revenueTimeline[rawDateKey] || 0) + Number(b.totalPrice || 0);
+                }
+            });
+
+            Chart.defaults.font.family = "'Inter', sans-serif";
+            Chart.defaults.color = '#6B7280';
+            const bosoColors = ['#556B2F', '#D2B48C', '#2C2C2C', '#8FBC8F', '#BC8F8F', '#A9A9A9'];
+
+            const ctxRooms = document.getElementById('roomsChart').getContext('2d');
+            if (roomsChartInstance) roomsChartInstance.destroy(); 
+            
+            roomsChartInstance = new Chart(ctxRooms, {
+                type: 'bar',
+                data: {
+                    labels: Object.keys(globalRoomCounts),
+                    datasets: [{
+                        label: currentChartMode === 'count' ? 'Кількість броней' : 'Дохід (грн)',
+                        data: currentChartMode === 'count' ? Object.values(globalRoomCounts) : Object.values(globalRoomMoney),
+                        backgroundColor: bosoColors[0],
+                        borderRadius: 6,
+                        borderSkipped: false,
+                        maxBarThickness: 28 
+                    }]
+                },
+                options: {
+                    responsive: true, maintainAspectRatio: false, layout: { padding: { top: 20 } }, 
+                    plugins: { legend: { display: false }, tooltip: { backgroundColor: '#111827', padding: 12, cornerRadius: 8, displayColors: false } },
+                    scales: {
+                        y: { beginAtZero: true, ticks: { padding: 10, color: '#9CA3AF' }, grid: { display: false, drawBorder: false } },
+                        x: { ticks: { color: '#9CA3AF' }, grid: { display: false, drawBorder: false } }
+                    } 
                 } 
-            } 
-        });
+            });
 
-        // 2. Графік джерел
-        const ctxSource = document.getElementById('sourceChart').getContext('2d');
-        if (sourceChartInstance) sourceChartInstance.destroy();
+            const ctxSource = document.getElementById('sourceChart').getContext('2d');
+            if (sourceChartInstance) sourceChartInstance.destroy();
 
-        const activeSources = Object.keys(sourceCounts).filter(k => sourceCounts[k] > 0);
-        const activeSourceValues = activeSources.map(k => sourceCounts[k]);
+            const activeSources = Object.keys(sourceCounts).filter(k => sourceCounts[k] > 0);
+            const activeSourceValues = activeSources.map(k => sourceCounts[k]);
 
-        sourceChartInstance = new Chart(ctxSource, {
-            type: 'doughnut',
-            data: {
-                labels: activeSources.length > 0 ? activeSources : ['Немає даних'],
-                datasets: [{
-                    data: activeSources.length > 0 ? activeSourceValues : [1],
-                    backgroundColor: activeSources.length > 0 ? bosoColors : ['#F3F4F6'],
-                    borderWidth: 0, hoverOffset: 4
-                }]
-            },
-            options: {
-                responsive: true, maintainAspectRatio: false, layout: { padding: 15 }, cutout: '75%', 
-                plugins: { legend: { position: 'bottom', labels: { padding: 20, usePointStyle: true, pointStyle: 'circle' } } }
-            }
-        });
-
-        // 3. Лінійний графік динаміки
-        const ctxLine = document.getElementById('revenueLineChart').getContext('2d');
-        if (revenueLineChartInstance) revenueLineChartInstance.destroy();
-        
-        // Сортуємо ключі (YYYY-MM-DD), а потім перетворюємо їх назад у красивий вигляд для labels
-        const sortedRawKeys = Object.keys(revenueTimeline).sort(); 
-        const sortedLabels = sortedRawKeys.map(k => {
-            let parts = k.split('-');
-            let d = new Date(parts[0], parts[1] - 1, parts[2]);
-            return d.toLocaleDateString('uk-UA', { day: 'numeric', month: 'short' });
-        });
-        const revenueValues = sortedRawKeys.map(k => revenueTimeline[k]);
-
-        revenueLineChartInstance = new Chart(ctxLine, {
-            type: 'line',
-            data: {
-                labels: sortedLabels,
-                datasets: [{
-                    label: 'Дохід (грн)', data: revenueValues, borderColor: '#556B2F', backgroundColor: 'rgba(85, 107, 47, 0.1)',
-                    borderWidth: 3, fill: true, tension: 0.4, pointBackgroundColor: '#FFFFFF', pointBorderColor: '#556B2F', pointBorderWidth: 2, pointRadius: 4
-                }]
-            },
-            options: {
-                responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } },
-                scales: {
-                    y: { beginAtZero: true, grid: { color: '#F3F4F6' }, border: { dash: [4, 4] } },
-                    x: { grid: { display: false } }
+            sourceChartInstance = new Chart(ctxSource, {
+                type: 'doughnut',
+                data: {
+                    labels: activeSources.length > 0 ? activeSources : ['Немає даних'],
+                    datasets: [{
+                        data: activeSources.length > 0 ? activeSourceValues : [1],
+                        backgroundColor: activeSources.length > 0 ? bosoColors : ['#F3F4F6'],
+                        borderWidth: 0, hoverOffset: 4
+                    }]
+                },
+                options: {
+                    responsive: true, maintainAspectRatio: false, layout: { padding: 15 }, cutout: '75%', 
+                    plugins: { legend: { position: 'bottom', labels: { padding: 20, usePointStyle: true, pointStyle: 'circle' } } }
                 }
-            }
-        });
-    }
+            });
+
+            const ctxLine = document.getElementById('revenueLineChart').getContext('2d');
+            if (revenueLineChartInstance) revenueLineChartInstance.destroy();
+            
+            const sortedRawKeys = Object.keys(revenueTimeline).sort(); 
+            const sortedLabels = sortedRawKeys.map(k => {
+                let parts = k.split('-');
+                let d = new Date(parts[0], parts[1] - 1, parts[2]);
+                return d.toLocaleDateString('uk-UA', { day: 'numeric', month: 'short' });
+            });
+            const revenueValues = sortedRawKeys.map(k => revenueTimeline[k]);
+
+            revenueLineChartInstance = new Chart(ctxLine, {
+                type: 'line',
+                data: {
+                    labels: sortedLabels,
+                    datasets: [{
+                        label: 'Дохід (грн)', data: revenueValues, borderColor: '#556B2F', backgroundColor: 'rgba(85, 107, 47, 0.1)',
+                        borderWidth: 3, fill: true, tension: 0.4, pointBackgroundColor: '#FFFFFF', pointBorderColor: '#556B2F', pointBorderWidth: 2, pointRadius: 4
+                    }]
+                },
+                options: {
+                    responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } },
+                    scales: {
+                        y: { beginAtZero: true, grid: { color: '#F3F4F6' }, border: { dash: [4, 4] } },
+                        x: { grid: { display: false } }
+                    }
+                }
+            });
+        }
         
         function switchReportTab(tabName, el) {
             document.querySelectorAll('.r-tab').forEach(t => t.classList.remove('active'));
@@ -3508,9 +3582,9 @@ function bosoLeave() {
             document.getElementById('rep-' + tabName).style.display = 'block';
             
            if (tabName === 'analytics' || tabName === 'finance') {
-                calculateAnalytics(); // 🟢 Запускаємо математику для обох вкладок!
-            }
-        }
+                calculateAnalytics(); 
+            }
+        }
     </script>
 </body>
 </html>
