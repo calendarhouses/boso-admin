@@ -2841,58 +2841,112 @@ function bosoLeave() {
             renderTrend('trendCount', currCount, prevCount);
             renderTrend('trendAvg', currAvg, prevAvg);
             
-            // --- РОЗРАХУНОК ФІНАНСІВ ---
-            let totalIncome = currSum; 
+            // --- РОЗРАХУНОК ФІНАНСІВ (ТІЛЬКИ ЖИВІ ГРОШІ) ---
+            let totalIncome = 0; 
             let totalExpense = 0;
             
-            const tbodyFinance = document.getElementById('financeTableBody');
-            tbodyFinance.innerHTML = '';
+            // Об'єкт для красивої розбивки системних доходів з броней
+            let incomeBreakdown = { base: 0, guests: 0, pets: 0 };
 
-            if (totalIncome > 0) {
-                tbodyFinance.innerHTML += `<tr>
-                    <td><strong>Плата за проживання</strong><br><span style="font-size:12px; color:#6B7280;">Автоматично з бронювань</span></td>
-                    <td><span class="badge confirmed" style="background:#D1FAE5; color:#059669;">Дохід</span></td>
-                    <td><strong style="color: #059669;">+${totalIncome} грн</strong></td>
-                    <td><span style="color:#9CA3AF; font-size:12px;">Системне</span></td>
-                </tr>`;
-            }
+            // 1. Проходимося по бронях і витягуємо РЕАЛЬНО ОПЛАЧЕНІ гроші
+            allBookings.forEach(b => {
+                if (String(b.status).toLowerCase().includes('скас')) return; 
+                const bDate = parseSafeDate(b.checkIn);
+                
+                if (bDate >= startDate && bDate <= endDate) {
+                    let paid = Number(b.paidAmount) || 0;
+                    let total = Number(b.totalPrice) || 0;
+                    
+                    if (paid > 0) {
+                        totalIncome += paid; // Додаємо до загального доходу тільки внесені гроші
+                        
+                        // Рахуємо пропорцію (якщо внесли 50% авансу, то 50% йде на тварин, 50% на базу)
+                        let ratio = (total > 0) ? (paid / total) : 1;
 
+                        // Відновлюємо математику броні для розбивки
+                        let inD = parseSafeDate(b.checkIn);
+                        let outD = parseSafeDate(b.checkOut);
+                        let nights = Math.max(1, Math.round((outD - inD) / 86400000));
+                        
+                        let room = roomsList.find(r => b.cottage && b.cottage.includes(r.short));
+                        let cap = room ? room.capacity : 2;
+                        let extraGuestPrice = room && room.extraGuestPrice !== undefined ? room.extraGuestPrice : 2500;
+                        
+                        let extraGuests = Math.max(0, (parseInt(b.guests) || 2) - cap);
+                        let feeGuests = extraGuests * extraGuestPrice * nights;
+                        let feePets = (b.pets === "Так") ? (500 + 200 * nights) : 0;
+
+                        // Записуємо розбиті суми з урахуванням пропорції оплати
+                        let actPets = feePets * ratio;
+                        let actGuests = feeGuests * ratio;
+                        let actBase = paid - actPets - actGuests; 
+
+                        incomeBreakdown.pets += actPets;
+                        incomeBreakdown.guests += actGuests;
+                        incomeBreakdown.base += actBase;
+                    }
+                }
+            });
+
+            // 2. Фільтруємо ручні транзакції (чани, прибирання, реклама)
             let filteredTrans = transactions.filter(t => {
                 const tDate = parseSafeDate(t.date);
                 return tDate >= startDate && tDate <= endDate;
             }).sort((a, b) => new Date(b.date) - new Date(a.date));
 
+            // Додаємо ручні транзакції до загальних сум
             filteredTrans.forEach(t => {
-                const isIncome = t.type === 'income';
-                if (isIncome) totalIncome += t.amount;
+                if (t.type === 'income') totalIncome += t.amount;
                 else totalExpense += t.amount;
+            });
 
-                const typeBadge = isIncome ? `<span class="badge confirmed" style="background:#D1FAE5; color:#059669;">Дохід</span>` : `<span class="badge cancelled" style="background:#FEE2E2; color:#DC2626;">Витрата</span>`;
-                const sign = isIncome ? '+' : '-';
-                const amountColor = isIncome ? '#059669' : '#DC2626';
-                const dateStr = parseSafeDate(t.date).toLocaleDateString('uk-UA', {day: 'numeric', month: 'short'});
+            // 3. МАЛЮЄМО ТАБЛИЦЮ ФІНАНСІВ
+            const tbodyFinance = document.getElementById('financeTableBody');
+            tbodyFinance.innerHTML = '';
 
-                tbodyFinance.innerHTML += `<tr>
-                    <td><strong>${t.category}</strong><br><span style="font-size:12px; color:#6B7280;">${t.comment || dateStr}</span></td>
-                    <td>${typeBadge}</td>
-                    <td><strong style="color: ${amountColor};">${sign}${t.amount} грн</strong></td>
-                    <td>
-                        <div style="display: flex; gap: 8px;">
-                            <button class="btn-icon-only" onclick="openGenericModal('transaction', ${t.id})"><svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg></button>
-                            <button class="btn-icon-only danger" onclick="deleteGenericItem('transaction', ${t.id})"><svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg></button>
-                        </div>
-                    </td>
+            // Функція для створення стильних рядків таблиці
+            function renderFinRow(title, desc, amount, type, isSystem, id = null) {
+                if (Math.round(amount) <= 0) return '';
+                const isInc = type === 'income';
+                const badge = isInc ? `<span class="badge confirmed" style="background:#D1FAE5; color:#059669;">Дохід</span>` : `<span class="badge cancelled" style="background:#FEE2E2; color:#DC2626;">Витрата</span>`;
+                const sign = isInc ? '+' : '-';
+                const color = isInc ? '#059669' : '#DC2626';
+                
+                // Якщо системне (з броней) - вішаємо бейдж Auto, якщо ручне - кнопки ред/вид
+                const actions = isSystem ? `<span style="color:#9CA3AF; font-size:12px; font-weight:700; padding:4px 8px; background:#F3F4F6; border-radius:6px; letter-spacing:0.5px;">Auto</span>` : `
+                    <div style="display: flex; gap: 8px;">
+                        <button class="btn-icon-only" onclick="openGenericModal('transaction', ${id})"><svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg></button>
+                        <button class="btn-icon-only danger" onclick="deleteGenericItem('transaction', ${id})"><svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg></button>
+                    </div>`;
+
+                return `<tr>
+                    <td><strong>${title}</strong><br><span style="font-size:12px; color:#6B7280;">${desc}</span></td>
+                    <td>${badge}</td>
+                    <td><strong style="color: ${color};">${sign}${Math.round(amount).toLocaleString('uk-UA')} грн</strong></td>
+                    <td>${actions}</td>
                 </tr>`;
+            }
+
+            // Виводимо розбивку системних доходів
+            tbodyFinance.innerHTML += renderFinRow("Оренда котеджів", "Оплачена базова вартість", incomeBreakdown.base, 'income', true);
+            tbodyFinance.innerHTML += renderFinRow("Додаткові гості", "Оплати за додаткові місця", incomeBreakdown.guests, 'income', true);
+            tbodyFinance.innerHTML += renderFinRow("Тварини", "Оплати за розміщення улюбленців", incomeBreakdown.pets, 'income', true);
+
+            // Виводимо ручні транзакції
+            filteredTrans.forEach(t => {
+                const dateStr = parseSafeDate(t.date).toLocaleDateString('uk-UA', {day: 'numeric', month: 'short'});
+                tbodyFinance.innerHTML += renderFinRow(t.category, t.comment || dateStr, t.amount, t.type, false, t.id);
             });
 
             if (totalIncome === 0 && filteredTrans.length === 0) {
                 tbodyFinance.innerHTML = '<tr><td colspan="4" style="text-align: center; color: #9CA3AF; padding: 40px;">Немає фінансових операцій за цей період</td></tr>';
             }
 
+            // Оновлюємо фінансові картки (Топ-віджети)
             const profit = totalIncome - totalExpense;
-            document.getElementById('finIncome').innerText = totalIncome.toLocaleString('uk-UA') + ' грн';
-            document.getElementById('finExpense').innerText = totalExpense.toLocaleString('uk-UA') + ' грн';
-            document.getElementById('finProfit').innerText = profit.toLocaleString('uk-UA') + ' грн';
+            document.getElementById('finIncome').innerText = Math.round(totalIncome).toLocaleString('uk-UA') + ' грн';
+            document.getElementById('finExpense').innerText = Math.round(totalExpense).toLocaleString('uk-UA') + ' грн';
+            document.getElementById('finProfit').innerText = Math.round(profit).toLocaleString('uk-UA') + ' грн';
             document.getElementById('finProfit').style.color = profit >= 0 ? 'var(--text-main)' : '#DC2626';
             
             // Малюємо графіки
