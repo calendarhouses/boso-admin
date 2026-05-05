@@ -483,12 +483,28 @@ input[type="number"] {
         /* Робимо іконку в активній вкладці зеленою */
         .r-tab.active svg { stroke: var(--success); }
         
-        .metrics-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 20px; margin-bottom: 24px; }
-        .metric-card { background: #FFF; border: none; border-radius: 16px; padding: 24px; display: flex; flex-direction: column; gap: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.04); transition: 0.2s;}
-        .metric-card:hover { transform: translateY(-2px); box-shadow: 0 15px 35px rgba(0,0,0,0.06); }
-        .metric-icon { width: 40px; height: 40px; border-radius: 12px; display: flex; align-items: center; justify-content: center; margin-bottom: 8px;}
-        .metric-title { font-size: 13px; font-weight: 600; color: #6B7280; text-transform: uppercase; letter-spacing: 0.5px; }
-        .metric-val { font-size: 28px; font-weight: 800; color: var(--text-main); letter-spacing: -0.5px;}
+        /* --- ОНОВЛЕНІ КАРТКИ АНАЛІТИКИ (ІДЕАЛЬНЕ ВИРІВНЮВАННЯ) --- */
+        .metrics-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; margin-bottom: 24px; }
+        .metric-card { 
+            background: #FFF; border: none; border-radius: 16px; padding: 20px; 
+            display: flex; flex-direction: column; justify-content: space-between; 
+            box-shadow: 0 10px 30px rgba(0,0,0,0.04); transition: 0.3s; cursor: pointer; min-height: 145px;
+        }
+        .metric-card:hover { transform: translateY(-4px); box-shadow: 0 15px 35px rgba(0,0,0,0.08); }
+        .mc-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 16px; }
+        .metric-icon { width: 38px; height: 38px; border-radius: 10px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+        .mc-details-badge { 
+            font-size: 10px; font-weight: 700; background: #F9FAFB; color: #6B7280; 
+            padding: 4px 8px; border-radius: 6px; border: 1px solid #E5E7EB; transition: 0.2s; letter-spacing: 0.5px;
+        }
+        .metric-card:hover .mc-details-badge { background: #E5E7EB; color: #111827; }
+        /* Червона кнопка для боргу */
+        .metric-card.danger-card .mc-details-badge { background: #FEF2F2; color: #DC2626; border-color: #FECACA; }
+        .metric-card.danger-card:hover .mc-details-badge { background: #FEE2E2; }
+        
+        .mc-body { display: flex; flex-direction: column; gap: 4px; }
+        .metric-title { font-size: 11px; font-weight: 700; color: #6B7280; text-transform: uppercase; letter-spacing: 0.5px; line-height: 1.2;}
+        .metric-val { font-size: 26px; font-weight: 800; color: var(--text-main); letter-spacing: -0.5px; line-height: 1;}
         
         .charts-grid { display: grid; grid-template-columns: 2fr 1fr; gap: 20px; margin-bottom: 24px;}
         .chart-card { background: #FFF; border: none; border-radius: 16px; padding: 24px; box-shadow: 0 10px 30px rgba(0,0,0,0.04); display: flex; flex-direction: column; }
@@ -675,71 +691,112 @@ input[type="number"] {
 
                 <h3 class="section-title" style="margin-bottom: 16px; margin-top: 8px;">Головні показники</h3>
                 <div class="metrics-grid">
-                    <div class="metric-card">
-                        <div class="metric-icon" style="background:#F0FDF4; color:#059669;"><svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg></div>
-                        <span class="metric-title">Сума бронювань (Прогноз)</span>
-                        <span class="metric-val" id="metTotalSum">0 грн</span>
-                        <div id="trendSum" style="display: none; align-items: center; gap: 6px; margin-top: auto; padding-top: 12px;"></div>
-                    </div>
-                    <div class="metric-card">
-                        <div class="metric-icon" style="background:#D1FAE5; color:#047857;"><svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg></div>
-                        <span class="metric-title">Фактично оплачено</span>
-                        <span class="metric-val" id="metPaid" style="color: #059669;">0 грн</span>
-                    </div>
-                    <!-- 🟥 КЛІКАБЕЛЬНИЙ БОРГ -->
-                    <div class="metric-card" style="cursor: pointer; transition: 0.3s; position: relative;" onclick="openDebtModal()" onmouseover="this.style.transform='translateY(-4px)'; this.style.boxShadow='0 12px 20px rgba(220, 38, 38, 0.15)';" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 10px 30px rgba(0,0,0,0.04)';">
-                        <div style="display: flex; justify-content: space-between; align-items: flex-start;">
-                            <div class="metric-icon" style="background:#FEE2E2; color:#DC2626; margin-bottom: 8px;"><svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg></div>
-                            <span style="font-size: 10px; font-weight: 700; color:#DC2626; background: #FEF2F2; padding: 4px 8px; border-radius: 6px; border: 1px solid #FECACA; transition: 0.2s;">Деталі &rarr;</span>
+                    <div class="metric-card" onclick="openUniversalDetails('sum', 'Сума бронювань (Всі)', '#059669', '#F0FDF4', 'Прогноз')">
+                        <div class="mc-header">
+                            <div class="metric-icon" style="background:#F0FDF4; color:#059669;"><svg width="22" height="22" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg></div>
+                            <span class="mc-details-badge">Деталі &rarr;</span>
                         </div>
-                        <span class="metric-title" style="margin-bottom: 4px; display: block;">Борг клієнтів</span>
-                        <span class="metric-val" id="metDebt" style="color: #DC2626; margin-top: 0;">0 грн</span>
+                        <div class="mc-body">
+                            <span class="metric-title">Сума бронювань (Прогноз)</span>
+                            <span class="metric-val" id="metTotalSum">0 грн</span>
+                        </div>
                     </div>
-                    <div class="metric-card">
-                        <div class="metric-icon" style="background:#EFF6FF; color:#2563EB;"><svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"></path></svg></div>
-                        <span class="metric-title">Кількість броней</span>
-                        <span class="metric-val" id="metCount">0</span>
-                        <div id="trendCount" style="display: none; align-items: center; gap: 6px; margin-top: auto; padding-top: 12px;"></div>
+                    
+                    <div class="metric-card" onclick="openUniversalDetails('paid', 'Фактично оплачено', '#047857', '#D1FAE5', 'Оплачено')">
+                        <div class="mc-header">
+                            <div class="metric-icon" style="background:#D1FAE5; color:#047857;"><svg width="22" height="22" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg></div>
+                            <span class="mc-details-badge">Деталі &rarr;</span>
+                        </div>
+                        <div class="mc-body">
+                            <span class="metric-title">Фактично оплачено</span>
+                            <span class="metric-val" id="metPaid" style="color: #059669;">0 грн</span>
+                        </div>
+                    </div>
+                    
+                    <div class="metric-card danger-card" onclick="openUniversalDetails('debt', 'Список боржників', '#DC2626', '#FEF2F2', 'Борг')">
+                        <div class="mc-header">
+                            <div class="metric-icon" style="background:#FEE2E2; color:#DC2626;"><svg width="22" height="22" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg></div>
+                            <span class="mc-details-badge">Деталі &rarr;</span>
+                        </div>
+                        <div class="mc-body">
+                            <span class="metric-title" style="color: #DC2626;">Борг клієнтів</span>
+                            <span class="metric-val" id="metDebt" style="color: #DC2626;">0 грн</span>
+                        </div>
+                    </div>
+                    
+                    <div class="metric-card" onclick="openUniversalDetails('count', 'Список броней', '#2563EB', '#EFF6FF', '')">
+                        <div class="mc-header">
+                            <div class="metric-icon" style="background:#EFF6FF; color:#2563EB;"><svg width="22" height="22" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"></path></svg></div>
+                            <span class="mc-details-badge">Деталі &rarr;</span>
+                        </div>
+                        <div class="mc-body">
+                            <span class="metric-title">Кількість броней</span>
+                            <span class="metric-val" id="metCount">0</span>
+                        </div>
                     </div>
                 </div>
 
                 <h3 class="section-title" style="margin-bottom: 16px; margin-top: 16px;">Деталізація доходу (продані послуги)</h3>
-                <div class="metrics-grid" style="grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));">
-                    <div class="metric-card" style="padding: 16px; display: flex; flex-direction: column; gap: 8px;">
-                        <div class="metric-icon" style="background:#FCE7F3; color:#E11D48; width: 32px; height: 32px; margin-bottom: 4px; border-radius: 8px;"><svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"></path></svg></div>
-                        <span class="metric-title" style="font-size: 11px;">Тварини</span>
-                        <span class="metric-val" id="metPets" style="font-size: 18px;">0 грн</span>
-                        <div style="height: 4px; background: #F3F4F6; border-radius: 2px; width: 100%; margin-top: auto;"><div id="pbPets" style="height: 100%; background: #E11D48; border-radius: 2px; width: 0%; transition: 1s ease;"></div></div>
+                <div class="metrics-grid" style="grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));">
+                    <div class="metric-card" id="cardGuests" onclick="openUniversalDetails('guests', 'Додаткові гості', '#1D4ED8', '#E0E7FF', 'Дохід')">
+                        <div class="mc-header">
+                            <div class="metric-icon" style="background:#E0E7FF; color:#1D4ED8;"><svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"></path></svg></div>
+                            <span class="mc-details-badge">Деталі &rarr;</span>
+                        </div>
+                        <div class="mc-body">
+                            <span class="metric-title">Дод. гості</span>
+                            <span class="metric-val" id="metGuests" style="font-size: 20px;">0 грн</span>
+                        </div>
                     </div>
-                    <div class="metric-card" style="padding: 16px; display: flex; flex-direction: column; gap: 8px;">
-                        <div class="metric-icon" style="background:#E0E7FF; color:#1D4ED8; width: 32px; height: 32px; margin-bottom: 4px; border-radius: 8px;"><svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"></path></svg></div>
-                        <span class="metric-title" style="font-size: 11px;">Дод. гості</span>
-                        <span class="metric-val" id="metGuests" style="font-size: 18px;">0 грн</span>
-                        <div style="height: 4px; background: #F3F4F6; border-radius: 2px; width: 100%; margin-top: auto;"><div id="pbGuests" style="height: 100%; background: #1D4ED8; border-radius: 2px; width: 0%; transition: 1s ease;"></div></div>
+                    <div class="metric-card" id="cardPets" onclick="openUniversalDetails('pets', 'Тварини', '#E11D48', '#FCE7F3', 'Дохід')">
+                        <div class="mc-header">
+                            <div class="metric-icon" style="background:#FCE7F3; color:#E11D48;"><svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"></path></svg></div>
+                            <span class="mc-details-badge">Деталі &rarr;</span>
+                        </div>
+                        <div class="mc-body">
+                            <span class="metric-title">Тварини</span>
+                            <span class="metric-val" id="metPets" style="font-size: 20px;">0 грн</span>
+                        </div>
                     </div>
-                    <div class="metric-card" style="padding: 16px; display: flex; flex-direction: column; gap: 8px;">
-                        <div class="metric-icon" style="background:#FFEDD5; color:#B45309; width: 32px; height: 32px; margin-bottom: 4px; border-radius: 8px;"><svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 18.657A8 8 0 016.343 7.343S7 9 9 10c0-2 .5-5 2.986-7C14 5 16.09 5.777 17.656 7.343A7.975 7.975 0 0120 13a7.975 7.975 0 01-2.343 5.657z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.879 16.121A3 3 0 1012.015 11L11 14H9c0 .768.293 1.536.879 2.121z"></path></svg></div>
-                        <span class="metric-title" style="font-size: 11px;">Чан</span>
-                        <span class="metric-val" id="metVat" style="font-size: 18px;">0 грн</span>
-                        <div style="height: 4px; background: #F3F4F6; border-radius: 2px; width: 100%; margin-top: auto;"><div id="pbVat" style="height: 100%; background: #B45309; border-radius: 2px; width: 0%; transition: 1s ease;"></div></div>
+                    <div class="metric-card" id="cardVat" onclick="openUniversalDetails('vat', 'Чан', '#B45309', '#FFEDD5', 'Дохід')">
+                        <div class="mc-header">
+                            <div class="metric-icon" style="background:#FFEDD5; color:#B45309;"><svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 18.657A8 8 0 016.343 7.343S7 9 9 10c0-2 .5-5 2.986-7C14 5 16.09 5.777 17.656 7.343A7.975 7.975 0 0120 13a7.975 7.975 0 01-2.343 5.657z"></path></svg></div>
+                            <span class="mc-details-badge">Деталі &rarr;</span>
+                        </div>
+                        <div class="mc-body">
+                            <span class="metric-title">Чан</span>
+                            <span class="metric-val" id="metVat" style="font-size: 20px;">0 грн</span>
+                        </div>
                     </div>
-                    <div class="metric-card" style="padding: 16px; display: flex; flex-direction: column; gap: 8px;">
-                        <div class="metric-icon" style="background:#ECFDF5; color:#047857; width: 32px; height: 32px; margin-bottom: 4px; border-radius: 8px;"><svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg></div>
-                        <span class="metric-title" style="font-size: 11px;">Велосипеди</span>
-                        <span class="metric-val" id="metBikes" style="font-size: 18px;">0 грн</span>
-                        <div style="height: 4px; background: #F3F4F6; border-radius: 2px; width: 100%; margin-top: auto;"><div id="pbBikes" style="height: 100%; background: #047857; border-radius: 2px; width: 0%; transition: 1s ease;"></div></div>
+                    <div class="metric-card" id="cardBikes" onclick="openUniversalDetails('bikes', 'Велосипеди', '#047857', '#ECFDF5', 'Дохід')">
+                        <div class="mc-header">
+                            <div class="metric-icon" style="background:#ECFDF5; color:#047857;"><svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg></div>
+                            <span class="mc-details-badge">Деталі &rarr;</span>
+                        </div>
+                        <div class="mc-body">
+                            <span class="metric-title">Велосипеди</span>
+                            <span class="metric-val" id="metBikes" style="font-size: 20px;">0 грн</span>
+                        </div>
                     </div>
-                    <div class="metric-card" style="padding: 16px; display: flex; flex-direction: column; gap: 8px;">
-                        <div class="metric-icon" style="background:#F3E8FF; color:#6D28D9; width: 32px; height: 32px; margin-bottom: 4px; border-radius: 8px;"><svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg></div>
-                        <span class="metric-title" style="font-size: 11px;">Гнучкий графік</span>
-                        <span class="metric-val" id="metEarlyLate" style="font-size: 18px;">0 грн</span>
-                        <div style="height: 4px; background: #F3F4F6; border-radius: 2px; width: 100%; margin-top: auto;"><div id="pbEarlyLate" style="height: 100%; background: #6D28D9; border-radius: 2px; width: 0%; transition: 1s ease;"></div></div>
+                    <div class="metric-card" id="cardEarlyLate" onclick="openUniversalDetails('earlyLate', 'Гнучкий графік', '#6D28D9', '#F3E8FF', 'Дохід')">
+                        <div class="mc-header">
+                            <div class="metric-icon" style="background:#F3E8FF; color:#6D28D9;"><svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg></div>
+                            <span class="mc-details-badge">Деталі &rarr;</span>
+                        </div>
+                        <div class="mc-body">
+                            <span class="metric-title">Ранній/Пізній</span>
+                            <span class="metric-val" id="metEarlyLate" style="font-size: 20px;">0 грн</span>
+                        </div>
                     </div>
-                    <div class="metric-card" style="padding: 16px; display: flex; flex-direction: column; gap: 8px;">
-                        <div class="metric-icon" style="background:#F3F4F6; color:#4B5563; width: 32px; height: 32px; margin-bottom: 4px; border-radius: 8px;"><svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"></path></svg></div>
-                        <span class="metric-title" style="font-size: 11px;">Інший дохід</span>
-                        <span class="metric-val" id="metOther" style="font-size: 18px;">0 грн</span>
-                        <div style="height: 4px; background: #F3F4F6; border-radius: 2px; width: 100%; margin-top: auto;"><div id="pbOther" style="height: 100%; background: #4B5563; border-radius: 2px; width: 0%; transition: 1s ease;"></div></div>
+                    <div class="metric-card" id="cardOther" onclick="openUniversalDetails('other', 'Інший дохід', '#4B5563', '#F3F4F6', 'Дохід')">
+                        <div class="mc-header">
+                            <div class="metric-icon" style="background:#F3F4F6; color:#4B5563;"><svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"></path></svg></div>
+                            <span class="mc-details-badge">Деталі &rarr;</span>
+                        </div>
+                        <div class="mc-body">
+                            <span class="metric-title">Інший дохід</span>
+                            <span class="metric-val" id="metOther" style="font-size: 20px;">0 грн</span>
+                        </div>
                     </div>
                 </div>
 
@@ -909,21 +966,23 @@ input[type="number"] {
     </div>
 </div> <!-- 🟢 ТЕПЕР GENERIC MODAL ЗАКРИВАЄТЬСЯ ТУТ! -->
 
-<!-- 🟢 А МОДАЛКА БОРЖНИКІВ СТОЇТЬ ОКРЕМО! -->
-<div id="debtModal" class="modal-overlay" style="z-index: 3000;">
-    <div class="modal-box" style="max-width: 500px; max-height: 80vh;">
-        <div class="modal-header">
-            <span style="display:flex; align-items:center; gap:8px;">
-                <svg width="24" height="24" color="#DC2626" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg> 
-                Список боржників
-            </span>
-            <button class="close-btn" onclick="closeDebtModal()">✕</button>
-        </div>
-        <div class="modal-body" id="debtModalBody" style="padding: 0; overflow-y: auto;">
-            <!-- Тут буде список -->
+<!-- УНІВЕРСАЛЬНА МОДАЛКА ДЕТАЛЕЙ АНАЛІТИКИ -->
+    <div id="uniDetailsModal" class="modal-overlay" style="z-index: 3000;">
+        <div class="modal-box" style="max-width: 500px; max-height: 80vh;">
+            <div class="modal-header">
+                <span style="display:flex; align-items:center; gap:8px;">
+                    <span id="uniModalIcon" style="display:flex; align-items:center;">
+                        <svg width="22" height="22" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                    </span>
+                    <span id="uniModalTitle">Деталі</span>
+                </span>
+                <button class="close-btn" onclick="document.getElementById('uniDetailsModal').classList.remove('active')">✕</button>
+            </div>
+            <div class="modal-body" id="uniModalBody" style="padding: 0; overflow-y: auto; background: #FDFCFB;">
+                <!-- Тут буде генеруватися красивий список -->
+            </div>
         </div>
     </div>
-</div>
         
     </div> <div id="customConfirmModal" class="modal-overlay" style="z-index: 3000;">
         <div class="modal-box" style="max-width: 380px; text-align: center; padding: 30px 24px;">
@@ -2823,148 +2882,6 @@ function bosoLeave() {
     if (tt) tt.classList.remove('show');
 }
 
-       // --- АНАЛІТИКА (МАТЕМАТИКА З ТРЕНДАМИ ТА ДЕТАЛІЗАЦІЄЮ) ---
-        function calculateAnalytics() {
-            const period = document.getElementById('reportPeriodVal').value;
-            const now = new Date();
-            let startDate, endDate;
-            let prevStartDate, prevEndDate;
-
-            if (period === 'current') {
-                startDate = new Date(now.getFullYear(), now.getMonth(), 1);
-                endDate = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59);
-                prevStartDate = new Date(now.getFullYear(), now.getMonth() - 1, 1);
-                prevEndDate = new Date(now.getFullYear(), now.getMonth(), 0, 23, 59, 59);
-            } else if (period === 'prev') {
-                startDate = new Date(now.getFullYear(), now.getMonth() - 1, 1);
-                endDate = new Date(now.getFullYear(), now.getMonth(), 0, 23, 59, 59);
-                prevStartDate = new Date(now.getFullYear(), now.getMonth() - 2, 1);
-                prevEndDate = new Date(now.getFullYear(), now.getMonth() - 1, 0, 23, 59, 59);
-            } else if (period === 'year') {
-                startDate = new Date(now.getFullYear(), 0, 1);
-                endDate = new Date(now.getFullYear(), 11, 31, 23, 59, 59);
-                prevStartDate = new Date(now.getFullYear() - 1, 0, 1);
-                prevEndDate = new Date(now.getFullYear() - 1, 11, 31, 23, 59, 59);
-            } else if (period === 'custom') { 
-                const dates = reportRangePicker.selectedDates;
-                if (dates.length === 2) {
-                    startDate = new Date(dates[0]); startDate.setHours(0,0,0,0);
-                    endDate = new Date(dates[1]); endDate.setHours(23,59,59,999);
-                    const diffTime = Math.abs(endDate - startDate);
-                    prevEndDate = new Date(startDate.getTime() - (1000 * 60 * 60 * 24));
-                    prevEndDate.setHours(23,59,59,999);
-                    prevStartDate = new Date(prevEndDate.getTime() - diffTime);
-                    prevStartDate.setHours(0,0,0,0);
-                } else {
-                    startDate = new Date(2000, 0, 1); endDate = new Date(2100, 0, 1);
-                }
-            } else {
-                startDate = new Date(2000, 0, 1); endDate = new Date(2100, 0, 1);
-                prevStartDate = null; prevEndDate = null;
-            }
-
-            let currSum = 0, currCount = 0, currPaid = 0;
-            let prevSum = 0, prevCount = 0;
-            
-            let currGuests = 0, currPets = 0;
-            let currEarlyLate = 0, currVat = 0, currBikes = 0, currOther = 0;
-            
-            globalDebtorsHtml = ''; // 🟢 Очищаємо пам'ять боржників перед новим розрахунком
-            let topRoomsCount = {}; 
-
-            allBookings.forEach(b => {
-                if (String(b.status).toLowerCase().includes('скас')) return; 
-                const bDate = parseSafeDate(b.checkIn);
-                const price = Number(b.totalPrice) || 0;
-                const paid = Number(b.paidAmount) || 0;
-                
-                if (bDate >= startDate && bDate <= endDate) {
-                    currSum += price;
-                    currPaid += paid;
-                    currCount++;
-
-                    if (b.cottage) {
-                        const matchedRoom = roomsList.find(r => b.cottage.includes(r.name) || b.cottage.includes(r.short));
-                        const roomName = matchedRoom ? matchedRoom.name : b.cottage;
-                        topRoomsCount[roomName] = (topRoomsCount[roomName] || 0) + 1;
-                    }
-
-                    // 🟢 Збираємо красиві рядки боржників для модалки
-                    let balance = price - paid;
-                    if (balance > 0 && price > 0) {
-                        let cName = String(b.name).replace(' (Ручна бронь)', '').trim() || "Клієнт";
-                        let cPhone = formatPhone(b.phone);
-                        let formattedDate = bDate.toLocaleDateString('uk-UA', { day: 'numeric', month: 'short' });
-                        
-                        // Генеруємо першу літеру для крутого CRM-аватару
-                        let initial = cName.charAt(0).toUpperCase();
-                        if(!initial || initial === '+') initial = '👤';
-
-                        globalDebtorsHtml += `
-                        <div style="display: flex; flex-direction: column; padding: 16px; background: #FFFFFF; border: 1px solid #F3F4F6; border-radius: 12px; margin: 16px 20px; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05); transition: 0.2s;" onmouseover="this.style.borderColor='#FECACA'; this.style.boxShadow='0 10px 15px -3px rgba(220,38,38,0.1)'" onmouseout="this.style.borderColor='#F3F4F6'; this.style.boxShadow='0 4px 6px -1px rgba(0, 0, 0, 0.05)'">
-                            
-                            <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 16px;">
-                                <div style="display: flex; gap: 12px; align-items: center;">
-                                    <div style="width: 42px; height: 42px; border-radius: 50%; background: #FEF2F2; color: #DC2626; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 16px; border: 1px solid #FECACA; flex-shrink: 0;">
-                                        ${initial}
-                                    </div>
-                                    <div>
-                                        <div style="font-weight: 700; color: #111827; font-size: 15px; margin-bottom: 2px;">${cName}</div>
-                                        <div style="font-size: 12px; color: #6B7280; display: flex; align-items: center; gap: 4px;">
-                                            <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
-                                            Заїзд: <strong style="color: #4B5563;">${formattedDate}</strong>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div style="text-align: right; background: #FEF2F2; padding: 6px 10px; border-radius: 8px; border: 1px dashed #FECACA;">
-                                    <div style="font-weight: 800; color: #DC2626; font-size: 15px; letter-spacing: -0.5px;">${balance} ₴</div>
-                                    <div style="font-size: 10px; color: #DC2626; text-transform: uppercase; font-weight: 700; letter-spacing: 0.5px;">Борг</div>
-                                </div>
-                            </div>
-                            
-                            <div style="display: flex; gap: 8px; border-top: 1px solid #F3F4F6; padding-top: 12px;">
-                                <button onclick="closeDebtModal(); openDetailsByRow(event, ${b.row});" style="flex: 1; background: #FFFFFF; color: #374151; border: 1px solid #D1D5DB; padding: 8px; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer; transition: 0.2s; display: flex; align-items: center; justify-content: center; gap: 6px;" onmouseover="this.style.background='#F9FAFB'" onmouseout="this.style.background='#FFFFFF'">
-                                    Відкрити бронь
-                                </button>
-                                <a href="https://t.me/+${cPhone}" target="_blank" style="flex: 1; background: #EFF6FF; color: #2563EB; border: 1px solid #BFDBFE; padding: 8px; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer; transition: 0.2s; text-decoration: none; display: flex; align-items: center; justify-content: center; gap: 6px;" onmouseover="this.style.background='#DBEAFE'" onmouseout="this.style.background='#EFF6FF'">
-                                    <svg width="16" height="16" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm4.64 6.8c-.15 1.58-.8 5.42-1.13 7.19-.14.75-.42 1-.68 1.03-.58.05-1.02-.38-1.58-.75-.88-.58-1.38-.94-2.23-1.5-.99-.65-.35-1.01.22-1.59.15-.15 2.71-2.48 2.76-2.69a.2.2 0 00-.05-.18c-.06-.05-.14-.03-.21-.02-.09.02-1.46.93-4.12 2.73-.39.27-.74.4-1.05.39-.34-.01-1-.19-1.48-.35-.6-.19-.11-.29.31-.48 1.18-.54 3.93-1.68 5.25-2.24 2.5-.1 3.02-1.28 3.12-1.3.02 0 .06-.01.1 0 .04.01.07.03.08.06.01.03.02.08.01.14z"/></svg> Telegram
-                                </a>
-                            </div>
-                        </div>`;
-                    }
-
-                    let inD = parseSafeDate(b.checkIn);
-                    let outD = parseSafeDate(b.checkOut);
-                    let nights = Math.max(1, Math.round((outD - inD) / 86400000));
-                    
-                    let room = roomsList.find(r => b.cottage && b.cottage.includes(r.short));
-                    let cap = room ? room.capacity : 2;
-                    let extraPrice = room && room.extraGuestPrice !== undefined ? room.extraGuestPrice : 2500;
-                    
-                    let extraGuests = Math.max(0, (parseInt(b.guests) || 2) - cap);
-                    currGuests += (extraGuests * extraPrice * nights);
-                    
-                    if (b.pets === "Так" || b.pets === true) {
-                        currPets += (500 + 200 * nights);
-                    }
-                }
-                
-                if (prevStartDate && bDate >= prevStartDate && bDate <= prevEndDate) {
-                    prevSum += price;
-                    prevCount++;
-                }
-            });
-
-            transactions.forEach(t => {
-                const tDate = parseSafeDate(t.date);
-                if (tDate >= startDate && tDate <= endDate && t.type === 'income') {
-                    if (t.category === "Плата за раннє заселення/пізнє виселення") currEarlyLate += t.amount;
-                    else if (t.category === "Чан") currVat += t.amount;
-                    else if (t.category === "Оренда велосипедів") currBikes += t.amount;
-                    else if (t.category === "Інший дохід" || t.category === "Міні-бар") currOther += t.amount;
-                }
-            });
-
             const currDebt = Math.max(0, currSum - currPaid);
 
             function renderTrend(elId, currVal, prevVal) {
@@ -3190,25 +3107,267 @@ function bosoLeave() {
         window.requestAnimationFrame(step);
     }
 
-    // 🟢 БЕЗПЕЧНЕ ВІДКРИТТЯ МОДАЛКИ БОРГІВ
-    function openDebtModal() {
-        const modal = document.getElementById('debtModal');
-        const body = document.getElementById('debtModalBody');
-        if (modal && body) {
-            // Підтягуємо імена перед відкриттям
-            body.innerHTML = globalDebtorsHtml || `
-                <div style="padding: 40px 20px; text-align: center; display: flex; flex-direction: column; align-items: center; gap: 12px;">
-                    <div style="width: 64px; height: 64px; background: #D1FAE5; color: #059669; border-radius: 50%; display: flex; align-items: center; justify-content: center;">
-                        <svg width="32" height="32" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"></path></svg>
+        // 🟢 Глобальна пам'ять для ВСІХ деталей аналітики
+        window.bosoDetails = { sum: [], paid: [], debt: [], count: [], pets: [], guests: [], vat: [], bikes: [], earlyLate: [], other: [] };
+
+        // --- УНІВЕРСАЛЬНЕ ВІКНО ДЕТАЛЕЙ (CRM Картки) ---
+        function openUniversalDetails(type, title, colorHex, bgHex, valLabel) {
+            const modal = document.getElementById('uniDetailsModal');
+            const body = document.getElementById('uniModalBody');
+            
+            document.getElementById('uniModalTitle').innerText = title;
+            document.getElementById('uniModalIcon').style.color = colorHex;
+            
+            let data = window.bosoDetails[type] || [];
+            let html = '';
+
+            if (data.length === 0) {
+                html = `
+                <div style="padding: 50px 20px; text-align: center; display: flex; flex-direction: column; align-items: center; gap: 12px;">
+                    <div style="width: 64px; height: 64px; background: ${bgHex}; color: ${colorHex}; border-radius: 50%; display: flex; align-items: center; justify-content: center;">
+                        <svg width="32" height="32" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
                     </div>
-                    <div style="font-size: 16px; font-weight: 700; color: #111827;">Боргів немає!</div>
-                    <div style="font-size: 13px; color: #6B7280;">Всі клієнти за цей період повністю оплатили свої бронювання.</div>
+                    <div style="font-size: 16px; font-weight: 700; color: #111827;">Тут поки порожньо</div>
+                    <div style="font-size: 13px; color: #6B7280;">Немає записів, які відповідають цій категорії за обраний період.</div>
                 </div>`;
+            } else {
+                data.forEach(item => {
+                    let initial = item.name.charAt(0).toUpperCase();
+                    if(!initial || initial === '+' || initial === 'І') initial = '👤'; // І - Інший дохід
+
+                    // Форматуємо суму по-багатому (наприклад: 26 300 грн)
+                    let amountHtml = item.amount > 0 ? `${item.amount.toLocaleString('uk-UA')} грн` : '—';
+                    let labelHtml = valLabel ? `<div style="font-size: 10px; color: ${colorHex}; text-transform: uppercase; font-weight: 700; letter-spacing: 0.5px; opacity: 0.8;">${valLabel}</div>` : '';
+
+                    // Якщо це ручна транзакція, відкриваємо її редагування. Якщо бронь — відкриваємо бронь.
+                    let actionBtn = item.isTrans 
+                        ? `<button onclick="document.getElementById('uniDetailsModal').classList.remove('active'); openGenericModal('transaction', ${item.id});" style="flex: 1; background: #FFFFFF; color: #374151; border: 1px solid #D1D5DB; padding: 8px; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer; transition: 0.2s;">Редагувати запис</button>`
+                        : `<button onclick="document.getElementById('uniDetailsModal').classList.remove('active'); openDetailsByRow(event, ${item.row});" style="flex: 1; background: #FFFFFF; color: #374151; border: 1px solid #D1D5DB; padding: 8px; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer; transition: 0.2s;">Відкрити бронь</button>`;
+
+                    let tgBtn = item.phone ? `<a href="https://t.me/+${item.phone}" target="_blank" style="flex: 1; background: #EFF6FF; color: #2563EB; border: 1px solid #BFDBFE; padding: 8px; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer; transition: 0.2s; text-decoration: none; display: flex; align-items: center; justify-content: center; gap: 6px;"><svg width="16" height="16" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm4.64 6.8c-.15 1.58-.8 5.42-1.13 7.19-.14.75-.42 1-.68 1.03-.58.05-1.02-.38-1.58-.75-.88-.58-1.38-.94-2.23-1.5-.99-.65-.35-1.01.22-1.59.15-.15 2.71-2.48 2.76-2.69a.2.2 0 00-.05-.18c-.06-.05-.14-.03-.21-.02-.09.02-1.46.93-4.12 2.73-.39.27-.74.4-1.05.39-.34-.01-1-.19-1.48-.35-.6-.19-.11-.29.31-.48 1.18-.54 3.93-1.68 5.25-2.24 2.5-.1 3.02-1.28 3.12-1.3.02 0 .06-.01.1 0 .04.01.07.03.08.06.01.03.02.08.01.14z"/></svg> Telegram</a>` : '';
+
+                    html += `
+                    <div style="display: flex; flex-direction: column; padding: 16px; background: #FFFFFF; border: 1px solid #E5E7EB; border-radius: 12px; margin: 16px 20px; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.03); transition: 0.2s;" onmouseover="this.style.borderColor='${colorHex}'; this.style.boxShadow='0 10px 15px -3px rgba(0,0,0,0.08)'" onmouseout="this.style.borderColor='#E5E7EB'; this.style.boxShadow='0 4px 6px -1px rgba(0, 0, 0, 0.03)'">
+                        
+                        <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 16px;">
+                            <div style="display: flex; gap: 12px; align-items: center;">
+                                <div style="width: 42px; height: 42px; border-radius: 50%; background: ${bgHex}; color: ${colorHex}; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 16px; flex-shrink: 0;">
+                                    ${initial}
+                                </div>
+                                <div>
+                                    <div style="font-weight: 700; color: #111827; font-size: 15px; margin-bottom: 2px;">${item.name}</div>
+                                    <div style="font-size: 12px; color: #6B7280;">Дата: <strong style="color: #4B5563;">${item.date}</strong></div>
+                                </div>
+                            </div>
+                            <div style="text-align: right; background: ${bgHex}; padding: 6px 10px; border-radius: 8px;">
+                                <div style="font-weight: 800; color: ${colorHex}; font-size: 15px; letter-spacing: -0.5px;">${amountHtml}</div>
+                                ${labelHtml}
+                            </div>
+                        </div>
+                        
+                        <div style="display: flex; gap: 8px; border-top: 1px solid #F3F4F6; padding-top: 12px;">
+                            ${actionBtn}
+                            ${tgBtn}
+                        </div>
+                    </div>`;
+                });
+            }
+            body.innerHTML = html;
             modal.classList.add('active');
-        } else {
-            alert("Помилка: Не знайдено вікно боржників у HTML!");
         }
-    }
+
+        function calculateAnalytics() {
+            const period = document.getElementById('reportPeriodVal').value;
+            const now = new Date();
+            let startDate, endDate, prevStartDate, prevEndDate;
+
+            if (period === 'current') {
+                startDate = new Date(now.getFullYear(), now.getMonth(), 1);
+                endDate = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59);
+                prevStartDate = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+                prevEndDate = new Date(now.getFullYear(), now.getMonth(), 0, 23, 59, 59);
+            } else if (period === 'prev') {
+                startDate = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+                endDate = new Date(now.getFullYear(), now.getMonth(), 0, 23, 59, 59);
+                prevStartDate = new Date(now.getFullYear(), now.getMonth() - 2, 1);
+                prevEndDate = new Date(now.getFullYear(), now.getMonth() - 1, 0, 23, 59, 59);
+            } else if (period === 'year') {
+                startDate = new Date(now.getFullYear(), 0, 1);
+                endDate = new Date(now.getFullYear(), 11, 31, 23, 59, 59);
+                prevStartDate = new Date(now.getFullYear() - 1, 0, 1);
+                prevEndDate = new Date(now.getFullYear() - 1, 11, 31, 23, 59, 59);
+            } else if (period === 'custom') { 
+                const dates = reportRangePicker.selectedDates;
+                if (dates.length === 2) {
+                    startDate = new Date(dates[0]); startDate.setHours(0,0,0,0);
+                    endDate = new Date(dates[1]); endDate.setHours(23,59,59,999);
+                    const diffTime = Math.abs(endDate - startDate);
+                    prevEndDate = new Date(startDate.getTime() - (1000 * 60 * 60 * 24));
+                    prevEndDate.setHours(23,59,59,999);
+                    prevStartDate = new Date(prevEndDate.getTime() - diffTime);
+                    prevStartDate.setHours(0,0,0,0);
+                } else {
+                    startDate = new Date(2000, 0, 1); endDate = new Date(2100, 0, 1);
+                }
+            } else {
+                startDate = new Date(2000, 0, 1); endDate = new Date(2100, 0, 1);
+                prevStartDate = null; prevEndDate = null;
+            }
+
+            let currSum = 0, currCount = 0, currPaid = 0, prevSum = 0, prevCount = 0;
+            let currGuests = 0, currPets = 0, currEarlyLate = 0, currVat = 0, currBikes = 0, currOther = 0;
+            let topRoomsCount = {}; 
+
+            // 🟢 Очищаємо деталі перед новим підрахунком
+            window.bosoDetails = { sum: [], paid: [], debt: [], count: [], pets: [], guests: [], vat: [], bikes: [], earlyLate: [], other: [] };
+
+            allBookings.forEach(b => {
+                if (String(b.status).toLowerCase().includes('скас')) return; 
+                const bDate = parseSafeDate(b.checkIn);
+                const price = Number(b.totalPrice) || 0;
+                const paid = Number(b.paidAmount) || 0;
+                
+                if (bDate >= startDate && bDate <= endDate) {
+                    currSum += price;
+                    currPaid += paid;
+                    currCount++;
+
+                    if (b.cottage) {
+                        const matchedRoom = roomsList.find(r => b.cottage.includes(r.name) || b.cottage.includes(r.short));
+                        const roomName = matchedRoom ? matchedRoom.name : b.cottage;
+                        topRoomsCount[roomName] = (topRoomsCount[roomName] || 0) + 1;
+                    }
+
+                    // 🟢 ЗБИРАЄМО ДАНІ ДЛЯ КАРТОК
+                    let cName = String(b.name).replace(' (Ручна бронь)', '').trim() || "Клієнт";
+                    let cPhone = formatPhone(b.phone);
+                    let fDate = bDate.toLocaleDateString('uk-UA', { day: 'numeric', month: 'short' });
+                    let baseObj = { name: cName, phone: cPhone, date: fDate, row: b.row, isTrans: false };
+
+                    if (price > 0) window.bosoDetails.sum.push({...baseObj, amount: price});
+                    if (paid > 0) window.bosoDetails.paid.push({...baseObj, amount: paid});
+                    window.bosoDetails.count.push({...baseObj, amount: 0}); // Для списку всіх броней
+                    
+                    let balance = price - paid;
+                    if (balance > 0 && price > 0) window.bosoDetails.debt.push({...baseObj, amount: balance});
+
+                    let inD = parseSafeDate(b.checkIn);
+                    let outD = parseSafeDate(b.checkOut);
+                    let nights = Math.max(1, Math.round((outD - inD) / 86400000));
+                    
+                    let room = roomsList.find(r => b.cottage && b.cottage.includes(r.short));
+                    let cap = room ? room.capacity : 2;
+                    let extraPrice = room && room.extraGuestPrice !== undefined ? room.extraGuestPrice : 2500;
+                    
+                    let extraGuests = Math.max(0, (parseInt(b.guests) || 2) - cap);
+                    let feeGuests = extraGuests * extraPrice * nights;
+                    if (feeGuests > 0) {
+                        currGuests += feeGuests;
+                        window.bosoDetails.guests.push({...baseObj, amount: feeGuests});
+                    }
+                    
+                    if (b.pets === "Так" || b.pets === true) {
+                        let feePets = 500 + 200 * nights;
+                        currPets += feePets;
+                        window.bosoDetails.pets.push({...baseObj, amount: feePets});
+                    }
+                }
+                
+                if (prevStartDate && bDate >= prevStartDate && bDate <= prevEndDate) {
+                    prevSum += price; prevCount++;
+                }
+            });
+
+            transactions.forEach(t => {
+                const tDate = parseSafeDate(t.date);
+                if (tDate >= startDate && tDate <= endDate && t.type === 'income') {
+                    let tObj = { name: t.comment || "Додано вручну", phone: "", date: tDate.toLocaleDateString('uk-UA', { day: 'numeric', month: 'short' }), row: null, amount: t.amount, isTrans: true, id: t.id };
+                    
+                    if (t.category === "Плата за раннє заселення/пізнє виселення") { currEarlyLate += t.amount; window.bosoDetails.earlyLate.push(tObj); }
+                    else if (t.category === "Чан") { currVat += t.amount; window.bosoDetails.vat.push(tObj); }
+                    else if (t.category === "Оренда велосипедів") { currBikes += t.amount; window.bosoDetails.bikes.push(tObj); }
+                    else if (t.category === "Інший дохід" || t.category === "Міні-бар") { currOther += t.amount; window.bosoDetails.other.push(tObj); }
+                }
+            });
+
+            const currDebt = Math.max(0, currSum - currPaid);
+
+            function renderTrend(elId, currVal, prevVal) {
+                const el = document.getElementById(elId);
+                if (!el) return;
+                if (!prevStartDate || prevVal === 0) { el.style.display = 'none'; return; }
+                el.style.display = 'flex';
+                const diff = currVal - prevVal;
+                const percent = Math.round((Math.abs(diff) / prevVal) * 100);
+                
+                if (diff >= 0) {
+                    el.innerHTML = `<span style="background: #D1FAE5; color: #059669; padding: 2px 6px; border-radius: 4px; font-size: 11px; font-weight: 700; display: flex; align-items: center;"><svg width="10" height="10" fill="none" stroke="currentColor" stroke-width="3" viewBox="0 0 24 24" style="margin-right: 2px;"><path stroke-linecap="round" stroke-linejoin="round" d="M4.5 19.5l15-15m0 0H8.25m11.25 0v11.25"></path></svg> ${percent}%</span><span style="font-size: 11px; color: #9CA3AF; font-weight: 500;">від минулого періоду</span>`;
+                } else {
+                    el.innerHTML = `<span style="background: #FEE2E2; color: #DC2626; padding: 2px 6px; border-radius: 4px; font-size: 11px; font-weight: 700; display: flex; align-items: center;"><svg width="10" height="10" fill="none" stroke="currentColor" stroke-width="3" viewBox="0 0 24 24" style="margin-right: 2px;"><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 4.5l-15 15m0 0h11.25m-11.25 0V8.25"></path></svg> ${percent}%</span><span style="font-size: 11px; color: #9CA3AF; font-weight: 500;">від минулого періоду</span>`;
+                }
+            }
+
+            animateValue('metTotalSum', 0, currSum, 800);
+            animateValue('metPaid', 0, currPaid, 800);
+            animateValue('metDebt', 0, currDebt, 800);
+            animateValue('metCount', 0, currCount, 800);
+
+            animateValue('metPets', 0, currPets, 800);
+            animateValue('metGuests', 0, currGuests, 800);
+            animateValue('metVat', 0, currVat, 800);
+            animateValue('metBikes', 0, currBikes, 800);
+            animateValue('metEarlyLate', 0, currEarlyLate, 800);
+            animateValue('metOther', 0, currOther, 800);
+            
+            renderTrend('trendSum', currSum, prevSum);
+            renderTrend('trendCount', currCount, prevCount);
+
+            // --- СОРТУВАННЯ КАРТОК ПОСЛУГ (Flex Order) ---
+            const services = [
+                { id: 'cardPets', val: currPets },
+                { id: 'cardGuests', val: currGuests },
+                { id: 'cardVat', val: currVat },
+                { id: 'cardBikes', val: currBikes },
+                { id: 'cardEarlyLate', val: currEarlyLate },
+                { id: 'cardOther', val: currOther }
+            ];
+            services.sort((a, b) => b.val - a.val);
+            services.forEach((service, index) => {
+                let el = document.getElementById(service.id);
+                if (el) el.style.order = index;
+            });
+
+            // --- РОЗУМНИЙ ШІ-ВИСНОВОК ---
+            if(document.getElementById('aiSummaryText')) {
+                let bestRoom = "не визначено";
+                let maxReservations = 0;
+                for (let r in topRoomsCount) {
+                    if (topRoomsCount[r] > maxReservations) {
+                        maxReservations = topRoomsCount[r];
+                        bestRoom = r;
+                    }
+                }
+                let extraTotal = currPets + currGuests + currVat + currBikes + currEarlyLate + currOther;
+                let text = "";
+                if (currSum === 0) {
+                    text = "За обраний період даних ще немає. Час запускати рекламу!";
+                } else {
+                    if (currSum > prevSum && prevSum > 0) {
+                        text = `🔥 Чудовий результат! Дохід зріс на ${Math.round(((currSum - prevSum) / prevSum) * 100)}%. `;
+                    } else if (currSum < prevSum && prevSum > 0) {
+                        text = `📉 Дохід знизився на ${Math.round(((prevSum - currSum) / prevSum) * 100)}%. `;
+                    } else {
+                        text = `📊 Загальний дохід: ${currSum.toLocaleString('uk-UA')} грн. `;
+                    }
+                    text += `Хіт продажів — <b>${bestRoom}</b>. Додаткові послуги принесли <b>${extraTotal.toLocaleString('uk-UA')} грн</b>.`;
+                }
+                document.getElementById('aiSummaryText').innerHTML = text;
+            }
+
+            // (Далі йде розрахунок фінансів і виклик графіків - залишаємо як було)
+            let totalIncome = 0; 
+            let totalExpense = 0;
+            // ... тут твій існуючий код розрахунку фінансів, не видаляй його!
 
     function closeDebtModal() {
         const modal = document.getElementById('debtModal');
