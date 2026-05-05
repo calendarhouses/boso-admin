@@ -3040,6 +3040,26 @@ function bosoLeave() {
                 finProfEl.innerText = Math.round(profit).toLocaleString('uk-UA') + ' грн';
                 finProfEl.style.color = profit >= 0 ? 'var(--text-main)' : '#DC2626';
             }
+
+            // --- ОНОВЛЕННЯ ПРОГРЕС-БАРІВ ---
+            let maxDetail = Math.max(currPets, currGuests, currVat, currBikes, currEarlyLate, currOther, 1); // Шукаємо максимум для 100%
+            if(document.getElementById('pbPets')) document.getElementById('pbPets').style.width = (currPets / maxDetail * 100) + '%';
+            if(document.getElementById('pbGuests')) document.getElementById('pbGuests').style.width = (currGuests / maxDetail * 100) + '%';
+            if(document.getElementById('pbVat')) document.getElementById('pbVat').style.width = (currVat / maxDetail * 100) + '%';
+            if(document.getElementById('pbBikes')) document.getElementById('pbBikes').style.width = (currBikes / maxDetail * 100) + '%';
+            if(document.getElementById('pbEarlyLate')) document.getElementById('pbEarlyLate').style.width = (currEarlyLate / maxDetail * 100) + '%';
+            if(document.getElementById('pbOther')) document.getElementById('pbOther').style.width = (currOther / maxDetail * 100) + '%';
+
+            // --- РОЗУМНИЙ ШІ-ВИСНОВОК ---
+            if(document.getElementById('aiSummaryText')) {
+                if (currSum > prevSum && prevSum > 0) {
+                    document.getElementById('aiSummaryText').innerText = `Чудовий результат! Ваш дохід зріс на ${Math.round(((currSum - prevSum) / prevSum) * 100)}% порівняно з минулим періодом. Продовжуйте в тому ж дусі!`;
+                } else if (currSum < prevSum && prevSum > 0) {
+                    document.getElementById('aiSummaryText').innerText = `Дохід знизився на ${Math.round(((prevSum - currSum) / prevSum) * 100)}%. Можливо, варто запустити акцію або запропонувати знижки постійним гостям.`;
+                } else {
+                    document.getElementById('aiSummaryText').innerText = `Показники стабільні. Загальний дохід за обраний період складає ${currSum.toLocaleString('uk-UA')} грн.`;
+                }
+            }
             
             renderCharts(startDate, endDate);
         }
@@ -3047,6 +3067,24 @@ function bosoLeave() {
         // --- ГРАФІКИ (CHART.JS) ---
         let roomsChartInstance = null;
         let sourceChartInstance = null;
+        let revenueLineChartInstance = null; // Змінна для нового лінійного графіка
+        
+        let currentChartMode = 'count'; // Стан перемикача
+        let globalRoomCounts = {};
+        let globalRoomMoney = {};
+
+        // Функція для роботи перемикача "Броні / Дохід"
+        function toggleRoomsChart(mode) {
+            currentChartMode = mode;
+            document.getElementById('chartModeCount').classList.toggle('active', mode === 'count');
+            document.getElementById('chartModeMoney').classList.toggle('active', mode === 'money');
+
+            if (roomsChartInstance) {
+                roomsChartInstance.data.datasets[0].data = mode === 'count' ? Object.values(globalRoomCounts) : Object.values(globalRoomMoney);
+                roomsChartInstance.data.datasets[0].label = mode === 'count' ? 'Кількість броней' : 'Дохід (грн)';
+                roomsChartInstance.update();
+            }
+        }
 
         function getBookingWord(count) {
             let n = Math.abs(parseInt(count)) % 100;
@@ -3058,10 +3096,12 @@ function bosoLeave() {
         }
         
         function renderCharts(startDate, endDate) {
-            const roomCounts = {};
+            globalRoomCounts = {};
+            globalRoomMoney = {};
             const sourceCounts = {};
+            const revenueTimeline = {}; // Дані для лінії доходу
             
-            roomsList.forEach(r => roomCounts[r.name] = 0);
+            roomsList.forEach(r => { globalRoomCounts[r.name] = 0; globalRoomMoney[r.name] = 0; });
             ['Instagram', 'Telegram Бот', 'Сайт', 'Телефон'].forEach(s => sourceCounts[s] = 0);
 
             allBookings.forEach(b => {
@@ -3069,31 +3109,38 @@ function bosoLeave() {
                 const bDate = parseSafeDate(b.checkIn);
                 
                 if (bDate >= startDate && bDate <= endDate) {
+                    // Дані для колонок (Котеджі)
                     if (b.cottage) {
                         const matchedRoom = roomsList.find(r => b.cottage.includes(r.name) || b.cottage.includes(r.short));
                         const roomName = matchedRoom ? matchedRoom.name : b.cottage;
-                        roomCounts[roomName] = (roomCounts[roomName] || 0) + 1;
+                        globalRoomCounts[roomName] = (globalRoomCounts[roomName] || 0) + 1;
+                        globalRoomMoney[roomName] = (globalRoomMoney[roomName] || 0) + Number(b.totalPrice || 0);
                     }
+                    // Дані для бублика (Джерела)
                     const src = b.source || 'Адмінка';
                     sourceCounts[src] = (sourceCounts[src] || 0) + 1;
+
+                    // Дані для лінійного графіка (групуємо по днях або місяцях)
+                    let tKey = bDate.toLocaleDateString('uk-UA', { day: 'numeric', month: 'short' });
+                    revenueTimeline[tKey] = (revenueTimeline[tKey] || 0) + Number(b.totalPrice || 0);
                 }
             });
 
             Chart.defaults.font.family = "'Inter', sans-serif";
             Chart.defaults.color = '#6B7280';
-            
             const bosoColors = ['#556B2F', '#D2B48C', '#2C2C2C', '#8FBC8F', '#BC8F8F', '#A9A9A9'];
 
+            // 1. Графік популярності котеджів
             const ctxRooms = document.getElementById('roomsChart').getContext('2d');
             if (roomsChartInstance) roomsChartInstance.destroy(); 
             
             roomsChartInstance = new Chart(ctxRooms, {
                 type: 'bar',
                 data: {
-                    labels: Object.keys(roomCounts),
+                    labels: Object.keys(globalRoomCounts),
                     datasets: [{
-                        label: 'Кількість броней',
-                        data: Object.values(roomCounts),
+                        label: currentChartMode === 'count' ? 'Кількість броней' : 'Дохід (грн)',
+                        data: currentChartMode === 'count' ? Object.values(globalRoomCounts) : Object.values(globalRoomMoney),
                         backgroundColor: bosoColors[0],
                         borderRadius: 6,
                         borderSkipped: false,
@@ -3101,34 +3148,73 @@ function bosoLeave() {
                     }]
                 },
                 options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    layout: { padding: { top: 20 } }, 
-                    plugins: {
-                        legend: { display: false },
-                        tooltip: {
-                            backgroundColor: '#111827',
-                            padding: 12,
-                            cornerRadius: 8,
-                            displayColors: false,
-                            callbacks: {
-                                label: function(context) { return ` ${context.raw} ${getBookingWord(context.raw)}`; }
-                            }
-                        }
-                    },
+                    responsive: true, maintainAspectRatio: false, layout: { padding: { top: 20 } }, 
+                    plugins: { legend: { display: false } },
                     scales: {
-                        y: { 
-                            beginAtZero: true, 
-                            ticks: { stepSize: 1, padding: 10, color: '#9CA3AF', font: {size: 11} }, 
-                            grid: { display: false, drawBorder: false } 
-                        },
-                        x: { 
-                            ticks: { color: '#9CA3AF', font: {size: 11} },
-                            grid: { display: false, drawBorder: false } 
-                        }
+                        y: { beginAtZero: true, ticks: { padding: 10, color: '#9CA3AF' }, grid: { display: false } },
+                        x: { ticks: { color: '#9CA3AF' }, grid: { display: false } }
                     } 
                 } 
             });
+
+            // 2. Графік джерел (Донат)
+            const ctxSource = document.getElementById('sourceChart').getContext('2d');
+            if (sourceChartInstance) sourceChartInstance.destroy();
+            const activeSources = Object.keys(sourceCounts).filter(k => sourceCounts[k] > 0);
+            const activeSourceValues = activeSources.map(k => sourceCounts[k]);
+
+            sourceChartInstance = new Chart(ctxSource, {
+                type: 'doughnut',
+                data: {
+                    labels: activeSources.length > 0 ? activeSources : ['Немає даних'],
+                    datasets: [{
+                        data: activeSources.length > 0 ? activeSourceValues : [1],
+                        backgroundColor: activeSources.length > 0 ? bosoColors : ['#F3F4F6'],
+                        borderWidth: 0, hoverOffset: 4
+                    }]
+                },
+                options: {
+                    responsive: true, maintainAspectRatio: false, layout: { padding: 15 }, cutout: '75%', 
+                    plugins: { legend: { position: 'bottom', labels: { padding: 20, usePointStyle: true, pointStyle: 'circle' } } }
+                }
+            });
+
+            // 3. НОВИЙ Графік динаміки доходу (Лінія)
+            const ctxLine = document.getElementById('revenueLineChart').getContext('2d');
+            if (revenueLineChartInstance) revenueLineChartInstance.destroy();
+            
+            // Сортуємо ключі дат для правильного відображення на осі Х
+            const sortedDates = Object.keys(revenueTimeline); 
+            const revenueValues = sortedDates.map(k => revenueTimeline[k]);
+
+            revenueLineChartInstance = new Chart(ctxLine, {
+                type: 'line',
+                data: {
+                    labels: sortedDates,
+                    datasets: [{
+                        label: 'Дохід (грн)',
+                        data: revenueValues,
+                        borderColor: '#556B2F',
+                        backgroundColor: 'rgba(85, 107, 47, 0.1)',
+                        borderWidth: 3,
+                        fill: true,
+                        tension: 0.4, // Робить лінію плавною
+                        pointBackgroundColor: '#FFFFFF',
+                        pointBorderColor: '#556B2F',
+                        pointBorderWidth: 2,
+                        pointRadius: 4
+                    }]
+                },
+                options: {
+                    responsive: true, maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                    scales: {
+                        y: { beginAtZero: true, grid: { color: '#F3F4F6' }, border: { dash: [4, 4] } },
+                        x: { grid: { display: false } }
+                    }
+                }
+            });
+        }
 
             const ctxSource = document.getElementById('sourceChart').getContext('2d');
             if (sourceChartInstance) sourceChartInstance.destroy();
