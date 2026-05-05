@@ -688,9 +688,12 @@ input[type="number"] {
                     </div>
                     <!-- 🟥 КЛІКАБЕЛЬНИЙ БОРГ -->
                     <div class="metric-card" style="cursor: pointer; transition: 0.3s; position: relative;" onclick="openDebtModal()" onmouseover="this.style.transform='translateY(-4px)'; this.style.boxShadow='0 12px 20px rgba(220, 38, 38, 0.15)';" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 10px 30px rgba(0,0,0,0.04)';">
-                        <div class="metric-icon" style="background:#FEE2E2; color:#DC2626;"><svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg></div>
-                        <span class="metric-title">Борг клієнтів <span style="font-size: 10px; color:#EF4444; background: #FEF2F2; padding: 2px 6px; border-radius: 4px; margin-left: 4px; border: 1px solid #FECACA;">Деталі &rarr;</span></span>
-                        <span class="metric-val" id="metDebt" style="color: #DC2626;">0 грн</span>
+                        <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+                            <div class="metric-icon" style="background:#FEE2E2; color:#DC2626; margin-bottom: 8px;"><svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg></div>
+                            <span style="font-size: 10px; font-weight: 700; color:#DC2626; background: #FEF2F2; padding: 4px 8px; border-radius: 6px; border: 1px solid #FECACA; transition: 0.2s;">Деталі &rarr;</span>
+                        </div>
+                        <span class="metric-title" style="margin-bottom: 4px; display: block;">Борг клієнтів</span>
+                        <span class="metric-val" id="metDebt" style="color: #DC2626; margin-top: 0;">0 грн</span>
                     </div>
                     <div class="metric-card">
                         <div class="metric-icon" style="background:#EFF6FF; color:#2563EB;"><svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"></path></svg></div>
