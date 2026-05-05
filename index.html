@@ -968,8 +968,8 @@ input[type="number"] {
                 </span>
                 <button class="close-btn" onclick="document.getElementById('uniDetailsModal').classList.remove('active')">✕</button>
             </div>
-            <!-- 🟢 ВИДАЛИЛИ margin/padding з inline-стилів, працює чистий CSS -->
-            <div class="modal-body" id="uniModalBody" style="background: #FDFCFB;">
+           <!-- 🟢 Додали padding безпосередньо в контейнер -->
+            <div class="modal-body" id="uniModalBody" style="padding: 20px; overflow-y: auto; background: #FDFCFB; max-height: 60vh;">
                 <!-- Тут буде генеруватися красивий список -->
             </div>
         </div>
@@ -2938,9 +2938,9 @@ function bosoLeave() {
 
                     let tgBtn = item.phone ? `<a href="https://t.me/+${item.phone}" target="_blank" style="flex: 1; background: #EFF6FF; color: #2563EB; border: 1px solid #BFDBFE; padding: 8px; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer; transition: 0.2s; text-decoration: none; display: flex; align-items: center; justify-content: center; gap: 6px;" onmouseover="this.style.background='#DBEAFE'" onmouseout="this.style.background='#EFF6FF'"><svg width="16" height="16" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm4.64 6.8c-.15 1.58-.8 5.42-1.13 7.19-.14.75-.42 1-.68 1.03-.58.05-1.02-.38-1.58-.75-.88-.58-1.38-.94-2.23-1.5-.99-.65-.35-1.01.22-1.59.15-.15 2.71-2.48 2.76-2.69a.2.2 0 00-.05-.18c-.06-.05-.14-.03-.21-.02-.09.02-1.46.93-4.12 2.73-.39.27-.74.4-1.05.39-.34-.01-1-.19-1.48-.35-.6-.19-.11-.29.31-.48 1.18-.54 3.93-1.68 5.25-2.24 2.5-.1 3.02-1.28 3.12-1.3.02 0 .06-.01.1 0 .04.01.07.03.08.06.01.03.02.08.01.14z"/></svg> Telegram</a>` : '';
 
-                    // 🟢 ВИДАЛЕНО margin, ТЕПЕР НІЧОГО НЕ ОБРІЗАЄТЬСЯ ЗНИЗУ
+                    // 🟢 ТУТ ЗАМІНИВ margin: 16px 20px; НА margin-bottom: 16px; (остання картка не буде мати цього відступу завдяки CSS flex, або просто падінг модалки все вирівняє)
                     html += `
-                    <div style="display: flex; flex-direction: column; padding: 16px; background: #FFFFFF; border: 1px solid #E5E7EB; border-radius: 12px; margin: 0; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.03); transition: 0.2s;" onmouseover="this.style.borderColor='${colorHex}'; this.style.boxShadow='0 10px 15px -3px rgba(0,0,0,0.08)'" onmouseout="this.style.borderColor='#E5E7EB'; this.style.boxShadow='0 4px 6px -1px rgba(0, 0, 0, 0.03)'">
+                    <div style="display: flex; flex-direction: column; padding: 16px; background: #FFFFFF; border: 1px solid #E5E7EB; border-radius: 12px; margin-bottom: 16px; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.03); transition: 0.2s;" onmouseover="this.style.borderColor='${colorHex}'; this.style.boxShadow='0 10px 15px -3px rgba(0,0,0,0.08)'" onmouseout="this.style.borderColor='#E5E7EB'; this.style.boxShadow='0 4px 6px -1px rgba(0, 0, 0, 0.03)'">
                         
                         <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 16px;">
                             <div style="display: flex; gap: 12px; align-items: center;">
@@ -2949,7 +2949,7 @@ function bosoLeave() {
                                 </div>
                                 <div>
                                     <div style="font-weight: 700; color: #111827; font-size: 15px; margin-bottom: 2px;">${item.name}</div>
-                                    <div style="font-size: 12px; color: #6B7280;">Дата: <strong style="color: #4B5563;">${item.date}</strong></div>
+                                    <div style="font-size: 12px; color: #6B7280;">Дати: <strong style="color: #4B5563;">${item.date}</strong></div>
                                 </div>
                             </div>
                             <div style="text-align: right; background: ${bgHex}; padding: 6px 10px; border-radius: 8px;">
