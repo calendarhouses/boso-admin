@@ -1181,6 +1181,7 @@ function getVisitWord(count) {
                 document.getElementById('mainActionButton').style.display = 'none'; 
                 switchReportTab('finance', document.querySelectorAll('.r-tab')[1]);
         }
+     }
 
         // Логіка підменю Налаштувань
         function toggleSettingsMenu() {
@@ -3046,11 +3047,10 @@ function bosoLeave() {
             
             document.getElementById('rep-' + tabName).style.display = 'block';
             
-           if (tabName === 'analytics') {
-                calculateAnalytics(); // 🟢 Запускаємо математику!
-                // initCharts(); 
-            }
-        }
+           if (tabName === 'analytics' || tabName === 'finance') {
+                calculateAnalytics(); // 🟢 Запускаємо математику для обох вкладок!
+            }
+        }
     </script>
 </body>
 </html>
