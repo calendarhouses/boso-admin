@@ -666,12 +666,24 @@ input[type="number"] {
 
             <!-- Вкладка 1: АНАЛІТИКА -->
             <div id="rep-analytics" style="display: none;">
+                
+                <h3 class="section-title" style="margin-bottom: 16px; margin-top: 8px;">Головні показники</h3>
                 <div class="metrics-grid">
                     <div class="metric-card">
                         <div class="metric-icon" style="background:#F0FDF4; color:#059669;"><svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg></div>
-                        <span class="metric-title">Сума бронювань</span>
+                        <span class="metric-title">Сума бронювань (Прогноз)</span>
                         <span class="metric-val" id="metTotalSum">0 грн</span>
                         <div id="trendSum" style="display: none; align-items: center; gap: 6px; margin-top: auto; padding-top: 12px;"></div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-icon" style="background:#D1FAE5; color:#047857;"><svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg></div>
+                        <span class="metric-title">Фактично оплачено</span>
+                        <span class="metric-val" id="metPaid" style="color: #059669;">0 грн</span>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-icon" style="background:#FEE2E2; color:#DC2626;"><svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg></div>
+                        <span class="metric-title">Борг клієнтів</span>
+                        <span class="metric-val" id="metDebt" style="color: #DC2626;">0 грн</span>
                     </div>
                     <div class="metric-card">
                         <div class="metric-icon" style="background:#EFF6FF; color:#2563EB;"><svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"></path></svg></div>
@@ -684,6 +696,34 @@ input[type="number"] {
                         <span class="metric-title">Середній чек</span>
                         <span class="metric-val" id="metAvg">0 грн</span>
                         <div id="trendAvg" style="display: none; align-items: center; gap: 6px; margin-top: auto; padding-top: 12px;"></div>
+                    </div>
+                </div>
+
+                <h3 class="section-title" style="margin-bottom: 16px; margin-top: 16px;">Деталізація доходу (продані послуги)</h3>
+                <div class="metrics-grid" style="grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));">
+                    <div class="metric-card" style="padding: 16px;">
+                        <span class="metric-title" style="font-size: 11px;">Тварини</span>
+                        <span class="metric-val" id="metPets" style="font-size: 20px;">0 грн</span>
+                    </div>
+                    <div class="metric-card" style="padding: 16px;">
+                        <span class="metric-title" style="font-size: 11px;">Дод. гості</span>
+                        <span class="metric-val" id="metGuests" style="font-size: 20px;">0 грн</span>
+                    </div>
+                    <div class="metric-card" style="padding: 16px;">
+                        <span class="metric-title" style="font-size: 11px;">Чан</span>
+                        <span class="metric-val" id="metVat" style="font-size: 20px;">0 грн</span>
+                    </div>
+                    <div class="metric-card" style="padding: 16px;">
+                        <span class="metric-title" style="font-size: 11px;">Електровелосипеди</span>
+                        <span class="metric-val" id="metBikes" style="font-size: 20px;">0 грн</span>
+                    </div>
+                    <div class="metric-card" style="padding: 16px;">
+                        <span class="metric-title" style="font-size: 11px;">Гнучкий графік</span>
+                        <span class="metric-val" id="metEarlyLate" style="font-size: 20px;">0 грн</span>
+                    </div>
+                    <div class="metric-card" style="padding: 16px;">
+                        <span class="metric-title" style="font-size: 11px;">Інший дохід</span>
+                        <span class="metric-val" id="metOther" style="font-size: 20px;">0 грн</span>
                     </div>
                 </div>
 
@@ -2734,14 +2774,13 @@ function bosoLeave() {
     if (tt) tt.classList.remove('show');
 }
 
-        // --- АНАЛІТИКА (МАТЕМАТИКА З ТРЕНДАМИ) ---
+        // --- АНАЛІТИКА (МАТЕМАТИКА З ТРЕНДАМИ ТА ДЕТАЛІЗАЦІЄЮ) ---
         function calculateAnalytics() {
             const period = document.getElementById('reportPeriodVal').value;
             const now = new Date();
             let startDate, endDate;
-            let prevStartDate, prevEndDate; // Дати для попереднього періоду
+            let prevStartDate, prevEndDate;
 
-            // Визначаємо межі поточного і попереднього періодів
             if (period === 'current') {
                 startDate = new Date(now.getFullYear(), now.getMonth(), 1);
                 endDate = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59);
@@ -2762,7 +2801,6 @@ function bosoLeave() {
                 if (dates.length === 2) {
                     startDate = new Date(dates[0]); startDate.setHours(0,0,0,0);
                     endDate = new Date(dates[1]); endDate.setHours(23,59,59,999);
-                    // Рахуємо різницю в днях, щоб відмотати назад такий самий період
                     const diffTime = Math.abs(endDate - startDate);
                     prevEndDate = new Date(startDate.getTime() - (1000 * 60 * 60 * 24));
                     prevEndDate.setHours(23,59,59,999);
@@ -2773,147 +2811,152 @@ function bosoLeave() {
                 }
             } else {
                 startDate = new Date(2000, 0, 1); endDate = new Date(2100, 0, 1);
-                prevStartDate = null; prevEndDate = null; // Для "За весь час" немає трендів
+                prevStartDate = null; prevEndDate = null;
             }
 
-            let currSum = 0, currCount = 0;
+            // Головні показники
+            let currSum = 0, currCount = 0, currPaid = 0;
             let prevSum = 0, prevCount = 0;
+            
+            // Деталізація (Проданий обсяг послуг)
+            let currGuests = 0, currPets = 0;
+            let currEarlyLate = 0, currVat = 0, currBikes = 0, currOther = 0;
 
-            // Перебираємо ВСІ броні з бази
+            // Перебираємо броні
             allBookings.forEach(b => {
                 if (String(b.status).toLowerCase().includes('скас')) return; 
                 const bDate = parseSafeDate(b.checkIn);
                 const price = Number(b.totalPrice) || 0;
+                const paid = Number(b.paidAmount) || 0;
                 
-                // Рахуємо поточний період
                 if (bDate >= startDate && bDate <= endDate) {
                     currSum += price;
+                    currPaid += paid;
                     currCount++;
+
+                    // Вираховуємо вартість дод. гостей та тварин (для Аналітики продажів)
+                    let inD = parseSafeDate(b.checkIn);
+                    let outD = parseSafeDate(b.checkOut);
+                    let nights = Math.max(1, Math.round((outD - inD) / 86400000));
+                    
+                    let room = roomsList.find(r => b.cottage && b.cottage.includes(r.short));
+                    let cap = room ? room.capacity : 2;
+                    let extraPrice = room && room.extraGuestPrice !== undefined ? room.extraGuestPrice : 2500;
+                    
+                    let extraGuests = Math.max(0, (parseInt(b.guests) || 2) - cap);
+                    currGuests += (extraGuests * extraPrice * nights);
+                    
+                    if (b.pets === "Так" || b.pets === true) {
+                        currPets += (500 + 200 * nights);
+                    }
                 }
-                // Рахуємо минулий період (якщо є)
+                
                 if (prevStartDate && bDate >= prevStartDate && bDate <= prevEndDate) {
                     prevSum += price;
                     prevCount++;
                 }
             });
 
+            // Перебираємо ручні транзакції для карток деталізації
+            transactions.forEach(t => {
+                const tDate = parseSafeDate(t.date);
+                if (tDate >= startDate && tDate <= endDate && t.type === 'income') {
+                    if (t.category === "Плата за раннє заселення/пізнє виселення") currEarlyLate += t.amount;
+                    else if (t.category === "Чан") currVat += t.amount;
+                    else if (t.category === "Оренда велосипедів") currBikes += t.amount;
+                    else if (t.category === "Інший дохід" || t.category === "Міні-бар") currOther += t.amount;
+                }
+            });
+
             const currAvg = currCount > 0 ? Math.round(currSum / currCount) : 0;
             const prevAvg = prevCount > 0 ? Math.round(prevSum / prevCount) : 0;
+            const currDebt = Math.max(0, currSum - currPaid);
 
-            // Функція для відмальовки бейджа
             function renderTrend(elId, currVal, prevVal) {
                 const el = document.getElementById(elId);
-                if (!prevStartDate || prevVal === 0) {
-                    el.style.display = 'none'; // Ховаємо, якщо нема з чим порівнювати
-                    return;
-                }
+                if (!el) return;
+                if (!prevStartDate || prevVal === 0) { el.style.display = 'none'; return; }
                 el.style.display = 'flex';
-                
                 const diff = currVal - prevVal;
                 const percent = Math.round((Math.abs(diff) / prevVal) * 100);
                 
                 if (diff >= 0) {
-                    el.innerHTML = `
-                        <span style="background: #D1FAE5; color: #059669; padding: 2px 6px; border-radius: 4px; font-size: 11px; font-weight: 700; display: flex; align-items: center;">
-                            <svg width="10" height="10" fill="none" stroke="currentColor" stroke-width="3" viewBox="0 0 24 24" style="margin-right: 2px;"><path stroke-linecap="round" stroke-linejoin="round" d="M4.5 19.5l15-15m0 0H8.25m11.25 0v11.25"></path></svg> 
-                            ${percent}%
-                        </span>
-                        <span style="font-size: 11px; color: #9CA3AF; font-weight: 500;">від минулого періоду</span>
-                    `;
+                    el.innerHTML = `<span style="background: #D1FAE5; color: #059669; padding: 2px 6px; border-radius: 4px; font-size: 11px; font-weight: 700; display: flex; align-items: center;"><svg width="10" height="10" fill="none" stroke="currentColor" stroke-width="3" viewBox="0 0 24 24" style="margin-right: 2px;"><path stroke-linecap="round" stroke-linejoin="round" d="M4.5 19.5l15-15m0 0H8.25m11.25 0v11.25"></path></svg> ${percent}%</span><span style="font-size: 11px; color: #9CA3AF; font-weight: 500;">від минулого періоду</span>`;
                 } else {
-                    el.innerHTML = `
-                        <span style="background: #FEE2E2; color: #DC2626; padding: 2px 6px; border-radius: 4px; font-size: 11px; font-weight: 700; display: flex; align-items: center;">
-                            <svg width="10" height="10" fill="none" stroke="currentColor" stroke-width="3" viewBox="0 0 24 24" style="margin-right: 2px;"><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 4.5l-15 15m0 0h11.25m-11.25 0V8.25"></path></svg> 
-                            ${percent}%
-                        </span>
-                        <span style="font-size: 11px; color: #9CA3AF; font-weight: 500;">від минулого періоду</span>
-                    `;
+                    el.innerHTML = `<span style="background: #FEE2E2; color: #DC2626; padding: 2px 6px; border-radius: 4px; font-size: 11px; font-weight: 700; display: flex; align-items: center;"><svg width="10" height="10" fill="none" stroke="currentColor" stroke-width="3" viewBox="0 0 24 24" style="margin-right: 2px;"><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 4.5l-15 15m0 0h11.25m-11.25 0V8.25"></path></svg> ${percent}%</span><span style="font-size: 11px; color: #9CA3AF; font-weight: 500;">від минулого періоду</span>`;
                 }
             }
 
-            // Оновлюємо цифри
+            // Оновлюємо HTML карток Аналітики
             document.getElementById('metTotalSum').innerText = currSum.toLocaleString('uk-UA') + ' грн';
+            document.getElementById('metPaid').innerText = currPaid.toLocaleString('uk-UA') + ' грн';
+            document.getElementById('metDebt').innerText = currDebt.toLocaleString('uk-UA') + ' грн';
             document.getElementById('metCount').innerText = currCount;
             document.getElementById('metAvg').innerText = currAvg.toLocaleString('uk-UA') + ' грн';
+
+            document.getElementById('metPets').innerText = currPets.toLocaleString('uk-UA') + ' грн';
+            document.getElementById('metGuests').innerText = currGuests.toLocaleString('uk-UA') + ' грн';
+            document.getElementById('metVat').innerText = currVat.toLocaleString('uk-UA') + ' грн';
+            document.getElementById('metBikes').innerText = currBikes.toLocaleString('uk-UA') + ' грн';
+            document.getElementById('metEarlyLate').innerText = currEarlyLate.toLocaleString('uk-UA') + ' грн';
+            document.getElementById('metOther').innerText = currOther.toLocaleString('uk-UA') + ' грн';
             
-            // Малюємо тренди
-            renderTrend('trendSum', currSum, prevSum);
-            renderTrend('trendCount', currCount, prevCount);
-            renderTrend('trendAvg', currAvg, prevAvg);
-            
+            renderTrend('trendSum', currSum, prevSum);
+            renderTrend('trendCount', currCount, prevCount);
+            renderTrend('trendAvg', currAvg, prevAvg);
+
             // --- РОЗРАХУНОК ФІНАНСІВ (ТІЛЬКИ ЖИВІ ГРОШІ) ---
             let totalIncome = 0; 
             let totalExpense = 0;
-            
-            // Об'єкт для красивої розбивки системних доходів з броней
             let incomeBreakdown = { base: 0, guests: 0, pets: 0 };
 
-            // 1. Проходимося по бронях і витягуємо РЕАЛЬНО ОПЛАЧЕНІ гроші
             allBookings.forEach(b => {
                 if (String(b.status).toLowerCase().includes('скас')) return; 
                 const bDate = parseSafeDate(b.checkIn);
-                
                 if (bDate >= startDate && bDate <= endDate) {
                     let paid = Number(b.paidAmount) || 0;
                     let total = Number(b.totalPrice) || 0;
                     
                     if (paid > 0) {
-                        totalIncome += paid; // Додаємо до загального доходу тільки внесені гроші
-                        
-                        // Рахуємо пропорцію (якщо внесли 50% авансу, то 50% йде на тварин, 50% на базу)
+                        totalIncome += paid;
                         let ratio = (total > 0) ? (paid / total) : 1;
-
-                        // Відновлюємо математику броні для розбивки
                         let inD = parseSafeDate(b.checkIn);
                         let outD = parseSafeDate(b.checkOut);
                         let nights = Math.max(1, Math.round((outD - inD) / 86400000));
-                        
                         let room = roomsList.find(r => b.cottage && b.cottage.includes(r.short));
                         let cap = room ? room.capacity : 2;
-                        let extraGuestPrice = room && room.extraGuestPrice !== undefined ? room.extraGuestPrice : 2500;
-                        
+                        let extraPrice = room && room.extraGuestPrice !== undefined ? room.extraGuestPrice : 2500;
                         let extraGuests = Math.max(0, (parseInt(b.guests) || 2) - cap);
-                        let feeGuests = extraGuests * extraGuestPrice * nights;
-                        let feePets = (b.pets === "Так") ? (500 + 200 * nights) : 0;
+                        let feeGuests = extraGuests * extraPrice * nights;
+                        let feePets = (b.pets === "Так" || b.pets === true) ? (500 + 200 * nights) : 0;
 
-                        // Записуємо розбиті суми з урахуванням пропорції оплати
-                        let actPets = feePets * ratio;
-                        let actGuests = feeGuests * ratio;
-                        let actBase = paid - actPets - actGuests; 
-
-                        incomeBreakdown.pets += actPets;
-                        incomeBreakdown.guests += actGuests;
-                        incomeBreakdown.base += actBase;
+                        incomeBreakdown.pets += (feePets * ratio);
+                        incomeBreakdown.guests += (feeGuests * ratio);
+                        incomeBreakdown.base += (paid - (feePets * ratio) - (feeGuests * ratio));
                     }
                 }
             });
 
-            // 2. Фільтруємо ручні транзакції (чани, прибирання, реклама)
             let filteredTrans = transactions.filter(t => {
                 const tDate = parseSafeDate(t.date);
                 return tDate >= startDate && tDate <= endDate;
             }).sort((a, b) => new Date(b.date) - new Date(a.date));
 
-            // Додаємо ручні транзакції до загальних сум
             filteredTrans.forEach(t => {
                 if (t.type === 'income') totalIncome += t.amount;
                 else totalExpense += t.amount;
             });
 
-            // 3. МАЛЮЄМО ТАБЛИЦЮ ФІНАНСІВ
             const tbodyFinance = document.getElementById('financeTableBody');
             tbodyFinance.innerHTML = '';
 
-            // Функція для створення стильних рядків таблиці
             function renderFinRow(title, desc, amount, type, isSystem, id = null) {
                 if (Math.round(amount) <= 0) return '';
                 const isInc = type === 'income';
                 const badge = isInc ? `<span class="badge confirmed" style="background:#D1FAE5; color:#059669;">Дохід</span>` : `<span class="badge cancelled" style="background:#FEE2E2; color:#DC2626;">Витрата</span>`;
                 const sign = isInc ? '+' : '-';
                 const color = isInc ? '#059669' : '#DC2626';
-                
-                // Якщо системне (з броней) - вішаємо бейдж Auto, якщо ручне - кнопки ред/вид
-                const actions = isSystem ? `<span style="color:#9CA3AF; font-size:12px; font-weight:700; padding:4px 8px; background:#F3F4F6; border-radius:6px; letter-spacing:0.5px;">Auto</span>` : `
+                const actions = isSystem ? `<span style="color:#9CA3AF; font-size:12px; font-weight:700; padding:4px 8px; background:#F3F4F6; border-radius:6px;">Auto</span>` : `
                     <div style="display: flex; gap: 8px;">
                         <button class="btn-icon-only" onclick="openGenericModal('transaction', ${id})"><svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg></button>
                         <button class="btn-icon-only danger" onclick="deleteGenericItem('transaction', ${id})"><svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg></button>
@@ -2927,12 +2970,10 @@ function bosoLeave() {
                 </tr>`;
             }
 
-            // Виводимо розбивку системних доходів
             tbodyFinance.innerHTML += renderFinRow("Оренда котеджів", "Оплачена базова вартість", incomeBreakdown.base, 'income', true);
             tbodyFinance.innerHTML += renderFinRow("Додаткові гості", "Оплати за додаткові місця", incomeBreakdown.guests, 'income', true);
             tbodyFinance.innerHTML += renderFinRow("Тварини", "Оплати за розміщення улюбленців", incomeBreakdown.pets, 'income', true);
 
-            // Виводимо ручні транзакції
             filteredTrans.forEach(t => {
                 const dateStr = parseSafeDate(t.date).toLocaleDateString('uk-UA', {day: 'numeric', month: 'short'});
                 tbodyFinance.innerHTML += renderFinRow(t.category, t.comment || dateStr, t.amount, t.type, false, t.id);
@@ -2942,16 +2983,14 @@ function bosoLeave() {
                 tbodyFinance.innerHTML = '<tr><td colspan="4" style="text-align: center; color: #9CA3AF; padding: 40px;">Немає фінансових операцій за цей період</td></tr>';
             }
 
-            // Оновлюємо фінансові картки (Топ-віджети)
             const profit = totalIncome - totalExpense;
             document.getElementById('finIncome').innerText = Math.round(totalIncome).toLocaleString('uk-UA') + ' грн';
             document.getElementById('finExpense').innerText = Math.round(totalExpense).toLocaleString('uk-UA') + ' грн';
             document.getElementById('finProfit').innerText = Math.round(profit).toLocaleString('uk-UA') + ' грн';
             document.getElementById('finProfit').style.color = profit >= 0 ? 'var(--text-main)' : '#DC2626';
-            
-            // Малюємо графіки
-            renderCharts(startDate, endDate);
-        }
+            
+            renderCharts(startDate, endDate);
+        }
 
         // --- ГРАФІКИ (CHART.JS) ---
         let roomsChartInstance = null;
