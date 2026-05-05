@@ -3058,9 +3058,6 @@ function bosoLeave() {
                     
                     let balance = price - paid;
                     if (balance > 0 && price > 0) window.bosoDetails.debt.push({...baseObj, amount: balance});
-
-                    let inD = parseSafeDate(b.checkIn);
-                    let outD = parseSafeDate(b.checkOut);
                     let nights = Math.max(1, Math.round((outD - inD) / 86400000));
                     
                     let room = roomsList.find(r => b.cottage && b.cottage.includes(r.short));
