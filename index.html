@@ -3089,23 +3089,6 @@ function bosoLeave() {
         function closeDebtModal() {
             document.getElementById('debtModal').classList.remove('active');
         } 
-        
-        let currentChartMode = 'count'; // Стан перемикача
-        let globalRoomCounts = {};
-        let globalRoomMoney = {};
-
-        // Функція для роботи перемикача "Броні / Дохід"
-        function toggleRoomsChart(mode) {
-            currentChartMode = mode;
-            document.getElementById('chartModeCount').classList.toggle('active', mode === 'count');
-            document.getElementById('chartModeMoney').classList.toggle('active', mode === 'money');
-
-            if (roomsChartInstance) {
-                roomsChartInstance.data.datasets[0].data = mode === 'count' ? Object.values(globalRoomCounts) : Object.values(globalRoomMoney);
-                roomsChartInstance.data.datasets[0].label = mode === 'count' ? 'Кількість броней' : 'Дохід (грн)';
-                roomsChartInstance.update();
-            }
-        }
 
         function getBookingWord(count) {
             let n = Math.abs(parseInt(count)) % 100;
