@@ -2870,9 +2870,6 @@ function bosoLeave() {
             let debtorsHtml = ''; // 🟢 Для списку боржників
             let topRoomsCount = {}; // 🟢 Для AI висновку
 
-            let debtorsHtml = ''; // Для модалки боргів
-            let topRoomsCount = {}; // Для AI висновку
-
             allBookings.forEach(b => {
                 if (String(b.status).toLowerCase().includes('скас')) return; 
                 const bDate = parseSafeDate(b.checkIn);
@@ -2967,14 +2964,6 @@ function bosoLeave() {
                     else if (t.category === "Інший дохід" || t.category === "Міні-бар") currOther += t.amount;
                 }
             });
-
-            // Заповнюємо модалку боргів
-            let debtBody = document.getElementById('debtModalBody');
-            if (debtorsHtml === '') {
-                debtBody.innerHTML = '<div style="padding: 30px; text-align: center; color: #6B7280; font-size: 14px;">Немає боржників за цей період. Всі молодці! 🎉</div>';
-            } else {
-                debtBody.innerHTML = debtorsHtml;
-            }
 
             const currDebt = Math.max(0, currSum - currPaid);
             // 🟢 Заповнюємо модалку боргів
