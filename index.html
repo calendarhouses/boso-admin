@@ -891,39 +891,39 @@ input[type="number"] {
 
 
     <div id="genericModal" class="modal-overlay">
-        <div class="modal-box">
-            <div class="modal-header">
-                <span id="gModalTitle">Налаштування</span>
-                <button class="close-btn" style="width: 28px; height: 28px;" onclick="closeGenericModal()">✕</button>
-            </div>
-            <div class="modal-body" id="gModalBody">
-                </div>
-            <div class="modal-footer" style="display: flex; justify-content: space-between; align-items: stretch; width: 100%;">
-                <button class="btn-outline-danger" id="modalDeleteBtn" onclick="deleteGenericItem()" style="display: none; height: 46px; margin: 0; padding: 0 16px;">
-                    <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
-                </button>
-                <div style="display: flex; gap: 12px; justify-content: flex-end; flex: 1;">
-                        <button class="btn-secondary" onclick="closeGenericModal()" style="height: 46px; margin: 0; display: flex; align-items: center;">Скасувати</button>
-                        <button class="btn-primary" onclick="saveGenericModal()" style="height: 46px; margin: 0; display: flex; align-items: center;">Зберегти</button>
-                    </div>
-                </div>
+    <div class="modal-box">
+        <div class="modal-header">
+            <span id="gModalTitle">Налаштування</span>
+            <button class="close-btn" style="width: 28px; height: 28px;" onclick="closeGenericModal()">✕</button>
         </div>
-
-        <!-- МОДАЛКА БОРЖНИКІВ -->
-    <div id="debtModal" class="modal-overlay" style="z-index: 3000;">
-        <div class="modal-box" style="max-width: 500px; max-height: 80vh;">
-            <div class="modal-header">
-                <span style="display:flex; align-items:center; gap:8px;">
-                    <svg width="24" height="24" color="#DC2626" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg> 
-                    Список боржників
-                </span>
-                <button class="close-btn" onclick="closeDebtModal()">✕</button>
-            </div>
-            <div class="modal-body" id="debtModalBody" style="padding: 0; overflow-y: auto;">
-                <!-- Тут буде список -->
+        <div class="modal-body" id="gModalBody"></div>
+        <div class="modal-footer" style="display: flex; justify-content: space-between; align-items: stretch; width: 100%;">
+            <button class="btn-outline-danger" id="modalDeleteBtn" onclick="deleteGenericItem()" style="display: none; height: 46px; margin: 0; padding: 0 16px;">
+                <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+            </button>
+            <div style="display: flex; gap: 12px; justify-content: flex-end; flex: 1;">
+                <button class="btn-secondary" onclick="closeGenericModal()" style="height: 46px; margin: 0; display: flex; align-items: center;">Скасувати</button>
+                <button class="btn-primary" onclick="saveGenericModal()" style="height: 46px; margin: 0; display: flex; align-items: center;">Зберегти</button>
             </div>
         </div>
     </div>
+</div> <!-- 🟢 ТЕПЕР GENERIC MODAL ЗАКРИВАЄТЬСЯ ТУТ! -->
+
+<!-- 🟢 А МОДАЛКА БОРЖНИКІВ СТОЇТЬ ОКРЕМО! -->
+<div id="debtModal" class="modal-overlay" style="z-index: 3000;">
+    <div class="modal-box" style="max-width: 500px; max-height: 80vh;">
+        <div class="modal-header">
+            <span style="display:flex; align-items:center; gap:8px;">
+                <svg width="24" height="24" color="#DC2626" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg> 
+                Список боржників
+            </span>
+            <button class="close-btn" onclick="closeDebtModal()">✕</button>
+        </div>
+        <div class="modal-body" id="debtModalBody" style="padding: 0; overflow-y: auto;">
+            <!-- Тут буде список -->
+        </div>
+    </div>
+</div>
         
     </div> <div id="customConfirmModal" class="modal-overlay" style="z-index: 3000;">
         <div class="modal-box" style="max-width: 380px; text-align: center; padding: 30px 24px;">
@@ -1069,7 +1069,8 @@ function getVisitWord(count) {
 }
         
         let allBookings = [];
-        let editingRowNumber = null;
+   let editingRowNumber = null;
+   let globalDebtorsHtml = ''; // 🟢 ВСТАВ ТУТ: Глобальна пам'ять для боржників
 
         // --- БАЗОВІ ДАНІ НАЛАШТУВАНЬ ---
         let roomsList = [
@@ -3138,8 +3139,6 @@ function bosoLeave() {
             roomsChartInstance.update();
         }
     }
-
-    let globalDebtorsHtml = ''; // 🟢 Глобальна пам'ять для боржників
 
     // 🚀 ФУНКЦІЯ АНІМАЦІЇ ЦИФР (CountUp)
     function animateValue(id, start, end, duration) {
