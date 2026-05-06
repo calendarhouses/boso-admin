@@ -393,6 +393,27 @@
             color: #6B7280; 
         }
 
+        /* ── ДОДАТКОВІ ПОСЛУГИ (ГНУЧКИЙ ГРАФІК В АДМІНЦІ) ── */
+        .service-card {
+            border: 1.5px solid #E5E7EB; border-radius: 12px; margin-top: 12px;
+            background: #fff; overflow: hidden; transition: 0.3s ease;
+        }
+        .service-card.active { border-color: var(--accent); background: #F8FAF7; }
+        .srv-header { padding: 16px; display: flex; justify-content: space-between; align-items: center; cursor: pointer; user-select: none; }
+        .srv-title { display: flex; align-items: center; gap: 10px; font-size: 14px; font-weight: 600; color: var(--text-main); }
+        .srv-title svg { width: 20px; height: 20px; stroke: #9CA3AF; fill: none; stroke-width: 1.5; transition: 0.3s; }
+        .service-card.active .srv-title svg { stroke: var(--accent); }
+        .srv-price { font-size: 13px; font-weight: 700; color: #6B7280; display: flex; align-items: center; gap: 8px;}
+        .service-card.active .srv-price { color: var(--accent); }
+        
+        .srv-body { max-height: 0; opacity: 0; transition: max-height 0.4s ease, opacity 0.3s ease, padding 0.3s ease; padding: 0 16px; }
+        .service-card.active .srv-body { max-height: 150px; opacity: 1; padding: 0 16px 16px; }
+
+        .time-chips { display: flex; gap: 8px; margin-top: 8px; overflow-x: auto; padding-bottom: 4px; -webkit-overflow-scrolling: touch; }
+        .time-chips::-webkit-scrollbar { display: none; }
+        .t-chip { padding: 8px 16px; border: 1px solid #E5E7EB; border-radius: 10px; font-size: 13px; font-weight: 600; color: #6B7280; background: #fff; cursor: pointer; transition: 0.2s; flex-shrink: 0; }
+        .t-chip.selected { background: var(--accent); color: #fff; border-color: var(--accent); box-shadow: 0 4px 10px rgba(85, 107, 47, 0.2); }
+        
         /* Активний стан: ЧЕРВОНИЙ (Ні / Вимкнено) */
         .pet-btn.active[data-val="Ні"],
         .room-status-btn.active[data-val="false"],
@@ -1104,7 +1125,59 @@ input[type="number"] {
 
     <!-- Порожній div для балансу сітки -->
     <div></div>
+<!-- 🟢 ГНУЧКИЙ ГРАФІК -->
+    <div style="margin-top: 16px; border-top: 1px dashed #E5E7EB; padding-top: 16px;">
+        <label style="font-size: 13px; font-weight: 700; color: #4B5563; text-transform: uppercase; letter-spacing: 0.5px;">Гнучкий графік</label>
+        
+        <!-- Ранній заїзд -->
+        <div class="service-card" id="adminCardEarly">
+            <div class="srv-header" onclick="toggleAdminService('early')">
+                <div class="srv-title">
+                    <svg viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                    Ранній заїзд
+                </div>
+                <div class="srv-price" id="adminLabelPriceEarly">Оберіть дати</div>
+            </div>
+            <div class="srv-body">
+                <div style="font-size:12px; color:#4B5563; font-weight:500;">Оберіть годину заїзду:</div>
+                <div class="time-chips">
+                    <div class="t-chip" onclick="selectAdminTime('early', '08:00', this)">08:00</div>
+                    <div class="t-chip" onclick="selectAdminTime('early', '09:00', this)">09:00</div>
+                    <div class="t-chip" onclick="selectAdminTime('early', '10:00', this)">10:00</div>
+                    <div class="t-chip" onclick="selectAdminTime('early', '11:00', this)">11:00</div>
+                    <div class="t-chip" onclick="selectAdminTime('early', '12:00', this)">12:00</div>
+                    <div class="t-chip" onclick="selectAdminTime('early', '13:00', this)">13:00</div>
+                    <div class="t-chip" onclick="selectAdminTime('early', '14:00', this)">14:00</div>
+                </div>
+            </div>
+        </div>
 
+        <!-- Пізній виїзд (до 21:00) -->
+        <div class="service-card" id="adminCardLate">
+            <div class="srv-header" onclick="toggleAdminService('late')">
+                <div class="srv-title">
+                    <svg viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z M12 7v5l2.5 2.5"/></svg>
+                    Пізній виїзд
+                </div>
+                <div class="srv-price" id="adminLabelPriceLate">Оберіть дати</div>
+            </div>
+            <div class="srv-body">
+                <div style="font-size:12px; color:#4B5563; font-weight:500;">Оберіть годину виїзду:</div>
+                <div class="time-chips">
+                    <div class="t-chip" onclick="selectAdminTime('late', '12:00', this)">12:00</div>
+                    <div class="t-chip" onclick="selectAdminTime('late', '13:00', this)">13:00</div>
+                    <div class="t-chip" onclick="selectAdminTime('late', '14:00', this)">14:00</div>
+                    <div class="t-chip" onclick="selectAdminTime('late', '15:00', this)">15:00</div>
+                    <div class="t-chip" onclick="selectAdminTime('late', '16:00', this)">16:00</div>
+                    <div class="t-chip" onclick="selectAdminTime('late', '17:00', this)">17:00</div>
+                    <div class="t-chip" onclick="selectAdminTime('late', '18:00', this)">18:00</div>
+                    <div class="t-chip" onclick="selectAdminTime('late', '19:00', this)">19:00</div>
+                    <div class="t-chip" onclick="selectAdminTime('late', '20:00', this)">20:00</div>
+                    <div class="t-chip" onclick="selectAdminTime('late', '21:00', this)">21:00</div>
+                </div>
+            </div>
+        </div>
+    </div>
 </div> <!-- 🔴 ЗАКРИВАЄМО form-grid АЖ ТУТ -->
 </div>
 <div id="liveCalculatorContainer"></div>
@@ -2249,6 +2322,33 @@ function toggleUBD(val) {
     });
     updatePricePreview(); // Перерахує знижку 10%
 }
+
+        let selectedEarlyTime = null;
+let selectedLateTime = null;
+
+function toggleAdminService(type) {
+    const card = document.getElementById(type === 'early' ? 'adminCardEarly' : 'adminCardLate');
+    if (card.classList.contains('active')) {
+        card.classList.remove('active');
+        if(type === 'early') selectedEarlyTime = null;
+        if(type === 'late') selectedLateTime = null;
+        card.querySelectorAll('.t-chip').forEach(c => c.classList.remove('selected'));
+    } else {
+        card.classList.add('active');
+    }
+    updatePricePreview();
+}
+
+function selectAdminTime(type, time, element) {
+    const parent = element.closest('.time-chips');
+    parent.querySelectorAll('.t-chip').forEach(c => c.classList.remove('selected'));
+    element.classList.add('selected');
+    
+    if (type === 'early') selectedEarlyTime = time;
+    else selectedLateTime = time;
+    
+    updatePricePreview();
+}
         
         // --- ПЕРЕМИКАЧ СТАТУСУ НОМЕРУ ---
         function toggleRoomStatus(val) {
@@ -2352,6 +2452,48 @@ if (guests > maxCap) {
     let petFee = (pets === "Так") ? (500 + 200 * nights) : 0;
     const adminDayGuests = parseInt(document.getElementById('adminDayGuests').value) || 0;
     let dayGuestFee = adminDayGuests * 500;
+            // --- 🟢 РОЗРАХУНОК РАННЬОГО ТА ПІЗНЬОГО ВІД 50% ДОБИ ТА АКЦІЯ ---
+    let earlyFee = 0;
+    let lateFee = 0;
+    let isPromoLateOut = false;
+
+    // Перевірка на АКЦІЮ: 2 ночі, заїзд у П'ятницю (5), виїзд у Неділю (0)
+    if (nights === 2 && d1.getDay() === 5 && d2.getDay() === 0) {
+        isPromoLateOut = true;
+    }
+
+    // Знаходимо ціну за перший і останній день
+    let earlyDayPrice = getDayPrice(room, d1);
+    let lateDayPrice = getDayPrice(room, d2);
+    let early50 = Math.round(earlyDayPrice * 0.5);
+    let late50 = Math.round(lateDayPrice * 0.5);
+
+    // Оновлюємо UI на самих картках
+    const labelEarly = document.getElementById('adminLabelPriceEarly');
+    const labelLate = document.getElementById('adminLabelPriceLate');
+
+    if (labelEarly) {
+        if (selectedEarlyTime) {
+            earlyFee = early50;
+            labelEarly.innerHTML = `<span style="color:#111827; font-weight:500; font-size:12px; margin-right:6px;">з ${selectedEarlyTime}</span> +${earlyFee} грн`;
+        } else {
+            labelEarly.innerHTML = `+${early50} грн (50% доби)`;
+        }
+    }
+
+    if (labelLate) {
+        if (selectedLateTime) {
+            if (isPromoLateOut) {
+                lateFee = 0;
+                labelLate.innerHTML = `<span style="color:#111827; font-weight:500; font-size:12px; margin-right:6px;">до ${selectedLateTime}</span> <span style="color:var(--success)">Безкоштовно (Акція)</span>`;
+            } else {
+                lateFee = late50;
+                labelLate.innerHTML = `<span style="color:#111827; font-weight:500; font-size:12px; margin-right:6px;">до ${selectedLateTime}</span> +${lateFee} грн`;
+            }
+        } else {
+            labelLate.innerHTML = isPromoLateOut ? `<span style="color:var(--success)">Акція: Безкоштовно</span>` : `+${late50} грн (50% доби)`;
+        }
+    }
 
    // --- РОЗУМНИЙ ПІДБІР ЗНИЖКИ ---
     let discountPercent = 0;
@@ -2395,7 +2537,7 @@ const appliesToRoom =
     // 🔴 І ДАЛІ ЙДЕ ТВІЙ СТАРИЙ КОД РОЗРАХУНКУ:
     let amountToDiscount = basePriceTotal + extraGuestFee;
     let discountAmount = Math.round(amountToDiscount * discountPercent);
-    let totalPrice = amountToDiscount - discountAmount + petFee + dayGuestFee;
+    let totalPrice = amountToDiscount - discountAmount + petFee + dayGuestFee + earlyFee + lateFee;
 
     // МАЛЮЄМО НОВУ КРАСИВУ РОЗШИФРОВКУ З ПОЛЯМИ ВВОДУ
     cont.innerHTML = `
@@ -2682,6 +2824,31 @@ document.getElementById('adminGuests').addEventListener('change', updatePricePre
                 toggleUBD('Ні');
             }
 
+                // Шукаємо Ранній заїзд
+            let earlyRegex = /🕒 Ранній заїзд: з (\d{2}:\d{2})(\s*\|\s*)?/;
+            let matchEarly = textComment.match(earlyRegex);
+            if (matchEarly) {
+                selectedEarlyTime = matchEarly[1];
+                document.getElementById('adminCardEarly').classList.add('active');
+                // Фарбуємо потрібний чіп
+                document.querySelectorAll('#adminCardEarly .t-chip').forEach(c => {
+                    if (c.innerText === selectedEarlyTime) c.classList.add('selected');
+                });
+                textComment = textComment.replace(earlyRegex, '').trim();
+            }
+            
+            // Шукаємо Пізній виїзд
+            let lateRegex = /🕒 Пізній виїзд: до (\d{2}:\d{2})(\s*\|\s*)?/;
+            let matchLate = textComment.match(lateRegex);
+            if (matchLate) {
+                selectedLateTime = matchLate[1];
+                document.getElementById('adminCardLate').classList.add('active');
+                document.querySelectorAll('#adminCardLate .t-chip').forEach(c => {
+                    if (c.innerText === selectedLateTime) c.classList.add('selected');
+                });
+                textComment = textComment.replace(lateRegex, '').trim();
+            }
+
             // 4. Фінальна чистка (прибираємо зайві "Коментар гостя:" та палички "|")
             textComment = textComment.replace(/^Коментар гостя:\s*/, '')
                                      .replace(/^\|\s*/, '')
@@ -2767,6 +2934,8 @@ document.getElementById('adminGuests').addEventListener('change', updatePricePre
 if (dayGuests > 0) sysComment.push(`👥 Денні гості: ${dayGuests}`);
 if (document.getElementById('adminVat').value === 'Так') sysComment.push(`♨️ Чан: Так`);
 if (document.getElementById('adminUBD').value === 'Так') sysComment.push(`🇺🇦 УБД: Так`);
+if (selectedEarlyTime) sysComment.push(`🕒 Ранній заїзд: з ${selectedEarlyTime}`);
+if (selectedLateTime) sysComment.push(`🕒 Пізній виїзд: до ${selectedLateTime}`);
 
 if (sysComment.length > 0) { 
                 rawComment = sysComment.join(' | ') + (rawComment ? '\n\nКоментар гостя: ' + rawComment : '');
