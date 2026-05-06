@@ -1392,6 +1392,8 @@ function getVisitWord(count) {
 
         // --- 🟢 НОВИЙ ФІНАНСОВИЙ ДВИГУН (РОЗУМНІ КАРТКИ) ---
 
+// --- 🟢 НОВИЙ ФІНАНСОВИЙ ДВИГУН (РОЗУМНІ КАРТКИ) ---
+
 function openFinanceInlineCards(type) {
     const isIncome = type === 'income';
     const categories = isIncome ? incomeCategories : expenseCategories;
@@ -1424,104 +1426,99 @@ function openFinanceInlineCards(type) {
     titleEl.innerText = isIncome ? "Оберіть категорію доходу" : "Оберіть категорію витрати";
     titleEl.style.color = colorHex;
 
-    // Якщо картки ВЖЕ відкриті, ми робимо "блимання", щоб анімація спрацювала ще раз
+    let html = '';
+    categories.forEach((cat, idx) => {
+        const svgPath = catIcons[cat] || defaultIcon;
+        const fullSvg = `<svg width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">${svgPath}</svg>`;
+        
+        html += `
+        <div class="it-card" id="itCard-${idx}" onclick="toggleInlineCard(${idx})" style="animation: slideUpFade 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards; animation-delay: ${idx * 0.03}s; opacity: 0;">
+            <div class="it-header">
+                <div class="it-icon" style="background: ${bgHex}; color: ${colorHex};">${fullSvg}</div>
+                <div class="it-title">${cat}</div>
+            </div>
+            <div class="it-body" id="itBody-${idx}" onclick="event.stopPropagation()">
+                <div class="form-grid" style="margin-bottom: 16px; border-top: 1px dashed #E5E7EB; padding-top: 20px;">
+                    <div class="form-group" style="margin-bottom: 0;">
+                        <label>Сума (грн)</label>
+                        <input type="number" id="itAmt-${idx}" placeholder="0" min="1" style="font-weight: 800; font-size: 20px; color: ${colorHex};">
+                    </div>
+                    
+                    <div class="form-group" style="margin-bottom: 0;">
+                        <label>Дата</label>
+                        <svg style="position: absolute; left: 14px; top: 38px; width: 18px; height: 18px; stroke: #9CA3AF; fill: none; z-index: 2; pointer-events: none;" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
+                        <input type="text" id="itDate-${idx}" class="it-date-picker">
+                    </div>
+                </div>
+                <div class="form-group" style="margin-bottom: 24px;">
+                    <label>Коментар (необов'язково)</label>
+                    <input type="text" id="itComm-${idx}" placeholder="Додаткові деталі...">
+                </div>
+                <div style="display: flex; gap: 12px; justify-content: flex-end;">
+                    <button class="btn-secondary" onclick="toggleInlineCard(${idx}); event.stopPropagation();">Скасувати</button>
+                    <button class="btn-primary" style="background: ${iconBtnHex}; border-color: ${iconBtnHex};" onclick="saveInlineTransaction('${type}', '${cat}', ${idx}); event.stopPropagation();">Зберегти запис</button>
+                </div>
+            </div>
+        </div>`;
+    });
+
     const wrapper = document.getElementById('financeCardsWrap');
-    wrapper.classList.replace('fade-visible', 'fade-hidden');
+    const tableWrap = document.getElementById('financeTableWrap');
 
-    setTimeout(() => {
-        let html = '';
-        categories.forEach((cat, idx) => {
-            const svgPath = catIcons[cat] || defaultIcon;
-            const fullSvg = `<svg width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">${svgPath}</svg>`;
-            
-            // 🟢 МАГІЯ: animation-delay дає ефект "водоспаду" (картки вилітають по черзі)
-            html += `
-            <div class="it-card" id="itCard-${idx}" onclick="toggleInlineCard(${idx})" style="animation: slideUpFade 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards; animation-delay: ${idx * 0.03}s; opacity: 0;">
-                <div class="it-header">
-                    <div class="it-icon" style="background: ${bgHex}; color: ${colorHex};">${fullSvg}</div>
-                    <div class="it-title">${cat}</div>
-                </div>
-                <div class="it-body" id="itBody-${idx}" onclick="event.stopPropagation()">
-                    <div class="form-grid" style="margin-bottom: 16px; border-top: 1px dashed #E5E7EB; padding-top: 20px;">
-                        <div class="form-group" style="margin-bottom: 0;">
-                            <label>Сума (грн)</label>
-                            <input type="number" id="itAmt-${idx}" placeholder="0" min="1" style="font-weight: 800; font-size: 20px; color: ${colorHex};">
-                        </div>
-                        
-                        <!-- 🟢 НОВИЙ ПРЕМІУМ ІНПУТ ДЛЯ ДАТИ З ІКОНКОЮ -->
-                        <div class="form-group" style="margin-bottom: 0;">
-                            <label>Дата</label>
-                            <svg style="position: absolute; left: 14px; top: 38px; width: 18px; height: 18px; stroke: #9CA3AF; fill: none; z-index: 2; pointer-events: none;" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
-                            <input type="text" id="itDate-${idx}" class="it-date-picker">
-                        </div>
-
-                    </div>
-                    <div class="form-group" style="margin-bottom: 24px;">
-                        <label>Коментар (необов'язково)</label>
-                        <input type="text" id="itComm-${idx}" placeholder="Додаткові деталі...">
-                    </div>
-                    <div style="display: flex; gap: 12px; justify-content: flex-end;">
-                        <button class="btn-secondary" onclick="toggleInlineCard(${idx}); event.stopPropagation();">Скасувати</button>
-                        <button class="btn-primary" style="background: ${iconBtnHex}; border-color: ${iconBtnHex};" onclick="saveInlineTransaction('${type}', '${cat}', ${idx}); event.stopPropagation();">Зберегти запис</button>
-                    </div>
-                </div>
-            </div>`;
-        });
-
+    const renderAndShowCards = () => {
         document.getElementById('fcGrid').innerHTML = html;
-
-        flatpickr(".it-date-picker", { 
-            locale: "uk", 
-            dateFormat: "Y-m-d", 
-            altInput: true, 
-            altFormat: "d.m.Y", 
-            defaultDate: "today" 
-        });
-
-        document.getElementById('financeTableWrap').classList.replace('fade-visible', 'fade-hidden');
+        flatpickr(".it-date-picker", { locale: "uk", dateFormat: "Y-m-d", altInput: true, altFormat: "d.m.Y", defaultDate: "today" });
+        
+        // Фізично прибираємо таблицю, показуємо картки
+        tableWrap.style.display = 'none';
+        wrapper.style.display = 'block';
+        void wrapper.offsetWidth; // Тригер рендеру
         wrapper.classList.replace('fade-hidden', 'fade-visible');
 
-        // 🟢 ФІКС СКРОЛУ: Плавно опускаємо екран до нових карток
+        // 🟢 ФІКС СКРОЛУ (Плавний скрол вниз до карток)
         setTimeout(() => {
             const mainContent = document.querySelector('.main-content');
-            if (mainContent && wrapper) {
+            if (mainContent) {
                 const targetPos = wrapper.offsetTop - 20;
                 mainContent.scrollTo({ top: targetPos, behavior: 'smooth' });
             }
-        }, 100);
+        }, 50);
+    };
 
-    }, 150); // Мінімальна затримка для скидання CSS-переходу
+    if (wrapper.classList.contains('fade-visible')) {
+        // Якщо ми вже в картках і просто змінюємо доходи на витрати - робимо хвилю
+        wrapper.classList.replace('fade-visible', 'fade-hidden');
+        setTimeout(renderAndShowCards, 300);
+    } else {
+        // Якщо відкрита таблиця - ховаємо її і показуємо картки
+        tableWrap.classList.replace('fade-visible', 'fade-hidden');
+        setTimeout(renderAndShowCards, 300);
+    }
 }
 
 function openFinanceTable() {
-    // Анімація: ховаємо картки, повертаємо таблицю
-    document.getElementById('financeCardsWrap').classList.replace('fade-visible', 'fade-hidden');
-    document.getElementById('financeTableWrap').classList.replace('fade-hidden', 'fade-visible');
-}
-
-function toggleInlineCard(idx) {
-    const card = document.getElementById('itCard-' + idx);
-    const isActive = card.classList.contains('active');
-
-    // Закриваємо всі інші картки
-    document.querySelectorAll('.it-card').forEach(c => c.classList.remove('active'));
-
-    // Якщо клікнута картка була закрита — відкриваємо її
-    if (!isActive) {
-        card.classList.add('active');
+    const wrapper = document.getElementById('financeCardsWrap');
+    const tableWrap = document.getElementById('financeTableWrap');
+    
+    if (wrapper.classList.contains('fade-visible')) {
+        wrapper.classList.replace('fade-visible', 'fade-hidden');
         
-        // Чекаємо завершення CSS-анімації (400мс), а потім фокусуємось і скролимо
         setTimeout(() => {
-            document.getElementById('itAmt-' + idx).focus();
+            // Фізично зхлопуємо картки і показуємо таблицю
+            wrapper.style.display = 'none';
+            tableWrap.style.display = 'block';
+            void tableWrap.offsetWidth;
+            tableWrap.classList.replace('fade-hidden', 'fade-visible');
             
-            // 🟢 ФІКС СКРОЛУ: Скролимо саме основний контейнер
-            const mainContent = document.querySelector('.main-content');
-            if (mainContent) {
-                // Рахуємо позицію картки, віднімаючи 40px для "повітря" зверху
-                const cardTopPos = card.offsetTop - 40; 
-                mainContent.scrollTo({ top: cardTopPos, behavior: 'smooth' });
-            }
-        }, 400); 
+            // 🟢 ФІКС СКРОЛУ (Скролимо екран назад вгору до таблиці)
+            setTimeout(() => {
+                const mainContent = document.querySelector('.main-content');
+                if (mainContent) {
+                    const targetPos = tableWrap.offsetTop - 20;
+                    mainContent.scrollTo({ top: targetPos, behavior: 'smooth' });
+                }
+            }, 50);
+        }, 300);
     }
 }
 
