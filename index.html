@@ -1045,30 +1045,47 @@ input[type="number"] {
     <input type="hidden" id="adminCottage" value="">
 </div>
                         <div class="form-grid">
-                            <div class="form-group"><label>Дата заїзду:</label><input type="text" id="adminCheckIn" required></div>
-                            <div class="form-group"><label>Дата виїзду:</label><input type="text" id="adminCheckOut" required></div>
-                            <div class="form-group">
-    <label>Дорослих:</label>
-    <div style="display: flex; align-items: center; gap: 4px;">
-        <button type="button" onclick="changeGuests(-1)" style="width: 44px; height: 44px; background: #FEE2E2; color: #DC2626; border: 1px solid #FECACA; border-radius: 10px; font-size: 20px; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: 0.2s;" onmouseover="this.style.background='#FECACA'" onmouseout="this.style.background='#FEE2E2'">-</button>
-        
-        <input type="number" id="adminGuests" value="2" min="1" style="text-align: center; width: 100%; -moz-appearance: textfield; padding: 12px 0;">
-        
-        <button type="button" onclick="changeGuests(1)" style="width: 44px; height: 44px; background: #D1FAE5; color: #059669; border: 1px solid #A7F3D0; border-radius: 10px; font-size: 20px; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: 0.2s;" onmouseover="this.style.background='#A7F3D0'" onmouseout="this.style.background='#D1FAE5'">+</button>
+    <div class="form-group"><label>Дата заїзду:</label><input type="text" id="adminCheckIn" required></div>
+    <div class="form-group"><label>Дата виїзду:</label><input type="text" id="adminCheckOut" required></div>
+    
+    <div class="form-group">
+        <label>Дорослих:</label>
+        <div style="display: flex; align-items: center; gap: 4px;">
+            <button type="button" onclick="changeGuests(-1)" style="width: 44px; height: 44px; background: #FEE2E2; color: #DC2626; border: 1px solid #FECACA; border-radius: 10px; font-size: 20px; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: 0.2s;" onmouseover="this.style.background='#FECACA'" onmouseout="this.style.background='#FEE2E2'">-</button>
+            
+            <input type="number" id="adminGuests" value="2" min="1" style="text-align: center; width: 100%; -moz-appearance: textfield; padding: 12px 0;">
+            
+            <button type="button" onclick="changeGuests(1)" style="width: 44px; height: 44px; background: #D1FAE5; color: #059669; border: 1px solid #A7F3D0; border-radius: 10px; font-size: 20px; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: 0.2s;" onmouseover="this.style.background='#A7F3D0'" onmouseout="this.style.background='#D1FAE5'">+</button>
+        </div>
     </div>
-</div>
-                           <div class="form-group">
-    <label>Тварини:</label>
-    <div class="mode-toggle" style="margin: 0; width: 100%; display: flex; padding: 4px; background: #F3F4F6; border-radius: 10px; height: 42px;">
-        <div class="mode-btn pet-btn active" data-val="Ні" onclick="togglePet('Ні')">Ні</div>
-        <div class="mode-btn pet-btn" data-val="Так" onclick="togglePet('Так')">Так</div>
+    
+    <div class="form-group">
+        <label>Тварини:</label>
+        <div class="mode-toggle" style="margin: 0; width: 100%; display: flex; padding: 4px; background: #F3F4F6; border-radius: 10px; height: 42px;">
+            <div class="mode-btn pet-btn active" data-val="Ні" onclick="togglePet('Ні')">Ні</div>
+            <div class="mode-btn pet-btn" data-val="Так" onclick="togglePet('Так')">Так</div>
+        </div>
+        <input type="hidden" id="adminPets" value="Ні">
     </div>
-    <input type="hidden" id="adminPets" value="Ні">
-</div>
-                        </div>
-                    </div>
-                    
-                    <div id="liveCalculatorContainer"></div>
+
+    <!-- 🟢 НОВИЙ БЛОК ВСЕРЕДИНІ СІТКИ -->
+    <div class="form-group">
+        <label>Денні гості (+500 грн):</label>
+        <div style="display: flex; align-items: center; gap: 4px;">
+            <button type="button" onclick="changeAdminDayGuests(-1)" style="width: 44px; height: 44px; background: #FEE2E2; color: #DC2626; border: 1px solid #FECACA; border-radius: 10px; font-size: 20px; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: 0.2s;" onmouseover="this.style.background='#FECACA'" onmouseout="this.style.background='#FEE2E2'">-</button>
+            
+            <input type="number" id="adminDayGuests" value="0" min="0" style="text-align: center; width: 100%; -moz-appearance: textfield; padding: 12px 0; border: 1px solid #D1D5DB; border-radius: 10px; font-size: 14px;">
+            
+            <button type="button" onclick="changeAdminDayGuests(1)" style="width: 44px; height: 44px; background: #D1FAE5; color: #059669; border: 1px solid #A7F3D0; border-radius: 10px; font-size: 20px; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: 0.2s;" onmouseover="this.style.background='#A7F3D0'" onmouseout="this.style.background='#D1FAE5'">+</button>
+        </div>
+    </div>
+    
+    <!-- Порожній div для балансу сітки -->
+    <div></div>
+
+</div> <!-- 🔴 ЗАКРИВАЄМО form-grid АЖ ТУТ -->
+
+<div id="liveCalculatorContainer"></div>
                     
                 </form>
             </div>
@@ -2268,6 +2285,8 @@ function getVisitWord(count) {
     let dynamicExtraPrice = room.extraGuestPrice !== undefined ? room.extraGuestPrice : 2500;
     let extraGuestFee = extraGuests * dynamicExtraPrice * nights;
     let petFee = (pets === "Так") ? (500 + 200 * nights) : 0;
+    const adminDayGuests = parseInt(document.getElementById('adminDayGuests').value) || 0;
+    let dayGuestFee = adminDayGuests * 500;
 
    // --- РОЗУМНИЙ ПІДБІР ЗНИЖКИ ---
     let discountPercent = 0;
@@ -2299,7 +2318,7 @@ function getVisitWord(count) {
     // Ті самі твої три рядки, які рахують саму математику (їх не чіпаємо)
     let amountToDiscount = basePriceTotal + extraGuestFee;
     let discountAmount = Math.round(amountToDiscount * discountPercent);
-    let totalPrice = amountToDiscount - discountAmount + petFee;
+    let totalPrice = amountToDiscount - discountAmount + petFee + dayGuestFee;
 
     // МАЛЮЄМО НОВУ КРАСИВУ РОЗШИФРОВКУ З ПОЛЯМИ ВВОДУ
     cont.innerHTML = `
@@ -2310,6 +2329,7 @@ function getVisitWord(count) {
                 <div style="display:flex; justify-content:space-between; margin-bottom:4px;"><span>Базова:</span><span>${basePriceTotal} грн</span></div>
                 ${extraGuestFee > 0 ? `<div style="display:flex; justify-content:space-between; margin-bottom:4px;"><span>Дод. гості:</span><span>+${extraGuestFee} грн</span></div>` : ''}
                 ${petFee > 0 ? `<div style="display:flex; justify-content:space-between; margin-bottom:4px;"><span>Тварини:</span><span>+${petFee} грн</span></div>` : ''}
+                ${dayGuestFee > 0 ? `<div style="display:flex; justify-content:space-between; margin-bottom:4px;"><span>Денні гості:</span><span>+${dayGuestFee} грн</span></div>` : ''}
                 ${discountAmount > 0 ? `<div style="display:flex; justify-content:space-between; margin-bottom:4px; color:var(--danger);"><span>Знижка:</span><span>-${discountAmount} грн</span></div>` : ''}
             </div>
 
@@ -2395,6 +2415,20 @@ function changeGuests(amount) {
         updatePricePreview(); // Одразу перераховуємо ціну!
     }
 }
+
+        function changeAdminDayGuests(amount) {
+    let input = document.getElementById('adminDayGuests');
+    let currentVal = parseInt(input.value) || 0;
+    let newVal = currentVal + amount;
+    if (newVal >= 0) { // Не може бути мінус
+        input.value = newVal;
+        updatePricePreview(); // Моментальний перерахунок
+    }
+}
+
+// Прив'язуємо ручне введення цифр до калькулятора
+document.getElementById('adminDayGuests').addEventListener('input', updatePricePreview);
+document.getElementById('adminDayGuests').addEventListener('change', updatePricePreview);
         
 // А функція перерахунку лежить окремо
 function calculateBalanceLive() {
@@ -2529,8 +2563,23 @@ document.getElementById('adminGuests').addEventListener('change', updatePricePre
             document.getElementById('adminGuests').value = booking.guests || 2;
             
             if(document.getElementById('adminComment')) {
-                document.getElementById('adminComment').value = booking.comment || ""; 
-            }
+    let textComment = booking.comment || "";
+    let parsedDayGuests = 0;
+    
+    // Регулярний вираз для пошуку мітки з сайту/адмінки
+    let dayGuestRegex = /👥 Денні гості \(без ночівлі\): (\d+) чол\.(\s*\|\s*)?/;
+    let match = textComment.match(dayGuestRegex);
+    
+    // Якщо знайшли, витягуємо цифру і вирізаємо системний текст, щоб не дублювався
+    if (match) {
+        parsedDayGuests = parseInt(match[1]);
+        textComment = textComment.replace(dayGuestRegex, '').trim();
+        textComment = textComment.replace(/^Коментар гостя:\s*/, '').trim(); // Прибираємо зайвий заголовок
+    }
+    
+    document.getElementById('adminComment').value = textComment;
+    if(document.getElementById('adminDayGuests')) document.getElementById('adminDayGuests').value = 0;
+}
 
             let savedSource = booking.source || "Адмінка";
             document.getElementById('adminSource').value = savedSource;
@@ -2611,8 +2660,21 @@ document.getElementById('adminGuests').addEventListener('change', updatePricePre
                 totalPrice: document.getElementById('adminTotalPrice').value,
                 paidAmount: document.getElementById('adminPaidAmount').value,
                 source: document.getElementById('adminSource').value, // Захоплюємо джерело
-                comment: document.getElementById('adminComment').value // 🟢 ВІДПРАВЛЯЄМО КОМЕНТАР
-            };
+                // Збираємо коментар та денних гостей
+let rawComment = document.getElementById('adminComment').value.trim();
+let dayGuests = parseInt(document.getElementById('adminDayGuests').value) || 0;
+
+let sysComment = [];
+if (dayGuests > 0) sysComment.push(`👥 Денні гості (без ночівлі): ${dayGuests} чол.`);
+
+if (sysComment.length > 0) {
+    rawComment = sysComment.join(' | ') + (rawComment ? '\n\nКоментар гостя: ' + rawComment : '');
+}
+
+const bookingData = { 
+    
+    comment: rawComment // Зберігаємо склеєний коментар
+};
             
             if (editingRowNumber !== null) bookingData.row = editingRowNumber;
             
