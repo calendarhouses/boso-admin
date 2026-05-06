@@ -2173,15 +2173,28 @@ function getVisitWord(count) {
                         
                         if (offsetDays + durationDays > 0 && offsetDays < daysCount) {
                             let statusClass = 'status-new'; 
-                            let s = String(b.status).toLowerCase();
-                            if (s.includes('підтвердж') || s.includes('заїхав')) statusClass = 'status-confirmed';
-                            if (s.includes('скас')) statusClass = 'status-cancelled';
+let s = String(b.status).toLowerCase();
+if (s.includes('підтвердж') || s.includes('заїхав')) statusClass = 'status-confirmed';
+if (s.includes('скас')) statusClass = 'status-cancelled';
 
-                            let blockLeft = offsetDays * cellWidth; 
-                            let blockWidth = durationDays * cellWidth; 
+// 🟢 ВІЗУАЛЬНИЙ ГНУЧКИЙ ГРАФІК: Читаємо, чи є ранній/пізній заїзд або акція Пт-Нд
+let exComment = b.comment ? String(b.comment) : "";
+let exHasEarly = exComment.includes('Ранній заїзд');
+let exHasLate = exComment.includes('Пізній виїзд') || (durationDays === 2 && inDate.getDay() === 5 && outDate.getDay() === 0);
 
-                            if (offsetDays < 0) { blockWidth = (durationDays + offsetDays) * cellWidth; blockLeft = 0; }
-                            if (offsetDays + durationDays > daysCount) { blockWidth = (daysCount - offsetDays) * cellWidth; }
+let blockLeft = offsetDays * cellWidth; 
+let blockWidth = durationDays * cellWidth; 
+
+// 🟢 Розширюємо плашку візуально, щоб вона "з'їла" зайнятий день
+if (exHasLate) blockWidth += (cellWidth * 0.85); // Тягнемо майже на весь день виїзду
+if (exHasEarly) {
+    blockLeft -= (cellWidth * 0.85); // Тягнемо назад на день заїзду
+    blockWidth += (cellWidth * 0.85);
+}
+
+// Захист від вильоту за межі екрану
+if (offsetDays < 0) { blockWidth = (durationDays + offsetDays) * cellWidth; blockLeft = 0; }
+if (offsetDays + durationDays > daysCount) { blockWidth = (daysCount - offsetDays) * cellWidth; }
 
                             let total = Number(b.totalPrice) || 0;
                             let paid = Number(b.paidAmount) || 0;
@@ -2414,22 +2427,72 @@ if (guests > maxCap) {
     document.getElementById('adminGuests').value = maxCap; // Змінюємо цифру в інтерфейсі
     showToast(`Кількість гостей зменшено до максимуму (${maxCap})`);
 }
-    // --- 1. ПЕРЕВІРКА НА ОВЕРБУКІНГ ---
+    // --- 1. ПЕРЕВІРКА НА ОВЕРБУКІНГ (РОЗУМНА З ГНУЧКИМ ГРАФІКОМ) ---
     let isOverlap = false;
+    let overlapReason = "";
+
     for (let b of allBookings) {
-        if (editingRowNumber && b.row == editingRowNumber) continue; // Не порівнюємо з собою ж при редагуванні
-        if (String(b.status).toLowerCase().includes('скас')) continue; // Скасовані не враховуємо
+        if (editingRowNumber && b.row == editingRowNumber) continue; // Не порівнюємо з собою ж
+        if (String(b.status).toLowerCase().includes('скас')) continue; // Скасовані ігноруємо
 
         if (b.cottage === roomName) {
             let exIn = new Date(b.checkIn); exIn.setHours(0,0,0,0);
             let exOut = new Date(b.checkOut); exOut.setHours(0,0,0,0);
             let currentIn = new Date(d1); currentIn.setHours(0,0,0,0);
             let currentOut = new Date(d2); currentOut.setHours(0,0,0,0);
+
+            // --- Зчитуємо графік існуючої броні ---
+            let exComment = b.comment ? String(b.comment) : "";
+            let exHasEarly = exComment.includes('Ранній заїзд');
+            let exHasLate = exComment.includes('Пізній виїзд');
             
-            // Логіка: Заїзд1 < Виїзд2 ТА Виїзд1 > Заїзд2 (дозволяє заїзд в день виїзду іншого гостя)
+            // Автоматична перевірка на акцію вихідного дня для існуючої броні (Пт-Нд)
+            let exNights = Math.round((exOut - exIn) / (1000 * 60 * 60 * 24));
+            if (exNights === 2 && exIn.getDay() === 5 && exOut.getDay() === 0) {
+                exHasLate = true;
+            }
+
+            // --- Зчитуємо графік поточної (нової) броні ---
+            let currentHasEarly = !!selectedEarlyTime;
+            let currentHasLate = !!selectedLateTime;
+            
+            if (nights === 2 && currentIn.getDay() === 5 && currentOut.getDay() === 0) {
+                currentHasLate = true; // Нова бронь теж підпадає під акцію
+            }
+
+            // 1. Стандартний жорсткий перетин дат
             if (currentIn < exOut && currentOut > exIn) {
                 isOverlap = true;
+                overlapReason = "Ці дати вже повністю зайняті іншим гостем.";
                 break;
+            }
+            
+            // 2. Стик в стик: Заїзд нової броні в день виїзду старої
+            if (currentIn.getTime() === exOut.getTime()) {
+                if (exHasLate) {
+                    isOverlap = true;
+                    overlapReason = "Попередній гість має <b>Пізній виїзд (чи акцію)</b>. Заселення в цей день неможливе.";
+                    break;
+                }
+                if (currentHasEarly) {
+                    isOverlap = true;
+                    overlapReason = "Попередній гість ще не виїхав. Ваш <b>Ранній заїзд</b> неможливий.";
+                    break;
+                }
+            }
+            
+            // 3. Стик в стик: Виїзд нової броні в день заїзду старої
+            if (currentOut.getTime() === exIn.getTime()) {
+                if (currentHasLate) {
+                    isOverlap = true;
+                    overlapReason = "Наступний гість вже заїжджає. Ваш <b>Пізній виїзд</b> неможливий.";
+                    break;
+                }
+                if (exHasEarly) {
+                    isOverlap = true;
+                    overlapReason = "Наступний гість має <b>Ранній заїзд</b>. Потрібно виїхати стандартно.";
+                    break;
+                }
             }
         }
     }
@@ -2445,7 +2508,7 @@ if (guests > maxCap) {
                 <div style="color: #DC2626; font-weight: bold; font-size: 15px; text-align: center; display: flex; flex-direction: column; align-items: center; gap: 12px;">
                     <svg width="40" height="40" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
                     ОБЕРЕЖНО: ОВЕРБУКІНГ!
-                    <span style="font-size: 13px; font-weight: 500; color: #991B1B;">Ці дати вже зайняті іншим гостем у цьому котеджі.</span>
+                    <span style="font-size: 13px; font-weight: 500; color: #991B1B;">${overlapReason}</span>
                 </div>
             </div>
         `;
