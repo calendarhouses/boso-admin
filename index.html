@@ -2648,19 +2648,19 @@ document.getElementById('adminGuests').addEventListener('change', updatePricePre
     // 2. Шукаємо Чан
     let vatRegex = /♨️ Чан: Так(\s*\|\s*)?/;
     if (textComment.match(vatRegex)) {
-        document.getElementById('adminVat').value = 'Так';
+        toggleVat('Так'); // 🟢 ТЕПЕР КНОПКА СТАНЕ ЗЕЛЕНОЮ
         textComment = textComment.replace(vatRegex, '').trim();
     } else {
-        document.getElementById('adminVat').value = 'Ні';
+        toggleVat('Ні');
     }
     
     // 3. Шукаємо УБД
     let ubdRegex = /🇺🇦 УБД: Так(\s*\|\s*)?/;
     if (textComment.match(ubdRegex)) {
-        document.getElementById('adminUBD').value = 'Так';
+        toggleUBD('Так'); // 🟢 ТЕПЕР КНОПКА СТАНЕ ЗЕЛЕНОЮ
         textComment = textComment.replace(ubdRegex, '').trim();
     } else {
-        document.getElementById('adminUBD').value = 'Ні';
+        toggleUBD('Ні');
     }
 
     // Чистимо коментар від залишків системного тексту
