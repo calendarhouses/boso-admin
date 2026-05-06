@@ -2495,8 +2495,9 @@ document.getElementById('adminGuests').addEventListener('change', updatePricePre
             document.getElementById('drawerTitle').innerText = 'Нове бронювання'; 
             document.getElementById('adminBookingForm').reset();
             
-            // ОЧИЩЕННЯ ПОЛІВ ПРИ НОВІЙ БРОНІ
+           // ОЧИЩЕННЯ ПОЛІВ ПРИ НОВІЙ БРОНІ
             if(document.getElementById('adminComment')) document.getElementById('adminComment').value = ""; 
+            if(document.getElementById('adminDayGuests')) document.getElementById('adminDayGuests').value = 0; // 🟢 Очищаємо денних гостей 
             document.getElementById('adminDeleteBtn').style.display = 'none';
             document.getElementById('liveCalculatorContainer').innerHTML = '';
             
@@ -2578,7 +2579,7 @@ document.getElementById('adminGuests').addEventListener('change', updatePricePre
     }
     
     document.getElementById('adminComment').value = textComment;
-    if(document.getElementById('adminDayGuests')) document.getElementById('adminDayGuests').value = 0;
+    if(document.getElementById('adminDayGuests')) document.getElementById('adminDayGuests').value = parsedDayGuests;
 }
 
             let savedSource = booking.source || "Адмінка";
@@ -2648,6 +2649,18 @@ document.getElementById('adminGuests').addEventListener('change', updatePricePre
             let safeIn = document.getElementById('adminCheckIn').value;
             let safeOut = document.getElementById('adminCheckOut').value;
 
+            // 🟢 Збираємо коментар та денних гостей ДО створення об'єкта
+            let rawComment = document.getElementById('adminComment').value.trim();
+            let dayGuests = parseInt(document.getElementById('adminDayGuests').value) || 0;
+
+            let sysComment = [];
+            if (dayGuests > 0) sysComment.push(`👥 Денні гості (без ночівлі): ${dayGuests} чол.`);
+
+            if (sysComment.length > 0) {
+                rawComment = sysComment.join(' | ') + (rawComment ? '\n\nКоментар гостя: ' + rawComment : '');
+            }
+
+            // 🟢 Формуємо ЄДИНИЙ об'єкт для відправки
             const bookingData = { 
                 checkIn: safeIn, 
                 checkOut: safeOut, 
@@ -2659,22 +2672,9 @@ document.getElementById('adminGuests').addEventListener('change', updatePricePre
                 status: document.querySelector('.status-btn.active').getAttribute('data-status'),
                 totalPrice: document.getElementById('adminTotalPrice').value,
                 paidAmount: document.getElementById('adminPaidAmount').value,
-                source: document.getElementById('adminSource').value, // Захоплюємо джерело
-                // Збираємо коментар та денних гостей
-let rawComment = document.getElementById('adminComment').value.trim();
-let dayGuests = parseInt(document.getElementById('adminDayGuests').value) || 0;
-
-let sysComment = [];
-if (dayGuests > 0) sysComment.push(`👥 Денні гості (без ночівлі): ${dayGuests} чол.`);
-
-if (sysComment.length > 0) {
-    rawComment = sysComment.join(' | ') + (rawComment ? '\n\nКоментар гостя: ' + rawComment : '');
-}
-
-const bookingData = { 
-    
-    comment: rawComment // Зберігаємо склеєний коментар
-};
+                source: document.getElementById('adminSource').value,
+                comment: rawComment // 🚀 Передаємо наш склеєний коментар!
+            };
             
             if (editingRowNumber !== null) bookingData.row = editingRowNumber;
             
