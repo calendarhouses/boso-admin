@@ -821,9 +821,10 @@ input[type="number"] {
                             <h3 class="section-title" style="margin: 0;">Популярність котеджів</h3>
                             <!-- 🔄 ПЕРЕМИКАЧ ШТУКИ/ГРОШІ -->
                             <div class="mode-toggle" style="margin: 0; padding: 2px;">
-                                <div id="chartModeCount" class="mode-btn active" style="padding: 4px 10px; font-size: 11px;" onclick="toggleRoomsChart('count')">Броні</div>
-                                <div id="chartModeMoney" class="mode-btn" style="padding: 4px 10px; font-size: 11px;" onclick="toggleRoomsChart('money')">Дохід</div>
-                            </div>
+    <div id="chartModeCount" class="mode-btn active" style="padding: 4px 10px; font-size: 11px;" onclick="toggleRoomsChart('count')">Броні</div>
+    <div id="chartModeMoney" class="mode-btn" style="padding: 4px 10px; font-size: 11px;" onclick="toggleRoomsChart('money')">Дохід</div>
+    <div id="chartModeNights" class="mode-btn" style="padding: 4px 10px; font-size: 11px;" onclick="toggleRoomsChart('nights')">Ночі</div>
+</div>
                         </div>
                         <div style="position: relative; height: 260px; width: 100%;">
                             <canvas id="roomsChart"></canvas>
@@ -3711,10 +3712,16 @@ function bosoLeave() {
             currentChartMode = mode;
             document.getElementById('chartModeCount').classList.toggle('active', mode === 'count');
             document.getElementById('chartModeMoney').classList.toggle('active', mode === 'money');
+            document.getElementById('chartModeNights').classList.toggle('active', mode === 'nights');
 
             if (roomsChartInstance) {
-                roomsChartInstance.data.datasets[0].data = mode === 'count' ? Object.values(globalRoomCounts) : Object.values(globalRoomMoney);
-                roomsChartInstance.data.datasets[0].label = mode === 'count' ? 'Кількість броней' : 'Дохід (грн)';
+                let dataArr, labelTxt;
+                if(mode === 'count') { dataArr = Object.values(globalRoomCounts); labelTxt = 'Кількість броней'; }
+                else if(mode === 'money') { dataArr = Object.values(globalRoomMoney); labelTxt = 'Дохід (грн)'; }
+                else { dataArr = Object.values(globalRoomNights); labelTxt = 'Продані ночі'; }
+                
+                roomsChartInstance.data.datasets[0].data = dataArr;
+                roomsChartInstance.data.datasets[0].label = labelTxt;
                 roomsChartInstance.update();
             }
         }
@@ -3722,10 +3729,15 @@ function bosoLeave() {
         function renderCharts(startDate, endDate) {
             globalRoomCounts = {};
             globalRoomMoney = {};
+            globalRoomNights = {}; // 🟢 ДОДАЛИ ПАМ'ЯТЬ ДЛЯ НОЧЕЙ
             const sourceCounts = {};
             const revenueTimeline = {}; 
             
-            roomsList.forEach(r => { globalRoomCounts[r.name] = 0; globalRoomMoney[r.name] = 0; });
+            roomsList.forEach(r => { 
+                globalRoomCounts[r.name] = 0; 
+                globalRoomMoney[r.name] = 0; 
+                globalRoomNights[r.name] = 0; // 🟢 ОБНУЛЯЄМО
+            });
             ['Instagram', 'Telegram Бот', 'Сайт', 'Телефон'].forEach(s => sourceCounts[s] = 0);
 
             allBookings.forEach(b => {
@@ -3736,8 +3748,15 @@ function bosoLeave() {
                     if (b.cottage) {
                         const matchedRoom = roomsList.find(r => b.cottage.includes(r.name) || b.cottage.includes(r.short));
                         const roomName = matchedRoom ? matchedRoom.name : b.cottage;
+                        
+                        // Рахуємо скільки ночей в цій броні
+                        let inD = parseSafeDate(b.checkIn);
+                        let outD = parseSafeDate(b.checkOut);
+                        let nights = Math.max(1, Math.round((outD - inD) / 86400000));
+
                         globalRoomCounts[roomName] = (globalRoomCounts[roomName] || 0) + 1;
                         globalRoomMoney[roomName] = (globalRoomMoney[roomName] || 0) + Number(b.totalPrice || 0);
+                        globalRoomNights[roomName] = (globalRoomNights[roomName] || 0) + nights; // 🟢 ЗАПИСУЄМО НОЧІ
                     }
                     const src = b.source || 'Адмінка';
                     sourceCounts[src] = (sourceCounts[src] || 0) + 1;
