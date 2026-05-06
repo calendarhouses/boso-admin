@@ -3537,7 +3537,8 @@ function bosoLeave() {
                         let ratio = (price > 0) ? (paid / price) : 1;
                         incomeBreakdown.pets += (feePets * ratio);
                         incomeBreakdown.guests += (feeGuests * ratio);
-                        incomeBreakdown.base += (paid - (feePets * ratio) - (feeGuests * ratio));
+                        incomeBreakdown.earlyLate += (feeEarlyLate * ratio);
+                        incomeBreakdown.base += (paid - (feePets * ratio) - (feeGuests * ratio) - (feeEarlyLate * ratio));
                     }
                 }
                 
