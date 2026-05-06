@@ -2204,7 +2204,7 @@ function getVisitWord(count) {
     const checkInStr = document.getElementById('adminCheckIn').value;
     const checkOutStr = document.getElementById('adminCheckOut').value;
     const roomName = document.getElementById('adminCottage').value;
-    const guests = parseInt(document.getElementById('adminGuests').value) || 2;
+    let guests = parseInt(document.getElementById('adminGuests').value) || 2;
     const petsSelect = document.getElementById('adminPets');
     const pets = petsSelect ? petsSelect.value : "Ні";
     const cont = document.getElementById('liveCalculatorContainer');
@@ -2227,6 +2227,13 @@ function getVisitWord(count) {
 
     const room = roomsList.find(r => r.name === roomName);
     if (!room) { cont.innerHTML = ''; return; }
+            // 🟢 АВТО-КОРЕКЦІЯ ГОСТЕЙ: не даємо перевищити ліміт при зміні номера
+let maxCap = room.maxCapacity || room.capacity || 10;
+if (guests > maxCap) {
+    guests = maxCap; // Оновлюємо змінну для математики
+    document.getElementById('adminGuests').value = maxCap; // Змінюємо цифру в інтерфейсі
+    showToast(`Кількість гостей зменшено до максимуму (${maxCap})`);
+}
     // --- 1. ПЕРЕВІРКА НА ОВЕРБУКІНГ ---
     let isOverlap = false;
     for (let b of allBookings) {
@@ -2303,7 +2310,10 @@ function getVisitWord(count) {
             // Перевірка 1: Чи достатньо ночей?
             if (nights >= condNights) {
                 // Перевірка 2: Чи підходить номер? (якщо "all" або ID в списку)
-                const appliesToRoom = d.roomsIds && (d.roomsIds.includes("all") || d.roomsIds.includes(currentRoomId));
+               // 🟢 Підтримуємо і новий формат (roomsIds), і старі текстові записи
+const appliesToRoom = 
+    (d.roomsIds && (d.roomsIds.includes("all") || d.roomsIds.includes(currentRoomId))) || 
+    (!d.roomsIds && String(d.rooms).includes("Всі"));
                 
                 if (appliesToRoom) {
                     // Якщо ця знижка краща за попередню знайдену — беремо її
@@ -2405,14 +2415,23 @@ function setFullPrepayment() {
         calculateBalanceLive(); // Перемальовує залишок в 0
     }
 }
-        // --- ФУНКЦІЯ ДЛЯ КНОПОК + ТА - (ДОРОСЛІ) ---
-function changeGuests(amount) {
+       function changeGuests(amount) {
     let input = document.getElementById('adminGuests');
     let currentVal = parseInt(input.value) || 1;
+    
+    // 🟢 Знаходимо, який котедж зараз обрано, і його ліміт
+    let roomName = document.getElementById('adminCottage').value;
+    let roomObj = roomsList.find(r => r.name === roomName);
+    let maxCap = roomObj ? (roomObj.maxCapacity || roomObj.capacity || 10) : 10;
+
     let newVal = currentVal + amount;
-    if (newVal >= 1) { // Не даємо поставити менше 1 гостя
+
+    // 🟢 Перевіряємо і мінімум, і МАКСИМУМ
+    if (newVal >= 1 && newVal <= maxCap) { 
         input.value = newVal;
-        updatePricePreview(); // Одразу перераховуємо ціну!
+        updatePricePreview(); // Перераховуємо ціну
+    } else if (newVal > maxCap) {
+        showToast(`Максимум для цього котеджу: ${maxCap} гостей`);
     }
 }
 
