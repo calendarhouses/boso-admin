@@ -2549,6 +2549,11 @@ const appliesToRoom =
                 ${extraGuestFee > 0 ? `<div style="display:flex; justify-content:space-between; margin-bottom:4px;"><span>Дод. гості:</span><span>+${extraGuestFee} грн</span></div>` : ''}
                 ${petFee > 0 ? `<div style="display:flex; justify-content:space-between; margin-bottom:4px;"><span>Тварини:</span><span>+${petFee} грн</span></div>` : ''}
                 ${dayGuestFee > 0 ? `<div style="display:flex; justify-content:space-between; margin-bottom:4px;"><span>Денні гості:</span><span>+${dayGuestFee} грн</span></div>` : ''}
+                
+                <!-- 🟢 ДОДАЄМО ОСЬ ЦІ ДВА РЯДКИ -->
+                ${selectedEarlyTime ? `<div style="display:flex; justify-content:space-between; margin-bottom:4px;"><span>Ранній заїзд (з ${selectedEarlyTime}):</span><span>+${earlyFee} грн</span></div>` : ''}
+                ${selectedLateTime ? `<div style="display:flex; justify-content:space-between; margin-bottom:4px;"><span>Пізній виїзд (до ${selectedLateTime}):</span><span style="${isPromoLateOut ? 'color:var(--success);font-weight:bold;' : ''}">${isPromoLateOut ? 'Безкоштовно' : '+' + lateFee + ' грн'}</span></div>` : ''}
+                
                 ${isVat === "Так" ? `<div style="display:flex; justify-content:space-between; margin-bottom:4px; color:var(--accent);"><span>Чан:</span><span>Оплата по факту</span></div>` : ''}
                 ${discountAmount > 0 ? `<div style="display:flex; justify-content:space-between; margin-bottom:4px; color:var(--danger);"><span>Знижка (${Math.round(discountPercent*100)}%):</span><span>-${discountAmount} грн</span></div>` : ''}
             </div>
@@ -2729,6 +2734,14 @@ document.getElementById('adminGuests').addEventListener('change', updatePricePre
             if(document.getElementById('adminDayGuests')) document.getElementById('adminDayGuests').value = 0; // 🟢 Очищаємо денних гостей 
             if(document.getElementById('adminVat')) toggleVat('Ні');
             if(document.getElementById('adminUBD')) toggleUBD('Ні');
+            
+            // 🟢 ОБНУЛЕННЯ ГНУЧКОГО ГРАФІКА
+            selectedEarlyTime = null;
+            selectedLateTime = null;
+            if(document.getElementById('adminCardEarly')) document.getElementById('adminCardEarly').classList.remove('active');
+            if(document.getElementById('adminCardLate')) document.getElementById('adminCardLate').classList.remove('active');
+            document.querySelectorAll('.t-chip').forEach(c => c.classList.remove('selected'));
+
             document.getElementById('adminDeleteBtn').style.display = 'none';
             document.getElementById('liveCalculatorContainer').innerHTML = '';
             
