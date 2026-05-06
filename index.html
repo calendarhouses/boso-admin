@@ -2358,6 +2358,27 @@ function selectAdminTime(type, time, element) {
                 btn.classList.toggle('active', btn.getAttribute('data-val') === val);
             });
         }
+
+        // --- ФУНКЦІЯ ДЛЯ ОТРИМАННЯ ТОЧНОЇ ЦІНИ ЗА ДЕНЬ (З УРАХУВАННЯМ ВИХІДНИХ ТА КАСТОМНИХ ЦІН) ---
+function getDayPrice(room, dateObj) {
+    if (!room || !dateObj) return 0;
+    
+    // Перевіряємо, чи це вихідний (П'ятниця-Субота, або Неділя-Субота залежно від логіки)
+    // У твоєму коді вихідними вважаються 0 (Неділя) та 6 (Субота)
+    const isWeekend = (dateObj.getDay() === 0 || dateObj.getDay() === 6);
+    let price = isWeekend ? room.priceWeekend : room.priceWeekday;
+    
+    // Формуємо дату у форматі YYYY-MM-DD для пошуку в кастомних цінах
+    const dateStr = `${dateObj.getFullYear()}-${String(dateObj.getMonth() + 1).padStart(2, '0')}-${String(dateObj.getDate()).padStart(2, '0')}`;
+    
+    // Якщо є змінена ціна саме на цю дату у конструкторі цін — беремо її
+    if (customPrices[room.id] && customPrices[room.id][dateStr]) {
+        price = customPrices[room.id][dateStr];
+    }
+    
+    return price;
+}
+        
         // --- ПАНЕЛЬ ДЕТАЛЕЙ БРОНЮВАННЯ ТА ЖИВИЙ КАЛЬКУЛЯТОР ---
         function updatePricePreview() {
     const checkInStr = document.getElementById('adminCheckIn').value;
