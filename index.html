@@ -376,7 +376,7 @@
             cursor: pointer;
         }
       /* --- ПРЕМІУМ КНОПКИ (ТВАРИНИ ТА СТАТУС НОМЕРІВ) --- */
-        .pet-btn, .room-status-btn {
+        .pet-btn, .room-status-btn, .vat-btn, .ubd-btn {
             flex: 1; 
             display: flex !important;
             align-items: center;
@@ -386,16 +386,18 @@
             border-radius: 8px;
             cursor: pointer;
             transition: 0.2s;
-            padding: 8px 4px !important; /* Рівні відступи для обох */
+            padding: 8px 4px !important; 
             margin: 0 !important;
             border: 1px solid transparent;
             line-height: 1.1;
-            color: #6B7280; /* Стандартний сірий для неактивних */
+            color: #6B7280; 
         }
 
         /* Активний стан: ЧЕРВОНИЙ (Ні / Вимкнено) */
         .pet-btn.active[data-val="Ні"],
-        .room-status-btn.active[data-val="false"] {
+        .room-status-btn.active[data-val="false"],
+        .vat-btn.active[data-val="Ні"],
+        .ubd-btn.active[data-val="Ні"] {
             background: #FEF2F2 !important;
             color: #DC2626 !important;
             border-color: #FECACA !important;
@@ -404,7 +406,9 @@
 
         /* Активний стан: ЗЕЛЕНИЙ (Так / Увімкнено) */
         .pet-btn.active[data-val="Так"],
-        .room-status-btn.active[data-val="true"] {
+        .room-status-btn.active[data-val="true"],
+        .vat-btn.active[data-val="Так"],
+        .ubd-btn.active[data-val="Так"] {
             background: #F0FDF4 !important;
             color: #059669 !important;
             border-color: #A7F3D0 !important;
@@ -1068,22 +1072,40 @@ input[type="number"] {
         <input type="hidden" id="adminPets" value="Ні">
     </div>
 
-    <!-- 🟢 НОВИЙ БЛОК ВСЕРЕДИНІ СІТКИ -->
+    <!-- ДЕННІ ГОСТІ -->
     <div class="form-group">
         <label>Денні гості (+500 грн):</label>
         <div style="display: flex; align-items: center; gap: 4px;">
-            <button type="button" onclick="changeAdminDayGuests(-1)" style="width: 44px; height: 44px; background: #FEE2E2; color: #DC2626; border: 1px solid #FECACA; border-radius: 10px; font-size: 20px; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: 0.2s;" onmouseover="this.style.background='#FECACA'" onmouseout="this.style.background='#FEE2E2'">-</button>
-            
+            <button type="button" onclick="changeAdminDayGuests(-1)" style="width: 44px; height: 44px; background: #FEE2E2; color: #DC2626; border: 1px solid #FECACA; border-radius: 10px; font-size: 20px; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: 0.2s;">-</button>
             <input type="number" id="adminDayGuests" value="0" min="0" style="text-align: center; width: 100%; -moz-appearance: textfield; padding: 12px 0; border: 1px solid #D1D5DB; border-radius: 10px; font-size: 14px;">
-            
-            <button type="button" onclick="changeAdminDayGuests(1)" style="width: 44px; height: 44px; background: #D1FAE5; color: #059669; border: 1px solid #A7F3D0; border-radius: 10px; font-size: 20px; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: 0.2s;" onmouseover="this.style.background='#A7F3D0'" onmouseout="this.style.background='#D1FAE5'">+</button>
+            <button type="button" onclick="changeAdminDayGuests(1)" style="width: 44px; height: 44px; background: #D1FAE5; color: #059669; border: 1px solid #A7F3D0; border-radius: 10px; font-size: 20px; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: 0.2s;">+</button>
         </div>
     </div>
     
+    <!-- 🟢 НОВИЙ БЛОК: ЧАН -->
+    <div class="form-group">
+        <label>Чан (по факту):</label>
+        <div class="mode-toggle" style="margin: 0; width: 100%; display: flex; padding: 4px; background: #F3F4F6; border-radius: 10px; height: 42px;">
+            <div class="mode-btn vat-btn active" data-val="Ні" onclick="toggleVat('Ні')">Ні</div>
+            <div class="mode-btn vat-btn" data-val="Так" onclick="toggleVat('Так')">Так</div>
+        </div>
+        <input type="hidden" id="adminVat" value="Ні">
+    </div>
+
+    <!-- 🟢 НОВИЙ БЛОК: УБД -->
+    <div class="form-group">
+        <label>Знижка УБД (-10%):</label>
+        <div class="mode-toggle" style="margin: 0; width: 100%; display: flex; padding: 4px; background: #F3F4F6; border-radius: 10px; height: 42px;">
+            <div class="mode-btn ubd-btn active" data-val="Ні" onclick="toggleUBD('Ні')">Ні</div>
+            <div class="mode-btn ubd-btn" data-val="Так" onclick="toggleUBD('Так')">Так</div>
+        </div>
+        <input type="hidden" id="adminUBD" value="Ні">
+    </div>
+
     <!-- Порожній div для балансу сітки -->
     <div></div>
 
-</div> 
+</div> <!-- 🔴 ЗАКРИВАЄМО form-grid АЖ ТУТ -->
 </div>
 <div id="liveCalculatorContainer"></div>
                     
@@ -2192,6 +2214,23 @@ function getVisitWord(count) {
             });
             updatePricePreview(); // Моментально перераховуємо ціну!
         }
+
+        function toggleVat(val) {
+    document.getElementById('adminVat').value = val;
+    document.querySelectorAll('.vat-btn').forEach(btn => {
+        btn.classList.toggle('active', btn.getAttribute('data-val') === val);
+    });
+    updatePricePreview(); 
+}
+
+function toggleUBD(val) {
+    document.getElementById('adminUBD').value = val;
+    document.querySelectorAll('.ubd-btn').forEach(btn => {
+        btn.classList.toggle('active', btn.getAttribute('data-val') === val);
+    });
+    updatePricePreview(); // Перерахує знижку 10%
+}
+        
         // --- ПЕРЕМИКАЧ СТАТУСУ НОМЕРУ ---
         function toggleRoomStatus(val) {
             document.getElementById('mRoomStatus').value = val;
@@ -2325,7 +2364,16 @@ const appliesToRoom =
         });
     }
 
-    // Ті самі твої три рядки, які рахують саму математику (їх не чіпаємо)
+            // Зчитуємо наші нові поля
+    const isVat = document.getElementById('adminVat') ? document.getElementById('adminVat').value : "Ні";
+    const isUBD = document.getElementById('adminUBD') ? document.getElementById('adminUBD').value : "Ні";
+
+    // Якщо УБД = Так, ДОДАЄМО 10% до загальної знижки
+    if (isUBD === "Так") {
+        discountPercent += 0.10;
+    }
+
+    // 🔴 І ДАЛІ ЙДЕ ТВІЙ СТАРИЙ КОД РОЗРАХУНКУ:
     let amountToDiscount = basePriceTotal + extraGuestFee;
     let discountAmount = Math.round(amountToDiscount * discountPercent);
     let totalPrice = amountToDiscount - discountAmount + petFee + dayGuestFee;
@@ -2340,7 +2388,8 @@ const appliesToRoom =
                 ${extraGuestFee > 0 ? `<div style="display:flex; justify-content:space-between; margin-bottom:4px;"><span>Дод. гості:</span><span>+${extraGuestFee} грн</span></div>` : ''}
                 ${petFee > 0 ? `<div style="display:flex; justify-content:space-between; margin-bottom:4px;"><span>Тварини:</span><span>+${petFee} грн</span></div>` : ''}
                 ${dayGuestFee > 0 ? `<div style="display:flex; justify-content:space-between; margin-bottom:4px;"><span>Денні гості:</span><span>+${dayGuestFee} грн</span></div>` : ''}
-                ${discountAmount > 0 ? `<div style="display:flex; justify-content:space-between; margin-bottom:4px; color:var(--danger);"><span>Знижка:</span><span>-${discountAmount} грн</span></div>` : ''}
+                ${isVat === "Так" ? `<div style="display:flex; justify-content:space-between; margin-bottom:4px; color:var(--accent);"><span>♨️ Чан:</span><span>Оплата по факту</span></div>` : ''}
+                ${discountAmount > 0 ? `<div style="display:flex; justify-content:space-between; margin-bottom:4px; color:var(--danger);"><span>Знижка (${Math.round(discountPercent*100)}%):</span><span>-${discountAmount} грн</span></div>` : ''}
             </div>
 
             <div style="border-top: 2px solid var(--accent); padding-top: 15px;">
@@ -2517,6 +2566,8 @@ document.getElementById('adminGuests').addEventListener('change', updatePricePre
            // ОЧИЩЕННЯ ПОЛІВ ПРИ НОВІЙ БРОНІ
             if(document.getElementById('adminComment')) document.getElementById('adminComment').value = ""; 
             if(document.getElementById('adminDayGuests')) document.getElementById('adminDayGuests').value = 0; // 🟢 Очищаємо денних гостей 
+            if(document.getElementById('adminVat')) toggleVat('Ні');
+            if(document.getElementById('adminUBD')) toggleUBD('Ні');
             document.getElementById('adminDeleteBtn').style.display = 'none';
             document.getElementById('liveCalculatorContainer').innerHTML = '';
             
@@ -2586,17 +2637,36 @@ document.getElementById('adminGuests').addEventListener('change', updatePricePre
     let textComment = booking.comment || "";
     let parsedDayGuests = 0;
     
-    // Регулярний вираз для пошуку мітки з сайту/адмінки
-    let dayGuestRegex = /👥 Денні гості \(без ночівлі\): (\d+) чол\.(\s*\|\s*)?/;
-    let match = textComment.match(dayGuestRegex);
-    
-    // Якщо знайшли, витягуємо цифру і вирізаємо системний текст, щоб не дублювався
-    if (match) {
-        parsedDayGuests = parseInt(match[1]);
+    // 1. Шукаємо Денних гостей
+    let dayGuestRegex = /👥 Денні гості: (\d+)(\s*\|\s*)?/;
+    let matchDay = textComment.match(dayGuestRegex);
+    if (matchDay) {
+        parsedDayGuests = parseInt(matchDay[1]);
         textComment = textComment.replace(dayGuestRegex, '').trim();
-        textComment = textComment.replace(/^Коментар гостя:\s*/, '').trim(); // Прибираємо зайвий заголовок
     }
     
+    // 2. Шукаємо Чан
+    let vatRegex = /♨️ Чан: Так(\s*\|\s*)?/;
+    if (textComment.match(vatRegex)) {
+        document.getElementById('adminVat').value = 'Так';
+        textComment = textComment.replace(vatRegex, '').trim();
+    } else {
+        document.getElementById('adminVat').value = 'Ні';
+    }
+    
+    // 3. Шукаємо УБД
+    let ubdRegex = /🇺🇦 УБД: Так(\s*\|\s*)?/;
+    if (textComment.match(ubdRegex)) {
+        document.getElementById('adminUBD').value = 'Так';
+        textComment = textComment.replace(ubdRegex, '').trim();
+    } else {
+        document.getElementById('adminUBD').value = 'Ні';
+    }
+
+    // Чистимо коментар від залишків системного тексту
+    textComment = textComment.replace(/^Коментар гостя:\s*/, '');
+    textComment = textComment.replace(/^\|\s*/, '').replace(/\|\s*$/, '').trim();
+
     document.getElementById('adminComment').value = textComment;
     if(document.getElementById('adminDayGuests')) document.getElementById('adminDayGuests').value = parsedDayGuests;
 }
@@ -2673,9 +2743,11 @@ document.getElementById('adminGuests').addEventListener('change', updatePricePre
             let dayGuests = parseInt(document.getElementById('adminDayGuests').value) || 0;
 
             let sysComment = [];
-            if (dayGuests > 0) sysComment.push(`👥 Денні гості (без ночівлі): ${dayGuests} чол.`);
+if (dayGuests > 0) sysComment.push(`👥 Денні гості: ${dayGuests}`);
+if (document.getElementById('adminVat').value === 'Так') sysComment.push(`♨️ Чан: Так`);
+if (document.getElementById('adminUBD').value === 'Так') sysComment.push(`🇺🇦 УБД: Так`);
 
-            if (sysComment.length > 0) {
+if (sysComment.length > 0) { 
                 rawComment = sysComment.join(' | ') + (rawComment ? '\n\nКоментар гостя: ' + rawComment : '');
             }
 
