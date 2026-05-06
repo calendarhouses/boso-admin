@@ -1084,7 +1084,7 @@ input[type="number"] {
     
     <!-- 🟢 НОВИЙ БЛОК: ЧАН -->
     <div class="form-group">
-        <label>Чан (по факту):</label>
+        <label>Чан:</label>
         <div class="mode-toggle" style="margin: 0; width: 100%; display: flex; padding: 4px; background: #F3F4F6; border-radius: 10px; height: 42px;">
             <div class="mode-btn vat-btn active" data-val="Ні" onclick="toggleVat('Ні')">Ні</div>
             <div class="mode-btn vat-btn" data-val="Так" onclick="toggleVat('Так')">Так</div>
@@ -2388,7 +2388,7 @@ const appliesToRoom =
                 ${extraGuestFee > 0 ? `<div style="display:flex; justify-content:space-between; margin-bottom:4px;"><span>Дод. гості:</span><span>+${extraGuestFee} грн</span></div>` : ''}
                 ${petFee > 0 ? `<div style="display:flex; justify-content:space-between; margin-bottom:4px;"><span>Тварини:</span><span>+${petFee} грн</span></div>` : ''}
                 ${dayGuestFee > 0 ? `<div style="display:flex; justify-content:space-between; margin-bottom:4px;"><span>Денні гості:</span><span>+${dayGuestFee} грн</span></div>` : ''}
-                ${isVat === "Так" ? `<div style="display:flex; justify-content:space-between; margin-bottom:4px; color:var(--accent);"><span>♨️ Чан:</span><span>Оплата по факту</span></div>` : ''}
+                ${isVat === "Так" ? `<div style="display:flex; justify-content:space-between; margin-bottom:4px; color:var(--accent);"><span>Чан:</span><span>Оплата по факту</span></div>` : ''}
                 ${discountAmount > 0 ? `<div style="display:flex; justify-content:space-between; margin-bottom:4px; color:var(--danger);"><span>Знижка (${Math.round(discountPercent*100)}%):</span><span>-${discountAmount} грн</span></div>` : ''}
             </div>
 
