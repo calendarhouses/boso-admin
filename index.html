@@ -2653,42 +2653,44 @@ document.getElementById('adminGuests').addEventListener('change', updatePricePre
             document.getElementById('adminGuests').value = booking.guests || 2;
             
             if(document.getElementById('adminComment')) {
-    let textComment = booking.comment || "";
-    let parsedDayGuests = 0;
-    
-    // 1. Шукаємо Денних гостей
-    let dayGuestRegex = /👥 Денні гості: (\d+)(\s*\|\s*)?/;
-    let matchDay = textComment.match(dayGuestRegex);
-    if (matchDay) {
-        parsedDayGuests = parseInt(matchDay[1]);
-        textComment = textComment.replace(dayGuestRegex, '').trim();
-    }
-    
-    // 2. Шукаємо Чан
-    let vatRegex = /♨️ Чан: Так(\s*\|\s*)?/;
-    if (textComment.match(vatRegex)) {
-        toggleVat('Так'); // 🟢 ТЕПЕР КНОПКА СТАНЕ ЗЕЛЕНОЮ
-        textComment = textComment.replace(vatRegex, '').trim();
-    } else {
-        toggleVat('Ні');
-    }
-    
-    // 3. Шукаємо УБД
-    let ubdRegex = /🇺🇦 УБД: Так(\s*\|\s*)?/;
-    if (textComment.match(ubdRegex)) {
-        toggleUBD('Так'); // 🟢 ТЕПЕР КНОПКА СТАНЕ ЗЕЛЕНОЮ
-        textComment = textComment.replace(ubdRegex, '').trim();
-    } else {
-        toggleUBD('Ні');
-    }
+            let textComment = booking.comment || "";
+            let parsedDayGuests = 0;
+            
+            // 1. Шукаємо Денних гостей (Розумна регулярка)
+            // Шукає "👥 Денні гості", пропускає будь-який текст до двокрапки, і бере цифру
+            let dayGuestRegex = /👥 Денні гості[^:]*:\s*(\d+)/;
+            let matchDay = textComment.match(dayGuestRegex);
+            if (matchDay) {
+                parsedDayGuests = parseInt(matchDay[1]);
+                // Вирізаємо цей блок з тексту аж до наступного розділювача "|"
+                textComment = textComment.replace(/👥 Денні гості[^|]+(\|\s*)?/, '').trim();
+            }
+            
+            // 2. Шукаємо Чан
+            if (textComment.includes('♨️ Чан: Так')) {
+                toggleVat('Так');
+                textComment = textComment.replace(/♨️ Чан: Так\s*(\|\s*)?/, '').trim();
+            } else {
+                toggleVat('Ні');
+            }
+            
+            // 3. Шукаємо УБД
+            if (textComment.includes('🇺🇦 УБД: Так')) {
+                toggleUBD('Так');
+                textComment = textComment.replace(/🇺🇦 УБД: Так\s*(\|\s*)?/, '').trim();
+            } else {
+                toggleUBD('Ні');
+            }
 
-    // Чистимо коментар від залишків системного тексту
-    textComment = textComment.replace(/^Коментар гостя:\s*/, '');
-    textComment = textComment.replace(/^\|\s*/, '').replace(/\|\s*$/, '').trim();
+            // 4. Фінальна чистка (прибираємо зайві "Коментар гостя:" та палички "|")
+            textComment = textComment.replace(/^Коментар гостя:\s*/, '')
+                                     .replace(/^\|\s*/, '')
+                                     .replace(/\|\s*$/, '')
+                                     .trim();
 
-    document.getElementById('adminComment').value = textComment;
-    if(document.getElementById('adminDayGuests')) document.getElementById('adminDayGuests').value = parsedDayGuests;
-}
+            document.getElementById('adminComment').value = textComment;
+            if(document.getElementById('adminDayGuests')) document.getElementById('adminDayGuests').value = parsedDayGuests;
+        }
 
             let savedSource = booking.source || "Адмінка";
             document.getElementById('adminSource').value = savedSource;
