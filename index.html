@@ -3446,7 +3446,7 @@ function bosoLeave() {
             
             let totalIncome = 0; 
             let totalExpense = 0;
-            let incomeBreakdown = { base: 0, guests: 0, pets: 0 };
+            let incomeBreakdown = { base: 0, guests: 0, pets: 0, earlyLate: 0 };
 
             // Очищаємо деталі перед підрахунком
             window.bosoDetails = { sum: [], paid: [], debt: [], count: [], pets: [], guests: [], vat: [], bikes: [], earlyLate: [], other: [] };
@@ -3509,6 +3509,29 @@ function bosoLeave() {
                         window.bosoDetails.pets.push({...baseObj, amount: feePets});
                     }
 
+                    // --- 🟢 ЗЧИТУЄМО ГНУЧКИЙ ГРАФІК З КОМЕНТАРЯ ---
+                    let rawComment = b.comment ? String(b.comment) : "";
+                    let feeEarlyLate = 0;
+                    
+                    if (rawComment.includes('🕒 Ранній заїзд:')) {
+                        let earlyDayPrice = getDayPrice(room, inD);
+                        feeEarlyLate += Math.round(earlyDayPrice * 0.5);
+                    }
+                    
+                    if (rawComment.includes('🕒 Пізній виїзд:')) {
+                        // Перевіряємо чи це не безкоштовна акція (Пт-Нд)
+                        let isPromo = (nights === 2 && inD.getDay() === 5 && outD.getDay() === 0);
+                        if (!isPromo) {
+                            let lateDayPrice = getDayPrice(room, outD);
+                            feeEarlyLate += Math.round(lateDayPrice * 0.5);
+                        }
+                    }
+
+                    if (feeEarlyLate > 0) {
+                        currEarlyLate += feeEarlyLate;
+                        window.bosoDetails.earlyLate.push({...baseObj, amount: feeEarlyLate});
+                    }
+                    
                     // Розбивка фінансів
                     if (paid > 0) {
                         let ratio = (price > 0) ? (paid / price) : 1;
@@ -3647,6 +3670,7 @@ function bosoLeave() {
                 tbodyFinance.innerHTML += renderFinRow("Оренда котеджів", "Оплачена базова вартість", incomeBreakdown.base, 'income', true);
                 tbodyFinance.innerHTML += renderFinRow("Додаткові гості", "Оплати за додаткові місця", incomeBreakdown.guests, 'income', true);
                 tbodyFinance.innerHTML += renderFinRow("Тварини", "Оплати за розміщення улюбленців", incomeBreakdown.pets, 'income', true);
+                tbodyFinance.innerHTML += renderFinRow("Гнучкий графік", "Ранні заїзди та пізні виїзди", incomeBreakdown.earlyLate, 'income', true);
 
                 filteredTrans.forEach(t => {
                     const dateStr = parseSafeDate(t.date).toLocaleDateString('uk-UA', {day: 'numeric', month: 'short'});
