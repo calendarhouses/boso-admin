@@ -1475,11 +1475,7 @@ function openFinanceInlineCards(type) {
 
         // 🟢 ФІКС СКРОЛУ (Плавний скрол вниз до карток)
         setTimeout(() => {
-            const mainContent = document.querySelector('.main-content');
-            if (mainContent) {
-                const targetPos = wrapper.offsetTop - 20;
-                mainContent.scrollTo({ top: targetPos, behavior: 'smooth' });
-            }
+            wrapper.scrollIntoView({ behavior: 'smooth', block: 'start' });
         }, 50);
     };
 
@@ -1510,11 +1506,7 @@ function openFinanceTable() {
             
             // 🟢 ФІКС СКРОЛУ (Скролимо екран назад вгору до таблиці)
             setTimeout(() => {
-                const mainContent = document.querySelector('.main-content');
-                if (mainContent) {
-                    const targetPos = tableWrap.offsetTop - 20;
-                    mainContent.scrollTo({ top: targetPos, behavior: 'smooth' });
-                }
+                document.querySelector('.finance-summary').scrollIntoView({ behavior: 'smooth', block: 'start' });
             }, 50);
         }, 300);
     }
@@ -4105,6 +4097,22 @@ function bosoLeave() {
                 calculateAnalytics(); 
             }
         }
+
+        // --- ФУНКЦІЯ ВІДКРИТТЯ/ЗАКРИТТЯ КАРТОК ФІНАНСІВ ---
+function toggleInlineCard(index) {
+    const clickedCard = document.getElementById('itCard-' + index);
+    const isAlreadyActive = clickedCard.classList.contains('active');
+
+    // 1. Спочатку закриваємо всі відкриті картки
+    document.querySelectorAll('.it-card').forEach(card => {
+        card.classList.remove('active');
+    });
+
+    // 2. Якщо клікнута картка не була активною — відкриваємо її
+    if (!isAlreadyActive) {
+        clickedCard.classList.add('active');
+    }
+}
     </script>
 </body>
 </html>
