@@ -33,7 +33,7 @@
             --safe-bottom: env(safe-area-inset-bottom, 16px);
         }
 
-        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Inter', sans-serif; -webkit-tap-highlight-color: transparent; touch-action: manipulation; }
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Inter', sans-serif; -webkit-tap-highlight-color: transparent; }
         
         /* Вбиваємо системні свайпи Safari (Назад/Вперед) */
         html, body { overscroll-behavior-x: none; overscroll-behavior-y: none; } 
@@ -1429,10 +1429,11 @@
                             // 🚀 ПОВЕРНУЛИ МОБІЛЬНІ ТАЧ-СЕНСОРИ
 currentRow.innerHTML += `
     <div class="booking-block ${statusClass}" style="left: ${blockLeft}px; width: ${blockWidth}px;" 
-         ontouchstart="handleTouchStart(event, this, ${b.row})"
-         ontouchend="handleTouchEnd(event, this, ${b.row})"
-         ontouchmove="handleTouchMove(event, this)"
-         oncontextmenu="event.preventDefault();">
+     ontouchstart="handleTouchStart(event, this, ${b.row})"
+     ontouchend="handleTouchEnd(event, this, ${b.row})"
+     ontouchmove="handleTouchMove(event, this)"
+     ontouchcancel="handleTouchEnd(event, this, ${b.row})" 
+     oncontextmenu="event.preventDefault();">
          
         <div style="font-size: 11px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; line-height: 1;">${guestName}</div>
         <div style="margin-top: 3px; display: flex; overflow: hidden;">
@@ -1584,10 +1585,10 @@ currentRow.innerHTML += `
     const b = allBookings.find(x => x.row == rowNumber); 
     if (!b) return; 
 
-    let inDate = "—"; let outDate = "—"; 
+    let inDate = "—"; let outDate = "—";
 try {
     let safeIn = b.checkIn; let safeOut = b.checkOut;
-    // Додано перевірку !includes('T'), щоб не ламати ISO дати від Google
+    // Додано !safeIn.includes('T'), щоб не ламати ISO дати від Google
     if (typeof safeIn === 'string' && safeIn.includes('.') && !safeIn.includes('T')) safeIn = safeIn.split('.').reverse().join('-');
     if (typeof safeOut === 'string' && safeOut.includes('.') && !safeOut.includes('T')) safeOut = safeOut.split('.').reverse().join('-');
     
