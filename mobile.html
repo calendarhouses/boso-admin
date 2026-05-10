@@ -752,116 +752,111 @@
         </div>
                     </div>
                     
-                    <div class="form-section">
-                        <span class="form-section-title">Заїзд</span>
-                        <div class="form-group">
-                            <label>Котедж:</label>
-                            <div class="custom-select-wrapper" id="cottageWrapper">
-                                <div class="custom-select-trigger" onclick="toggleCustomSelect('cottageWrapper')">
-                                    <span id="cottageSelectedText">Оберіть номер</span>
-                                    <svg width="14" height="14" fill="none" stroke="#6B7280" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
-                                </div>
-                                <div class="custom-select-options" id="cottageOptions"></div>
-                            </div>
-                            <input type="hidden" id="adminCottage" value="">
-                        </div>
-                        <div class="form-grid">
-                            <div class="form-group"><label>Заїзд:</label><input type="text" id="adminCheckIn" required></div>
-                            <div class="form-group"><label>Виїзд:</label><input type="text" id="adminCheckOut" required></div>
-                        </div>
-                        <div class="form-grid">
-                            <div class="form-group">
-                                <label>Дорослих:</label>
-                                <div style="display: flex; align-items: center; gap: 4px;">
-                                    <button type="button" onclick="changeGuests(-1)" style="width: 40px; height: 40px; background: #FEF2F2; color: #DC2626; border: 1px solid #FECACA; border-radius: 10px; font-size: 18px; font-weight: bold; cursor: pointer;">-</button>
-                                    <input type="number" id="adminGuests" value="2" min="1" style="text-align: center; width: 100%; padding: 10px 0;">
-                                    <button type="button" onclick="changeGuests(1)" style="width: 40px; height: 40px; background: #D1FAE5; color: #059669; border: 1px solid #A7F3D0; border-radius: 10px; font-size: 18px; font-weight: bold; cursor: pointer;">+</button>
-                                </div>
-                            </div>
-                            <div class="form-group">
-                                <label>Тварини:</label>
-                                <div style="display: flex; background: #F3F4F6; border-radius: 10px; padding: 3px; height: 40px;">
-                                    <div class="pet-btn active" data-val="Ні" onclick="togglePet('Ні')">Ні</div>
-                                    <div class="pet-btn" data-val="Так" onclick="togglePet('Так')">Так</div>
-                                </div>
-                                <input type="hidden" id="adminPets" value="Ні">
-                            </div>
-                            <div class="form-group">
-    <label>Денні гості (+500 грн):</label>
-    <div style="display: flex; align-items: center; gap: 4px;">
-        <button type="button" onclick="changeAdminDayGuests(-1)" style="width: 40px; height: 40px; background: #FEF2F2; color: #DC2626; border: 1px solid #FECACA; border-radius: 10px; font-size: 18px; font-weight: bold; cursor: pointer;">-</button>
-        <input type="number" id="adminDayGuests" value="0" min="0" style="text-align: center; width: 100%; padding: 10px 0; border: 1px solid #D1D5DB; border-radius: 12px; font-size: 15px; background: #F9FAFB;">
-        <button type="button" onclick="changeAdminDayGuests(1)" style="width: 40px; height: 40px; background: #D1FAE5; color: #059669; border: 1px solid #A7F3D0; border-radius: 10px; font-size: 18px; font-weight: bold; cursor: pointer;">+</button>
+                   <div class="form-section">
+    <span class="form-section-title">Заїзд</span>
+    <div class="form-group">
+        <label>Котедж:</label>
+        <div class="custom-select-wrapper" id="cottageWrapper">
+            <div class="custom-select-trigger" onclick="toggleCustomSelect('cottageWrapper')">
+                <span id="cottageSelectedText">Оберіть номер</span>
+                <svg width="14" height="14" fill="none" stroke="#6B7280" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+            </div>
+            <div class="custom-select-options" id="cottageOptions"></div>
+        </div>
+        <input type="hidden" id="adminCottage" value="">
     </div>
-</div>
-<div class="form-group">
-    <label>Чан:</label>
-    <div style="display: flex; background: #F3F4F6; border-radius: 10px; padding: 3px; height: 40px;">
-        <div class="vat-btn active" data-val="Ні" onclick="toggleVat('Ні')">Ні</div>
-        <div class="vat-btn" data-val="Так" onclick="toggleVat('Так')">Так</div>
-    </div>
-    <input type="hidden" id="adminVat" value="Ні">
-</div>
-<div class="form-group">
-    <label>УБД (-10%):</label>
-    <div style="display: flex; background: #F3F4F6; border-radius: 10px; padding: 3px; height: 40px;">
-        <div class="ubd-btn active" data-val="Ні" onclick="toggleUBD('Ні')">Ні</div>
-        <div class="ubd-btn" data-val="Так" onclick="toggleUBD('Так')">Так</div>
-    </div>
-    <input type="hidden" id="adminUBD" value="Ні">
-</div>
-</div>
-                        </div>
-                        </div>
-                        <!-- ГНУЧКИЙ ГРАФІК -->
-<div style="margin-top: 16px; border-top: 1px dashed #E5E7EB; padding-top: 16px;">
-    <label style="font-size: 12px; font-weight: 800; color: #9CA3AF; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 12px; display: block;">Гнучкий графік</label>
     
-    <div class="service-card" id="adminCardEarly">
-        <div class="srv-header" onclick="toggleAdminService('early')">
-            <div class="srv-title"><svg viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>Ранній заїзд</div>
-            <div class="srv-price" id="adminLabelPriceEarly">Дати</div>
-        </div>
-        <div class="srv-body">
-            <div style="font-size:11px; color:#6B7280; font-weight:500;">Година заїзду:</div>
-            <div class="time-chips">
-                <div class="t-chip" onclick="selectAdminTime('early', '08:00', this)">08:00</div>
-                <div class="t-chip" onclick="selectAdminTime('early', '09:00', this)">09:00</div>
-                <div class="t-chip" onclick="selectAdminTime('early', '10:00', this)">10:00</div>
-                <div class="t-chip" onclick="selectAdminTime('early', '11:00', this)">11:00</div>
-                <div class="t-chip" onclick="selectAdminTime('early', '12:00', this)">12:00</div>
-                <div class="t-chip" onclick="selectAdminTime('early', '13:00', this)">13:00</div>
-                <div class="t-chip" onclick="selectAdminTime('early', '14:00', this)">14:00</div>
+    <div class="form-grid">
+        <div class="form-group"><label>Заїзд:</label><input type="text" id="adminCheckIn" required></div>
+        <div class="form-group"><label>Виїзд:</label><input type="text" id="adminCheckOut" required></div>
+    </div>
+    
+    <div class="form-grid">
+        <div class="form-group">
+            <label>Дорослих:</label>
+            <div style="display: flex; align-items: center; gap: 4px;">
+                <button type="button" onclick="changeGuests(-1)" style="width: 40px; height: 40px; background: #FEF2F2; color: #DC2626; border: 1px solid #FECACA; border-radius: 10px; font-size: 18px; font-weight: bold; cursor: pointer;">-</button>
+                <input type="number" id="adminGuests" value="2" min="1" style="text-align: center; width: 100%; padding: 10px 0;">
+                <button type="button" onclick="changeGuests(1)" style="width: 40px; height: 40px; background: #D1FAE5; color: #059669; border: 1px solid #A7F3D0; border-radius: 10px; font-size: 18px; font-weight: bold; cursor: pointer;">+</button>
             </div>
         </div>
-    </div>
+        <div class="form-group">
+            <label>Тварини:</label>
+            <div style="display: flex; background: #F3F4F6; border-radius: 10px; padding: 3px; height: 40px;">
+                <div class="pet-btn active" data-val="Ні" onclick="togglePet('Ні')">Ні</div>
+                <div class="pet-btn" data-val="Так" onclick="togglePet('Так')">Так</div>
+            </div>
+            <input type="hidden" id="adminPets" value="Ні">
+        </div>
+        <div class="form-group">
+            <label>Денні гості (+500 грн):</label>
+            <div style="display: flex; align-items: center; gap: 4px;">
+                <button type="button" onclick="changeAdminDayGuests(-1)" style="width: 40px; height: 40px; background: #FEF2F2; color: #DC2626; border: 1px solid #FECACA; border-radius: 10px; font-size: 18px; font-weight: bold; cursor: pointer;">-</button>
+                <input type="number" id="adminDayGuests" value="0" min="0" style="text-align: center; width: 100%; padding: 10px 0; border: 1px solid #D1D5DB; border-radius: 12px; font-size: 15px; background: #F9FAFB;">
+                <button type="button" onclick="changeAdminDayGuests(1)" style="width: 40px; height: 40px; background: #D1FAE5; color: #059669; border: 1px solid #A7F3D0; border-radius: 10px; font-size: 18px; font-weight: bold; cursor: pointer;">+</button>
+            </div>
+        </div>
+        <div class="form-group">
+            <label>Чан:</label>
+            <div style="display: flex; background: #F3F4F6; border-radius: 10px; padding: 3px; height: 40px;">
+                <div class="vat-btn active" data-val="Ні" onclick="toggleVat('Ні')">Ні</div>
+                <div class="vat-btn" data-val="Так" onclick="toggleVat('Так')">Так</div>
+            </div>
+            <input type="hidden" id="adminVat" value="Ні">
+        </div>
+        <div class="form-group">
+            <label>УБД (-10%):</label>
+            <div style="display: flex; background: #F3F4F6; border-radius: 10px; padding: 3px; height: 40px;">
+                <div class="ubd-btn active" data-val="Ні" onclick="toggleUBD('Ні')">Ні</div>
+                <div class="ubd-btn" data-val="Так" onclick="toggleUBD('Так')">Так</div>
+            </div>
+            <input type="hidden" id="adminUBD" value="Ні">
+        </div>
+    </div> <div style="margin-top: 16px; border-top: 1px dashed #E5E7EB; padding-top: 16px;">
+        <label style="font-size: 12px; font-weight: 800; color: #9CA3AF; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 12px; display: block;">Гнучкий графік</label>
+        
+        <div class="service-card" id="adminCardEarly">
+            <div class="srv-header" onclick="toggleAdminService('early')">
+                <div class="srv-title"><svg viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>Ранній заїзд</div>
+                <div class="srv-price" id="adminLabelPriceEarly">Дати</div>
+            </div>
+            <div class="srv-body">
+                <div style="font-size:11px; color:#6B7280; font-weight:500;">Година заїзду:</div>
+                <div class="time-chips">
+                    <div class="t-chip" onclick="selectAdminTime('early', '08:00', this)">08:00</div>
+                    <div class="t-chip" onclick="selectAdminTime('early', '09:00', this)">09:00</div>
+                    <div class="t-chip" onclick="selectAdminTime('early', '10:00', this)">10:00</div>
+                    <div class="t-chip" onclick="selectAdminTime('early', '11:00', this)">11:00</div>
+                    <div class="t-chip" onclick="selectAdminTime('early', '12:00', this)">12:00</div>
+                    <div class="t-chip" onclick="selectAdminTime('early', '13:00', this)">13:00</div>
+                    <div class="t-chip" onclick="selectAdminTime('early', '14:00', this)">14:00</div>
+                </div>
+            </div>
+        </div>
 
-    <div class="service-card" id="adminCardLate">
-        <div class="srv-header" onclick="toggleAdminService('late')">
-            <div class="srv-title"><svg viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z M12 7v5l2.5 2.5"/></svg>Пізній виїзд</div>
-            <div class="srv-price" id="adminLabelPriceLate">Дати</div>
-        </div>
-        <div class="srv-body">
-            <div style="font-size:11px; color:#6B7280; font-weight:500;">Година виїзду:</div>
-            <div class="time-chips">
-                <div class="t-chip" onclick="selectAdminTime('late', '12:00', this)">12:00</div>
-                <div class="t-chip" onclick="selectAdminTime('late', '13:00', this)">13:00</div>
-                <div class="t-chip" onclick="selectAdminTime('late', '14:00', this)">14:00</div>
-                <div class="t-chip" onclick="selectAdminTime('late', '15:00', this)">15:00</div>
-                <div class="t-chip" onclick="selectAdminTime('late', '16:00', this)">16:00</div>
-                <div class="t-chip" onclick="selectAdminTime('late', '17:00', this)">17:00</div>
-                <div class="t-chip" onclick="selectAdminTime('late', '18:00', this)">18:00</div>
-                <div class="t-chip" onclick="selectAdminTime('late', '19:00', this)">19:00</div>
-                <div class="t-chip" onclick="selectAdminTime('late', '20:00', this)">20:00</div>
-                <div class="t-chip" onclick="selectAdminTime('late', '21:00', this)">21:00</div>
+        <div class="service-card" id="adminCardLate">
+            <div class="srv-header" onclick="toggleAdminService('late')">
+                <div class="srv-title"><svg viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z M12 7v5l2.5 2.5"/></svg>Пізній виїзд</div>
+                <div class="srv-price" id="adminLabelPriceLate">Дати</div>
+            </div>
+            <div class="srv-body">
+                <div style="font-size:11px; color:#6B7280; font-weight:500;">Година виїзду:</div>
+                <div class="time-chips">
+                    <div class="t-chip" onclick="selectAdminTime('late', '12:00', this)">12:00</div>
+                    <div class="t-chip" onclick="selectAdminTime('late', '13:00', this)">13:00</div>
+                    <div class="t-chip" onclick="selectAdminTime('late', '14:00', this)">14:00</div>
+                    <div class="t-chip" onclick="selectAdminTime('late', '15:00', this)">15:00</div>
+                    <div class="t-chip" onclick="selectAdminTime('late', '16:00', this)">16:00</div>
+                    <div class="t-chip" onclick="selectAdminTime('late', '17:00', this)">17:00</div>
+                    <div class="t-chip" onclick="selectAdminTime('late', '18:00', this)">18:00</div>
+                    <div class="t-chip" onclick="selectAdminTime('late', '19:00', this)">19:00</div>
+                    <div class="t-chip" onclick="selectAdminTime('late', '20:00', this)">20:00</div>
+                    <div class="t-chip" onclick="selectAdminTime('late', '21:00', this)">21:00</div>
+                </div>
             </div>
         </div>
-    </div>
-</div>
-                    </div>
-                    
-                    <div id="liveCalculatorContainer"></div>
-                </form>
+    </div> </div> ```
+                        
             </div>
             <div class="drawer-footer">
                 <button type="submit" class="btn-primary" form="adminBookingForm" id="adminSubmitBtn">Зберегти бронь</button>
