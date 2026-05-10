@@ -1428,10 +1428,15 @@
 
                             // 🚀 ПОВЕРНУЛИ МОБІЛЬНІ ТАЧ-СЕНСОРИ
 currentRow.innerHTML += `
-    <div class="booking-block ${statusClass}" style="left: ${blockLeft}px; width: ${blockWidth}px;" 
-         ontouchstart="handleTouchStart(event, this, ${b.row})"
-         ontouchend="handleTouchEnd(event, this, ${b.row})"
+    <div class="booking-block ${statusClass}" style="left: ${blockLeft}px; width: ${blockWidth}px; cursor: pointer;" 
+         onmousedown="handleTouchStart(event, this, '${b.row}')"
+         onmouseup="handleTouchEnd(event, this, '${b.row}')"
+         onmousemove="handleTouchMove(event, this)"
+         onmouseleave="handleTouchCancel(this)"
+         ontouchstart="handleTouchStart(event, this, '${b.row}')"
+         ontouchend="handleTouchEnd(event, this, '${b.row}')"
          ontouchmove="handleTouchMove(event, this)"
+         ontouchcancel="handleTouchCancel(this)"
          oncontextmenu="event.preventDefault();">
          
         <div style="font-size: 11px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; line-height: 1;">${guestName}</div>
@@ -1661,27 +1666,31 @@ function hidePremiumTooltip() {
     if (tt) tt.classList.remove('visible');
 }
         
-// --- ЛОГІКА ДОВГОГО НАТИСКАННЯ (HAPTIC TOUCH) ---
+// --- ЛОГІКА ДОВГОГО НАТИСКАННЯ (ПОКРАЩЕНА) ---
 let pressTimer;
 let isLongPress = false;
+let isScrolling = false; // Прапорець, щоб відрізнити клік/утримання від скролу
 let touchStartX = 0;
 let touchStartY = 0;
 
 function handleTouchStart(e, element, rowNumber) {
     isLongPress = false;
-    if(e.touches.length > 1) return;
-    
-    touchStartX = e.touches[0].clientX;
-    touchStartY = e.touches[0].clientY;
+    isScrolling = false; 
+    if (e.touches && e.touches.length > 1) return; // Ігноруємо мультитач
+
+    // Підтримка і тачу, і звичайної миші
+    touchStartX = e.touches ? e.touches[0].clientX : e.clientX;
+    touchStartY = e.touches ? e.touches[0].clientY : e.clientY;
 
     element.classList.add('pressing'); 
     hidePremiumTooltip(); 
     
     pressTimer = setTimeout(() => {
+        if (isScrolling) return; // Якщо почали скролити - тултип не показуємо
         isLongPress = true;
         if (navigator.vibrate) navigator.vibrate(40);
         showPremiumTooltip(element, rowNumber); 
-    }, 1000); // 🟢 1 секунда (1000 мс) замість 400
+    }, 550); // 🟢 Оптимальний час для Haptic Touch (550 мс)
 }
 
 function handleTouchEnd(e, element, rowNumber) {
@@ -1689,21 +1698,34 @@ function handleTouchEnd(e, element, rowNumber) {
     element.classList.remove('pressing'); 
     
     if (isLongPress) {
+        // Якщо тултип вже відкрився, блокуємо стандартний клік
         if (e.cancelable) e.preventDefault(); 
-    } else {
+    } else if (!isScrolling) {
+        // Відкриваємо бронь ТІЛЬКИ якщо користувач не скролив сторінку
         openDetailsByRow(rowNumber); 
     }
 }
 
 function handleTouchMove(e, element) {
-    if(!e.touches || e.touches.length === 0) return;
-    const diffX = Math.abs(e.touches[0].clientX - touchStartX);
-    const diffY = Math.abs(e.touches[0].clientY - touchStartY);
+    const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+    const clientY = e.touches ? e.touches[0].clientY : e.clientY;
 
-    if (diffX > 25 || diffY > 25) {
-        clearTimeout(pressTimer); 
+    const diffX = Math.abs(clientX - touchStartX);
+    const diffY = Math.abs(clientY - touchStartY);
+
+    // Якщо палець зсунувся більше ніж на 15 пікселів — це скрол
+    if (diffX > 15 || diffY > 15) {
+        isScrolling = true;
+        clearTimeout(pressTimer);
         element.classList.remove('pressing');
     }
+}
+
+function handleTouchCancel(element) {
+    // 🟢 Обробка переривання від iOS Safari
+    isScrolling = true;
+    clearTimeout(pressTimer);
+    element.classList.remove('pressing');
 }
 
 // 🟢 ДОДАЄМО ЗАКРИТТЯ ТУЛТИПУ ПРИ КЛІКУ В ІНШЕ МІСЦЕ
