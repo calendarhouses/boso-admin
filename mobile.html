@@ -687,7 +687,7 @@
             </div>
             <div class="modal-body" id="gModalBody"></div>
             <div class="modal-footer">
-                <button class="btn-outline-danger" id="modalDeleteBtn" onclick="deleteGenericItem()" style="display: none; padding: 12px; width: 48px;"><svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg></button>
+                <button class="btn-outline-danger" id="modalDeleteBtn" onclick="deleteGenericItem()" style="display: none; padding: 12px; width: 48px;"><svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg></button>
                 <button class="btn-secondary" onclick="closeGenericModal()">Скасувати</button>
                 <button class="btn-primary" onclick="saveGenericModal()">Зберегти</button>
             </div>
@@ -759,7 +759,7 @@
                             <div class="custom-select-wrapper" id="cottageWrapper">
                                 <div class="custom-select-trigger" onclick="toggleCustomSelect('cottageWrapper')">
                                     <span id="cottageSelectedText">Оберіть номер</span>
-                                    <svg width="14" height="14" fill="none" stroke="#6B7280" viewBox="0 0 24 24"><path d="M19 9l-7 7-7-7"></path></svg>
+                                    <svg width="14" height="14" fill="none" stroke="#6B7280" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
                                 </div>
                                 <div class="custom-select-options" id="cottageOptions"></div>
                             </div>
@@ -1394,7 +1394,16 @@
                             let statusClass = 'status-new'; let s = String(b.status).toLowerCase();
                             if (s.includes('підтвердж') || s.includes('заїхав')) statusClass = 'status-confirmed';
                             
+                            // 🟢 ВІЗУАЛЬНИЙ ГНУЧКИЙ ГРАФІК (РОЗШИРЕННЯ ПЛАШОК)
+                            let exComment = b.comment ? String(b.comment) : "";
+                            let exHasEarly = exComment.includes('Ранній заїзд');
+                            let exHasLate = exComment.includes('Пізній виїзд') || (durationDays === 2 && inDate.getDay() === 5 && outDate.getDay() === 0);
+
                             let blockLeft = offsetDays * cellWidth; let blockWidth = durationDays * cellWidth; 
+                            
+                            if (exHasLate) blockWidth += (cellWidth * 0.85); 
+                            if (exHasEarly) { blockLeft -= (cellWidth * 0.85); blockWidth += (cellWidth * 0.85); }
+
                             if (offsetDays < 0) { blockWidth = (durationDays + offsetDays) * cellWidth; blockLeft = 0; }
                             if (offsetDays + durationDays > daysCount) { blockWidth = (daysCount - offsetDays) * cellWidth; }
 
@@ -2415,7 +2424,7 @@ function calculateAnalytics() {
             const actions = isSystem ? `<span style="color:#9CA3AF; font-size:11px; padding:4px; background:#F3F4F6; border-radius:6px;">Auto</span>` : `
                 <div style="display: flex; gap: 8px;">
                     <button class="btn-icon-only" style="padding:6px; border-radius:6px; background:#F3F4F6; border:none; color:#4B5563;" onclick="event.stopPropagation(); toggleEditFinRow(${id})"><svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg></button>
-                    <button class="btn-icon-only danger" style="padding:6px; border-radius:6px; background:#FEE2E2; border:none; color:#DC2626;" onclick="event.stopPropagation(); deleteGenericItem('transaction', ${id})"><svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg></button>
+                    <button class="btn-icon-only danger" style="padding:6px; border-radius:6px; background:#FEE2E2; border:none; color:#DC2626;" onclick="event.stopPropagation(); deleteGenericItem('transaction', ${id})"><svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg></button>
                 </div>`;
             const rowAttrs = (!isSystem && id) ? `id="mainRow-${id}" onclick="toggleEditFinRow(${id})"` : `id="mainRow-${id || Date.now()}"`;
 
@@ -2476,7 +2485,14 @@ function openUniversalDetails(type, title, colorHex, bgHex, valLabel) {
     let data = window.bosoDetails[type] || []; data.sort((a, b) => a.rawDate - b.rawDate);
     let html = '';
     if (data.length === 0) {
-        html = `<div style="padding: 40px 20px; text-align: center; color: #6B7280; font-size:14px;">Тут поки порожньо</div>`;
+        html = `
+        <div style="padding: 50px 20px; text-align: center; display: flex; flex-direction: column; align-items: center; gap: 12px; margin: auto;">
+            <div style="width: 64px; height: 64px; background: ${bgHex}; color: ${colorHex}; border-radius: 50%; display: flex; align-items: center; justify-content: center;">
+                <svg width="32" height="32" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+            </div>
+            <div style="font-size: 16px; font-weight: 700; color: #111827;">Тут поки порожньо</div>
+            <div style="font-size: 13px; color: #6B7280;">Немає записів за цей період.</div>
+        </div>`;
     } else {
         data.forEach(item => {
             let initial = item.name.charAt(0).toUpperCase(); if(!initial || initial === '+') initial = '👤';
