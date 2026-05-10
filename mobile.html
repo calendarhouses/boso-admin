@@ -1428,12 +1428,10 @@
 
                             // 🚀 ПОВЕРНУЛИ МОБІЛЬНІ ТАЧ-СЕНСОРИ
 currentRow.innerHTML += `
-    <div class="booking-block ${statusClass}" style="left: ${blockLeft}px; width: ${blockWidth}px; touch-action: pan-x pan-y;" 
-         onpointerdown="handlePointerDown(event, this, '${b.row}')"
-         onpointerup="handlePointerUp(event, this, '${b.row}')"
-         onpointermove="handlePointerMove(event, this)"
-         onpointercancel="handlePointerCancel(event, this)"
-         onpointerleave="handlePointerCancel(event, this)"
+    <div class="booking-block ${statusClass}" style="left: ${blockLeft}px; width: ${blockWidth}px;" 
+         ontouchstart="handleTouchStart(event, this, '${b.row}')"
+         ontouchend="handleTouchEnd(event, this, '${b.row}')"
+         ontouchmove="handleTouchMove(event, this)"
          oncontextmenu="event.preventDefault();">
          
         <div style="font-size: 11px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; line-height: 1;">${guestName}</div>
