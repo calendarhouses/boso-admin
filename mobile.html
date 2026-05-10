@@ -1432,7 +1432,7 @@ currentRow.innerHTML += `
      ontouchstart="handleTouchStart(event, this, ${b.row})"
      ontouchend="handleTouchEnd(event, this, ${b.row})"
      ontouchmove="handleTouchMove(event, this)"
-     ontouchcancel="handleTouchEnd(event, this, ${b.row})" 
+     ontouchcancel="handleTouchCancel(event, this)" 
      oncontextmenu="event.preventDefault();">
          
         <div style="font-size: 11px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; line-height: 1;">${guestName}</div>
@@ -1704,8 +1704,20 @@ function handleTouchEnd(e, element, rowNumber) {
 } 
 
 function handleTouchMove(e, element) {
-    // Якщо палець поїхав - одразу скасовуємо таймер довгого натискання
-    clearTimeout(pressTimer); 
+    if (!e.touches || e.touches.length === 0) return;
+    let currentX = e.touches[0].clientX;
+    let currentY = e.touches[0].clientY;
+
+    // Допускаємо мікро-рух пальця до 10 пікселів (бо палець завжди трохи зсувається при натисканні)
+    if (Math.abs(currentX - startTouchX) > 10 || Math.abs(currentY - startTouchY) > 10) {
+        clearTimeout(pressTimer); 
+        element.classList.remove('pressing');
+    }
+}
+
+// ДОДАНА ФУНКЦІЯ: Окремо тихо скасовуємо дію, якщо iOS перервав дотик, не відкриваючи шторку!
+function handleTouchCancel(e, element) {
+    clearTimeout(pressTimer);
     element.classList.remove('pressing');
 }
 
