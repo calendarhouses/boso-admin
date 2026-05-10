@@ -1427,7 +1427,7 @@
                             let guestName = String(b.name).replace(' (Ручна бронь)', '');
 
                             // 🚀 ПОВЕРНУЛИ МОБІЛЬНІ ТАЧ-СЕНСОРИ
-rowHtml += `
+currentRow.innerHTML += `
     <div class="booking-block ${statusClass}" style="left: ${blockLeft}px; width: ${blockWidth}px;" 
          ontouchstart="handleTouchStart(event, this, ${b.row})"
          ontouchend="handleTouchEnd(event, this, ${b.row})"
