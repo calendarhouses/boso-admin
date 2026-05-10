@@ -2790,8 +2790,7 @@ function renderCharts(startDate, endDate) {
     });
 }
 
-        // --- ЛОГІКА СВАЙПУ ВНИЗ ДЛЯ ЗАКРИТТЯ ВІКОН ---
-function initSwipeToClose() {
+        function initSwipeToClose() {
     const swipeables = document.querySelectorAll('.drawer, .modal-box');
     
     swipeables.forEach(el => {
@@ -2800,8 +2799,9 @@ function initSwipeToClose() {
         let isDragging = false;
         
         el.addEventListener('touchstart', (e) => {
-            // Перевіряємо, чи ми не скролимо контент всередині. 
-            // Якщо контент проскролений вниз - свайп вікна не працює, щоб не заважати.
+            // ВИПРАВЛЕНО: Якщо тапнули по кнопці (наприклад, хрестик) або інпуту - ігноруємо свайп
+            if (e.target.closest('button') || e.target.closest('input') || e.target.closest('textarea')) return;
+
             const scrollable = el.querySelector('.drawer-body, .modal-body');
             if (scrollable && scrollable.contains(e.target) && scrollable.scrollTop > 0) {
                 return; 
@@ -2828,19 +2828,20 @@ function initSwipeToClose() {
             isDragging = false;
             const deltaY = currentY - startY;
             
-            // Повертаємо плавну анімацію
-            el.style.transition = 'transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1)'; 
+            // ВИПРАВЛЕНО: Очищаємо inline transition, щоб відновився плавний CSS-клас
+            el.style.transition = ''; 
             
-            // Якщо потягнули вниз більше ніж на 80 пікселів - закриваємо
             if (deltaY > 80) {
+                // Закриваємо модалку
                 if (el.classList.contains('drawer')) {
                     closeDrawer();
                 } else {
                     el.closest('.modal-overlay').classList.remove('active');
                 }
                 
-                // Скидаємо transform після того, як вікно сховається
-                setTimeout(() => { el.style.transform = ''; }, 300);
+                // ВИПРАВЛЕНО: Миттєво скидаємо transform. Оскільки ми щойно видалили .active, 
+                // рідний CSS сам плавно опустить вікно до -100% або translateY(100%)
+                el.style.transform = '';
             } else {
                 // Якщо потягнули слабо - вікно "відпружинює" назад на місце
                 el.style.transform = '';
