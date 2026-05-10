@@ -1939,12 +1939,6 @@ function handleTouchEnd(e, element, rowNumber) {
     }
 }
 
-        function handleTouchMove(e, element) {
-            // Якщо під час утримання палець поїхав убік (свайп екрану) - скасовуємо таймер
-            clearTimeout(pressTimer); 
-            element.classList.remove('pressing');
-        }
-
         // Закриваємо тултіп, якщо клікнули будь-де в іншому місці екрану
         document.addEventListener('touchstart', function(e) {
             if (!e.target.closest('.booking-block') && !e.target.closest('.premium-tooltip')) {
