@@ -1429,8 +1429,8 @@
                             // 🚀 ПОВЕРНУЛИ МОБІЛЬНІ ТАЧ-СЕНСОРИ
 currentRow.innerHTML += `
     <div class="booking-block ${statusClass}" style="left: ${blockLeft}px; width: ${blockWidth}px;" 
-         ontouchstart="handleTouchStart(event, this, '${b.row}')"
-         ontouchend="handleTouchEnd(event, this, '${b.row}')"
+         ontouchstart="handleTouchStart(event, this, ${b.row})"
+         ontouchend="handleTouchEnd(event, this, ${b.row})"
          ontouchmove="handleTouchMove(event, this)"
          oncontextmenu="event.preventDefault();">
          
@@ -1584,16 +1584,16 @@ currentRow.innerHTML += `
     const b = allBookings.find(x => x.row == rowNumber); 
     if (!b) return; 
 
-    // 🟢 БЕЗПЕЧНИЙ ПАРСИНГ (врятує від крашу на iPhone)
-    let inDate = "—"; let outDate = "—";
-    try {
-        let safeIn = b.checkIn; let safeOut = b.checkOut;
-        if (typeof safeIn === 'string' && safeIn.includes('.')) safeIn = safeIn.split('.').reverse().join('-');
-        if (typeof safeOut === 'string' && safeOut.includes('.')) safeOut = safeOut.split('.').reverse().join('-');
-        
-        inDate = new Date(safeIn).toLocaleDateString('uk-UA', { day: 'numeric', month: 'short' }); 
-        outDate = new Date(safeOut).toLocaleDateString('uk-UA', { day: 'numeric', month: 'short' }); 
-    } catch(e) {}
+    let inDate = "—"; let outDate = "—"; 
+try {
+    let safeIn = b.checkIn; let safeOut = b.checkOut;
+    // Додано перевірку !includes('T'), щоб не ламати ISO дати від Google
+    if (typeof safeIn === 'string' && safeIn.includes('.') && !safeIn.includes('T')) safeIn = safeIn.split('.').reverse().join('-');
+    if (typeof safeOut === 'string' && safeOut.includes('.') && !safeOut.includes('T')) safeOut = safeOut.split('.').reverse().join('-');
+    
+    inDate = new Date(safeIn).toLocaleDateString('uk-UA', { day: 'numeric', month: 'short' }); 
+    outDate = new Date(safeOut).toLocaleDateString('uk-UA', { day: 'numeric', month: 'short' }); 
+} catch(e) {}
 
     const guestName = String(b.name).replace(' (Ручна бронь)', ''); 
     
@@ -1702,18 +1702,10 @@ function handleTouchEnd(e, element, rowNumber) {
     } 
 } 
 
-function handleTouchMove(e, element) { 
-    if (!e.touches || e.touches.length === 0) return;
-
-    // Рахуємо, чи палець реально поїхав (скрол), чи це просто тремтіння
-    let diffX = Math.abs(e.touches[0].clientX - startTouchX);
-    let diffY = Math.abs(e.touches[0].clientY - startTouchY);
-
-    // Вбиваємо таймер ТІЛЬКИ якщо палець зсунувся більше ніж на 15 пікселів
-    if (diffX > 15 || diffY > 15) {
-        clearTimeout(pressTimer);  
-        element.classList.remove('pressing'); 
-    }
+function handleTouchMove(e, element) {
+    // Якщо палець поїхав - одразу скасовуємо таймер довгого натискання
+    clearTimeout(pressTimer); 
+    element.classList.remove('pressing');
 }
 
         // --- ГЛОБАЛЬНІ ЗМІННІ ---
@@ -2559,6 +2551,13 @@ function renderCharts(startDate, endDate) {
         options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true } } }
     });
 }
+
+        // Закриваємо тултіп, якщо клікнули будь-де в іншому місці екрану
+document.addEventListener('touchstart', function(e) {
+    if (!e.target.closest('.booking-block') && !e.target.closest('.premium-tooltip')) {
+        hidePremiumTooltip();
+    }
+});
         
         window.onload = () => { switchView('grid'); initApp(); };
     </script>
