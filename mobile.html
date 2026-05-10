@@ -984,17 +984,20 @@
                 topTitle.innerText = 'База гостей';
                 renderGuests(); 
             } else if(viewName === 'settings') {
-                document.getElementById('view-settings').style.display = 'flex';
-                topTitle.innerText = 'Налаштування';
-                document.getElementById('mainActionButton').style.display = 'none'; 
-                // Відкриваємо першу вкладку налаштувань
-                const firstSubItem = document.querySelector('.m-tab');
-                switchSettingsTab('rooms', firstSubItem);
-            } else if(viewName === 'reports') {
-                document.getElementById('view-reports').style.display = 'flex';
-                topTitle.innerText = 'Звіти';
-                document.getElementById('mainActionButton').style.display = 'none'; 
-            }
+    document.getElementById('view-settings').style.display = 'flex';
+    topTitle.innerText = 'Налаштування';
+    document.getElementById('mainActionButton').style.display = 'none'; 
+    // Відкриваємо першу вкладку налаштувань
+    const firstSubItem = document.querySelector('#view-settings .m-tab');
+    switchSettingsTab('rooms', firstSubItem);
+} else if(viewName === 'reports') {
+    document.getElementById('view-reports').style.display = 'flex';
+    topTitle.innerText = 'Звіти';
+    document.getElementById('mainActionButton').style.display = 'none'; 
+    
+    // Запускаємо рендер аналітики одразу при відкритті сторінки!
+    switchReportTab('analytics', document.querySelector('.r-tab.active') || document.querySelectorAll('.r-tab')[0]);
+}
         }
 
         function switchSettingsTab(tabName, el) {
@@ -1211,7 +1214,7 @@
                         if (selectedRooms.includes(String(r.id))) {
                             if (!customPrices[r.id]) customPrices[r.id] = {};
                             for (let i = 0; i < daysCount; i++) {
-                                let d = new Date(startDate); d.setDate(startDate.getDate() + i); let isWeekend = (d.getDay() === 0 || d.getDay() === 6);
+                                let d = new Date(startDate); d.setDate(startDate.getDate() + i); let isWeekend = (d.getDay() === 0 || d.getDay() === 5 || d.getDay() === 6);
                                 if (dayType === 'weekdays' && isWeekend) continue; if (dayType === 'weekends' && !isWeekend) continue; 
                                 let dateStr = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
                                 customPrices[r.id][dateStr] = amount;
@@ -1440,7 +1443,7 @@
             monthsContainer.innerHTML = `<div class="timeline-month-cell" style="width: ${daysCount * cellWidth}px">${monthName}</div>`;
 
             for (let i = 0; i < daysCount; i++) {
-                const d = new Date(startDate); d.setDate(startDate.getDate() + i); const isWeekend = d.getDay() === 0 || d.getDay() === 6;
+                const d = new Date(startDate); d.setDate(startDate.getDate() + i); const isWeekend = (d.getDay() === 0 || d.getDay() === 5 || d.getDay() === 6);
                 datesContainer.innerHTML += `<div class="timeline-date ${isWeekend ? 'weekend' : ''}" style="height: 60px;">${d.getDate()} <span>${daysArr[d.getDay()]}</span></div>`;
             }
 
@@ -1571,7 +1574,21 @@
 
         function setHalfPrepayment() { let t = document.getElementById('adminTotalPrice'); let p = document.getElementById('adminPaidAmount'); if (t && p) { p.value = Math.round(Number(t.value) / 2); calculateBalanceLive(); } }
         function setFullPrepayment() { let t = document.getElementById('adminTotalPrice'); let p = document.getElementById('adminPaidAmount'); if (t && p) { p.value = Number(t.value) || 0; calculateBalanceLive(); } }
-        function changeGuests(amount) { let input = document.getElementById('adminGuests'); let newVal = (parseInt(input.value) || 1) + amount; if (newVal >= 1) { input.value = newVal; updatePricePreview(); } }
+        function changeGuests(amount) { 
+    let input = document.getElementById('adminGuests'); 
+    let currentVal = parseInt(input.value) || 1; 
+    let roomName = document.getElementById('adminCottage').value;
+    let roomObj = roomsList.find(r => r.name === roomName);
+    let maxCap = roomObj ? (roomObj.maxCapacity || roomObj.capacity || 10) : 10;
+
+    let newVal = currentVal + amount; 
+    if (newVal >= 1 && newVal <= maxCap) { 
+        input.value = newVal; 
+        updatePricePreview(); 
+    } else if (newVal > maxCap) {
+        showToast(`Максимум для цього котеджу: ${maxCap} гостей`);
+    }
+}
         
         function calculateBalanceLive() {
             let total = Number(document.getElementById('adminTotalPrice').value) || 0; let paid = Number(document.getElementById('adminPaidAmount').value) || 0;
@@ -1847,7 +1864,7 @@ let selectedLateTime = null;
 
 // Ініціалізація календаря звітів
 const reportRangePicker = flatpickr("#customReportRange", { 
-    locale: "uk", mode: "range", dateFormat: "Y-m-d", 
+    locale: "uk", mode: "range", dateFormat: "Y-m-d", disableMobile: "true",
     onChange: function(selectedDates) {
         if (selectedDates.length === 2) {
             document.getElementById('reportPeriodVal').value = 'custom';
@@ -2246,7 +2263,7 @@ function calculateAnalytics() {
         startDate = new Date(2000, 0, 1); endDate = new Date(2100, 0, 1);
     }
 
-    let currSum = 0, currCount = 0, currPaid = 0;
+    let currSum = 0, currCount = 0, currPaid = 0, prevSum = 0, prevCount = 0;
     let currGuests = 0, currPets = 0, currEarlyLate = 0, currVat = 0, currBikes = 0, currOther = 0;
     let topRoomsCount = {}; 
     let totalIncome = 0; let totalExpense = 0;
@@ -2308,9 +2325,14 @@ function calculateAnalytics() {
                 incomeBreakdown.guests += (feeGuests * ratio);
                 incomeBreakdown.earlyLate += (feeEarlyLate * ratio);
                 incomeBreakdown.base += (paid - (feePets * ratio) - (feeGuests * ratio) - (feeEarlyLate * ratio));
-            }
         }
-    });
+    }
+
+    // Рахуємо дані за минулий період для порівняння
+    if (prevStartDate && bDate >= prevStartDate && bDate <= prevEndDate) {
+        prevSum += price; prevCount++;
+    }
+});
 
     let filteredTrans = transactions.filter(t => {
         const tDate = parseSafeDate(t.date); return tDate >= startDate && tDate <= endDate;
@@ -2345,10 +2367,24 @@ function calculateAnalytics() {
     services.sort((a, b) => b.val - a.val);
     services.forEach((service, index) => { let el = document.getElementById(service.id); if (el) el.style.order = index; });
 
-    if(document.getElementById('aiSummaryText')) {
+   if(document.getElementById('aiSummaryText')) {
         let bestRoom = "не визначено"; let maxReservations = 0;
         for (let r in topRoomsCount) { if (topRoomsCount[r] > maxReservations) { maxReservations = topRoomsCount[r]; bestRoom = r; } }
-        let text = currSum === 0 ? "Даних ще немає." : `📊 Дохід: ${currSum.toLocaleString('uk-UA')} грн. Хіт продажів — <b>${bestRoom}</b>.`;
+        let extraTotal = currPets + currGuests + currVat + currBikes + currEarlyLate + currOther;
+        let text = "";
+        
+        if (currSum === 0) {
+            text = "Даних ще немає.";
+        } else {
+            if (currSum > prevSum && prevSum > 0) {
+                text = `🔥 Дохід зріс на ${Math.round(((currSum - prevSum) / prevSum) * 100)}%. `;
+            } else if (currSum < prevSum && prevSum > 0) {
+                text = `📉 Дохід знизився на ${Math.round(((prevSum - currSum) / prevSum) * 100)}%. `;
+            } else {
+                text = `📊 Загальний дохід: ${currSum.toLocaleString('uk-UA')} грн. `;
+            }
+            text += `Хіт — <b>${bestRoom}</b>. Дод. послуги: <b>${extraTotal.toLocaleString('uk-UA')} грн</b>.`;
+        }
         document.getElementById('aiSummaryText').innerHTML = text;
     }
 
