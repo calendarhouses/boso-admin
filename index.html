@@ -4111,6 +4111,11 @@ function toggleInlineCard(index) {
     // 2. Якщо клікнута картка не була активною — відкриваємо її
     if (!isAlreadyActive) {
         clickedCard.classList.add('active');
+        
+        // 🟢 ДОДАЄМО ПЛАВНИЙ СКРОЛ ДО ВІДКРИТОЇ КАРТКИ
+        setTimeout(() => {
+            clickedCard.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }, 150); 
     }
 }
     </script>
