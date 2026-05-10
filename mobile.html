@@ -391,6 +391,40 @@
 .it-card.active .it-body { max-height: 500px; opacity: 1; padding: 0 16px 16px; }
 .it-date-picker { padding: 14px 16px 14px 40px !important; text-align: left !important; background: #F9FAFB !important; border: 1px solid #D1D5DB !important; border-radius: 12px !important; color: #111827 !important; font-weight: 600 !important; font-size: 15px !important; width: 100%; }
 .fin-table-mobile td { font-size: 12px; padding: 10px 0; border-bottom: 1px solid #F3F4F6 !important;}
+
+        /* Візуальна ручка для свайпу шторки */
+.swipe-handle {
+    width: 40px;
+    height: 5px;
+    background: #D1D5DB;
+    border-radius: 3px;
+    margin: 0 auto 12px auto;
+    display: block;
+}
+
+/* Трохи коригуємо шапки, щоб ручка виглядала гарно */
+.drawer-header {
+    padding: 12px 20px 16px; 
+    flex-direction: column; 
+    align-items: stretch;
+}
+.drawer-header-content {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+}
+.modal-header {
+    padding: 12px 20px 16px;
+    flex-direction: column; 
+    align-items: stretch;
+}
+.modal-header-content {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+}
     </style>
 </head>
 <body>
@@ -682,9 +716,12 @@
     <div id="genericModal" class="modal-overlay">
         <div class="modal-box">
             <div class="modal-header">
-                <span id="gModalTitle">Налаштування</span>
-                <button class="close-btn" onclick="closeGenericModal()">✕</button>
-            </div>
+    <div class="swipe-handle"></div>
+    <div class="modal-header-content">
+        <span id="gModalTitle">Налаштування</span>
+        <button class="close-btn" onclick="closeGenericModal()">✕</button>
+    </div>
+</div>
             <div class="modal-body" id="gModalBody"></div>
             <div class="modal-footer">
                 <button class="btn-outline-danger" id="modalDeleteBtn" onclick="deleteGenericItem()" style="display: none; padding: 12px; width: 48px;"><svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg></button>
@@ -713,9 +750,12 @@
     <div id="bookingDrawer" class="drawer-overlay">
         <div class="drawer">
             <div class="drawer-header">
-                <h2 id="drawerTitle">Бронювання</h2>
-                <button class="close-btn" onclick="closeDrawer()">✕</button>
-            </div>
+    <div class="swipe-handle"></div>
+    <div class="drawer-header-content">
+        <h2 id="drawerTitle">Бронювання</h2>
+        <button class="close-btn" onclick="closeDrawer()">✕</button>
+    </div>
+</div>
             <div class="drawer-body">
                 <div class="status-toggle">
                     <div class="status-btn active" data-status="Нова бронь"><span class="status-dot"></span> Нова</div>
@@ -1567,9 +1607,9 @@
             let discountAmount = Math.round(amountToDiscount * discountPercent);
             let totalPrice = amountToDiscount - discountAmount + petFee;
 
-            cont.innerHTML = `
-                <div class="form-section" style="background:#FDFCFB; border-color: var(--accent); padding: 16px;">
-                    <span class="form-section-title" style="color:var(--accent);">Розшифровка (${nights} ${nightWord(nights)})</span>
+           cont.innerHTML = `
+    <div class="form-section" style="background:#FDFCFB; border-color: var(--accent); padding: 16px; margin-top: 24px; box-shadow: 0 4px 12px rgba(85, 107, 47, 0.05);">
+        <span class="form-section-title" style="color:var(--accent);">Розшифровка (${nights} ${nightWord(nights)})</span>
                     <div style="font-size: 13px; color: #4B5563; margin-bottom: 12px;">
                         <div style="display:flex; justify-content:space-between; margin-bottom:4px;"><span>Базова:</span><span>${basePriceTotal} грн</span></div>
                         ${extraGuestFee > 0 ? `<div style="display:flex; justify-content:space-between; margin-bottom:4px;"><span>Дод. гості:</span><span>+${extraGuestFee} грн</span></div>` : ''}
@@ -2082,8 +2122,8 @@ function updatePricePreview() {
     let totalPrice = amountToDiscount - discountAmount + petFee + dayGuestFee + earlyFee + lateFee;
 
     cont.innerHTML = `
-        <div class="form-section" style="background:#FDFCFB; border-color: var(--accent); padding: 16px;">
-            <span class="form-section-title" style="color:var(--accent);">Розшифровка (${nights} ночей)</span>
+    <div class="form-section" style="background:#FDFCFB; border-color: var(--accent); padding: 16px; margin-top: 24px; box-shadow: 0 4px 12px rgba(85, 107, 47, 0.05);">
+        <span class="form-section-title" style="color:var(--accent);">Розшифровка (${nights} ${nightWord(nights)})</span>
             <div style="font-size: 13px; color: #4B5563; margin-bottom: 12px;">
                 <div style="display:flex; justify-content:space-between; margin-bottom:4px;"><span>Базова:</span><span>${basePriceTotal} грн</span></div>
                 ${extraGuestFee > 0 ? `<div style="display:flex; justify-content:space-between; margin-bottom:4px;"><span>Дод. гості:</span><span>+${extraGuestFee} грн</span></div>` : ''}
@@ -2737,8 +2777,71 @@ function renderCharts(startDate, endDate) {
         options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true } } }
     });
 }
+
+        // --- ЛОГІКА СВАЙПУ ВНИЗ ДЛЯ ЗАКРИТТЯ ВІКОН ---
+function initSwipeToClose() {
+    const swipeables = document.querySelectorAll('.drawer, .modal-box');
+    
+    swipeables.forEach(el => {
+        let startY = 0;
+        let currentY = 0;
+        let isDragging = false;
         
-        window.onload = () => { switchView('grid'); initApp(); };
+        el.addEventListener('touchstart', (e) => {
+            // Перевіряємо, чи ми не скролимо контент всередині. 
+            // Якщо контент проскролений вниз - свайп вікна не працює, щоб не заважати.
+            const scrollable = el.querySelector('.drawer-body, .modal-body');
+            if (scrollable && scrollable.contains(e.target) && scrollable.scrollTop > 0) {
+                return; 
+            }
+            
+            startY = e.touches[0].clientY;
+            isDragging = true;
+            el.style.transition = 'none'; // Вимикаємо анімацію для миттєвого руху за пальцем
+        }, { passive: true });
+
+        el.addEventListener('touchmove', (e) => {
+            if (!isDragging) return;
+            currentY = e.touches[0].clientY;
+            const deltaY = currentY - startY;
+            
+            // Вікно тягнеться тільки вниз
+            if (deltaY > 0) {
+                el.style.transform = `translateY(${deltaY}px)`;
+            }
+        }, { passive: true });
+
+        el.addEventListener('touchend', (e) => {
+            if (!isDragging) return;
+            isDragging = false;
+            const deltaY = currentY - startY;
+            
+            // Повертаємо плавну анімацію
+            el.style.transition = 'transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1)'; 
+            
+            // Якщо потягнули вниз більше ніж на 80 пікселів - закриваємо
+            if (deltaY > 80) {
+                if (el.classList.contains('drawer')) {
+                    closeDrawer();
+                } else {
+                    el.closest('.modal-overlay').classList.remove('active');
+                }
+                
+                // Скидаємо transform після того, як вікно сховається
+                setTimeout(() => { el.style.transform = ''; }, 300);
+            } else {
+                // Якщо потягнули слабо - вікно "відпружинює" назад на місце
+                el.style.transform = '';
+            }
+        });
+    });
+}
+        
+        window.onload = () => { 
+    switchView('grid'); 
+    initApp(); 
+    initSwipeToClose(); // Додаємо активацію свайпів!
+};
     </script>
 </body>
 </html>
