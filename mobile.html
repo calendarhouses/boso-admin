@@ -1580,91 +1580,86 @@ currentRow.innerHTML += `
         }
 
         // --- ЛОГІКА ПРЕМІУМ-КАРТКИ (TOOLTIP) ---
-        function showPremiumTooltip(element, rowNumber) {
-            const tooltip = document.getElementById('premiumTooltip');
-            const b = allBookings.find(x => x.row == rowNumber);
-            if (!b) return;
+function showPremiumTooltip(element, rowNumber) {
+    const tooltip = document.getElementById('premiumTooltip');
+    const b = allBookings.find(x => x.row == rowNumber);
+    if (!b) return;
 
-            const inDate = new Date(b.checkIn).toLocaleDateString('uk-UA', { day: 'numeric', month: 'short' });
-            const outDate = new Date(b.checkOut).toLocaleDateString('uk-UA', { day: 'numeric', month: 'short' });
-            const guestName = String(b.name).replace(' (Ручна бронь)', '');
-            
-            let total = Number(b.totalPrice) || 0;
-            let paid = Number(b.paidAmount) || 0;
-            let balance = total - paid;
-            
-            let finText = ""; let finColor = ""; let finBg = "";
-            let statusClass = String(b.status).toLowerCase();
+    // 🟢 БЕЗПЕЧНИЙ ПАРСИНГ ДАТ (Саме тут падала помилка на iOS!)
+    let inDate = "—"; let outDate = "—";
+    try {
+        if (b.checkIn) inDate = parseSafeDate(b.checkIn).toLocaleDateString('uk-UA', { day: 'numeric', month: 'short' });
+        if (b.checkOut) outDate = parseSafeDate(b.checkOut).toLocaleDateString('uk-UA', { day: 'numeric', month: 'short' });
+    } catch(err) {}
 
-            if (statusClass.includes('скас')) {
-                finText = "Бронь скасована"; finBg = "#F3F4F6"; finColor = "#9CA3AF";
-            } else if (total === 0) {
-                finText = "Очікує прорахунку ціни"; finBg = "#F3F4F6"; finColor = "#4B5563";
-            } else if (paid === 0) {
-                finText = `Очікує передплату (${Math.round(total / 2)} грн)`; finBg = "#FEF3C7"; finColor = "#B45309";
-            } else if (balance <= 0) {
-                finText = `Сплачено повністю (${total} грн)`; finBg = "#D1FAE5"; finColor = "#059669";
-            } else {
-                finText = `Залишок до сплати: ${balance} грн`; finBg = "#FEE2E2"; finColor = "#DC2626";
-            }
+    const guestName = b.name ? String(b.name).replace(' (Ручна бронь)', '') : "Клієнт";
+    const guestsCount = parseInt(b.guests) || 2;
+    
+    let total = Number(b.totalPrice) || 0;
+    let paid = Number(b.paidAmount) || 0;
+    let balance = total - paid;
+    
+    let finText = ""; let finColor = ""; let finBg = "";
+    let statusClass = String(b.status).toLowerCase();
 
-            let paidRowHtml = paid > 0 ? `<div class="tt-row"><span class="tt-label">Внесено:</span> <span class="tt-value" style="color: #059669;">${paid} грн</span></div>` : '';
+    if (statusClass.includes('скас')) {
+        finText = "Бронь скасована"; finBg = "#F3F4F6"; finColor = "#9CA3AF";
+    } else if (total === 0) {
+        finText = "Очікує прорахунку ціни"; finBg = "#F3F4F6"; finColor = "#4B5563";
+    } else if (paid === 0) {
+        finText = `Очікує передплату (${Math.round(total / 2)} грн)`; finBg = "#FEF3C7"; finColor = "#B45309";
+    } else if (balance <= 0) {
+        finText = `Сплачено повністю (${total} грн)`; finBg = "#D1FAE5"; finColor = "#059669";
+    } else {
+        finText = `Залишок до сплати: ${balance} грн`; finBg = "#FEE2E2"; finColor = "#DC2626";
+    }
 
-            // 🚀 ДОДАЄМО БЛОК КОМЕНТАРЯ (ЯК НА ПК)
-            let rawComment = b.comment ? String(b.comment).trim() : "";
-            if (rawComment === "undefined" || rawComment === "null") rawComment = "";
-            let commentHtml = rawComment !== "" 
-                ? `<div style="margin-top: 12px; padding: 10px 12px; background: #F9FAFB; border-left: 3px solid var(--accent); border-radius: 4px 8px 8px 4px; font-size: 12px; color: #4B5563; line-height: 1.4; text-align: left;">
-                     <span style="display: block; font-size: 10px; font-weight: 800; text-transform: uppercase; color: #9CA3AF; margin-bottom: 4px; letter-spacing: 0.5px;">Коментар</span>
-                     <div style="display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; text-overflow: ellipsis; word-break: break-all;">
-                         ${rawComment}
-                     </div>
-                   </div>` 
-                : '';
+    let paidRowHtml = paid > 0 ? `<div class="tt-row"><span class="tt-label">Внесено:</span> <span class="tt-value" style="color: #059669;">${paid} грн</span></div>` : '';
 
-            // МАЛЮЄМО КАРТКУ (Додали ${commentHtml} в кінці)
-            tooltip.innerHTML = `
-                <div class="tt-header">
-                    <span class="tt-name">${guestName}</span>
-                    <span class="tt-guests">${b.guests} ${getGuestWord(b.guests)}</span>
-                </div>
-                <div class="tt-body">
-                    <div class="tt-row"><span class="tt-label">Номер:</span> <span class="tt-value">${b.cottage}</span></div>
-                    <div class="tt-row"><span class="tt-label">Дати:</span> <span class="tt-value" style="color: var(--accent);">${inDate} — ${outDate}</span></div>
-                    <div class="tt-row"><span class="tt-label">Загальна сума:</span> <span class="tt-value">${total} грн</span></div>
-                    ${paidRowHtml}
-                    <div class="tt-status" style="background: ${finBg}; color: ${finColor};">${finText}</div>
-                    ${commentHtml}
-                </div>
-            `;
+    let rawComment = b.comment ? String(b.comment).trim() : "";
+    if (rawComment === "undefined" || rawComment === "null") rawComment = "";
+    let commentHtml = rawComment !== "" 
+        ? `<div style="margin-top: 12px; padding: 10px 12px; background: #F9FAFB; border-left: 3px solid var(--accent); border-radius: 4px 8px 8px 4px; font-size: 12px; color: #4B5563; line-height: 1.4; text-align: left;">
+             <span style="display: block; font-size: 10px; font-weight: 800; text-transform: uppercase; color: #9CA3AF; margin-bottom: 4px; letter-spacing: 0.5px;">Коментар</span>
+             <div style="display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; text-overflow: ellipsis; word-break: break-all;">
+                 ${rawComment}
+             </div>
+           </div>` 
+        : '';
 
-            // МАГІЯ ПОЗИЦІОНУВАННЯ ДЛЯ МОБІЛКИ
-            const rect = element.getBoundingClientRect();
-            
-            // Центруємо рівно по центру екрану по горизонталі
-            let left = (window.innerWidth - tooltip.offsetWidth) / 2;
-            
-            // Ставимо вище пальця (над броНню)
-            let top = rect.top - tooltip.offsetHeight - 20;
+    tooltip.innerHTML = `
+        <div class="tt-header">
+            <span class="tt-name">${guestName}</span>
+            <span class="tt-guests">${guestsCount} ${getGuestWord(guestsCount)}</span>
+        </div>
+        <div class="tt-body">
+            <div class="tt-row"><span class="tt-label">Номер:</span> <span class="tt-value">${b.cottage}</span></div>
+            <div class="tt-row"><span class="tt-label">Дати:</span> <span class="tt-value" style="color: var(--accent);">${inDate} — ${outDate}</span></div>
+            <div class="tt-row"><span class="tt-label">Загальна сума:</span> <span class="tt-value">${total} грн</span></div>
+            ${paidRowHtml}
+            <div class="tt-status" style="background: ${finBg}; color: ${finColor};">${finText}</div>
+            ${commentHtml}
+        </div>
+    `;
 
-            // Якщо зверху мало місця (бронь в самому верху екрану) - кидаємо картку під палець
-            if (top < 40) {
-                top = rect.bottom + 20;
-            }
+    const rect = element.getBoundingClientRect();
+    let left = (window.innerWidth - tooltip.offsetWidth) / 2;
+    let top = rect.top - tooltip.offsetHeight - 20;
 
-            tooltip.style.top = top + 'px';
-            tooltip.style.left = left + 'px';
-            
-            // Запускаємо анімацію
-            requestAnimationFrame(() => {
-                tooltip.classList.add('visible');
-            });
-        }
+    if (top < 40) top = rect.bottom + 20;
 
-        function hidePremiumTooltip() {
-            const tt = document.getElementById('premiumTooltip');
-            if (tt) tt.classList.remove('visible');
-        }
+    tooltip.style.top = top + 'px';
+    tooltip.style.left = left + 'px';
+    
+    requestAnimationFrame(() => {
+        tooltip.classList.add('visible');
+    });
+}
+
+function hidePremiumTooltip() {
+    const tt = document.getElementById('premiumTooltip');
+    if (tt) tt.classList.remove('visible');
+}
         
 // --- ЛОГІКА ДОВГОГО НАТИСКАННЯ (HAPTIC TOUCH) ---
 let pressTimer;
@@ -1674,23 +1669,19 @@ let touchStartY = 0;
 
 function handleTouchStart(e, element, rowNumber) {
     isLongPress = false;
-    
-    // Якщо дотик кількома пальцями - ігноруємо
     if(e.touches.length > 1) return;
     
-    // Фіксуємо координати старту
     touchStartX = e.touches[0].clientX;
     touchStartY = e.touches[0].clientY;
 
     element.classList.add('pressing'); 
     hidePremiumTooltip(); 
     
-    // Запускаємо таймер на тултип
     pressTimer = setTimeout(() => {
         isLongPress = true;
         if (navigator.vibrate) navigator.vibrate(40);
         showPremiumTooltip(element, rowNumber); 
-    }, 400); 
+    }, 1000); // 🟢 1 секунда (1000 мс) замість 400
 }
 
 function handleTouchEnd(e, element, rowNumber) {
@@ -1698,30 +1689,29 @@ function handleTouchEnd(e, element, rowNumber) {
     element.classList.remove('pressing'); 
     
     if (isLongPress) {
-        // Якщо відкрився тултип - блокуємо клік
         if (e.cancelable) e.preventDefault(); 
     } else {
-        // 🟢 ВИПРАВЛЕНО: Прибрали 'e', залишили тільки rowNumber!
         openDetailsByRow(rowNumber); 
     }
 }
 
 function handleTouchMove(e, element) {
     if(!e.touches || e.touches.length === 0) return;
-    
-    const currentX = e.touches[0].clientX;
-    const currentY = e.touches[0].clientY;
+    const diffX = Math.abs(e.touches[0].clientX - touchStartX);
+    const diffY = Math.abs(e.touches[0].clientY - touchStartY);
 
-    const diffX = Math.abs(currentX - touchStartX);
-    const diffY = Math.abs(currentY - touchStartY);
-
-    // 🟢 Збільшили "мертву зону" до 25 пікселів. 
-    // Тепер мікро-здригання пальця не будуть скасовувати тултип!
     if (diffX > 25 || diffY > 25) {
         clearTimeout(pressTimer); 
         element.classList.remove('pressing');
     }
 }
+
+// 🟢 ДОДАЄМО ЗАКРИТТЯ ТУЛТИПУ ПРИ КЛІКУ В ІНШЕ МІСЦЕ
+document.addEventListener('touchstart', function(e) {
+    if (!e.target.closest('.booking-block') && !e.target.closest('.premium-tooltip')) {
+        hidePremiumTooltip();
+    }
+});
 
         // --- ГЛОБАЛЬНІ ЗМІННІ ---
 let transactions = [];
