@@ -1426,18 +1426,19 @@
 
                             let guestName = String(b.name).replace(' (Ручна бронь)', '');
 
-                            currentRow.innerHTML += `
-                                <div class="booking-block ${statusClass}" style="left: ${blockLeft}px; width: ${blockWidth}px;" 
-                                     ontouchstart="handleTouchStart(event, this, ${b.row})"
-                                     ontouchend="handleTouchEnd(event, this, ${b.row})"
-                                     ontouchmove="handleTouchMove(event, this)"
-                                     oncontextmenu="event.preventDefault();">
-                                     
-                                    <div style="font-size: 11px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; line-height: 1;">${guestName}</div>
-                                    <div style="margin-top: 3px; display: flex; overflow: hidden;">
-                                        <span style="background: ${badgeBg}; color: ${badgeColor}; font-size: 8px; padding: 2px 4px; border-radius: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${finText}</span>
-                                    </div>
-                                </div>`;
+                            // 🚀 ПОВЕРНУЛИ МОБІЛЬНІ ТАЧ-СЕНСОРИ
+rowHtml += `
+    <div class="booking-block ${statusClass}" style="left: ${blockLeft}px; width: ${blockWidth}px;" 
+         ontouchstart="handleTouchStart(event, this, ${b.row})"
+         ontouchend="handleTouchEnd(event, this, ${b.row})"
+         ontouchmove="handleTouchMove(event, this)"
+         oncontextmenu="event.preventDefault();">
+         
+        <div style="font-size: 11px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; line-height: 1;">${guestName}</div>
+        <div style="margin-top: 3px; display: flex; overflow: hidden;">
+            <span style="background: ${badgeBg}; color: ${badgeColor}; font-size: 8px; padding: 2px 4px; border-radius: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${finText}</span>
+        </div>
+    </div>`;
                         }
                     }
                 });
@@ -1691,14 +1692,15 @@ function handleTouchStart(e, element, rowNumber) {
 
 function handleTouchEnd(e, element, rowNumber) {
     clearTimeout(pressTimer);
-    element.classList.remove('pressing'); // Картка опускається
+    element.classList.remove('pressing'); 
     
     if (isLongPress) {
         // Якщо тултип відкрився - блокуємо звичайний клік (шторку)
         if (e.cancelable) e.preventDefault(); 
     } else {
-        // Якщо відпустили швидко - відкриваємо звичайну шторку редагування
-        openDetailsByRow(rowNumber); 
+        // Якщо відпустили швидко - відкриваємо шторку!
+        // ВАЖЛИВО: Передаємо 'e' першим параметром, бо нова функція цього вимагає
+        openDetailsByRow(e, rowNumber); 
     }
 }
 
