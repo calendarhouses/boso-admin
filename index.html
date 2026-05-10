@@ -3894,11 +3894,16 @@ function bosoLeave() {
                     
                     const actions = isSystem ? `<span style="color:#9CA3AF; font-size:12px; font-weight:700; padding:4px 8px; background:#F3F4F6; border-radius:6px;">Auto</span>` : `
                         <div style="display: flex; gap: 8px;">
-                            <button class="btn-icon-only" onclick="toggleEditFinRow(${id})"><svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg></button>
-                            <button class="btn-icon-only danger" onclick="deleteGenericItem('transaction', ${id})"><svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg></button>
+                            <button class="btn-icon-only" onclick="event.stopPropagation(); toggleEditFinRow(${id})"><svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg></button>
+                            <button class="btn-icon-only danger" onclick="event.stopPropagation(); deleteGenericItem('transaction', ${id})"><svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg></button>
                         </div>`;
 
-                    let mainRow = `<tr>
+                    // 🟢 РОБИМО РЯДОК КЛІКАБЕЛЬНИМ (якщо це не системний запис)
+                    const rowAttrs = (!isSystem && id) 
+                        ? `id="mainRow-${id}" onclick="toggleEditFinRow(${id})" style="cursor: pointer; transition: 0.2s;" onmouseover="this.style.background='#F9FAFB'" onmouseout="this.style.background='transparent'"` 
+                        : `id="mainRow-${id || Date.now()}"`;
+
+                    let mainRow = `<tr ${rowAttrs}>
                         <td><strong>${title}</strong><br><span style="font-size:12px; color:#6B7280;">${desc}</span></td>
                         <td>${badge}</td>
                         <td><strong style="color: ${color};">${sign}${Math.round(amount).toLocaleString('uk-UA')} грн</strong></td>
@@ -3909,36 +3914,31 @@ function bosoLeave() {
                     if (!isSystem && id) {
                         const t = transactions.find(x => x.id === id);
                         if (t) {
-                            // 🟢 ОНОВЛЕНИЙ ДИЗАЙН: Красива біла картка на сірому фоні замість кривих рамок
+                            // 🟢 ДИЗАЙН АКОРДЕОНА: на всю ширину, без білих рамок, з лінією зліва
                             editHtml = `
                             <tr id="editRow-${id}" class="inline-edit-row" style="display: none;">
-                                <td colspan="4" style="padding: 16px 20px; background: #F3F4F6; border-bottom: 1px solid #E5E7EB;">
-                                    
-                                    <div style="background: #FFFFFF; border-radius: 12px; padding: 24px; box-shadow: 0 4px 10px rgba(0,0,0,0.05); position: relative; overflow: hidden; max-width: 700px; border: 1px solid #E5E7EB;">
-                                        
-                                        <div style="position: absolute; left: 0; top: 0; bottom: 0; width: 5px; background: ${color};"></div>
-                                        
+                                <td colspan="4" style="padding: 0; border-bottom: 1px solid #E5E7EB; background: #FAFAFA;">
+                                    <div style="padding: 24px; position: relative; border-left: 4px solid ${color};">
                                         <div class="form-grid" style="margin-bottom: 16px;">
                                             <div class="form-group" style="margin-bottom: 0;">
                                                 <label>Сума (грн)</label>
-                                                <input type="number" id="editAmt-${id}" value="${t.amount}" min="1" style="font-weight: 800; font-size: 20px; color: ${color};">
+                                                <input type="number" id="editAmt-${id}" value="${t.amount}" min="1" style="font-weight: 800; font-size: 20px; color: ${color}; background: #FFF;">
                                             </div>
                                             <div class="form-group" style="margin-bottom: 0; position: relative;">
                                                 <label>Дата</label>
                                                 <svg style="position: absolute; left: 14px; top: 38px; width: 18px; height: 18px; stroke: #9CA3AF; fill: none; z-index: 2; pointer-events: none;" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
-                                                <input type="text" id="editDate-${id}" class="it-date-picker" value="${t.date}">
+                                                <input type="text" id="editDate-${id}" class="it-date-picker" value="${t.date}" style="background: #FFF;">
                                             </div>
                                         </div>
                                         <div class="form-group" style="margin-bottom: 24px;">
                                             <label>Коментар (необов'язково)</label>
-                                            <input type="text" id="editComm-${id}" value="${t.comment || ''}" placeholder="Додаткові деталі...">
+                                            <input type="text" id="editComm-${id}" value="${t.comment || ''}" placeholder="Додаткові деталі..." style="background: #FFF;">
                                         </div>
                                         <div style="display: flex; gap: 12px; justify-content: flex-end;">
-                                            <button class="btn-secondary" onclick="toggleEditFinRow(${id})">Скасувати</button>
-                                            <button class="btn-primary" style="background: ${color}; border-color: ${color}; box-shadow: 0 4px 6px ${color}33;" onclick="saveInlineEdit(${id})">Зберегти зміни</button>
+                                            <button class="btn-secondary" onclick="event.stopPropagation(); toggleEditFinRow(${id})">Скасувати</button>
+                                            <button class="btn-primary" style="background: ${color}; border-color: ${color}; box-shadow: 0 4px 6px ${color}33;" onclick="event.stopPropagation(); saveInlineEdit(${id})">Зберегти зміни</button>
                                         </div>
                                     </div>
-
                                 </td>
                             </tr>`;
                         }
@@ -4164,15 +4164,22 @@ function toggleInlineCard(index) {
         // --- ВІДКРИТТЯ ВБУДОВАНОГО РЕДАКТОРА ТРАНЗАКЦІЇ ---
 function toggleEditFinRow(id) {
     const editRow = document.getElementById(`editRow-${id}`);
+    const mainRow = document.getElementById(`mainRow-${id}`);
     
     if (editRow.style.display === 'none') {
-        // Спочатку закриваємо всі інші відкриті рядки редагування
-        document.querySelectorAll('.inline-edit-row').forEach(row => {
-            row.style.display = 'none';
-        });
+        // 1. Спочатку закриваємо всі інші відкриті рядки та повертаємо їм рамки
+        document.querySelectorAll('.inline-edit-row').forEach(row => row.style.display = 'none');
+        document.querySelectorAll('tr[id^="mainRow-"] td').forEach(td => td.style.borderBottom = '');
+        document.querySelectorAll('tr[id^="mainRow-"]').forEach(tr => tr.style.backgroundColor = 'transparent');
         
-        // Відкриваємо потрібний
+        // 2. Відкриваємо потрібний рядок
         editRow.style.display = 'table-row';
+        
+        // 3. Зливаємо клікнутий рядок з формою (прибираємо бордер знизу і ставимо спільний сірий фон)
+        if (mainRow) {
+            mainRow.querySelectorAll('td').forEach(td => td.style.borderBottom = 'none');
+            mainRow.style.backgroundColor = '#FAFAFA'; // Колір фону такий же, як у форми
+        }
         
         // Ініціалізуємо календар (Flatpickr)
         const dateInput = document.getElementById(`editDate-${id}`);
@@ -4180,14 +4187,20 @@ function toggleEditFinRow(id) {
             flatpickr(dateInput, { locale: "uk", dateFormat: "Y-m-d", altInput: true, altFormat: "d.m.Y" });
         }
 
-        // 🟢 ДОДАЄМО АВТОСКРОЛ
+        // 🟢 ДОДАЄМО АВТОСКРОЛ ДО ГОЛОВНОГО РЯДКА
         setTimeout(() => {
-            editRow.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            if (mainRow) {
+                mainRow.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }
         }, 100);
 
     } else {
-        // Якщо вже відкрито — закриваємо
+        // Якщо вже відкрито — закриваємо і повертаємо як було
         editRow.style.display = 'none';
+        if (mainRow) {
+            mainRow.querySelectorAll('td').forEach(td => td.style.borderBottom = '');
+            mainRow.style.backgroundColor = 'transparent';
+        }
     }
 }
 
