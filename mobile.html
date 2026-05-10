@@ -1675,18 +1675,21 @@ let touchStartY = 0;
 function handleTouchStart(e, element, rowNumber) {
     isLongPress = false;
     
-    // Фіксуємо початкові координати пальця на екрані
+    // Якщо дотик кількома пальцями - ігноруємо
+    if(e.touches.length > 1) return;
+    
+    // Фіксуємо координати старту
     touchStartX = e.touches[0].clientX;
     touchStartY = e.touches[0].clientY;
 
-    element.classList.add('pressing'); // Картка підстрибує
-    hidePremiumTooltip(); // Ховаємо старий тултіп, якщо був
+    element.classList.add('pressing'); 
+    hidePremiumTooltip(); 
     
-    // Запускаємо таймер
+    // Запускаємо таймер на тултип
     pressTimer = setTimeout(() => {
         isLongPress = true;
-        if (navigator.vibrate) navigator.vibrate(40); // Легка вібрація
-        showPremiumTooltip(element, rowNumber); // Показуємо інфу
+        if (navigator.vibrate) navigator.vibrate(40);
+        showPremiumTooltip(element, rowNumber); 
     }, 400); 
 }
 
@@ -1695,26 +1698,26 @@ function handleTouchEnd(e, element, rowNumber) {
     element.classList.remove('pressing'); 
     
     if (isLongPress) {
-        // Якщо тултип відкрився - блокуємо звичайний клік (шторку)
+        // Якщо відкрився тултип - блокуємо клік
         if (e.cancelable) e.preventDefault(); 
     } else {
-        // Якщо відпустили швидко - відкриваємо шторку!
-        // ВАЖЛИВО: Передаємо 'e' першим параметром, бо нова функція цього вимагає
-        openDetailsByRow(e, rowNumber); 
+        // 🟢 ВИПРАВЛЕНО: Прибрали 'e', залишили тільки rowNumber!
+        openDetailsByRow(rowNumber); 
     }
 }
 
 function handleTouchMove(e, element) {
-    // Отримуємо поточні координати пальця
+    if(!e.touches || e.touches.length === 0) return;
+    
     const currentX = e.touches[0].clientX;
     const currentY = e.touches[0].clientY;
 
-    // Рахуємо різницю (наскільки реально зсунувся палець)
     const diffX = Math.abs(currentX - touchStartX);
     const diffY = Math.abs(currentY - touchStartY);
 
-    // Якщо палець зсунувся більше ніж на 10 пікселів (це точно свайп, а не мікро-рух)
-    if (diffX > 10 || diffY > 10) {
+    // 🟢 Збільшили "мертву зону" до 25 пікселів. 
+    // Тепер мікро-здригання пальця не будуть скасовувати тултип!
+    if (diffX > 25 || diffY > 25) {
         clearTimeout(pressTimer); 
         element.classList.remove('pressing');
     }
