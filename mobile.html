@@ -1892,34 +1892,52 @@
         }
         
 // --- ЛОГІКА ДОВГОГО НАТИСКАННЯ (HAPTIC TOUCH) ---
-        let pressTimer;
-        let isLongPress = false;
+let pressTimer;
+let isLongPress = false;
+let touchStartX = 0;
+let touchStartY = 0;
 
-        function handleTouchStart(e, element, rowNumber) {
-            isLongPress = false;
-            element.classList.add('pressing'); // Картка підстрибує
-            hidePremiumTooltip(); // Ховаємо старий тултіп, якщо був
-            
-            // Запускаємо таймер. Якщо палець тримають 400 мілісекунд - це Long Press
-            pressTimer = setTimeout(() => {
-                isLongPress = true;
-                if (navigator.vibrate) navigator.vibrate(40); // Легка тактильна вібрація на Android/деяких iOS
-                showPremiumTooltip(element, rowNumber); // Показуємо інфу
-            }, 400); 
-        }
+function handleTouchStart(e, element, rowNumber) {
+    isLongPress = false;
+    element.classList.add('pressing'); // Картка підстрибує
+    hidePremiumTooltip(); // Ховаємо старий тултіп, якщо був
+    
+    // Запам'ятовуємо стартові координати дотику
+    touchStartX = e.touches[0].clientX;
+    touchStartY = e.touches[0].clientY;
+    
+    // Запускаємо таймер на 400 мілісекунд
+    pressTimer = setTimeout(() => {
+        isLongPress = true;
+        if (navigator.vibrate) navigator.vibrate(40); // Тактильна відача
+        showPremiumTooltip(element, rowNumber); // Показуємо тултип
+    }, 400); 
+}
 
-        function handleTouchEnd(e, element, rowNumber) {
-            clearTimeout(pressTimer);
-            element.classList.remove('pressing'); // Картка опускається
-            
-            if (isLongPress) {
-                // Якщо це було довге затискання - блокуємо відкриття шторки
-                if (e.cancelable) e.preventDefault(); 
-            } else {
-                // Якщо палець відпустили швидко - це звичайний тап, відкриваємо шторку
-                openDetailsByRow(rowNumber); 
-            }
-        }
+function handleTouchMove(e, element) {
+    // Рахуємо, на скільки пікселів посунувся палець
+    let moveX = Math.abs(e.touches[0].clientX - touchStartX);
+    let moveY = Math.abs(e.touches[0].clientY - touchStartY);
+
+    // Ігноруємо "розплющення" пальця. Скасовуємо таймер ТІЛЬКИ якщо це реальний свайп (>10px)
+    if (moveX > 10 || moveY > 10) {
+        clearTimeout(pressTimer); 
+        element.classList.remove('pressing');
+    }
+}
+
+function handleTouchEnd(e, element, rowNumber) {
+    clearTimeout(pressTimer);
+    element.classList.remove('pressing'); // Картка опускається
+    
+    if (isLongPress) {
+        // Якщо це було довге затискання - тултип уже відкритий, блокуємо клік
+        if (e.cancelable) e.preventDefault(); 
+    } else {
+        // Якщо палець відпустили швидко (менше 400мс) - це звичайний тап, відкриваємо шторку!
+        openDetailsByRow(rowNumber); 
+    }
+}
 
         function handleTouchMove(e, element) {
             // Якщо під час утримання палець поїхав убік (свайп екрану) - скасовуємо таймер
