@@ -1428,15 +1428,12 @@
 
                             // 🚀 ПОВЕРНУЛИ МОБІЛЬНІ ТАЧ-СЕНСОРИ
 currentRow.innerHTML += `
-    <div class="booking-block ${statusClass}" style="left: ${blockLeft}px; width: ${blockWidth}px; cursor: pointer;" 
-         onmousedown="handleTouchStart(event, this, '${b.row}')"
-         onmouseup="handleTouchEnd(event, this, '${b.row}')"
-         onmousemove="handleTouchMove(event, this)"
-         onmouseleave="handleTouchCancel(this)"
-         ontouchstart="handleTouchStart(event, this, '${b.row}')"
-         ontouchend="handleTouchEnd(event, this, '${b.row}')"
-         ontouchmove="handleTouchMove(event, this)"
-         ontouchcancel="handleTouchCancel(this)"
+    <div class="booking-block ${statusClass}" style="left: ${blockLeft}px; width: ${blockWidth}px; touch-action: pan-x pan-y;" 
+         onpointerdown="handlePointerDown(event, this, '${b.row}')"
+         onpointerup="handlePointerUp(event, this, '${b.row}')"
+         onpointermove="handlePointerMove(event, this)"
+         onpointercancel="handlePointerCancel(event, this)"
+         onpointerleave="handlePointerCancel(event, this)"
          oncontextmenu="event.preventDefault();">
          
         <div style="font-size: 11px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; line-height: 1;">${guestName}</div>
@@ -1584,13 +1581,13 @@ currentRow.innerHTML += `
             const allBtn = document.getElementById('chip-disc-room-all'); if (allChips.length === activeChips.length) { allBtn.classList.add('active'); } else { allBtn.classList.remove('active'); }
         }
 
-        // --- ЛОГІКА ПРЕМІУМ-КАРТКИ (TOOLTIP) ---
-function showPremiumTooltip(element, rowNumber) {
+        function showPremiumTooltip(element, rowNumber) {
     const tooltip = document.getElementById('premiumTooltip');
-    const b = allBookings.find(x => x.row == rowNumber);
-    if (!b) return;
+    if (!tooltip) return; // Захист від відсутності елемента в DOM
 
-    // 🟢 БЕЗПЕЧНИЙ ПАРСИНГ ДАТ (Саме тут падала помилка на iOS!)
+    const b = allBookings.find(x => x.row == rowNumber);
+    if (!b) return; // Якщо броні немає - виходимо
+
     let inDate = "—"; let outDate = "—";
     try {
         if (b.checkIn) inDate = parseSafeDate(b.checkIn).toLocaleDateString('uk-UA', { day: 'numeric', month: 'short' });
@@ -1632,6 +1629,7 @@ function showPremiumTooltip(element, rowNumber) {
            </div>` 
         : '';
 
+    // Вставляємо HTML
     tooltip.innerHTML = `
         <div class="tt-header">
             <span class="tt-name">${guestName}</span>
@@ -1647,18 +1645,28 @@ function showPremiumTooltip(element, rowNumber) {
         </div>
     `;
 
+    // --- РОЗРАХУНОК ПОЗИЦІЇ ---
     const rect = element.getBoundingClientRect();
-    let left = (window.innerWidth - tooltip.offsetWidth) / 2;
-    let top = rect.top - tooltip.offsetHeight - 20;
+    
+    // Надійно беремо ширину екрану. 260px - це ширина тултипа з твого CSS
+    let left = (window.innerWidth - 260) / 2; 
+    
+    // Беремо реальну висоту або ставимо дефолтну, якщо браузер "затупив"
+    let ttHeight = tooltip.offsetHeight || 160; 
+    let top = rect.top - ttHeight - 15;
 
-    if (top < 40) top = rect.bottom + 20;
+    // Якщо вилазить за верхній край екрана — показуємо під карткою
+    if (top < 60) {
+        top = rect.bottom + 15;
+    }
 
     tooltip.style.top = top + 'px';
     tooltip.style.left = left + 'px';
     
-    requestAnimationFrame(() => {
-        tooltip.classList.add('visible');
-    });
+    // Примусовий перерахунок стилів (reflow), щоб анімація спрацювала плавно
+    void tooltip.offsetWidth;
+    
+    tooltip.classList.add('visible');
 }
 
 function hidePremiumTooltip() {
@@ -1666,70 +1674,72 @@ function hidePremiumTooltip() {
     if (tt) tt.classList.remove('visible');
 }
         
-// --- ЛОГІКА ДОВГОГО НАТИСКАННЯ (ПОКРАЩЕНА) ---
+// --- ЛОГІКА ДОВГОГО НАТИСКАННЯ (СУЧАСНИЙ POINTER API) ---
 let pressTimer;
 let isLongPress = false;
-let isScrolling = false; // Прапорець, щоб відрізнити клік/утримання від скролу
-let touchStartX = 0;
-let touchStartY = 0;
+let isScrolling = false; 
+let startX = 0;
+let startY = 0;
 
-function handleTouchStart(e, element, rowNumber) {
+function handlePointerDown(e, element, rowNumber) {
+    // Реагуємо лише на лівий клік миші або тач
+    if (e.button !== 0 && e.pointerType === 'mouse') return;
+    
     isLongPress = false;
     isScrolling = false; 
-    if (e.touches && e.touches.length > 1) return; // Ігноруємо мультитач
+    startX = e.clientX;
+    startY = e.clientY;
 
-    // Підтримка і тачу, і звичайної миші
-    touchStartX = e.touches ? e.touches[0].clientX : e.clientX;
-    touchStartY = e.touches ? e.touches[0].clientY : e.clientY;
+    // Фіксуємо курсор/палець на картці, щоб події не обривались, якщо палець трохи з'їде
+    if (e.pointerId) element.setPointerCapture(e.pointerId);
 
     element.classList.add('pressing'); 
     hidePremiumTooltip(); 
     
     pressTimer = setTimeout(() => {
-        if (isScrolling) return; // Якщо почали скролити - тултип не показуємо
+        if (isScrolling) return; 
         isLongPress = true;
         if (navigator.vibrate) navigator.vibrate(40);
         showPremiumTooltip(element, rowNumber); 
-    }, 550); // 🟢 Оптимальний час для Haptic Touch (550 мс)
+    }, 500); // 500 мс — ідеальний час для Haptic Touch
 }
 
-function handleTouchEnd(e, element, rowNumber) {
+function handlePointerUp(e, element, rowNumber) {
     clearTimeout(pressTimer);
     element.classList.remove('pressing'); 
+    if (e.pointerId) element.releasePointerCapture(e.pointerId);
     
     if (isLongPress) {
-        // Якщо тултип вже відкрився, блокуємо стандартний клік
+        // Якщо це був лонг-прес, глушимо стандартний клік
         if (e.cancelable) e.preventDefault(); 
     } else if (!isScrolling) {
-        // Відкриваємо бронь ТІЛЬКИ якщо користувач не скролив сторінку
+        // Якщо просто швидко клікнули — відкриваємо деталі броні
         openDetailsByRow(rowNumber); 
     }
 }
 
-function handleTouchMove(e, element) {
-    const clientX = e.touches ? e.touches[0].clientX : e.clientX;
-    const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+function handlePointerMove(e, element) {
+    if (!startX || !startY) return; 
 
-    const diffX = Math.abs(clientX - touchStartX);
-    const diffY = Math.abs(clientY - touchStartY);
+    const diffX = Math.abs(e.clientX - startX);
+    const diffY = Math.abs(e.clientY - startY);
 
-    // Якщо палець зсунувся більше ніж на 15 пікселів — це скрол
-    if (diffX > 15 || diffY > 15) {
+    // Якщо палець зсунувся більше ніж на 10 пікселів — це точно скрол шахматки
+    if (diffX > 10 || diffY > 10) {
         isScrolling = true;
         clearTimeout(pressTimer);
         element.classList.remove('pressing');
     }
 }
 
-function handleTouchCancel(element) {
-    // 🟢 Обробка переривання від iOS Safari
+function handlePointerCancel(e, element) {
     isScrolling = true;
     clearTimeout(pressTimer);
     element.classList.remove('pressing');
 }
 
-// 🟢 ДОДАЄМО ЗАКРИТТЯ ТУЛТИПУ ПРИ КЛІКУ В ІНШЕ МІСЦЕ
-document.addEventListener('touchstart', function(e) {
+        // Закриття тултипу при кліку в інше місце
+document.addEventListener('pointerdown', function(e) {
     if (!e.target.closest('.booking-block') && !e.target.closest('.premium-tooltip')) {
         hidePremiumTooltip();
     }
