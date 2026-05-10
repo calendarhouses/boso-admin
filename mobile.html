@@ -1568,8 +1568,8 @@
             let totalPrice = amountToDiscount - discountAmount + petFee;
 
             cont.innerHTML = `
-                <div class="form-section" style="background:#FDFCFB; border-color: var(--accent); padding: 16px;">
-                    <span class="form-section-title" style="color:var(--accent);">Розшифровка (${nights} ${nightWord(nights)})</span>
+    <div class="form-section" style="background:#FDFCFB; border-color: var(--accent); padding: 16px; margin-top: 24px; box-shadow: 0 4px 12px rgba(85, 107, 47, 0.05);">
+        <span class="form-section-title" style="color:var(--accent);">Розшифровка (${nights} ${nightWord(nights)})</span>
                     <div style="font-size: 13px; color: #4B5563; margin-bottom: 12px;">
                         <div style="display:flex; justify-content:space-between; margin-bottom:4px;"><span>Базова:</span><span>${basePriceTotal} грн</span></div>
                         ${extraGuestFee > 0 ? `<div style="display:flex; justify-content:space-between; margin-bottom:4px;"><span>Дод. гості:</span><span>+${extraGuestFee} грн</span></div>` : ''}
@@ -2082,8 +2082,8 @@ function updatePricePreview() {
     let totalPrice = amountToDiscount - discountAmount + petFee + dayGuestFee + earlyFee + lateFee;
 
     cont.innerHTML = `
-        <div class="form-section" style="background:#FDFCFB; border-color: var(--accent); padding: 16px;">
-            <span class="form-section-title" style="color:var(--accent);">Розшифровка (${nights} ночей)</span>
+    <div class="form-section" style="background:#FDFCFB; border-color: var(--accent); padding: 16px; margin-top: 24px; box-shadow: 0 4px 12px rgba(85, 107, 47, 0.05);">
+        <span class="form-section-title" style="color:var(--accent);">Розшифровка (${nights} ${nightWord(nights)})</span>
             <div style="font-size: 13px; color: #4B5563; margin-bottom: 12px;">
                 <div style="display:flex; justify-content:space-between; margin-bottom:4px;"><span>Базова:</span><span>${basePriceTotal} грн</span></div>
                 ${extraGuestFee > 0 ? `<div style="display:flex; justify-content:space-between; margin-bottom:4px;"><span>Дод. гості:</span><span>+${extraGuestFee} грн</span></div>` : ''}
