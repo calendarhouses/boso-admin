@@ -1581,92 +1581,86 @@ currentRow.innerHTML += `
             const allBtn = document.getElementById('chip-disc-room-all'); if (allChips.length === activeChips.length) { allBtn.classList.add('active'); } else { allBtn.classList.remove('active'); }
         }
 
-        function showPremiumTooltip(element, rowNumber) {
-    const tooltip = document.getElementById('premiumTooltip');
-    if (!tooltip) return; // Захист від відсутності елемента в DOM
+        function showPremiumTooltip(element, rowNumber) { 
+    const tooltip = document.getElementById('premiumTooltip'); 
+    const b = allBookings.find(x => x.row == rowNumber); 
+    if (!b) return; 
 
-    const b = allBookings.find(x => x.row == rowNumber);
-    if (!b) return; // Якщо броні немає - виходимо
-
+    // 🟢 БЕЗПЕЧНИЙ ПАРСИНГ (врятує від крашу на iPhone)
     let inDate = "—"; let outDate = "—";
     try {
-        if (b.checkIn) inDate = parseSafeDate(b.checkIn).toLocaleDateString('uk-UA', { day: 'numeric', month: 'short' });
-        if (b.checkOut) outDate = parseSafeDate(b.checkOut).toLocaleDateString('uk-UA', { day: 'numeric', month: 'short' });
-    } catch(err) {}
+        let safeIn = b.checkIn; let safeOut = b.checkOut;
+        if (typeof safeIn === 'string' && safeIn.includes('.')) safeIn = safeIn.split('.').reverse().join('-');
+        if (typeof safeOut === 'string' && safeOut.includes('.')) safeOut = safeOut.split('.').reverse().join('-');
+        
+        inDate = new Date(safeIn).toLocaleDateString('uk-UA', { day: 'numeric', month: 'short' }); 
+        outDate = new Date(safeOut).toLocaleDateString('uk-UA', { day: 'numeric', month: 'short' }); 
+    } catch(e) {}
 
-    const guestName = b.name ? String(b.name).replace(' (Ручна бронь)', '') : "Клієнт";
-    const guestsCount = parseInt(b.guests) || 2;
+    const guestName = String(b.name).replace(' (Ручна бронь)', ''); 
     
-    let total = Number(b.totalPrice) || 0;
-    let paid = Number(b.paidAmount) || 0;
-    let balance = total - paid;
+    let total = Number(b.totalPrice) || 0; 
+    let paid = Number(b.paidAmount) || 0; 
+    let balance = total - paid; 
     
-    let finText = ""; let finColor = ""; let finBg = "";
-    let statusClass = String(b.status).toLowerCase();
+    let finText = ""; let finColor = ""; let finBg = ""; 
+    let statusClass = String(b.status).toLowerCase(); 
 
-    if (statusClass.includes('скас')) {
-        finText = "Бронь скасована"; finBg = "#F3F4F6"; finColor = "#9CA3AF";
-    } else if (total === 0) {
-        finText = "Очікує прорахунку ціни"; finBg = "#F3F4F6"; finColor = "#4B5563";
-    } else if (paid === 0) {
-        finText = `Очікує передплату (${Math.round(total / 2)} грн)`; finBg = "#FEF3C7"; finColor = "#B45309";
-    } else if (balance <= 0) {
-        finText = `Сплачено повністю (${total} грн)`; finBg = "#D1FAE5"; finColor = "#059669";
-    } else {
-        finText = `Залишок до сплати: ${balance} грн`; finBg = "#FEE2E2"; finColor = "#DC2626";
-    }
+    if (statusClass.includes('скас')) { 
+        finText = "Бронь скасована"; finBg = "#F3F4F6"; finColor = "#9CA3AF"; 
+    } else if (total === 0) { 
+        finText = "Очікує прорахунку ціни"; finBg = "#F3F4F6"; finColor = "#4B5563"; 
+    } else if (paid === 0) { 
+        finText = `Очікує передплату (${Math.round(total / 2)} грн)`; finBg = "#FEF3C7"; finColor = "#B45309"; 
+    } else if (balance <= 0) { 
+        finText = `Сплачено повністю (${total} грн)`; finBg = "#D1FAE5"; finColor = "#059669"; 
+    } else { 
+        finText = `Залишок до сплати: ${balance} грн`; finBg = "#FEE2E2"; finColor = "#DC2626"; 
+    } 
 
-    let paidRowHtml = paid > 0 ? `<div class="tt-row"><span class="tt-label">Внесено:</span> <span class="tt-value" style="color: #059669;">${paid} грн</span></div>` : '';
+    let paidRowHtml = paid > 0 ? `<div class="tt-row"><span class="tt-label">Внесено:</span> <span class="tt-value" style="color: #059669;">${paid} грн</span></div>` : ''; 
 
-    let rawComment = b.comment ? String(b.comment).trim() : "";
-    if (rawComment === "undefined" || rawComment === "null") rawComment = "";
-    let commentHtml = rawComment !== "" 
-        ? `<div style="margin-top: 12px; padding: 10px 12px; background: #F9FAFB; border-left: 3px solid var(--accent); border-radius: 4px 8px 8px 4px; font-size: 12px; color: #4B5563; line-height: 1.4; text-align: left;">
-             <span style="display: block; font-size: 10px; font-weight: 800; text-transform: uppercase; color: #9CA3AF; margin-bottom: 4px; letter-spacing: 0.5px;">Коментар</span>
-             <div style="display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; text-overflow: ellipsis; word-break: break-all;">
-                 ${rawComment}
-             </div>
-           </div>` 
-        : '';
+    let rawComment = b.comment ? String(b.comment).trim() : ""; 
+    if (rawComment === "undefined" || rawComment === "null") rawComment = ""; 
+    let commentHtml = rawComment !== ""  
+        ? `<div style="margin-top: 12px; padding: 10px 12px; background: #F9FAFB; border-left: 3px solid var(--accent); border-radius: 4px 8px 8px 4px; font-size: 12px; color: #4B5563; line-height: 1.4; text-align: left;"> 
+             <span style="display: block; font-size: 10px; font-weight: 800; text-transform: uppercase; color: #9CA3AF; margin-bottom: 4px; letter-spacing: 0.5px;">Коментар</span> 
+             <div style="display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; text-overflow: ellipsis; word-break: break-all;"> 
+                 ${rawComment} 
+             </div> 
+           </div>`  
+        : ''; 
 
-    // Вставляємо HTML
-    tooltip.innerHTML = `
-        <div class="tt-header">
-            <span class="tt-name">${guestName}</span>
-            <span class="tt-guests">${guestsCount} ${getGuestWord(guestsCount)}</span>
-        </div>
-        <div class="tt-body">
-            <div class="tt-row"><span class="tt-label">Номер:</span> <span class="tt-value">${b.cottage}</span></div>
-            <div class="tt-row"><span class="tt-label">Дати:</span> <span class="tt-value" style="color: var(--accent);">${inDate} — ${outDate}</span></div>
-            <div class="tt-row"><span class="tt-label">Загальна сума:</span> <span class="tt-value">${total} грн</span></div>
-            ${paidRowHtml}
-            <div class="tt-status" style="background: ${finBg}; color: ${finColor};">${finText}</div>
-            ${commentHtml}
-        </div>
-    `;
+    tooltip.innerHTML = ` 
+        <div class="tt-header"> 
+            <span class="tt-name">${guestName}</span> 
+            <span class="tt-guests">${b.guests} ${getGuestWord(b.guests)}</span> 
+        </div> 
+        <div class="tt-body"> 
+            <div class="tt-row"><span class="tt-label">Номер:</span> <span class="tt-value">${b.cottage}</span></div> 
+            <div class="tt-row"><span class="tt-label">Дати:</span> <span class="tt-value" style="color: var(--accent);">${inDate} — ${outDate}</span></div> 
+            <div class="tt-row"><span class="tt-label">Загальна сума:</span> <span class="tt-value">${total} грн</span></div> 
+            ${paidRowHtml} 
+            <div class="tt-status" style="background: ${finBg}; color: ${finColor};">${finText}</div> 
+            ${commentHtml} 
+        </div> 
+    `; 
 
-    // --- РОЗРАХУНОК ПОЗИЦІЇ ---
-    const rect = element.getBoundingClientRect();
-    
-    // Надійно беремо ширину екрану. 260px - це ширина тултипа з твого CSS
-    let left = (window.innerWidth - 260) / 2; 
-    
-    // Беремо реальну висоту або ставимо дефолтну, якщо браузер "затупив"
+    const rect = element.getBoundingClientRect(); 
+    // Запобіжник для offsetWidth, якщо DOM не встиг відмалювати
+    let ttWidth = tooltip.offsetWidth || 260; 
     let ttHeight = tooltip.offsetHeight || 160; 
-    let top = rect.top - ttHeight - 15;
+    let left = (window.innerWidth - ttWidth) / 2; 
+    let top = rect.top - ttHeight - 20; 
 
-    // Якщо вилазить за верхній край екрана — показуємо під карткою
-    if (top < 60) {
-        top = rect.bottom + 15;
-    }
+    if (top < 40) top = rect.bottom + 20; 
 
-    tooltip.style.top = top + 'px';
-    tooltip.style.left = left + 'px';
+    tooltip.style.top = top + 'px'; 
+    tooltip.style.left = left + 'px'; 
     
-    // Примусовий перерахунок стилів (reflow), щоб анімація спрацювала плавно
-    void tooltip.offsetWidth;
-    
-    tooltip.classList.add('visible');
+    requestAnimationFrame(() => { 
+        tooltip.classList.add('visible'); 
+    }); 
 }
 
 function hidePremiumTooltip() {
@@ -1674,76 +1668,55 @@ function hidePremiumTooltip() {
     if (tt) tt.classList.remove('visible');
 }
         
-// --- ЛОГІКА ДОВГОГО НАТИСКАННЯ (СУЧАСНИЙ POINTER API) ---
-let pressTimer;
-let isLongPress = false;
-let isScrolling = false; 
-let startX = 0;
-let startY = 0;
+// --- ЛОГІКА ДОВГОГО НАТИСКАННЯ (HAPTIC TOUCH) --- 
+let pressTimer; 
+let isLongPress = false; 
+let startTouchX = 0; // Додаємо координати
+let startTouchY = 0;
 
-function handlePointerDown(e, element, rowNumber) {
-    // Реагуємо лише на лівий клік миші або тач
-    if (e.button !== 0 && e.pointerType === 'mouse') return;
+function handleTouchStart(e, element, rowNumber) { 
+    isLongPress = false; 
     
-    isLongPress = false;
-    isScrolling = false; 
-    startX = e.clientX;
-    startY = e.clientY;
-
-    // Фіксуємо курсор/палець на картці, щоб події не обривались, якщо палець трохи з'їде
-    if (e.pointerId) element.setPointerCapture(e.pointerId);
+    // Запам'ятовуємо, куди саме ліг палець
+    if (e.touches && e.touches.length > 0) {
+        startTouchX = e.touches[0].clientX;
+        startTouchY = e.touches[0].clientY;
+    }
 
     element.classList.add('pressing'); 
     hidePremiumTooltip(); 
     
-    pressTimer = setTimeout(() => {
-        if (isScrolling) return; 
-        isLongPress = true;
-        if (navigator.vibrate) navigator.vibrate(40);
+    pressTimer = setTimeout(() => { 
+        isLongPress = true; 
+        if (navigator.vibrate) navigator.vibrate(40); 
         showPremiumTooltip(element, rowNumber); 
-    }, 500); // 500 мс — ідеальний час для Haptic Touch
-}
+    }, 400);  
+} 
 
-function handlePointerUp(e, element, rowNumber) {
-    clearTimeout(pressTimer);
+function handleTouchEnd(e, element, rowNumber) { 
+    clearTimeout(pressTimer); 
     element.classList.remove('pressing'); 
-    if (e.pointerId) element.releasePointerCapture(e.pointerId);
     
-    if (isLongPress) {
-        // Якщо це був лонг-прес, глушимо стандартний клік
-        if (e.cancelable) e.preventDefault(); 
-    } else if (!isScrolling) {
-        // Якщо просто швидко клікнули — відкриваємо деталі броні
-        openDetailsByRow(rowNumber); 
+    if (isLongPress) { 
+        if (e.cancelable) e.preventDefault();  
+    } else { 
+        openDetailsByRow(rowNumber);  
+    } 
+} 
+
+function handleTouchMove(e, element) { 
+    if (!e.touches || e.touches.length === 0) return;
+
+    // Рахуємо, чи палець реально поїхав (скрол), чи це просто тремтіння
+    let diffX = Math.abs(e.touches[0].clientX - startTouchX);
+    let diffY = Math.abs(e.touches[0].clientY - startTouchY);
+
+    // Вбиваємо таймер ТІЛЬКИ якщо палець зсунувся більше ніж на 15 пікселів
+    if (diffX > 15 || diffY > 15) {
+        clearTimeout(pressTimer);  
+        element.classList.remove('pressing'); 
     }
 }
-
-function handlePointerMove(e, element) {
-    if (!startX || !startY) return; 
-
-    const diffX = Math.abs(e.clientX - startX);
-    const diffY = Math.abs(e.clientY - startY);
-
-    // Якщо палець зсунувся більше ніж на 10 пікселів — це точно скрол шахматки
-    if (diffX > 10 || diffY > 10) {
-        isScrolling = true;
-        clearTimeout(pressTimer);
-        element.classList.remove('pressing');
-    }
-}
-
-function handlePointerCancel(e, element) {
-    isScrolling = true;
-    clearTimeout(pressTimer);
-    element.classList.remove('pressing');
-}
-
-        // Закриття тултипу при кліку в інше місце
-document.addEventListener('pointerdown', function(e) {
-    if (!e.target.closest('.booking-block') && !e.target.closest('.premium-tooltip')) {
-        hidePremiumTooltip();
-    }
-});
 
         // --- ГЛОБАЛЬНІ ЗМІННІ ---
 let transactions = [];
