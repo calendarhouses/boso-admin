@@ -33,7 +33,7 @@
             --safe-bottom: env(safe-area-inset-bottom, 16px);
         }
 
-        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Inter', sans-serif; -webkit-tap-highlight-color: transparent; }
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Inter', sans-serif; -webkit-tap-highlight-color: transparent; touch-action: manipulation; }
         
         /* Вбиваємо системні свайпи Safari (Назад/Вперед) */
         html, body { overscroll-behavior-x: none; overscroll-behavior-y: none; } 
@@ -794,23 +794,22 @@
         <button type="button" onclick="changeAdminDayGuests(1)" style="width: 40px; height: 40px; background: #D1FAE5; color: #059669; border: 1px solid #A7F3D0; border-radius: 10px; font-size: 18px; font-weight: bold; cursor: pointer;">+</button>
     </div>
 </div>
-<div class="form-grid">
-    <div class="form-group">
-        <label>Чан:</label>
-        <div style="display: flex; background: #F3F4F6; border-radius: 10px; padding: 3px; height: 40px;">
-            <div class="pet-btn vat-btn active" data-val="Ні" onclick="toggleVat('Ні')">Ні</div>
-            <div class="pet-btn vat-btn" data-val="Так" onclick="toggleVat('Так')">Так</div>
-        </div>
-        <input type="hidden" id="adminVat" value="Ні">
+<div class="form-group">
+    <label>Чан:</label>
+    <div style="display: flex; background: #F3F4F6; border-radius: 10px; padding: 3px; height: 40px;">
+        <div class="vat-btn active" data-val="Ні" onclick="toggleVat('Ні')">Ні</div>
+        <div class="vat-btn" data-val="Так" onclick="toggleVat('Так')">Так</div>
     </div>
-    <div class="form-group">
-        <label>УБД (-10%):</label>
-        <div style="display: flex; background: #F3F4F6; border-radius: 10px; padding: 3px; height: 40px;">
-            <div class="pet-btn ubd-btn active" data-val="Ні" onclick="toggleUBD('Ні')">Ні</div>
-            <div class="pet-btn ubd-btn" data-val="Так" onclick="toggleUBD('Так')">Так</div>
-        </div>
-        <input type="hidden" id="adminUBD" value="Ні">
+    <input type="hidden" id="adminVat" value="Ні">
+</div>
+<div class="form-group">
+    <label>УБД (-10%):</label>
+    <div style="display: flex; background: #F3F4F6; border-radius: 10px; padding: 3px; height: 40px;">
+        <div class="ubd-btn active" data-val="Ні" onclick="toggleUBD('Ні')">Ні</div>
+        <div class="ubd-btn" data-val="Так" onclick="toggleUBD('Так')">Так</div>
     </div>
+    <input type="hidden" id="adminUBD" value="Ні">
+</div>
 </div>
                         </div>
                         <!-- ГНУЧКИЙ ГРАФІК -->
@@ -2461,7 +2460,11 @@ function calculateAnalytics() {
                         <td style="width:100%;">
                             <div class="form-grid" style="margin-bottom: 12px;">
                                 <div class="form-group" style="margin-bottom:0;"><label>Сума</label><input type="number" id="editAmt-${id}" value="${t.amount}" min="1" style="font-weight: 800; color: ${color};"></div>
-                                <div class="form-group" style="margin-bottom:0;"><label>Дата</label><input type="date" id="editDate-${id}" value="${t.date}"></div>
+                                <div class="form-group" style="margin-bottom:0; position: relative;">
+    <label>Дата</label>
+    <svg style="position: absolute; left: 14px; top: 38px; width: 18px; height: 18px; stroke: #9CA3AF; fill: none; z-index: 2; pointer-events: none;" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
+    <input type="text" id="editDate-${id}" class="it-date-picker" value="${t.date}" style="background: #FFF;">
+</div>
                             </div>
                             <div class="form-group" style="margin-bottom: 12px;"><label>Коментар</label><input type="text" id="editComm-${id}" value="${t.comment || ''}"></div>
                             <div style="display: flex; gap: 8px; justify-content: flex-end;">
@@ -2635,6 +2638,13 @@ function toggleEditFinRow(id) {
     if (editRow.style.display === 'none') {
         document.querySelectorAll('.inline-edit-row').forEach(row => row.style.display = 'none');
         editRow.style.display = 'block';
+        
+        // 🟢 Ініціалізуємо красивий календар
+        const dateInput = document.getElementById(`editDate-${id}`);
+        if (!dateInput._flatpickr) {
+            flatpickr(dateInput, { locale: "uk", dateFormat: "Y-m-d", altInput: true, altFormat: "d.m.Y", disableMobile: true });
+        }
+
         setTimeout(() => {
             if (mainRow) {
                 mainRow.scrollIntoView({ behavior: 'smooth', block: 'center' });
