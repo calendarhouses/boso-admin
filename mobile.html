@@ -15,6 +15,7 @@
     <link rel="preconnect" href="https://cdn.jsdelivr.net">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     
     <style>
         /* --- МОБІЛЬНА ПРЕМІУМ-ПАЛІТРА ТА БАЗА --- */
@@ -330,6 +331,66 @@
         .tt-label { color: #6B7280; font-weight: 500;}
         .tt-value { font-weight: 700; color: #111827; }
         .tt-status { margin-top: 10px; display: flex; align-items: center; justify-content: center; padding: 8px; border-radius: 10px; font-size: 12px; font-weight: 800; text-align: center; border: 1px solid rgba(0,0,0,0.05);}
+        /* --- ГНУЧКИЙ ГРАФІК ТА ПОСЛУГИ --- */
+.service-card { border: 1.5px solid #E5E7EB; border-radius: 12px; margin-top: 12px; background: #fff; overflow: hidden; transition: 0.3s ease; }
+.service-card.active { border-color: var(--accent); background: #F8FAF7; }
+.srv-header { padding: 16px; display: flex; justify-content: space-between; align-items: center; cursor: pointer; user-select: none; }
+.srv-title { display: flex; align-items: center; gap: 10px; font-size: 14px; font-weight: 600; color: var(--text-main); }
+.srv-title svg { width: 20px; height: 20px; stroke: #9CA3AF; fill: none; stroke-width: 1.5; transition: 0.3s; }
+.service-card.active .srv-title svg { stroke: var(--accent); }
+.srv-price { font-size: 13px; font-weight: 700; color: #6B7280; display: flex; align-items: center; gap: 8px;}
+.service-card.active .srv-price { color: var(--accent); }
+.srv-body { max-height: 0; opacity: 0; transition: max-height 0.4s ease, opacity 0.3s ease, padding 0.3s ease; padding: 0 16px; }
+.service-card.active .srv-body { max-height: 150px; opacity: 1; padding: 0 16px 16px; }
+.time-chips { display: flex; gap: 8px; margin-top: 8px; overflow-x: auto; padding-bottom: 4px; -webkit-overflow-scrolling: touch; }
+.time-chips::-webkit-scrollbar { display: none; }
+.t-chip { padding: 8px 16px; border: 1px solid #E5E7EB; border-radius: 10px; font-size: 13px; font-weight: 600; color: #6B7280; background: #fff; cursor: pointer; transition: 0.2s; flex-shrink: 0; }
+.t-chip.selected { background: var(--accent); color: #fff; border-color: var(--accent); box-shadow: 0 4px 10px rgba(85, 107, 47, 0.2); }
+.vat-btn, .ubd-btn { flex: 1; display: flex !important; align-items: center; justify-content: center; font-size: 14px; font-weight: 600; border-radius: 10px; padding: 10px 4px !important; margin: 0 !important; border: 1px solid transparent; color: #6B7280; }
+.vat-btn.active[data-val="Ні"], .ubd-btn.active[data-val="Ні"] { background: #FEF2F2 !important; color: #DC2626 !important; border-color: #FECACA !important; }
+.vat-btn.active[data-val="Так"], .ubd-btn.active[data-val="Так"] { background: #F0FDF4 !important; color: #059669 !important; border-color: #A7F3D0 !important; }
+
+/* --- ЗВІТИ ТА АНАЛІТИКА (Адаптовано для мобілки) --- */
+.reports-header { display: flex; flex-direction: column; gap: 12px; margin-bottom: 24px; }
+.reports-tabs { display: flex; gap: 8px; background: #F3F4F6; padding: 6px; border-radius: 12px; width: 100%; justify-content: space-between;}
+.r-tab { flex: 1; justify-content: center; padding: 10px; font-size: 13px; font-weight: 600; color: #6B7280; cursor: pointer; border-radius: 8px; transition: all 0.2s ease; display: flex; align-items: center; gap: 6px; }
+.r-tab.active { background: #FFFFFF; color: var(--success); box-shadow: 0 2px 6px rgba(0,0,0,0.08); }
+.r-tab.active svg { stroke: var(--success); }
+.metrics-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 24px; }
+.metric-card { background: #FFF; border-radius: 16px; padding: 16px; display: flex; flex-direction: column; justify-content: space-between; box-shadow: 0 4px 12px rgba(0,0,0,0.04); border: 1px solid #F3F4F6; min-height: 120px;}
+.mc-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 12px; }
+.metric-icon { width: 32px; height: 32px; border-radius: 10px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+.mc-details-badge { font-size: 9px; font-weight: 700; background: #F9FAFB; color: #6B7280; padding: 4px 6px; border-radius: 6px; border: 1px solid #E5E7EB; letter-spacing: 0.5px;}
+.metric-card.danger-card .mc-details-badge { background: #FEF2F2; color: #DC2626; border-color: #FECACA; }
+.metric-title { font-size: 10px; font-weight: 700; color: #6B7280; text-transform: uppercase; line-height: 1.2;}
+.metric-val { font-size: 20px; font-weight: 800; color: var(--text-main); line-height: 1; margin-top: 4px;}
+.charts-grid { display: grid; grid-template-columns: 1fr; gap: 16px; margin-bottom: 24px;}
+.chart-card { background: #FFF; border-radius: 16px; padding: 16px; box-shadow: 0 4px 12px rgba(0,0,0,0.04); border: 1px solid #F3F4F6; display: flex; flex-direction: column; }
+.chart-card h3 { font-size: 16px; font-weight: 700; color: var(--text-main); margin-bottom: 16px; }
+
+/* ФІНАНСИ */
+.finance-summary { display: grid; grid-template-columns: 1fr; gap: 12px; margin-bottom: 24px; margin-top: 10px; }
+.fin-box { padding: 20px; border-radius: 16px; display: flex; flex-direction: column; gap: 8px; position: relative; border-width: 2px !important; border-style: solid; }
+.fin-box.income { background: #F0FDF4; border-color: #A7F3D0; }
+.fin-box.expense { background: #FEF2F2; border-color: #FECACA; }
+.fin-box.profit { background: #F8FAF7; border-color: #BFE0A6; }
+.fin-box span { font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; }
+.fin-box h3 { font-size: 28px; font-weight: 800; margin: 0; }
+.fin-box.income span, .fin-box.income h3 { color: #059669; }
+.fin-box.expense span, .fin-box.expense h3 { color: #DC2626; }
+.fin-box.profit span { color: var(--accent); } .fin-box.profit h3 { color: var(--text-main); }
+.fade-section { transition: opacity 0.4s ease, transform 0.4s ease; }
+.fade-hidden { opacity: 0; transform: scale(0.98) translateY(10px); pointer-events: none; position: absolute; width: 100%; visibility: hidden; z-index: -1; height: 0; overflow: hidden; }
+.fade-visible { opacity: 1; transform: scale(1) translateY(0); pointer-events: auto; position: relative; visibility: visible; z-index: 1; height: auto; overflow: visible; }
+.inline-trans-grid { display: grid; grid-template-columns: 1fr; gap: 12px; width: 100%; align-items: start;}
+.it-card { background: #fff; border: 1px solid #E5E7EB; border-radius: 16px; overflow: hidden; display: flex; flex-direction: column; }
+.it-header { padding: 16px; display: flex; align-items: center; gap: 12px; }
+.it-icon { width: 40px; height: 40px; border-radius: 10px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+.it-title { font-size: 14px; font-weight: 600; color: var(--text-main); line-height: 1.2; }
+.it-body { max-height: 0; opacity: 0; padding: 0 16px; overflow: hidden; transition: max-height 0.4s ease, opacity 0.3s ease, padding 0.3s ease; }
+.it-card.active .it-body { max-height: 500px; opacity: 1; padding: 0 16px 16px; }
+.it-date-picker { padding: 14px 16px 14px 40px !important; text-align: left !important; background: #F9FAFB !important; border: 1px solid #D1D5DB !important; border-radius: 12px !important; color: #111827 !important; font-weight: 600 !important; font-size: 15px !important; width: 100%; }
+.fin-table-mobile td { font-size: 12px; padding: 10px 0; border-bottom: 1px solid #F3F4F6 !important;}
     </style>
 </head>
 <body>
@@ -444,15 +505,154 @@
             </div> 
         </div>
 
-        <div id="view-reports" style="display: none; height: 100%; justify-content: center; align-items: center;">
-            <div style="text-align: center; color: #6B7280;"> 
-                <div style="background: #E5E7EB; width: 64px; height: 64px; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 16px;"> 
-                    <svg width="32" height="32" fill="none" stroke="#4B5563" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg> 
-                </div> 
-                <h3 style="font-size: 18px; font-weight: 700; color: #374151; margin-bottom: 8px;">Розділ у розробці</h3> 
-                <p style="font-size: 13px;">Мобільна аналітика з'явиться незабаром.</p> 
-            </div> 
+        <div id="view-reports" style="display: none; flex-direction: column; padding-bottom: 20px;">
+    <div class="reports-header">
+        <div class="reports-tabs">
+            <div class="r-tab active" onclick="switchReportTab('analytics', this)">
+                <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 0 1 3 19.875v-6.75ZM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 0 1-1.125-1.125V8.625ZM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 0 1-1.125-1.125V4.125Z" /></svg> Аналітика
+            </div>
+            <div class="r-tab" onclick="switchReportTab('finance', this)">
+                <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6v12m-3-2.818l.879.659c1.171.879 3.07.879 4.242 0 1.172-.879 1.172-2.303 0-3.182C13.536 12.219 12.768 12 12 12c-.725 0-1.45-.22-2.003-.659-1.106-.879-1.106-2.303 0-3.182s2.9-.879 4.006 0l.415.33M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg> Фінанси
+            </div>
         </div>
+        
+        <div style="display: flex; gap: 8px; align-items: center; width: 100%;">
+            <div style="position: relative; flex-shrink: 0;">
+                <div style="width: 48px; height: 48px; border-radius: 12px; border: 1px solid #D1D5DB; background: #FFF; display: flex; align-items: center; justify-content: center; color: #4B5563; pointer-events: none;">
+                    <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 0 1 2.25-2.25h13.5A2.25 2.25 0 0 1 21 7.5v11.25m-18 0A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75m-18 0v-7.5A2.25 2.25 0 0 1 5.25 9h13.5A2.25 2.25 0 0 1 21 11.25v7.5"></path></svg>
+                </div>
+                <input type="text" id="customReportRange" style="position: absolute; top:0; left:0; width:100%; height:100%; opacity:0; cursor: pointer;">
+            </div>
+            <div class="custom-select-wrapper" id="reportPeriodWrapper" style="flex: 1;">
+                <div class="custom-select-trigger" onclick="toggleCustomSelect('reportPeriodWrapper')">
+                    <span id="reportPeriodText">Поточний місяць</span>
+                    <svg width="16" height="16" fill="none" stroke="#6B7280" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                </div>
+                <div class="custom-select-options">
+                    <div class="custom-option selected" onclick="selectOption('reportPeriodWrapper', 'reportPeriodVal', 'current', this, 'Поточний місяць')">Поточний місяць</div>
+                    <div class="custom-option" onclick="selectOption('reportPeriodWrapper', 'reportPeriodVal', 'prev', this, 'Минулий місяць')">Минулий місяць</div>
+                    <div class="custom-option" onclick="selectOption('reportPeriodWrapper', 'reportPeriodVal', 'year', this, 'За весь рік')">За весь рік</div>
+                    <div class="custom-option" onclick="selectOption('reportPeriodWrapper', 'reportPeriodVal', 'all', this, 'За весь час')">За весь час</div>
+                </div>
+            </div>
+            <input type="hidden" id="reportPeriodVal" value="current">
+        </div>
+    </div>
+
+    <!-- АНАЛІТИКА -->
+    <div id="rep-analytics" style="display: block;">
+        <div style="background: linear-gradient(to right, #F0FDF4, #ECFDF5); border: 1px solid #A7F3D0; border-radius: 12px; padding: 12px; margin-bottom: 20px; display: flex; gap: 10px;">
+            <span style="font-size: 18px;">✨</span>
+            <span id="aiSummaryText" style="font-size: 12px; font-weight: 600; color: #065F46; line-height: 1.4;">Генеруємо...</span>
+        </div>
+
+        <div class="metrics-grid">
+            <div class="metric-card" onclick="openUniversalDetails('sum', 'Сума (Всі)', '#059669', '#F0FDF4', 'Прогноз')">
+                <div class="mc-header"><div class="metric-icon" style="background:#F0FDF4; color:#059669;"><svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg></div></div>
+                <div><div class="metric-title">Прогноз доходу</div><div class="metric-val" id="metTotalSum">0 грн</div></div>
+            </div>
+            <div class="metric-card" onclick="openUniversalDetails('paid', 'Оплачено', '#047857', '#D1FAE5', 'Оплачено')">
+                <div class="mc-header"><div class="metric-icon" style="background:#D1FAE5; color:#047857;"><svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg></div></div>
+                <div><div class="metric-title">Фактично опл.</div><div class="metric-val" id="metPaid" style="color: #059669;">0 грн</div></div>
+            </div>
+            <div class="metric-card danger-card" onclick="openUniversalDetails('debt', 'Боржники', '#DC2626', '#FEF2F2', 'Борг')">
+                <div class="mc-header"><div class="metric-icon" style="background:#FEE2E2; color:#DC2626;"><svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg></div></div>
+                <div><div class="metric-title" style="color: #DC2626;">Борг гостей</div><div class="metric-val" id="metDebt" style="color: #DC2626;">0 грн</div></div>
+            </div>
+            <div class="metric-card" onclick="openUniversalDetails('count', 'Броні', '#2563EB', '#EFF6FF', '')">
+                <div class="mc-header"><div class="metric-icon" style="background:#EFF6FF; color:#2563EB;"><svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"></path></svg></div></div>
+                <div><div class="metric-title">Броней</div><div class="metric-val" id="metCount">0</div></div>
+            </div>
+        </div>
+
+        <div style="font-size: 14px; font-weight: 700; margin: 20px 0 12px;">Деталізація послуг</div>
+        <div class="metrics-grid">
+            <div class="metric-card" id="cardGuests" onclick="openUniversalDetails('guests', 'Додаткові гості', '#1D4ED8', '#E0E7FF', 'Дохід')">
+                <div class="mc-header"><div class="metric-icon" style="background:#E0E7FF; color:#1D4ED8;"><svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"></path></svg></div></div>
+                <div><div class="metric-title">Дод. гості</div><div class="metric-val" id="metGuests" style="font-size: 16px;">0 грн</div></div>
+            </div>
+            <div class="metric-card" id="cardPets" onclick="openUniversalDetails('pets', 'Тварини', '#E11D48', '#FCE7F3', 'Дохід')">
+                <div class="mc-header"><div class="metric-icon" style="background:#FCE7F3; color:#E11D48;"><svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"></path></svg></div></div>
+                <div><div class="metric-title">Тварини</div><div class="metric-val" id="metPets" style="font-size: 16px;">0 грн</div></div>
+            </div>
+            <div class="metric-card" id="cardVat" onclick="openUniversalDetails('vat', 'Чан', '#B45309', '#FFEDD5', 'Дохід')">
+                <div class="mc-header"><div class="metric-icon" style="background:#FFEDD5; color:#B45309;"><svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-width="2" d="M17.657 18.657A8 8 0 016.343 7.343S7 9 9 10c0-2 .5-5 2.986-7C14 5 16.09 5.777 17.656 7.343A7.975 7.975 0 0120 13a7.975 7.975 0 01-2.343 5.657z"></path></svg></div></div>
+                <div><div class="metric-title">Чан</div><div class="metric-val" id="metVat" style="font-size: 16px;">0 грн</div></div>
+            </div>
+            <div class="metric-card" id="cardEarlyLate" onclick="openUniversalDetails('earlyLate', 'Гнучкий графік', '#6D28D9', '#F3E8FF', 'Дохід')">
+                <div class="mc-header"><div class="metric-icon" style="background:#F3E8FF; color:#6D28D9;"><svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg></div></div>
+                <div><div class="metric-title">Гнучкий граф.</div><div class="metric-val" id="metEarlyLate" style="font-size: 16px;">0 грн</div></div>
+            </div>
+        </div>
+
+        <div class="charts-grid">
+            <div class="chart-card">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+                    <h3 style="margin:0;">Номери</h3>
+                    <div class="mode-toggle" style="margin: 0; width:auto;">
+                        <div id="chartModeCount" class="mode-btn active" style="padding: 4px 8px; font-size: 10px;" onclick="toggleRoomsChart('count')">Броні</div>
+                        <div id="chartModeMoney" class="mode-btn" style="padding: 4px 8px; font-size: 10px;" onclick="toggleRoomsChart('money')">Дохід</div>
+                    </div>
+                </div>
+                <div style="position: relative; height: 200px; width: 100%;"><canvas id="roomsChart"></canvas></div>
+            </div>
+            <div class="chart-card">
+                <h3>Динаміка</h3>
+                <div style="position: relative; height: 200px; width: 100%;"><canvas id="revenueLineChart"></canvas></div>
+            </div>
+            <div class="chart-card">
+                <h3>Джерела</h3>
+                <div style="position: relative; height: 200px; width: 100%;"><canvas id="sourceChart"></canvas></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ФІНАНСИ -->
+    <div id="rep-finance" style="display: none;">
+        <div class="finance-summary">
+            <div class="fin-box income" onclick="openFinanceInlineCards('income')">
+                <span>Доходи</span><h3 id="finIncome">0 грн</h3>
+                <div style="position:absolute; right:20px; top:50%; transform:translateY(-50%); background:#D1FAE5; color:#059669; width:36px; height:36px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:24px;">+</div>
+            </div>
+            <div class="fin-box expense" onclick="openFinanceInlineCards('expense')">
+                <span>Витрати</span><h3 id="finExpense">0 грн</h3>
+                <div style="position:absolute; right:20px; top:50%; transform:translateY(-50%); background:#FEE2E2; color:#DC2626; width:36px; height:36px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:24px;">+</div>
+            </div>
+            <div class="fin-box profit" onclick="openFinanceTable()">
+                <span>Чистий Прибуток</span><h3 id="finProfit">0 грн</h3>
+            </div>
+        </div>
+
+        <div id="financeTableWrap" class="fade-section fade-visible">
+            <div class="chart-card" style="padding: 0; overflow: hidden; border:none; box-shadow:none; background:transparent;">
+                <table style="margin: 0; width: 100%; border-spacing: 0;" class="fin-table-mobile">
+                    <tbody id="financeTableBody"></tbody>
+                </table>
+            </div>
+        </div>
+
+        <div id="financeCardsWrap" class="fade-section fade-hidden">
+            <div style="margin-bottom: 16px; display: flex; justify-content: space-between; align-items: center;">
+                <h3 id="fcTitle" style="margin: 0; font-size: 15px;">Категорія</h3>
+                <button class="btn-secondary" style="padding: 6px 12px; font-size: 12px; width:auto;" onclick="openFinanceTable()">✕ Назад</button>
+            </div>
+            <div class="inline-trans-grid" id="fcGrid"></div>
+        </div>
+    </div>
+</div>
+
+<!-- МОДАЛКА АНАЛІТИКИ -->
+<div id="uniDetailsModal" class="modal-overlay" style="z-index: 3000;">
+    <div class="modal-box">
+        <div class="modal-header">
+            <span style="display:flex; align-items:center; gap:8px;">
+                <span id="uniModalIcon"></span> <span id="uniModalTitle">Деталі</span>
+            </span>
+            <button class="close-btn" onclick="document.getElementById('uniDetailsModal').classList.remove('active')">✕</button>
+        </div>
+        <div class="modal-body" id="uniModalBody" style="background: #FDFCFB; padding-bottom: 40px;"></div>
+    </div>
+</div>
 
     </div>
 
@@ -586,7 +786,78 @@
                                 </div>
                                 <input type="hidden" id="adminPets" value="Ні">
                             </div>
+                            <div class="form-group">
+    <label>Денні гості (+500 грн):</label>
+    <div style="display: flex; align-items: center; gap: 4px;">
+        <button type="button" onclick="changeAdminDayGuests(-1)" style="width: 40px; height: 40px; background: #FEF2F2; color: #DC2626; border: 1px solid #FECACA; border-radius: 10px; font-size: 18px; font-weight: bold; cursor: pointer;">-</button>
+        <input type="number" id="adminDayGuests" value="0" min="0" style="text-align: center; width: 100%; padding: 10px 0; border: 1px solid #D1D5DB; border-radius: 12px; font-size: 15px; background: #F9FAFB;">
+        <button type="button" onclick="changeAdminDayGuests(1)" style="width: 40px; height: 40px; background: #D1FAE5; color: #059669; border: 1px solid #A7F3D0; border-radius: 10px; font-size: 18px; font-weight: bold; cursor: pointer;">+</button>
+    </div>
+</div>
+<div class="form-grid">
+    <div class="form-group">
+        <label>Чан:</label>
+        <div style="display: flex; background: #F3F4F6; border-radius: 10px; padding: 3px; height: 40px;">
+            <div class="pet-btn vat-btn active" data-val="Ні" onclick="toggleVat('Ні')">Ні</div>
+            <div class="pet-btn vat-btn" data-val="Так" onclick="toggleVat('Так')">Так</div>
+        </div>
+        <input type="hidden" id="adminVat" value="Ні">
+    </div>
+    <div class="form-group">
+        <label>УБД (-10%):</label>
+        <div style="display: flex; background: #F3F4F6; border-radius: 10px; padding: 3px; height: 40px;">
+            <div class="pet-btn ubd-btn active" data-val="Ні" onclick="toggleUBD('Ні')">Ні</div>
+            <div class="pet-btn ubd-btn" data-val="Так" onclick="toggleUBD('Так')">Так</div>
+        </div>
+        <input type="hidden" id="adminUBD" value="Ні">
+    </div>
+</div>
                         </div>
+                        <!-- ГНУЧКИЙ ГРАФІК -->
+<div style="margin-top: 16px; border-top: 1px dashed #E5E7EB; padding-top: 16px;">
+    <label style="font-size: 12px; font-weight: 800; color: #9CA3AF; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 12px; display: block;">Гнучкий графік</label>
+    
+    <div class="service-card" id="adminCardEarly">
+        <div class="srv-header" onclick="toggleAdminService('early')">
+            <div class="srv-title"><svg viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>Ранній заїзд</div>
+            <div class="srv-price" id="adminLabelPriceEarly">Дати</div>
+        </div>
+        <div class="srv-body">
+            <div style="font-size:11px; color:#6B7280; font-weight:500;">Година заїзду:</div>
+            <div class="time-chips">
+                <div class="t-chip" onclick="selectAdminTime('early', '08:00', this)">08:00</div>
+                <div class="t-chip" onclick="selectAdminTime('early', '09:00', this)">09:00</div>
+                <div class="t-chip" onclick="selectAdminTime('early', '10:00', this)">10:00</div>
+                <div class="t-chip" onclick="selectAdminTime('early', '11:00', this)">11:00</div>
+                <div class="t-chip" onclick="selectAdminTime('early', '12:00', this)">12:00</div>
+                <div class="t-chip" onclick="selectAdminTime('early', '13:00', this)">13:00</div>
+                <div class="t-chip" onclick="selectAdminTime('early', '14:00', this)">14:00</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="service-card" id="adminCardLate">
+        <div class="srv-header" onclick="toggleAdminService('late')">
+            <div class="srv-title"><svg viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z M12 7v5l2.5 2.5"/></svg>Пізній виїзд</div>
+            <div class="srv-price" id="adminLabelPriceLate">Дати</div>
+        </div>
+        <div class="srv-body">
+            <div style="font-size:11px; color:#6B7280; font-weight:500;">Година виїзду:</div>
+            <div class="time-chips">
+                <div class="t-chip" onclick="selectAdminTime('late', '12:00', this)">12:00</div>
+                <div class="t-chip" onclick="selectAdminTime('late', '13:00', this)">13:00</div>
+                <div class="t-chip" onclick="selectAdminTime('late', '14:00', this)">14:00</div>
+                <div class="t-chip" onclick="selectAdminTime('late', '15:00', this)">15:00</div>
+                <div class="t-chip" onclick="selectAdminTime('late', '16:00', this)">16:00</div>
+                <div class="t-chip" onclick="selectAdminTime('late', '17:00', this)">17:00</div>
+                <div class="t-chip" onclick="selectAdminTime('late', '18:00', this)">18:00</div>
+                <div class="t-chip" onclick="selectAdminTime('late', '19:00', this)">19:00</div>
+                <div class="t-chip" onclick="selectAdminTime('late', '20:00', this)">20:00</div>
+                <div class="t-chip" onclick="selectAdminTime('late', '21:00', this)">21:00</div>
+            </div>
+        </div>
+    </div>
+</div>
                     </div>
                     
                     <div id="liveCalculatorContainer"></div>
@@ -1564,6 +1835,780 @@
                 hidePremiumTooltip();
             }
         });
+
+        // --- ГЛОБАЛЬНІ ЗМІННІ ---
+let transactions = [];
+const incomeCategories = ["Плата за раннє заселення/пізнє виселення", "Додаткові гості", "Домашні тварини", "Міні-бар", "Чан", "Оренда велосипедів", "Інший дохід"];
+const expenseCategories = ["Прибирання", "Прасування", "Користування електроенергією", "Утримання прилеглої території", "Розхідні матеріали", "Реклама", "Адміністрування та SMM", "Податки", "Інші витрати"];
+window.bosoDetails = { sum: [], paid: [], debt: [], count: [], pets: [], guests: [], vat: [], bikes: [], earlyLate: [], other: [] };
+
+let selectedEarlyTime = null;
+let selectedLateTime = null;
+
+// Ініціалізація календаря звітів
+const reportRangePicker = flatpickr("#customReportRange", { 
+    locale: "uk", mode: "range", dateFormat: "Y-m-d", 
+    onChange: function(selectedDates) {
+        if (selectedDates.length === 2) {
+            document.getElementById('reportPeriodVal').value = 'custom';
+            const d1 = selectedDates[0].toLocaleDateString('uk-UA', {day: 'numeric', month: 'short'});
+            const d2 = selectedDates[1].toLocaleDateString('uk-UA', {day: 'numeric', month: 'short'});
+            document.getElementById('reportPeriodText').innerText = `${d1} — ${d2}`;
+            document.querySelectorAll('#reportPeriodWrapper .custom-option').forEach(opt => opt.classList.remove('selected'));
+            calculateAnalytics(); 
+        }
+    } 
+});
+
+// --- ГНУЧКИЙ ГРАФІК ТА ПОСЛУГИ ---
+function changeAdminDayGuests(amount) {
+    let input = document.getElementById('adminDayGuests');
+    let newVal = (parseInt(input.value) || 0) + amount;
+    if (newVal >= 0) { input.value = newVal; updatePricePreview(); }
+}
+function toggleVat(val) {
+    document.getElementById('adminVat').value = val;
+    document.querySelectorAll('.vat-btn').forEach(btn => btn.classList.toggle('active', btn.getAttribute('data-val') === val));
+    updatePricePreview(); 
+}
+function toggleUBD(val) {
+    document.getElementById('adminUBD').value = val;
+    document.querySelectorAll('.ubd-btn').forEach(btn => btn.classList.toggle('active', btn.getAttribute('data-val') === val));
+    updatePricePreview(); 
+}
+function toggleAdminService(type) {
+    const card = document.getElementById(type === 'early' ? 'adminCardEarly' : 'adminCardLate');
+    if (card.classList.contains('active')) {
+        card.classList.remove('active');
+        if(type === 'early') selectedEarlyTime = null;
+        if(type === 'late') selectedLateTime = null;
+        card.querySelectorAll('.t-chip').forEach(c => c.classList.remove('selected'));
+    } else { card.classList.add('active'); }
+    updatePricePreview();
+}
+function selectAdminTime(type, time, element) {
+    const parent = element.closest('.time-chips');
+    parent.querySelectorAll('.t-chip').forEach(c => c.classList.remove('selected'));
+    element.classList.add('selected');
+    if (type === 'early') selectedEarlyTime = time; else selectedLateTime = time;
+    updatePricePreview();
+}
+function getDayPrice(room, dateObj) {
+    if (!room || !dateObj) return 0;
+    const isWeekend = (dateObj.getDay() === 0 || dateObj.getDay() === 6);
+    let price = isWeekend ? room.priceWeekend : room.priceWeekday;
+    const dateStr = `${dateObj.getFullYear()}-${String(dateObj.getMonth() + 1).padStart(2, '0')}-${String(dateObj.getDate()).padStart(2, '0')}`;
+    if (customPrices[room.id] && customPrices[room.id][dateStr]) price = customPrices[room.id][dateStr];
+    return price;
+}
+
+// --- ЗАМІНА ФУНКЦІЇ updatePricePreview ---
+// Видали стару функцію updatePricePreview() і заміни її на цю (вона ідентична десктопу)
+function updatePricePreview() {
+    const checkInStr = document.getElementById('adminCheckIn').value;
+    const checkOutStr = document.getElementById('adminCheckOut').value;
+    const roomName = document.getElementById('adminCottage').value;
+    let guests = parseInt(document.getElementById('adminGuests').value) || 2;
+    const pets = document.getElementById('adminPets') ? document.getElementById('adminPets').value : "Ні";
+    const cont = document.getElementById('liveCalculatorContainer');
+
+    if (!checkInStr || !checkOutStr || !roomName) { cont.innerHTML = ''; return; }
+
+    let savedPaidAmount = document.getElementById('adminPaidAmount') ? Number(document.getElementById('adminPaidAmount').value) || 0 : 0;
+    let safeIn = checkInStr.includes('.') ? checkInStr.split('.').reverse().join('-') : checkInStr;
+    let safeOut = checkOutStr.includes('.') ? checkOutStr.split('.').reverse().join('-') : checkOutStr;
+
+    const d1 = new Date(safeIn); const d2 = new Date(safeOut);
+    let nights = Math.round((d2 - d1) / (1000 * 60 * 60 * 24));
+    if (nights < 1 || isNaN(nights)) nights = 1;
+
+    const room = roomsList.find(r => r.name === roomName);
+    if (!room) { cont.innerHTML = ''; return; }
+
+    let maxCap = room.maxCapacity || room.capacity || 10;
+    if (guests > maxCap) {
+        guests = maxCap;
+        document.getElementById('adminGuests').value = maxCap;
+        showToast(`Максимум: ${maxCap} гостей`);
+    }
+
+    let isOverlap = false; let overlapReason = "";
+    for (let b of allBookings) {
+        if (editingRowNumber && b.row == editingRowNumber) continue;
+        if (String(b.status).toLowerCase().includes('скас')) continue;
+
+        if (b.cottage === roomName) {
+            let exIn = new Date(b.checkIn); exIn.setHours(0,0,0,0);
+            let exOut = new Date(b.checkOut); exOut.setHours(0,0,0,0);
+            let currentIn = new Date(d1); currentIn.setHours(0,0,0,0);
+            let currentOut = new Date(d2); currentOut.setHours(0,0,0,0);
+
+            let exComment = b.comment ? String(b.comment) : "";
+            let exHasEarly = exComment.includes('Ранній заїзд');
+            let exHasLate = exComment.includes('Пізній виїзд');
+            if (Math.round((exOut - exIn) / 86400000) === 2 && exIn.getDay() === 5 && exOut.getDay() === 0) exHasLate = true;
+
+            let currentHasEarly = !!selectedEarlyTime;
+            let currentHasLate = !!selectedLateTime;
+            if (nights === 2 && currentIn.getDay() === 5 && currentOut.getDay() === 0) currentHasLate = true;
+
+            if (currentIn < exOut && currentOut > exIn) { isOverlap = true; overlapReason = "Дати зайняті."; break; }
+            if (currentIn.getTime() === exOut.getTime()) {
+                if (exHasLate) { isOverlap = true; overlapReason = "Попередній гість має Пізній виїзд."; break; }
+                if (currentHasEarly) { isOverlap = true; overlapReason = "Ваш Ранній заїзд неможливий."; break; }
+            }
+            if (currentOut.getTime() === exIn.getTime()) {
+                if (currentHasLate) { isOverlap = true; overlapReason = "Ваш Пізній виїзд неможливий."; break; }
+                if (exHasEarly) { isOverlap = true; overlapReason = "Наступний гість має Ранній заїзд."; break; }
+            }
+        }
+    }
+
+    const submitBtn = document.getElementById('adminSubmitBtn');
+    if (isOverlap) {
+        submitBtn.disabled = true; submitBtn.style.opacity = '0.5';
+        cont.innerHTML = `<div class="form-section" style="background:#FEF2F2; border-color:#EF4444; padding:20px; color:#DC2626; text-align:center; font-weight:bold;">ОБЕРЕЖНО: ОВЕРБУКІНГ!<br><span style="font-size:12px;">${overlapReason}</span></div>`;
+        return;
+    } else { submitBtn.disabled = false; submitBtn.style.opacity = '1'; }
+
+    let basePriceTotal = 0;
+    for (let i = 0; i < nights; i++) {
+        let curr = new Date(d1); curr.setDate(curr.getDate() + i);
+        basePriceTotal += getDayPrice(room, curr);
+    }
+
+    let extraGuests = Math.max(0, guests - room.capacity);
+    let dynamicExtraPrice = room.extraGuestPrice !== undefined ? room.extraGuestPrice : 2500;
+    let extraGuestFee = extraGuests * dynamicExtraPrice * nights;
+    let petFee = (pets === "Так") ? (500 + 200 * nights) : 0;
+    let dayGuestFee = (parseInt(document.getElementById('adminDayGuests') ? document.getElementById('adminDayGuests').value : 0) || 0) * 500;
+
+    let earlyFee = 0; let lateFee = 0; let isPromoLateOut = false;
+    if (nights === 2 && d1.getDay() === 5 && d2.getDay() === 0) isPromoLateOut = true;
+
+    let early50 = Math.round(getDayPrice(room, d1) * 0.5);
+    let late50 = Math.round(getDayPrice(room, d2) * 0.5);
+
+    const labelEarly = document.getElementById('adminLabelPriceEarly');
+    const labelLate = document.getElementById('adminLabelPriceLate');
+    if (labelEarly) {
+        if (selectedEarlyTime) { earlyFee = early50; labelEarly.innerHTML = `<span style="color:#111827;">з ${selectedEarlyTime}</span> +${earlyFee}`; } 
+        else { labelEarly.innerHTML = `+${early50} (50%)`; }
+    }
+    if (labelLate) {
+        if (selectedLateTime) {
+            if (isPromoLateOut) { lateFee = 0; labelLate.innerHTML = `<span style="color:#111827;">до ${selectedLateTime}</span> <span style="color:var(--success)">Безкоштовно</span>`; } 
+            else { lateFee = late50; labelLate.innerHTML = `<span style="color:#111827;">до ${selectedLateTime}</span> +${lateFee}`; }
+        } else { labelLate.innerHTML = isPromoLateOut ? `<span style="color:var(--success)">Безкоштовно</span>` : `+${late50} (50%)`; }
+    }
+
+    let discountPercent = 0;
+    const currentRoomId = String(room.id);
+    if (typeof discountsList !== 'undefined') {
+        discountsList.forEach(d => {
+            const condNights = parseInt(String(d.condition).replace(/\D/g,'')) || 0;
+            const dPct = parseInt(String(d.discount).replace(/\D/g,'')) / 100;
+            if (nights >= condNights) {
+                const appliesToRoom = (d.roomsIds && (d.roomsIds.includes("all") || d.roomsIds.includes(currentRoomId))) || (!d.roomsIds && String(d.rooms).includes("Всі"));
+                if (appliesToRoom && dPct > discountPercent) discountPercent = dPct;
+            }
+        });
+    }
+
+    const isVat = document.getElementById('adminVat') ? document.getElementById('adminVat').value : "Ні";
+    const isUBD = document.getElementById('adminUBD') ? document.getElementById('adminUBD').value : "Ні";
+    if (isUBD === "Так") discountPercent += 0.10;
+
+    let amountToDiscount = basePriceTotal + extraGuestFee;
+    let discountAmount = Math.round(amountToDiscount * discountPercent);
+    let totalPrice = amountToDiscount - discountAmount + petFee + dayGuestFee + earlyFee + lateFee;
+
+    cont.innerHTML = `
+        <div class="form-section" style="background:#FDFCFB; border-color: var(--accent); padding: 16px;">
+            <span class="form-section-title" style="color:var(--accent);">Розшифровка (${nights} ночей)</span>
+            <div style="font-size: 13px; color: #4B5563; margin-bottom: 12px;">
+                <div style="display:flex; justify-content:space-between; margin-bottom:4px;"><span>Базова:</span><span>${basePriceTotal} грн</span></div>
+                ${extraGuestFee > 0 ? `<div style="display:flex; justify-content:space-between; margin-bottom:4px;"><span>Дод. гості:</span><span>+${extraGuestFee} грн</span></div>` : ''}
+                ${petFee > 0 ? `<div style="display:flex; justify-content:space-between; margin-bottom:4px;"><span>Тварини:</span><span>+${petFee} грн</span></div>` : ''}
+                ${dayGuestFee > 0 ? `<div style="display:flex; justify-content:space-between; margin-bottom:4px;"><span>Денні гості:</span><span>+${dayGuestFee} грн</span></div>` : ''}
+                ${selectedEarlyTime ? `<div style="display:flex; justify-content:space-between; margin-bottom:4px;"><span>Ранній заїзд:</span><span>+${earlyFee} грн</span></div>` : ''}
+                ${selectedLateTime ? `<div style="display:flex; justify-content:space-between; margin-bottom:4px;"><span>Пізній виїзд:</span><span style="${isPromoLateOut ? 'color:var(--success);' : ''}">${isPromoLateOut ? 'Безкоштовно' : '+' + lateFee + ' грн'}</span></div>` : ''}
+                ${isVat === "Так" ? `<div style="display:flex; justify-content:space-between; margin-bottom:4px; color:var(--accent);"><span>Чан:</span><span>Оплата по факту</span></div>` : ''}
+                ${discountAmount > 0 ? `<div style="display:flex; justify-content:space-between; margin-bottom:4px; color:var(--danger);"><span>Знижка:</span><span>-${discountAmount} грн</span></div>` : ''}
+            </div>
+            <div style="border-top: 1px solid #E5E7EB; padding-top: 12px;">
+                <div class="form-group" style="margin-bottom: 12px;">
+                    <label style="color: var(--accent); font-weight: 700;">До сплати:</label>
+                    <input type="number" id="adminTotalPrice" value="${totalPrice}" style="font-weight:bold; font-size: 16px; border-color: var(--accent); background: #FFF;">
+                </div>
+                <div class="form-group" style="margin-bottom: 0;">
+                    <label style="color: var(--text-main); font-weight: 700;">Внесено (Аванс):</label>
+                    <input type="number" id="adminPaidAmount" value="${savedPaidAmount}" placeholder="0" style="width: 100%; margin-bottom: 12px; font-weight: bold; font-size: 16px;">
+                    <div style="display: flex; gap: 10px;">
+                        <button type="button" class="tap-btn" onclick="setHalfPrepayment()" style="flex: 1; padding: 14px; background: #F3F4F6; color: #4B5563; font-size: 14px; font-weight: 700; border-radius: 12px; border: none; outline: none;">50% Аванс</button>
+                        <button type="button" class="tap-btn" onclick="setFullPrepayment()" style="flex: 1; padding: 14px; background: #D1FAE5; color: #065F46; font-size: 14px; font-weight: 700; border-radius: 12px; border: none; outline: none;">100% Оплата</button>
+                    </div>
+                </div>
+                <div style="margin-top: 12px; padding: 10px; font-size: 14px; font-weight: bold; border-radius: 10px; text-align: center;" id="adminBalance">0 грн</div>
+            </div>
+        </div>
+    `;
+    document.getElementById('adminTotalPrice').addEventListener('input', calculateBalanceLive);
+    document.getElementById('adminPaidAmount').addEventListener('input', calculateBalanceLive);
+    calculateBalanceLive();
+}
+
+// --- ЗАМІНА openNewBookingDrawer ТА openDetailsByRow ---
+// Ці функції потрібно оновити, щоб вони парсили та скидали коментар так само як на ПК
+function openNewBookingDrawer(prefillRoom = null, prefillDate = null) {
+    editingRowNumber = null; document.getElementById('drawerTitle').innerText = 'Нова бронь'; 
+    document.getElementById('adminBookingForm').reset(); document.getElementById('adminDeleteBtn').style.display = 'none';
+    document.getElementById('liveCalculatorContainer').innerHTML = '';
+    
+    if(document.getElementById('adminComment')) document.getElementById('adminComment').value = "";
+    if(document.getElementById('adminDayGuests')) document.getElementById('adminDayGuests').value = 0; 
+    if(document.getElementById('adminVat')) toggleVat('Ні');
+    if(document.getElementById('adminUBD')) toggleUBD('Ні');
+    
+    selectedEarlyTime = null; selectedLateTime = null;
+    if(document.getElementById('adminCardEarly')) document.getElementById('adminCardEarly').classList.remove('active');
+    if(document.getElementById('adminCardLate')) document.getElementById('adminCardLate').classList.remove('active');
+    document.querySelectorAll('.t-chip').forEach(c => c.classList.remove('selected'));
+
+    document.querySelectorAll('.status-btn').forEach(b => b.classList.remove('active'));
+    document.querySelector('.status-btn[data-status="Нова бронь"]').classList.add('active');
+    if(document.getElementById('adminPets')) togglePet('Ні');
+    
+    const activeRooms = roomsList.filter(r => r.active);
+    const cottageOptions = document.getElementById('cottageOptions');
+    cottageOptions.innerHTML = activeRooms.map(r => `<div class="custom-option" onclick="selectOption('cottageWrapper', 'adminCottage', '${r.name}', this, '${r.name} (${r.desc})')"><div>${r.name} <span style="font-size:11px; color:#9CA3AF; display:block;">${r.desc}</span></div></div>`).join('');
+
+    let defaultRoom = prefillRoom || (activeRooms[0] ? activeRooms[0].name : "");
+    let defaultDesc = activeRooms.find(r => r.name === defaultRoom)?.desc || "";
+    document.getElementById('adminCottage').value = defaultRoom;
+    document.getElementById('cottageSelectedText').innerText = defaultRoom ? `${defaultRoom} (${defaultDesc})` : "Оберіть номер";
+    document.getElementById('adminSource').value = "Instagram"; document.getElementById('sourceSelectedText').innerText = "Instagram";
+
+    if (prefillDate) {
+        checkInPicker.setDate(prefillDate); let nextDay = new Date(prefillDate); nextDay.setDate(nextDay.getDate() + 1); checkOutPicker.setDate(nextDay);
+    } else { checkInPicker.clear(); checkOutPicker.clear(); }
+    setTimeout(updatePricePreview, 100); document.getElementById('bookingDrawer').classList.add('active');
+}
+
+function openDetailsByRow(rowNumber) {
+    const booking = allBookings.find(b => b.row == rowNumber); if (!booking) return;
+    editingRowNumber = rowNumber; document.getElementById('drawerTitle').innerText = `Деталі броні`;
+    document.getElementById('adminDeleteBtn').style.display = 'flex';
+    document.getElementById('adminName').value = String(booking.name).replace(' (Ручна бронь)', '');
+    document.getElementById('adminPhone').value = '+' + formatPhone(booking.phone);
+    document.getElementById('adminGuests').value = booking.guests || 2;
+    
+    if(document.getElementById('adminComment')) {
+        let textComment = booking.comment || "";
+        let parsedDayGuests = 0;
+        let dayGuestRegex = /👥 Денні гості[^:]*:\s*(\d+)/;
+        let matchDay = textComment.match(dayGuestRegex);
+        if (matchDay) { parsedDayGuests = parseInt(matchDay[1]); textComment = textComment.replace(/👥 Денні гості[^|]+(\|\s*)?/, '').trim(); }
+        
+        if (textComment.includes('♨️ Чан: Так')) { toggleVat('Так'); textComment = textComment.replace(/♨️ Чан: Так\s*(\|\s*)?/, '').trim(); } else { toggleVat('Ні'); }
+        if (textComment.includes('🇺🇦 УБД: Так')) { toggleUBD('Так'); textComment = textComment.replace(/🇺🇦 УБД: Так\s*(\|\s*)?/, '').trim(); } else { toggleUBD('Ні'); }
+
+        let earlyRegex = /🕒 Ранній заїзд: з (\d{2}:\d{2})(\s*\|\s*)?/;
+        let matchEarly = textComment.match(earlyRegex);
+        if (matchEarly) {
+            selectedEarlyTime = matchEarly[1]; document.getElementById('adminCardEarly').classList.add('active');
+            document.querySelectorAll('#adminCardEarly .t-chip').forEach(c => { if (c.innerText === selectedEarlyTime) c.classList.add('selected'); });
+            textComment = textComment.replace(earlyRegex, '').trim();
+        }
+        
+        let lateRegex = /🕒 Пізній виїзд: до (\d{2}:\d{2})(\s*\|\s*)?/;
+        let matchLate = textComment.match(lateRegex);
+        if (matchLate) {
+            selectedLateTime = matchLate[1]; document.getElementById('adminCardLate').classList.add('active');
+            document.querySelectorAll('#adminCardLate .t-chip').forEach(c => { if (c.innerText === selectedLateTime) c.classList.add('selected'); });
+            textComment = textComment.replace(lateRegex, '').trim();
+        }
+
+        textComment = textComment.replace(/^Коментар гостя:\s*/, '').replace(/^\|\s*/, '').replace(/\|\s*$/, '').trim();
+        document.getElementById('adminComment').value = textComment;
+        if(document.getElementById('adminDayGuests')) document.getElementById('adminDayGuests').value = parsedDayGuests;
+    }
+    
+    const availableRooms = roomsList.filter(r => r.active || r.name === booking.cottage);
+    const cottageOptions = document.getElementById('cottageOptions');
+    cottageOptions.innerHTML = availableRooms.map(r => `<div class="custom-option" onclick="selectOption('cottageWrapper', 'adminCottage', '${r.name}', this, '${r.name} (${r.desc})')"><div>${r.name} <span style="font-size:11px; color:#9CA3AF; display:block;">${r.desc}</span></div></div>`).join('');
+
+    let savedRoom = roomsList.some(r => r.name === booking.cottage) ? booking.cottage : (availableRooms[0] ? availableRooms[0].name : "");
+    let savedDesc = roomsList.find(r => r.name === savedRoom)?.desc || "";
+    document.getElementById('adminCottage').value = savedRoom;
+    document.getElementById('cottageSelectedText').innerText = savedRoom ? `${savedRoom} (${savedDesc})` : "Оберіть номер";
+    checkInPicker.setDate(booking.checkIn); checkOutPicker.setDate(booking.checkOut);
+    
+    if (document.getElementById('adminPets')) { togglePet((booking.pets === "Так" || booking.pets === true) ? "Так" : "Ні"); }
+    
+    document.querySelectorAll('.status-btn').forEach(b => b.classList.remove('active'));
+    let matched = Array.from(document.querySelectorAll('.status-btn')).find(b => b.getAttribute('data-status') === booking.status);
+    if(matched) matched.classList.add('active'); else document.querySelector('.status-btn[data-status="Нова бронь"]').classList.add('active');
+
+    setTimeout(() => {
+        updatePricePreview();
+        setTimeout(() => {
+            if(document.getElementById('adminTotalPrice')) {
+                document.getElementById('adminTotalPrice').value = booking.totalPrice || 0;
+                document.getElementById('adminPaidAmount').value = booking.paidAmount || 0;
+                calculateBalanceLive(); 
+            }
+        }, 50);
+    }, 100);
+    document.getElementById('bookingDrawer').classList.add('active');
+}
+
+// Оновлення логіки submit (збирання коментаря)
+document.getElementById('adminBookingForm').addEventListener('submit', async function(e) {
+    e.preventDefault(); const btn = document.getElementById('adminSubmitBtn'); const originalText = btn.innerText; btn.innerText = "Збереження..."; btn.disabled = true;
+    
+    let rawComment = document.getElementById('adminComment').value.trim();
+    let dayGuests = parseInt(document.getElementById('adminDayGuests') ? document.getElementById('adminDayGuests').value : 0) || 0;
+
+    let sysComment = [];
+    if (dayGuests > 0) sysComment.push(`👥 Денні гості: ${dayGuests}`);
+    if (document.getElementById('adminVat') && document.getElementById('adminVat').value === 'Так') sysComment.push(`♨️ Чан: Так`);
+    if (document.getElementById('adminUBD') && document.getElementById('adminUBD').value === 'Так') sysComment.push(`🇺🇦 УБД: Так`);
+    if (selectedEarlyTime) sysComment.push(`🕒 Ранній заїзд: з ${selectedEarlyTime}`);
+    if (selectedLateTime) sysComment.push(`🕒 Пізній виїзд: до ${selectedLateTime}`);
+
+    if (sysComment.length > 0) { 
+        rawComment = sysComment.join(' | ') + (rawComment ? '\n\nКоментар гостя: ' + rawComment : '');
+    }
+
+    const bookingData = { 
+        checkIn: document.getElementById('adminCheckIn').value, checkOut: document.getElementById('adminCheckOut').value, cottage: document.getElementById('adminCottage').value, 
+        name: document.getElementById('adminName').value, phone: document.getElementById('adminPhone').value, guests: document.getElementById('adminGuests').value,
+        pets: document.getElementById('adminPets').value, status: document.querySelector('.status-btn.active').getAttribute('data-status'),
+        totalPrice: document.getElementById('adminTotalPrice').value, paidAmount: document.getElementById('adminPaidAmount').value,
+        source: document.getElementById('adminSource').value,
+        comment: rawComment
+    };
+    if (editingRowNumber !== null) bookingData.row = editingRowNumber;
+    try { 
+        let res = await fetch(API_URL, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify(bookingData) }); 
+        let json = await res.json();
+        if (json.error === "OVERLAP") { alert("❌ ПОМИЛКА: Ці дати щойно були зайняті."); return; }
+        closeDrawer(); showToast("Збережено!"); await initApp(); 
+    } catch (error) { alert("Помилка збереження!"); } finally { btn.innerText = originalText; btn.disabled = false; }
+});
+
+
+// --- АНАЛІТИКА ТА ФІНАНСИ ---
+function switchReportTab(tabName, el) {
+    document.querySelectorAll('.r-tab').forEach(t => t.classList.remove('active'));
+    if(el) el.classList.add('active');
+    document.getElementById('rep-analytics').style.display = 'none';
+    document.getElementById('rep-finance').style.display = 'none';
+    document.getElementById('rep-' + tabName).style.display = 'block';
+    if (tabName === 'analytics' || tabName === 'finance') calculateAnalytics(); 
+}
+
+function animateValue(id, start, end, duration) {
+    const obj = document.getElementById(id);
+    if (!obj) return;
+    let startTimestamp = null;
+    const isCurrency = !id.includes('Count');
+    const step = (timestamp) => {
+        if (!startTimestamp) startTimestamp = timestamp;
+        const progress = Math.min((timestamp - startTimestamp) / duration, 1);
+        const easeOut = 1 - Math.pow(1 - progress, 4); 
+        const current = Math.floor(easeOut * (end - start) + start);
+        obj.innerText = current.toLocaleString('uk-UA') + (isCurrency ? ' грн' : '');
+        if (progress < 1) window.requestAnimationFrame(step); else obj.innerText = end.toLocaleString('uk-UA') + (isCurrency ? ' грн' : '');
+    };
+    window.requestAnimationFrame(step);
+}
+
+function calculateAnalytics() {
+    const period = document.getElementById('reportPeriodVal').value;
+    const now = new Date();
+    let startDate, endDate, prevStartDate, prevEndDate;
+
+    if (period === 'current') {
+        startDate = new Date(now.getFullYear(), now.getMonth(), 1); endDate = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59);
+    } else if (period === 'prev') {
+        startDate = new Date(now.getFullYear(), now.getMonth() - 1, 1); endDate = new Date(now.getFullYear(), now.getMonth(), 0, 23, 59, 59);
+    } else if (period === 'year') {
+        startDate = new Date(now.getFullYear(), 0, 1); endDate = new Date(now.getFullYear(), 11, 31, 23, 59, 59);
+    } else if (period === 'custom') { 
+        const dates = reportRangePicker.selectedDates;
+        if (dates.length === 2) {
+            startDate = new Date(dates[0]); startDate.setHours(0,0,0,0);
+            endDate = new Date(dates[1]); endDate.setHours(23,59,59,999);
+        } else { startDate = new Date(2000, 0, 1); endDate = new Date(2100, 0, 1); }
+    } else {
+        startDate = new Date(2000, 0, 1); endDate = new Date(2100, 0, 1);
+    }
+
+    let currSum = 0, currCount = 0, currPaid = 0;
+    let currGuests = 0, currPets = 0, currEarlyLate = 0, currVat = 0, currBikes = 0, currOther = 0;
+    let topRoomsCount = {}; 
+    let totalIncome = 0; let totalExpense = 0;
+    let incomeBreakdown = { base: 0, guests: 0, pets: 0, earlyLate: 0 };
+    window.bosoDetails = { sum: [], paid: [], debt: [], count: [], pets: [], guests: [], vat: [], bikes: [], earlyLate: [], other: [] };
+
+    allBookings.forEach(b => {
+        if (String(b.status).toLowerCase().includes('скас')) return; 
+        const bDate = parseSafeDate(b.checkIn);
+        const price = Number(b.totalPrice) || 0;
+        const paid = Number(b.paidAmount) || 0;
+        
+        if (bDate >= startDate && bDate <= endDate) {
+            currSum += price; currPaid += paid; currCount++;
+            if (b.cottage) {
+                const matchedRoom = roomsList.find(r => b.cottage.includes(r.name) || b.cottage.includes(r.short));
+                const roomName = matchedRoom ? matchedRoom.name : b.cottage;
+                topRoomsCount[roomName] = (topRoomsCount[roomName] || 0) + 1;
+            }
+
+            let cName = String(b.name).replace(' (Ручна бронь)', '').trim() || "Клієнт";
+            let cPhone = formatPhone(b.phone);
+            let inD = parseSafeDate(b.checkIn); let outD = parseSafeDate(b.checkOut);
+            let fIn = inD.toLocaleDateString('uk-UA', { day: 'numeric', month: 'short' }).replace('.', '');
+            let fOut = outD.toLocaleDateString('uk-UA', { day: 'numeric', month: 'short' }).replace('.', '');
+            let fullDateStr = `${fIn} — ${fOut}`;
+            let baseObj = { name: cName, phone: cPhone, date: fullDateStr, row: b.row, isTrans: false, rawDate: inD.getTime() };
+
+            if (price > 0) window.bosoDetails.sum.push({...baseObj, amount: price});
+            if (paid > 0) { window.bosoDetails.paid.push({...baseObj, amount: paid}); totalIncome += paid; }
+            window.bosoDetails.count.push({...baseObj, amount: 0});
+            
+            let balance = price - paid;
+            if (balance > 0 && price > 0) window.bosoDetails.debt.push({...baseObj, amount: balance});
+            let nights = Math.max(1, Math.round((outD - inD) / 86400000));
+            
+            let room = roomsList.find(r => b.cottage && b.cottage.includes(r.short));
+            let cap = room ? room.capacity : 2;
+            let extraPrice = room && room.extraGuestPrice !== undefined ? room.extraGuestPrice : 2500;
+            let extraGuests = Math.max(0, (parseInt(b.guests) || 2) - cap);
+            let feeGuests = extraGuests * extraPrice * nights;
+            let feePets = (b.pets === "Так" || b.pets === true) ? (500 + 200 * nights) : 0;
+
+            if (feeGuests > 0) { currGuests += feeGuests; window.bosoDetails.guests.push({...baseObj, amount: feeGuests}); }
+            if (feePets > 0) { currPets += feePets; window.bosoDetails.pets.push({...baseObj, amount: feePets}); }
+
+            let rawComment = b.comment ? String(b.comment) : "";
+            let feeEarlyLate = 0;
+            if (rawComment.includes('🕒 Ранній заїзд:')) feeEarlyLate += Math.round(getDayPrice(room, inD) * 0.5);
+            if (rawComment.includes('🕒 Пізній виїзд:')) {
+                let isPromo = (nights === 2 && inD.getDay() === 5 && outD.getDay() === 0);
+                if (!isPromo) feeEarlyLate += Math.round(getDayPrice(room, outD) * 0.5);
+            }
+            if (feeEarlyLate > 0) { currEarlyLate += feeEarlyLate; window.bosoDetails.earlyLate.push({...baseObj, amount: feeEarlyLate}); }
+            
+            if (paid > 0) {
+                let ratio = (price > 0) ? (paid / price) : 1;
+                incomeBreakdown.pets += (feePets * ratio);
+                incomeBreakdown.guests += (feeGuests * ratio);
+                incomeBreakdown.earlyLate += (feeEarlyLate * ratio);
+                incomeBreakdown.base += (paid - (feePets * ratio) - (feeGuests * ratio) - (feeEarlyLate * ratio));
+            }
+        }
+    });
+
+    let filteredTrans = transactions.filter(t => {
+        const tDate = parseSafeDate(t.date); return tDate >= startDate && tDate <= endDate;
+    }).sort((a, b) => new Date(b.date) - new Date(a.date));
+
+    filteredTrans.forEach(t => {
+        const tDate = parseSafeDate(t.date);
+        if (t.type === 'income') {
+            totalIncome += t.amount;
+            let tObj = { name: t.comment || "Додано вручну", phone: "", date: tDate.toLocaleDateString('uk-UA', { day: 'numeric', month: 'short' }), row: null, amount: t.amount, isTrans: true, id: t.id, rawDate: tDate.getTime() };
+            if (t.category === "Плата за раннє заселення/пізнє виселення") { currEarlyLate += t.amount; window.bosoDetails.earlyLate.push(tObj); }
+            else if (t.category === "Чан") { currVat += t.amount; window.bosoDetails.vat.push(tObj); }
+            else if (t.category === "Оренда велосипедів") { currBikes += t.amount; window.bosoDetails.bikes.push(tObj); }
+            else if (t.category === "Інший дохід" || t.category === "Міні-бар") { currOther += t.amount; window.bosoDetails.other.push(tObj); }
+        } else {
+            totalExpense += t.amount;
+        }
+    });
+
+    const currDebt = Math.max(0, currSum - currPaid);
+    animateValue('metTotalSum', 0, currSum, 800); animateValue('metPaid', 0, currPaid, 800);
+    animateValue('metDebt', 0, currDebt, 800); animateValue('metCount', 0, currCount, 800);
+    animateValue('metPets', 0, currPets, 800); animateValue('metGuests', 0, currGuests, 800);
+    animateValue('metVat', 0, currVat, 800); animateValue('metBikes', 0, currBikes, 800);
+    animateValue('metEarlyLate', 0, currEarlyLate, 800); animateValue('metOther', 0, currOther, 800);
+    
+    const services = [
+        { id: 'cardPets', val: currPets }, { id: 'cardGuests', val: currGuests },
+        { id: 'cardVat', val: currVat }, { id: 'cardBikes', val: currBikes },
+        { id: 'cardEarlyLate', val: currEarlyLate }, { id: 'cardOther', val: currOther }
+    ];
+    services.sort((a, b) => b.val - a.val);
+    services.forEach((service, index) => { let el = document.getElementById(service.id); if (el) el.style.order = index; });
+
+    if(document.getElementById('aiSummaryText')) {
+        let bestRoom = "не визначено"; let maxReservations = 0;
+        for (let r in topRoomsCount) { if (topRoomsCount[r] > maxReservations) { maxReservations = topRoomsCount[r]; bestRoom = r; } }
+        let text = currSum === 0 ? "Даних ще немає." : `📊 Дохід: ${currSum.toLocaleString('uk-UA')} грн. Хіт продажів — <b>${bestRoom}</b>.`;
+        document.getElementById('aiSummaryText').innerHTML = text;
+    }
+
+    const tbodyFinance = document.getElementById('financeTableBody');
+    if(tbodyFinance) {
+        tbodyFinance.innerHTML = '';
+        function renderFinRow(title, desc, amount, type, isSystem, id = null) {
+            if (Math.round(amount) <= 0) return '';
+            const isInc = type === 'income';
+            const badge = isInc ? `<span class="badge confirmed" style="background:#D1FAE5; color:#059669; font-size:10px;">Дохід</span>` : `<span class="badge cancelled" style="background:#FEE2E2; color:#DC2626; font-size:10px;">Витрата</span>`;
+            const sign = isInc ? '+' : '-'; const color = isInc ? '#059669' : '#DC2626';
+            const actions = isSystem ? `<span style="color:#9CA3AF; font-size:11px; padding:4px; background:#F3F4F6; border-radius:6px;">Auto</span>` : `
+                <div style="display: flex; gap: 8px;">
+                    <button class="btn-icon-only" style="padding:6px; border-radius:6px; background:#F3F4F6; border:none;" onclick="event.stopPropagation(); toggleEditFinRow(${id})">✏️</button>
+                    <button class="btn-icon-only danger" style="padding:6px; border-radius:6px; background:#FEE2E2; border:none;" onclick="event.stopPropagation(); deleteGenericItem('transaction', ${id})">🗑️</button>
+                </div>`;
+            const rowAttrs = (!isSystem && id) ? `id="mainRow-${id}" onclick="toggleEditFinRow(${id})"` : `id="mainRow-${id || Date.now()}"`;
+
+            let mainRow = `<tr ${rowAttrs} style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #E5E7EB; padding:12px 0;">
+                <td style="flex:1;"><strong>${title}</strong><br><span style="font-size:11px; color:#6B7280;">${desc}</span></td>
+                <td style="text-align:right; margin-right:8px;">${badge}<br><strong style="color: ${color};">${sign}${Math.round(amount).toLocaleString('uk-UA')} грн</strong></td>
+                <td>${actions}</td>
+            </tr>`;
+
+            let editHtml = '';
+            if (!isSystem && id) {
+                const t = transactions.find(x => x.id === id);
+                if (t) {
+                    editHtml = `
+                    <tr id="editRow-${id}" class="inline-edit-row" style="display: none; background: #FAFAFA; padding: 12px; border-left: 3px solid ${color}; border-radius:8px; margin-top:8px;">
+                        <td style="width:100%;">
+                            <div class="form-grid" style="margin-bottom: 12px;">
+                                <div class="form-group" style="margin-bottom:0;"><label>Сума</label><input type="number" id="editAmt-${id}" value="${t.amount}" min="1" style="font-weight: 800; color: ${color};"></div>
+                                <div class="form-group" style="margin-bottom:0;"><label>Дата</label><input type="date" id="editDate-${id}" value="${t.date}"></div>
+                            </div>
+                            <div class="form-group" style="margin-bottom: 12px;"><label>Коментар</label><input type="text" id="editComm-${id}" value="${t.comment || ''}"></div>
+                            <div style="display: flex; gap: 8px; justify-content: flex-end;">
+                                <button class="btn-secondary" style="padding:8px 12px; font-size:12px; width:auto;" onclick="event.stopPropagation(); toggleEditFinRow(${id})">Скасувати</button>
+                                <button class="btn-primary" style="background: ${color}; padding:8px 12px; font-size:12px; width:auto;" onclick="event.stopPropagation(); saveInlineEdit(${id})">Зберегти</button>
+                            </div>
+                        </td>
+                    </tr>`;
+                }
+            }
+            return mainRow + editHtml;
+        }
+
+        tbodyFinance.innerHTML += renderFinRow("Оренда котеджів", "Оплачена базова вартість", incomeBreakdown.base, 'income', true);
+        tbodyFinance.innerHTML += renderFinRow("Додаткові гості", "Оплати за додаткові місця", incomeBreakdown.guests, 'income', true);
+        tbodyFinance.innerHTML += renderFinRow("Тварини", "Оплати за розміщення улюбленців", incomeBreakdown.pets, 'income', true);
+        tbodyFinance.innerHTML += renderFinRow("Гнучкий графік", "Ранні заїзди та пізні виїзди", incomeBreakdown.earlyLate, 'income', true);
+
+        filteredTrans.forEach(t => {
+            const dateStr = parseSafeDate(t.date).toLocaleDateString('uk-UA', {day: 'numeric', month: 'short'});
+            tbodyFinance.innerHTML += renderFinRow(t.category, t.comment || dateStr, t.amount, t.type, false, t.id);
+        });
+    }
+
+    const finIncEl = document.getElementById('finIncome'); const finExpEl = document.getElementById('finExpense'); const finProfEl = document.getElementById('finProfit');
+    if(finIncEl && finExpEl && finProfEl) {
+        const profit = totalIncome - totalExpense;
+        finIncEl.innerText = Math.round(totalIncome).toLocaleString('uk-UA') + ' грн';
+        finExpEl.innerText = Math.round(totalExpense).toLocaleString('uk-UA') + ' грн';
+        finProfEl.innerText = Math.round(profit).toLocaleString('uk-UA') + ' грн';
+        finProfEl.style.color = profit >= 0 ? 'var(--text-main)' : '#DC2626';
+    }
+    renderCharts(startDate, endDate);
+}
+
+function openUniversalDetails(type, title, colorHex, bgHex, valLabel) {
+    const modal = document.getElementById('uniDetailsModal'); const body = document.getElementById('uniModalBody');
+    document.getElementById('uniModalTitle').innerText = title; document.getElementById('uniModalIcon').style.color = colorHex;
+    let data = window.bosoDetails[type] || []; data.sort((a, b) => a.rawDate - b.rawDate);
+    let html = '';
+    if (data.length === 0) {
+        html = `<div style="padding: 40px 20px; text-align: center; color: #6B7280; font-size:14px;">Тут поки порожньо</div>`;
+    } else {
+        data.forEach(item => {
+            let initial = item.name.charAt(0).toUpperCase(); if(!initial || initial === '+') initial = '👤';
+            let amountHtml = item.amount > 0 ? `${item.amount.toLocaleString('uk-UA')} грн` : '—';
+            let labelHtml = valLabel ? `<div style="font-size: 10px; color: ${colorHex}; font-weight: 700;">${valLabel}</div>` : '';
+            let actionBtn = item.isTrans 
+                ? `<button onclick="jumpToFinanceAndEdit(${item.id})" style="flex: 1; padding: 10px; border-radius: 8px; border: 1px solid #D1D5DB; background: #FFF; font-weight:600; font-size:13px;">Редагувати</button>`
+                : `<button onclick="document.getElementById('uniDetailsModal').classList.remove('active'); openDetailsByRow(${item.row});" style="flex: 1; padding: 10px; border-radius: 8px; border: 1px solid #D1D5DB; background: #FFF; font-weight:600; font-size:13px;">Відкрити бронь</button>`;
+
+            html += `
+            <div style="background: #FFFFFF; border: 1px solid #E5E7EB; border-radius: 12px; margin-bottom: 12px; padding: 12px;">
+                <div style="display: flex; justify-content: space-between; margin-bottom: 12px;">
+                    <div style="display: flex; gap: 10px; align-items: center;">
+                        <div style="width: 36px; height: 36px; border-radius: 50%; background: ${bgHex}; color: ${colorHex}; display: flex; align-items: center; justify-content: center; font-weight: 700;">${initial}</div>
+                        <div>
+                            <div style="font-weight: 700; color: #111827; font-size: 14px;">${item.name}</div>
+                            <div style="font-size: 11px; color: #6B7280;">${item.date}</div>
+                        </div>
+                    </div>
+                    <div style="text-align: right; background: ${bgHex}; padding: 4px 8px; border-radius: 8px;">
+                        <div style="font-weight: 800; color: ${colorHex}; font-size: 14px;">${amountHtml}</div>
+                        ${labelHtml}
+                    </div>
+                </div>
+                <div style="display: flex; gap: 8px; border-top: 1px solid #F3F4F6; padding-top: 10px;">${actionBtn}</div>
+            </div>`;
+        });
+    }
+    body.innerHTML = html; modal.classList.add('active');
+}
+
+function openFinanceInlineCards(type) {
+    const isIncome = type === 'income'; const categories = isIncome ? incomeCategories : expenseCategories;
+    const colorHex = isIncome ? '#059669' : '#DC2626'; const bgHex = isIncome ? '#ECFDF5' : '#FEF2F2';
+    document.getElementById('fcTitle').innerText = isIncome ? "Категорія доходу" : "Категорія витрати";
+    document.getElementById('fcTitle').style.color = colorHex;
+
+    let html = '';
+    categories.forEach((cat, idx) => {
+        html += `
+        <div class="it-card" id="itCard-${idx}" onclick="toggleInlineCard(${idx})">
+            <div class="it-header">
+                <div class="it-icon" style="background: ${bgHex}; color: ${colorHex}; font-weight:bold;">${cat.charAt(0)}</div>
+                <div class="it-title">${cat}</div>
+            </div>
+            <div class="it-body" id="itBody-${idx}" onclick="event.stopPropagation()">
+                <div class="form-grid" style="border-top: 1px dashed #E5E7EB; padding-top: 16px;">
+                    <div class="form-group" style="margin-bottom: 0;"><label>Сума (грн)</label><input type="number" id="itAmt-${idx}" placeholder="0" min="1" style="font-weight: 800; color: ${colorHex};"></div>
+                    <div class="form-group" style="margin-bottom: 0;"><label>Дата</label><input type="date" id="itDate-${idx}" value="${new Date().toISOString().split('T')[0]}"></div>
+                </div>
+                <div class="form-group" style="margin-top: 12px;"><label>Коментар</label><input type="text" id="itComm-${idx}" placeholder="..."></div>
+                <div style="display: flex; gap: 8px; margin-top:12px;">
+                    <button class="btn-secondary" style="flex:1; padding:10px; font-size:13px;" onclick="toggleInlineCard(${idx}); event.stopPropagation();">Скасувати</button>
+                    <button class="btn-primary" style="flex:1; padding:10px; font-size:13px; background: ${colorHex}; border-color: ${colorHex};" onclick="saveInlineTransaction('${type}', '${cat}', ${idx}); event.stopPropagation();">Зберегти</button>
+                </div>
+            </div>
+        </div>`;
+    });
+    
+    document.getElementById('fcGrid').innerHTML = html;
+    document.getElementById('financeTableWrap').classList.replace('fade-visible', 'fade-hidden');
+    document.getElementById('financeTableWrap').style.display = 'none';
+    document.getElementById('financeCardsWrap').style.display = 'block';
+    setTimeout(() => document.getElementById('financeCardsWrap').classList.replace('fade-hidden', 'fade-visible'), 50);
+}
+
+function openFinanceTable() {
+    document.getElementById('financeCardsWrap').classList.replace('fade-visible', 'fade-hidden');
+    setTimeout(() => {
+        document.getElementById('financeCardsWrap').style.display = 'none';
+        document.getElementById('financeTableWrap').style.display = 'block';
+        document.getElementById('financeTableWrap').classList.replace('fade-hidden', 'fade-visible');
+    }, 300);
+}
+
+function toggleInlineCard(index) {
+    const clickedCard = document.getElementById('itCard-' + index);
+    const isAlreadyActive = clickedCard.classList.contains('active');
+    document.querySelectorAll('.it-card').forEach(card => card.classList.remove('active'));
+    if (!isAlreadyActive) clickedCard.classList.add('active');
+}
+
+function saveInlineTransaction(type, category, idx) {
+    const amount = parseInt(document.getElementById('itAmt-' + idx).value) || 0;
+    const dateInput = document.getElementById('itDate-' + idx).value;
+    const comment = document.getElementById('itComm-' + idx).value.trim();
+    if (amount <= 0) { showToast("Сума має бути > 0"); return; }
+    transactions.push({ id: Date.now(), type: type, category: category, amount: amount, date: dateInput, comment: comment });
+    saveSettingsToCloud(); calculateAnalytics(); showToast("Запис додано!"); openFinanceTable();
+}
+
+function toggleEditFinRow(id) {
+    const editRow = document.getElementById(`editRow-${id}`);
+    if (editRow.style.display === 'none') {
+        document.querySelectorAll('.inline-edit-row').forEach(row => row.style.display = 'none');
+        editRow.style.display = 'block';
+    } else { editRow.style.display = 'none'; }
+}
+
+function saveInlineEdit(id) {
+    const t = transactions.find(x => x.id === id); if (!t) return;
+    const newAmt = parseInt(document.getElementById(`editAmt-${id}`).value) || 0;
+    if (newAmt <= 0) { showToast("Сума має бути > 0"); return; }
+    t.amount = newAmt; t.date = document.getElementById(`editDate-${id}`).value; t.comment = document.getElementById(`editComm-${id}`).value.trim();
+    saveSettingsToCloud(); calculateAnalytics(); showToast("Збережено!");
+}
+
+function jumpToFinanceAndEdit(id) {
+    document.getElementById('uniDetailsModal').classList.remove('active');
+    switchReportTab('finance', document.querySelectorAll('.r-tab')[1]);
+    if (document.getElementById('financeTableWrap').style.display === 'none') openFinanceTable();
+    setTimeout(() => { const editRow = document.getElementById(`editRow-${id}`); if (editRow && editRow.style.display === 'none') toggleEditFinRow(id); }, 400); 
+}
+
+let currentChartMode = 'count'; 
+let globalRoomCounts = {}; let globalRoomMoney = {}; let globalRoomNights = {};
+let roomsChartInstance = null; let sourceChartInstance = null; let revenueLineChartInstance = null;
+
+function toggleRoomsChart(mode) {
+    currentChartMode = mode;
+    document.getElementById('chartModeCount').classList.toggle('active', mode === 'count');
+    document.getElementById('chartModeMoney').classList.toggle('active', mode === 'money');
+    document.getElementById('chartModeNights').classList.toggle('active', mode === 'nights');
+    if (roomsChartInstance) {
+        let dataArr, labelTxt;
+        if(mode === 'count') { dataArr = Object.values(globalRoomCounts); labelTxt = 'Кількість броней'; }
+        else if(mode === 'money') { dataArr = Object.values(globalRoomMoney); labelTxt = 'Дохід (грн)'; }
+        else { dataArr = Object.values(globalRoomNights); labelTxt = 'Продані ночі'; }
+        roomsChartInstance.data.datasets[0].data = dataArr;
+        roomsChartInstance.data.datasets[0].label = labelTxt;
+        roomsChartInstance.update();
+    }
+}
+
+function renderCharts(startDate, endDate) {
+    globalRoomCounts = {}; globalRoomMoney = {}; globalRoomNights = {}; const sourceCounts = {}; const revenueTimeline = {}; 
+    roomsList.forEach(r => { globalRoomCounts[r.name] = 0; globalRoomMoney[r.name] = 0; globalRoomNights[r.name] = 0; });
+    ['Instagram', 'Telegram', 'Сайт', 'Телефон'].forEach(s => sourceCounts[s] = 0);
+
+    allBookings.forEach(b => {
+        if (String(b.status).toLowerCase().includes('скас')) return;
+        const bDate = parseSafeDate(b.checkIn);
+        if (bDate >= startDate && bDate <= endDate) {
+            if (b.cottage) {
+                const matchedRoom = roomsList.find(r => b.cottage.includes(r.name) || b.cottage.includes(r.short));
+                const roomName = matchedRoom ? matchedRoom.name : b.cottage;
+                let nights = Math.max(1, Math.round((parseSafeDate(b.checkOut) - parseSafeDate(b.checkIn)) / 86400000));
+                globalRoomCounts[roomName] = (globalRoomCounts[roomName] || 0) + 1;
+                globalRoomMoney[roomName] = (globalRoomMoney[roomName] || 0) + Number(b.totalPrice || 0);
+                globalRoomNights[roomName] = (globalRoomNights[roomName] || 0) + nights;
+            }
+            const src = b.source || 'Адмінка'; sourceCounts[src] = (sourceCounts[src] || 0) + 1;
+            let rawDateKey = `${bDate.getFullYear()}-${String(bDate.getMonth() + 1).padStart(2, '0')}-${String(bDate.getDate()).padStart(2, '0')}`;
+            revenueTimeline[rawDateKey] = (revenueTimeline[rawDateKey] || 0) + Number(b.totalPrice || 0);
+        }
+    });
+
+    Chart.defaults.font.family = "'Inter', sans-serif"; Chart.defaults.color = '#6B7280';
+    const bosoColors = ['#556B2F', '#D2B48C', '#2C2C2C', '#8FBC8F', '#BC8F8F', '#A9A9A9'];
+
+    if (roomsChartInstance) roomsChartInstance.destroy(); 
+    roomsChartInstance = new Chart(document.getElementById('roomsChart').getContext('2d'), {
+        type: 'bar',
+        data: { labels: Object.keys(globalRoomCounts), datasets: [{ data: currentChartMode === 'count' ? Object.values(globalRoomCounts) : Object.values(globalRoomMoney), backgroundColor: bosoColors[0], borderRadius: 6 }] },
+        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true } } } 
+    });
+
+    if (sourceChartInstance) sourceChartInstance.destroy();
+    const activeSources = Object.keys(sourceCounts).filter(k => sourceCounts[k] > 0);
+    sourceChartInstance = new Chart(document.getElementById('sourceChart').getContext('2d'), {
+        type: 'doughnut',
+        data: { labels: activeSources.length > 0 ? activeSources : ['Немає даних'], datasets: [{ data: activeSources.length > 0 ? activeSources.map(k => sourceCounts[k]) : [1], backgroundColor: activeSources.length > 0 ? bosoColors : ['#F3F4F6'], borderWidth: 0 }] },
+        options: { responsive: true, maintainAspectRatio: false, cutout: '75%', plugins: { legend: { position: 'bottom' } } }
+    });
+
+    if (revenueLineChartInstance) revenueLineChartInstance.destroy();
+    const sortedRawKeys = Object.keys(revenueTimeline).sort(); 
+    revenueLineChartInstance = new Chart(document.getElementById('revenueLineChart').getContext('2d'), {
+        type: 'line',
+        data: { labels: sortedRawKeys.map(k => { let parts = k.split('-'); return new Date(parts[0], parts[1] - 1, parts[2]).toLocaleDateString('uk-UA', { day: 'numeric', month: 'short' }); }),
+                datasets: [{ label: 'Дохід', data: sortedRawKeys.map(k => revenueTimeline[k]), borderColor: '#556B2F', backgroundColor: 'rgba(85, 107, 47, 0.1)', borderWidth: 3, fill: true, tension: 0.4 }] },
+        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true } } }
+    });
+}
         
         window.onload = () => { switchView('grid'); initApp(); };
     </script>
