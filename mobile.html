@@ -1827,12 +1827,12 @@
                     <div style="font-size: 13px; color: #4B5563; margin-bottom: 12px;">
                         <div style="display:flex; justify-content:space-between; margin-bottom:4px;"><span>Проживання:</span><span style="font-weight:600;">${basePriceTotal} ₴</span></div>
                         ${extraGuestFee > 0 ? `<div style="display:flex; justify-content:space-between; margin-bottom:4px;"><span>Дод. гості:</span><span style="font-weight:600;">+${extraGuestFee} ₴</span></div>` : ''}
-                        ${petFee > 0 ? `<div style="display:flex; justify-content:space-between; margin-bottom:4px;"><span>🐾 Тварини:</span><span style="font-weight:600;">+${petFee} ₴</span></div>` : ''}
-                        ${dayGuestsFee > 0 ? `<div style="display:flex; justify-content:space-between; margin-bottom:4px;"><span>👥 Денні гості (${dayGuests}):</span><span style="font-weight:600;">+${dayGuestsFee} ₴</span></div>` : ''}
-                        ${hasVat ? `<div style="display:flex; justify-content:space-between; margin-bottom:4px;"><span>🔥 Чан:</span><span style="font-weight:600; color:#059669;">Замовлено</span></div>` : ''}
-                        ${selectedEarlyTime ? `<div style="display:flex; justify-content:space-between; margin-bottom:4px;"><span>⏳ Ранній заїзд:</span><span style="font-weight:600;">+${earlyFee} ₴</span></div>` : ''}
-                        ${selectedLateTime ? `<div style="display:flex; justify-content:space-between; margin-bottom:4px;"><span style="color:${isPromoLateOut?'#059669':'inherit'}">${isPromoLateOut ? '🎁 Акційний виїзд:' : '⏳ Пізній виїзд:'}</span><span style="font-weight:600;">${isPromoLateOut ? '0 ₴' : '+'+lateFee+' ₴'}</span></div>` : ''}
-                        ${discountAmount > 0 ? `<div style="display:flex; justify-content:space-between; margin-bottom:4px; color:#DC2626;"><span>🔻 Знижка (${Math.round(discountPercent*100)}%):</span><span style="font-weight:600;">-${discountAmount} ₴</span></div>` : ''}
+                        ${petFee > 0 ? `<div style="display:flex; justify-content:space-between; margin-bottom:4px;"><span>Тварини:</span><span style="font-weight:600;">+${petFee} ₴</span></div>` : ''}
+                        ${dayGuestsFee > 0 ? `<div style="display:flex; justify-content:space-between; margin-bottom:4px;"><span>Денні гості (${dayGuests}):</span><span style="font-weight:600;">+${dayGuestsFee} ₴</span></div>` : ''}
+                        ${hasVat ? `<div style="display:flex; justify-content:space-between; margin-bottom:4px;"><span>Чан:</span><span style="font-weight:600; color:#059669;">Замовлено</span></div>` : ''}
+                        ${selectedEarlyTime ? `<div style="display:flex; justify-content:space-between; margin-bottom:4px;"><span>Ранній заїзд:</span><span style="font-weight:600;">+${earlyFee} ₴</span></div>` : ''}
+                        ${selectedLateTime ? `<div style="display:flex; justify-content:space-between; margin-bottom:4px;"><span style="color:${isPromoLateOut?'#059669':'inherit'}">${isPromoLateOut ? 'Акційний виїзд:' : 'Пізній виїзд:'}</span><span style="font-weight:600;">${isPromoLateOut ? '0 ₴' : '+'+lateFee+' ₴'}</span></div>` : ''}
+                        ${discountAmount > 0 ? `<div style="display:flex; justify-content:space-between; margin-bottom:4px; color:#DC2626;"><span>Знижка (${Math.round(discountPercent*100)}%):</span><span style="font-weight:600;">-${discountAmount} ₴</span></div>` : ''}
                     </div>
                     <div style="border-top: 1px dashed #D1D5DB; padding-top: 12px;">
                         <div class="form-group" style="margin-bottom: 12px;">
