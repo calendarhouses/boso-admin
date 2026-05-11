@@ -984,7 +984,7 @@ input[type="number"] {
                 <div id="set-rooms" class="settings-tab-content">
                     <div class="settings-title">
                         Категорії та Котеджі
-                        <button class="btn-primary" style="padding: 10px 16px; font-size: 13px;" onclick="openGenericModal('room')">+ Додати номер</button>
+                        <button class="btn-primary" style="padding: 10px 16px; font-size: 13px;" onclick="openGenericModal('room')">+ Додати котедж</button>
                     </div>
                     <table>
                         <thead><tr><th>Назва</th><th>Місткість</th><th>Доступність</th><th>Дія</th></tr></thead>
@@ -1173,7 +1173,7 @@ input[type="number"] {
                             <label>Номер / Котедж:</label>
                             <div class="custom-select-wrapper" id="cottageWrapper">
                                 <div class="custom-select-trigger" onclick="toggleCustomSelect('cottageWrapper')">
-                                    <span id="cottageSelectedText">Оберіть номер</span>
+                                    <span id="cottageSelectedText">Оберіть котедж</span>
                                     <svg width="16" height="16" fill="none" stroke="#6B7280" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
                                 </div>
                                 <div class="custom-select-options" id="cottageOptions"></div>
@@ -1828,14 +1828,14 @@ function saveInlineTransaction(type, category, idx) {
             const body = document.getElementById('gModalBody');
             
             if (type === 'room') {
-                title.innerText = id ? 'Редагувати номер' : 'Додати номер';
+                title.innerText = id ? 'Редагувати котедж' : 'Додати котедж';
                 let r = id ? roomsList.find(x => x.id === id) : {name: '', desc: '', capacity: 2, maxCapacity: 4, extraGuestPrice: 2500, active: true};
                 
                 // Якщо це старий номер без збереженої ціни за гостя — ставимо базові 2500
                 let currentExtraPrice = r.extraGuestPrice !== undefined ? r.extraGuestPrice : 2500;
 
                 body.innerHTML = `
-                    <div class="form-group"><label>Назва котеджу:</label><input type="text" id="mRoomName" value="${r.name}" placeholder="Напр. Номер 5"></div>
+                    <div class="form-group"><label>Назва котеджу:</label><input type="text" id="mRoomName" value="${r.name}" placeholder="Напр. Котедж 5"></div>
                     <div class="form-group"><label>Опис (Коротка назва):</label><input type="text" id="mRoomDesc" value="${r.desc}" placeholder="Напр. Стандарт"></div>
                     <div class="form-grid">
                         <div class="form-group"><label>Базова місткість (входить в ціну):</label><input type="number" id="mRoomCap" value="${r.capacity}" min="1"></div>
@@ -2082,7 +2082,7 @@ function saveInlineTransaction(type, category, idx) {
         // Функція збереження змін з модалки
         function saveGenericModal() { 
             if (currentEditType === 'room') {
-                const name = document.getElementById('mRoomName').value || 'Новий номер';
+                const name = document.getElementById('mRoomName').value || 'Новий котедж';
                 const desc = document.getElementById('mRoomDesc').value;
                 const cap = parseInt(document.getElementById('mRoomCap').value) || 2;
                 const maxCap = parseInt(document.getElementById('mRoomMaxCap').value) || cap;
@@ -3128,7 +3128,7 @@ document.getElementById('adminGuests').addEventListener('change', updatePricePre
             let defaultDesc = activeRooms.find(r => r.name === defaultRoom)?.desc || "";
             
             document.getElementById('adminCottage').value = defaultRoom;
-            document.getElementById('cottageSelectedText').innerText = defaultRoom ? `${defaultRoom} (${defaultDesc})` : "Оберіть номер";
+            document.getElementById('cottageSelectedText').innerText = defaultRoom ? `${defaultRoom} (${defaultDesc})` : "Оберіть котедж";
             
             // Скидаємо джерело на дефолт
             document.getElementById('adminSource').value = "Instagram";
@@ -3273,7 +3273,7 @@ document.getElementById('adminGuests').addEventListener('change', updatePricePre
             let savedDesc = roomsList.find(r => r.name === savedRoom)?.desc || "";
             
             document.getElementById('adminCottage').value = savedRoom;
-            document.getElementById('cottageSelectedText').innerText = savedRoom ? `${savedRoom} (${savedDesc})` : "Оберіть номер";
+            document.getElementById('cottageSelectedText').innerText = savedRoom ? `${savedRoom} (${savedDesc})` : "Оберіть котедж";
             
             checkInPicker.setDate(booking.checkIn);
             checkOutPicker.setDate(booking.checkOut);
@@ -3589,7 +3589,7 @@ document.addEventListener('click', function(e) {
                         <span class="bt-name">${name}</span>
                         <span class="bt-guests">${guests} ${getGuestWord(guests)}</span>
                     </div>
-                    <div class="bt-row"><span class="bt-label">Номер:</span> <span class="bt-val">${room}</span></div>
+                    <div class="bt-row"><span class="bt-label">Котедж:</span> <span class="bt-val">${room}</span></div>
                     <div class="bt-row"><span class="bt-label">Дати:</span> <span class="bt-val">${inDate} — ${outDate}</span></div>
                     <div class="bt-row"><span class="bt-label">Загальна сума:</span> <span class="bt-val">${total} грн</span></div>
                     <div class="bt-row"><span class="bt-label">Внесено:</span> <span class="bt-val green">${paid} грн</span></div>
