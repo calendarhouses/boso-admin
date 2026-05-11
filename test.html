@@ -272,9 +272,25 @@
         .chip-btn { padding: 10px 16px; background: #FFFFFF; border: 1px solid #D1D5DB; border-radius: 12px; font-size: 13px; font-weight: 600; color: #6B7280; display: inline-flex; align-items: center; justify-content: center; }
         .chip-btn.active { background: #F0FDF4; border-color: var(--success); color: #059669; box-shadow: 0 4px 12px rgba(5, 150, 105, 0.15); }
 
-        .pet-btn, .room-status-btn { flex: 1; display: flex !important; align-items: center; justify-content: center; font-size: 14px; font-weight: 600; border-radius: 10px; padding: 10px 4px !important; margin: 0 !important; border: 1px solid transparent; color: #6B7280; }
-        .pet-btn.active[data-val="Ні"], .room-status-btn.active[data-val="false"] { background: #FEF2F2 !important; color: #DC2626 !important; border-color: #FECACA !important; }
-        .pet-btn.active[data-val="Так"], .room-status-btn.active[data-val="true"] { background: #F0FDF4 !important; color: #059669 !important; border-color: #A7F3D0 !important; }
+        .pet-btn, .room-status-btn, .vat-btn, .ubd-btn { flex: 1; display: flex !important; align-items: center; justify-content: center; font-size: 14px; font-weight: 600; border-radius: 10px; padding: 10px 4px !important; margin: 0 !important; border: 1px solid transparent; color: #6B7280; }
+        .pet-btn.active[data-val="Ні"], .room-status-btn.active[data-val="false"], .vat-btn.active[data-val="Ні"], .ubd-btn.active[data-val="Ні"] { background: #FEF2F2 !important; color: #DC2626 !important; border-color: #FECACA !important; }
+        .pet-btn.active[data-val="Так"], .room-status-btn.active[data-val="true"], .vat-btn.active[data-val="Так"], .ubd-btn.active[data-val="Так"] { background: #F0FDF4 !important; color: #059669 !important; border-color: #A7F3D0 !important; }
+
+        /* ── ДОДАТКОВІ ПОСЛУГИ (ГНУЧКИЙ ГРАФІК) ── */
+        .service-card { border: 1.5px solid #E5E7EB; border-radius: 12px; margin-top: 12px; background: #fff; overflow: hidden; transition: 0.3s ease; }
+        .service-card.active { border-color: var(--accent); background: #F8FAF7; }
+        .srv-header { padding: 14px 16px; display: flex; justify-content: space-between; align-items: center; cursor: pointer; user-select: none; }
+        .srv-title { display: flex; align-items: center; gap: 10px; font-size: 13px; font-weight: 600; color: var(--text-main); }
+        .srv-title svg { width: 18px; height: 18px; stroke: #9CA3AF; fill: none; stroke-width: 1.5; transition: 0.3s; }
+        .service-card.active .srv-title svg { stroke: var(--accent); }
+        .srv-price { font-size: 12px; font-weight: 700; color: #6B7280; display: flex; align-items: center; gap: 6px;}
+        .service-card.active .srv-price { color: var(--accent); }
+        .srv-body { max-height: 0; opacity: 0; transition: max-height 0.4s ease, opacity 0.3s ease, padding 0.3s ease; padding: 0 16px; }
+        .service-card.active .srv-body { max-height: 180px; opacity: 1; padding: 0 16px 16px; }
+        .time-chips { display: flex; gap: 8px; margin-top: 8px; overflow-x: auto; padding-bottom: 4px; -webkit-overflow-scrolling: touch; }
+        .time-chips::-webkit-scrollbar { display: none; }
+        .t-chip { padding: 8px 14px; border: 1px solid #E5E7EB; border-radius: 10px; font-size: 12px; font-weight: 600; color: #6B7280; background: #fff; cursor: pointer; transition: 0.2s; flex-shrink: 0; }
+        .t-chip.selected { background: var(--accent); color: #fff; border-color: var(--accent); box-shadow: 0 4px 10px rgba(85, 107, 47, 0.2); }
 
         /* --- Вкладки налаштувань (Скролл) --- */
         .mobile-settings-tabs { display: flex; overflow-x: auto; gap: 8px; padding-bottom: 12px; border-bottom: 1px solid #E5E7EB; margin-bottom: 16px; -webkit-overflow-scrolling: touch; }
@@ -587,6 +603,84 @@
                                 <input type="hidden" id="adminPets" value="Ні">
                             </div>
                         </div>
+
+                        <div class="form-grid">
+                            <div class="form-group">
+                                <label>Денні гості:</label>
+                                <div style="display: flex; align-items: center; gap: 4px;">
+                                    <button type="button" onclick="changeAdminDayGuests(-1)" style="width: 40px; height: 40px; background: #FEF2F2; color: #DC2626; border: 1px solid #FECACA; border-radius: 10px; font-size: 18px; font-weight: bold; cursor: pointer;">-</button>
+                                    <input type="number" id="adminDayGuests" value="0" min="0" style="text-align: center; width: 100%; padding: 10px 0;">
+                                    <button type="button" onclick="changeAdminDayGuests(1)" style="width: 40px; height: 40px; background: #D1FAE5; color: #059669; border: 1px solid #A7F3D0; border-radius: 10px; font-size: 18px; font-weight: bold; cursor: pointer;">+</button>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label>Чан:</label>
+                                <div style="display: flex; background: #F3F4F6; border-radius: 10px; padding: 3px; height: 40px;">
+                                    <div class="vat-btn active" data-val="Ні" onclick="toggleVat('Ні')">Ні</div>
+                                    <div class="vat-btn" data-val="Так" onclick="toggleVat('Так')">Так</div>
+                                </div>
+                                <input type="hidden" id="adminVat" value="Ні">
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Знижка УБД (-10%):</label>
+                            <div style="display: flex; background: #F3F4F6; border-radius: 10px; padding: 3px; height: 40px;">
+                                <div class="ubd-btn active" data-val="Ні" onclick="toggleUBD('Ні')">Ні</div>
+                                <div class="ubd-btn" data-val="Так" onclick="toggleUBD('Так')">Так</div>
+                            </div>
+                            <input type="hidden" id="adminUBD" value="Ні">
+                        </div>
+
+                        <div style="margin-top: 16px; border-top: 1px dashed #E5E7EB; padding-top: 16px;">
+                            <label style="font-size: 11px; font-weight: 800; color: #9CA3AF; text-transform: uppercase; letter-spacing: 1px; display: block; margin-bottom: 8px;">Гнучкий графік</label>
+                            
+                            <div class="service-card" id="adminCardEarly">
+                                <div class="srv-header" onclick="toggleAdminService('early')">
+                                    <div class="srv-title">
+                                        <svg viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                                        Ранній заїзд
+                                    </div>
+                                    <div class="srv-price" id="adminLabelPriceEarly">Оберіть час</div>
+                                </div>
+                                <div class="srv-body">
+                                    <div class="time-chips">
+                                        <div class="t-chip" onclick="selectAdminTime('early', '08:00', this)">08:00</div>
+                                        <div class="t-chip" onclick="selectAdminTime('early', '09:00', this)">09:00</div>
+                                        <div class="t-chip" onclick="selectAdminTime('early', '10:00', this)">10:00</div>
+                                        <div class="t-chip" onclick="selectAdminTime('early', '11:00', this)">11:00</div>
+                                        <div class="t-chip" onclick="selectAdminTime('early', '12:00', this)">12:00</div>
+                                        <div class="t-chip" onclick="selectAdminTime('early', '13:00', this)">13:00</div>
+                                        <div class="t-chip" onclick="selectAdminTime('early', '14:00', this)">14:00</div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="service-card" id="adminCardLate">
+                                <div class="srv-header" onclick="toggleAdminService('late')">
+                                    <div class="srv-title">
+                                        <svg viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z M12 7v5l2.5 2.5"/></svg>
+                                        Пізній виїзд
+                                    </div>
+                                    <div class="srv-price" id="adminLabelPriceLate">Оберіть час</div>
+                                </div>
+                                <div class="srv-body">
+                                    <div class="time-chips">
+                                        <div class="t-chip" onclick="selectAdminTime('late', '12:00', this)">12:00</div>
+                                        <div class="t-chip" onclick="selectAdminTime('late', '13:00', this)">13:00</div>
+                                        <div class="t-chip" onclick="selectAdminTime('late', '14:00', this)">14:00</div>
+                                        <div class="t-chip" onclick="selectAdminTime('late', '15:00', this)">15:00</div>
+                                        <div class="t-chip" onclick="selectAdminTime('late', '16:00', this)">16:00</div>
+                                        <div class="t-chip" onclick="selectAdminTime('late', '17:00', this)">17:00</div>
+                                        <div class="t-chip" onclick="selectAdminTime('late', '18:00', this)">18:00</div>
+                                        <div class="t-chip" onclick="selectAdminTime('late', '19:00', this)">19:00</div>
+                                        <div class="t-chip" onclick="selectAdminTime('late', '20:00', this)">20:00</div>
+                                        <div class="t-chip" onclick="selectAdminTime('late', '21:00', this)">21:00</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
                     </div>
                     
                     <div id="liveCalculatorContainer"></div>
@@ -1195,6 +1289,65 @@
         function toggleRoomStatus(val) {
             document.getElementById('mRoomStatus').value = val;
             document.querySelectorAll('.room-status-btn').forEach(btn => { btn.classList.toggle('active', btn.getAttribute('data-val') === val); });
+        }
+
+        // --- НОВІ ПЕРЕМИКАЧІ ДЛЯ ШТОРКИ ---
+        function toggleVat(val) {
+            document.getElementById('adminVat').value = val;
+            document.querySelectorAll('.vat-btn').forEach(btn => { btn.classList.toggle('active', btn.getAttribute('data-val') === val); });
+            updatePricePreview(); 
+        }
+
+        function toggleUBD(val) {
+            document.getElementById('adminUBD').value = val;
+            document.querySelectorAll('.ubd-btn').forEach(btn => { btn.classList.toggle('active', btn.getAttribute('data-val') === val); });
+            updatePricePreview(); 
+        }
+
+        function changeAdminDayGuests(amount) {
+            let input = document.getElementById('adminDayGuests');
+            let currentVal = parseInt(input.value) || 0;
+            let newVal = currentVal + amount;
+            if (newVal >= 0) { 
+                input.value = newVal;
+                updatePricePreview(); 
+            }
+        }
+
+        // Ручне введення денних гостей з клавіатури
+        document.addEventListener("DOMContentLoaded", () => {
+            const dayGuestsInput = document.getElementById('adminDayGuests');
+            if(dayGuestsInput) {
+                dayGuestsInput.addEventListener('input', updatePricePreview);
+                dayGuestsInput.addEventListener('change', updatePricePreview);
+            }
+        });
+
+        let selectedEarlyTime = null;
+        let selectedLateTime = null;
+
+        function toggleAdminService(type) {
+            const card = document.getElementById(type === 'early' ? 'adminCardEarly' : 'adminCardLate');
+            if (card.classList.contains('active')) {
+                card.classList.remove('active');
+                if(type === 'early') selectedEarlyTime = null;
+                if(type === 'late') selectedLateTime = null;
+                card.querySelectorAll('.t-chip').forEach(c => c.classList.remove('selected'));
+            } else {
+                card.classList.add('active');
+            }
+            updatePricePreview();
+        }
+
+        function selectAdminTime(type, time, element) {
+            const parent = element.closest('.time-chips');
+            parent.querySelectorAll('.t-chip').forEach(c => c.classList.remove('selected'));
+            element.classList.add('selected');
+            
+            if (type === 'early') selectedEarlyTime = time;
+            else selectedLateTime = time;
+            
+            updatePricePreview();
         }
 
         function updatePricePreview() {
