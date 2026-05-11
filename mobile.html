@@ -510,7 +510,7 @@
 
         <div id="view-settings" style="display: none; flex-direction: column;">
             <div class="mobile-settings-tabs">
-                <div class="m-tab active" onclick="switchSettingsTab('rooms', this)">Номери</div>
+                <div class="m-tab active" onclick="switchSettingsTab('rooms', this)">Котеджі</div>
                 <div class="m-tab" onclick="switchSettingsTab('prices', this)">Ціни</div>
                 <div class="m-tab" onclick="switchSettingsTab('discounts', this)">Знижки</div>
             </div>
@@ -1094,12 +1094,17 @@
         function renderSettingsRooms() {
             const tbody = document.getElementById('settingsRoomsTableBody'); tbody.innerHTML = '';
             roomsList.forEach(r => {
-                let badge = r.active ? `<span class="badge confirmed" style="font-size:10px;">Увімкнено</span>` : `<span class="badge cancelled" style="font-size:10px;">Вимкнено</span>`;
+                let badge = r.active ? `<span class="badge confirmed" style="font-size:10px; padding: 2px 8px;">Увімкнено</span>` : `<span class="badge cancelled" style="font-size:10px; padding: 2px 8px;">Вимкнено</span>`;
                 tbody.innerHTML += `<tr>
-                    <td><strong>${r.name}</strong></td>
-                    <td style="flex-direction: row; font-size:12px; color:#6B7280;">${r.capacity} (до ${r.maxCapacity || r.capacity}) осіб <span>${badge}</span></td>
-                    <td style="justify-content: flex-end; gap:8px;">
-                        <button class="btn-action" style="padding:6px 12px; border-radius:8px;" onclick="openGenericModal('room', ${r.id})">Редагувати</button>
+                    <td style="flex-direction: row; justify-content: space-between; align-items: center;">
+                        <strong>${r.name}</strong>
+                        ${badge}
+                    </td>
+                    <td style="font-size:13px; color:#6B7280;">
+                        Місткість: від ${r.capacity} до ${r.maxCapacity || r.capacity} гостей
+                    </td>
+                    <td style="justify-content: flex-end; gap:8px; padding-top: 10px; border-top: 1px solid #F3F4F6;">
+                        <button class="btn-action" style="padding:10px 16px; font-size:14px; flex:1; justify-content:center;" onclick="openGenericModal('room', ${r.id})">Редагувати котедж</button>
                     </td>
                 </tr>`;
             });
@@ -1108,10 +1113,20 @@
         function renderSettingsDiscounts() {
             const tbody = document.getElementById('settingsDiscountsTableBody'); tbody.innerHTML = '';
             discountsList.forEach(d => {
+                // Міняємо текст прямо при виводі
+                let roomsText = d.rooms.replace('Всі номери', 'Всі котеджі');
+                
                 tbody.innerHTML += `<tr>
-                    <td><strong>${d.condition}</strong></td>
-                    <td style="flex-direction:row; font-size:12px;"><span class="badge confirmed">${d.discount}</span><span style="color:#6B7280; font-size:11px;">${d.rooms}</span></td>
-                    <td style="justify-content: flex-end;"><button class="btn-action" style="padding:6px 12px;" onclick="openGenericModal('discount', ${d.id})">Редагувати</button></td>
+                    <td style="flex-direction: row; justify-content: space-between; align-items: flex-start;">
+                        <div style="flex:1;"><strong>${d.condition}</strong></div>
+                        <div style="text-align: right;"><span class="badge confirmed" style="font-size: 14px;">${d.discount}</span></div>
+                    </td>
+                    <td style="font-size:12px; color:#6B7280;">
+                        Застосовано: ${roomsText}
+                    </td>
+                    <td style="justify-content: flex-end; padding-top: 10px;">
+                        <button class="btn-action" style="padding:10px 16px; font-size:14px; width:100%; justify-content:center;" onclick="openGenericModal('discount', ${d.id})">Редагувати знижку</button>
+                    </td>
                 </tr>`;
             });
         }
@@ -1347,17 +1362,25 @@
             data.forEach((b) => {
                 const inDate = new Date(b.checkIn); const outDate = new Date(b.checkOut);
                 const nights = Math.round((outDate - inDate) / (1000 * 60 * 60 * 24)) || 0;
+                
+                // Повна дата без скорочень
                 const dateStr = `${inDate.toLocaleDateString('uk-UA', { day: 'numeric', month: 'short' })} - ${outDate.toLocaleDateString('uk-UA', { day: 'numeric', month: 'short' })}`;
+                
                 let badgeClass = 'new'; let s = String(b.status).toLowerCase();
                 if(s.includes('підтвердж') || s.includes('заїхав')) badgeClass = 'confirmed';
                 if(s.includes('скас')) badgeClass = 'cancelled';
-                const cleanPhone = formatPhone(b.phone);
+                
                 tbody.innerHTML += `<tr>
-                    <td><strong>${String(b.name).replace(' (Ручна бронь)', '')}</strong></td>
-                    <td style="flex-direction: row; font-size:12px; color:#6B7280;">${dateStr} (${nights}н) <span>${b.cottage}</span></td>
-                    <td style="flex-direction: row; justify-content:space-between; border-top:1px solid #F3F4F6; margin-top:4px; padding-top:8px;">
-                        <span class="badge ${badgeClass}">${b.status}</span>
-                        <button class="btn-action" style="padding:6px 12px; border-radius:8px;" onclick="openDetailsByRow(${b.row})">Деталі</button>
+                    <td style="flex-direction: row; justify-content: space-between; align-items: center;">
+                        <strong>${String(b.name).replace(' (Ручна бронь)', '')}</strong>
+                        <span style="font-size: 11px; font-weight: 700; color: var(--accent); background: #F0FDF4; padding: 4px 8px; border-radius: 6px; border: 1px solid #DCF1D3;">${b.cottage}</span>
+                    </td>
+                    <td style="font-size:12px; color:#6B7280;">
+                        ${dateStr} — <span style="color:#4B5563; font-weight:600;">${nights} ${getNightWord(nights)}</span>
+                    </td>
+                    <td style="flex-direction: row; justify-content:space-between; border-top:1px solid #F3F4F6; margin-top:4px; padding-top:12px; gap: 10px;">
+                        <span class="badge ${badgeClass}" style="flex:1; justify-content:center;">${b.status}</span>
+                        <button class="btn-action" style="padding:12px 20px; border-radius:10px; font-size:14px; flex:1; justify-content:center; background: var(--accent); color: white;" onclick="openDetailsByRow(${b.row})">Деталі броні</button>
                     </td>
                 </tr>`;
             });
