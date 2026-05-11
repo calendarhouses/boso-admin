@@ -234,6 +234,22 @@
         .booking-block.status-new { background: linear-gradient(135deg, #DEB887 0%, #CDA062 100%); color: #1A1A1A; }
         .booking-block.status-confirmed { background: linear-gradient(135deg, #6B8E23 0%, #4B5D28 100%); color: #FFFFFF; }
         .booking-block.status-cancelled { background: #F9FAFB; color: #9CA3AF; border: 1px dashed #D1D5DB; }
+
+        /* --- ПРЕМІУМ-ІНДИКАТОРИ РАННЬОГО/ПІЗНЬОГО ЗАЇЗДУ --- */
+        .time-extension {
+            position: absolute;
+            top: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.12); /* Легке затемнення */
+            background-image: repeating-linear-gradient(45deg, transparent, transparent 4px, rgba(255,255,255,0.15) 4px, rgba(255,255,255,0.15) 8px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1;
+        }
+        .time-extension.early { left: 0; border-right: 1px solid rgba(0,0,0,0.05); }
+        .time-extension.late { right: 0; border-left: 1px solid rgba(0,0,0,0.05); }
+        .time-extension svg { stroke: rgba(255,255,255,0.9); }
         
         /* --- МОБІЛЬНІ ШТОРКИ (BOTTOM SHEETS) --- */
         .drawer-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(17,24,39,0.5); backdrop-filter: blur(4px); z-index: 1000; opacity: 0; pointer-events: none; transition: 0.3s; }
@@ -1229,16 +1245,27 @@
                             let blockLeft = offsetDays * cellWidth; 
                             let blockWidth = durationDays * cellWidth; 
 
-                            // 🟢 Розширюємо плашку візуально, щоб вона "з'їла" зайнятий день
-                            if (exHasLate) blockWidth += (cellWidth * 0.85); // Тягнемо вправо
-                            if (exHasEarly) {
-                                blockLeft -= (cellWidth * 0.85); // Тягнемо вліво
+                            // 🟢 ЗМІННІ ДЛЯ ПРЕМІУМ-ВІЗУАЛУ
+                            let extensionsHtml = "";
+                            let padLeft = 8;
+                            let padRight = 8;
+
+                            if (exHasLate) {
                                 blockWidth += (cellWidth * 0.85);
+                                let isPromo = (durationDays === 2 && inDate.getDay() === 5 && outDate.getDay() === 0);
+                                extensionsHtml += `<div class="time-extension late" style="width: ${cellWidth * 0.85}px;">${isPromo ? '<span style="font-size:12px;">🎁</span>' : '<svg width="12" height="12" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>'}</div>`;
+                                padRight = (cellWidth * 0.85) + 8; // Відштовхуємо текст від правого краю
+                            }
+                            if (exHasEarly) {
+                                blockLeft -= (cellWidth * 0.85);
+                                blockWidth += (cellWidth * 0.85);
+                                extensionsHtml += `<div class="time-extension early" style="width: ${cellWidth * 0.85}px;"><svg width="12" height="12" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg></div>`;
+                                padLeft = (cellWidth * 0.85) + 8; // Відштовхуємо текст від лівого краю
                             }
                             
                             // Захист від вильоту за межі екрану
-                            if (offsetDays < 0) { blockWidth = (durationDays + offsetDays) * cellWidth; blockLeft = 0; }
-                            if (offsetDays + durationDays > daysCount) { blockWidth = (daysCount - offsetDays) * cellWidth; }
+                            if (offsetDays < 0) { blockWidth = (durationDays + offsetDays) * cellWidth; blockLeft = 0; padLeft = 8; extensionsHtml = extensionsHtml.replace(/early/g, 'early" style="display:none;"'); }
+                            if (offsetDays + durationDays > daysCount) { blockWidth = (daysCount - offsetDays) * cellWidth; padRight = 8; extensionsHtml = extensionsHtml.replace(/late/g, 'late" style="display:none;"'); }
 
                             let total = Number(b.totalPrice) || 0; let paid = Number(b.paidAmount) || 0; let balance = total - paid;
                             let finText = ""; let badgeBg = ""; let badgeColor = "#FFFFFF";
@@ -1250,14 +1277,14 @@
                             let guestName = String(b.name).replace(' (Ручна бронь)', '');
 
                             currentRow.innerHTML += `
-                                <div class="booking-block ${statusClass}" style="left: ${blockLeft}px; width: ${blockWidth}px;" 
+                                <div class="booking-block ${statusClass}" style="left: ${blockLeft}px; width: ${blockWidth}px; padding-left: ${padLeft}px; padding-right: ${padRight}px;" 
                                      ontouchstart="handleTouchStart(event, this, ${b.row})"
                                      ontouchend="handleTouchEnd(event, this, ${b.row})"
                                      ontouchmove="handleTouchMove(event, this)"
                                      oncontextmenu="event.preventDefault();">
-                                     
-                                    <div style="font-size: 11px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; line-height: 1;">${guestName}</div>
-                                    <div style="margin-top: 3px; display: flex; overflow: hidden;">
+                                     ${extensionsHtml}
+                                    <div style="position: relative; z-index: 2; font-size: 11px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; line-height: 1;">${guestName}</div>
+                                    <div style="position: relative; z-index: 2; margin-top: 3px; display: flex; overflow: hidden;">
                                         <span style="background: ${badgeBg}; color: ${badgeColor}; font-size: 8px; padding: 2px 4px; border-radius: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${finText}</span>
                                     </div>
                                 </div>`;
