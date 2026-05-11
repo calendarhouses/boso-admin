@@ -1647,46 +1647,63 @@
             if (document.getElementById('adminLabelPriceEarly')) document.getElementById('adminLabelPriceEarly').innerHTML = 'Оберіть час';
             if (document.getElementById('adminLabelPriceLate')) document.getElementById('adminLabelPriceLate').innerHTML = 'Оберіть час';
 
-            // --- ПАРСИНГ СИСТЕМНОГО КОМЕНТАРЯ (КРОК 3) ---
-            let rawComment = booking.comment ? String(booking.comment) : "";
+            // --- ПАРСИНГ СИСТЕМНОГО КОМЕНТАРЯ (ЯК НА ПК) ---
+            let textComment = booking.comment || "";
+            let parsedDayGuests = 0;
             
-            if (rawComment.includes("[🔥 Чан]")) { 
-                if(document.getElementById('adminVat')) toggleVat("Так"); 
-                rawComment = rawComment.replace("[🔥 Чан]", ""); 
-            }
-            if (rawComment.includes("[🇺🇦 УБД]")) { 
-                if(document.getElementById('adminUBD')) toggleUBD("Так"); 
-                rawComment = rawComment.replace("[🇺🇦 УБД]", ""); 
-            }
-            
-            let dgMatch = rawComment.match(/\[👥 ДГ: (\d+)\]/);
-            if (dgMatch) { 
-                if(document.getElementById('adminDayGuests')) document.getElementById('adminDayGuests').value = parseInt(dgMatch[1]); 
-                rawComment = rawComment.replace(dgMatch[0], ""); 
+            // 1. Шукаємо Денних гостей
+            let dayGuestRegex = /👥 Денні гості[^:]*:\s*(\d+)/;
+            let matchDay = textComment.match(dayGuestRegex);
+            if (matchDay) {
+                parsedDayGuests = parseInt(matchDay[1]);
+                textComment = textComment.replace(/👥 Денні гості[^|]+(\|\s*)?/, '').trim();
             }
             
-            let earlyMatch = rawComment.match(/\[⏳ РЗ: ([\d:]+)\]/);
-            if (earlyMatch) { 
-                selectedEarlyTime = earlyMatch[1];
-                document.getElementById('adminCardEarly').classList.add('active');
-                let chip = Array.from(document.querySelectorAll('#adminCardEarly .t-chip')).find(c => c.innerText === selectedEarlyTime);
-                if(chip) chip.classList.add('selected');
-                rawComment = rawComment.replace(earlyMatch[0], ""); 
+            // 2. Шукаємо Чан
+            if (textComment.includes('♨️ Чан: Так')) {
+                if(document.getElementById('adminVat')) toggleVat('Так');
+                textComment = textComment.replace(/♨️ Чан: Так\s*(\|\s*)?/, '').trim();
+            } else {
+                if(document.getElementById('adminVat')) toggleVat('Ні');
             }
             
-            let lateMatch = rawComment.match(/\[⏳ ПВ: ([\d:]+)\]/);
-            if (lateMatch) { 
-                selectedLateTime = lateMatch[1];
-                document.getElementById('adminCardLate').classList.add('active');
-                let chip = Array.from(document.querySelectorAll('#adminCardLate .t-chip')).find(c => c.innerText === selectedLateTime);
-                if(chip) chip.classList.add('selected');
-                rawComment = rawComment.replace(lateMatch[0], ""); 
+            // 3. Шукаємо УБД
+            if (textComment.includes('🇺🇦 УБД: Так')) {
+                if(document.getElementById('adminUBD')) toggleUBD('Так');
+                textComment = textComment.replace(/🇺🇦 УБД: Так\s*(\|\s*)?/, '').trim();
+            } else {
+                if(document.getElementById('adminUBD')) toggleUBD('Ні');
             }
 
-            // Повертаємо у поле лише чистий клієнтський коментар
-            if(document.getElementById('adminComment')) {
-                document.getElementById('adminComment').value = rawComment.trim();
+            // 4. Шукаємо Ранній заїзд
+            let earlyRegex = /🕒 Ранній заїзд: з (\d{2}:\d{2})(\s*\|\s*)?/;
+            let matchEarly = textComment.match(earlyRegex);
+            if (matchEarly) {
+                selectedEarlyTime = matchEarly[1];
+                document.getElementById('adminCardEarly').classList.add('active');
+                document.querySelectorAll('#adminCardEarly .t-chip').forEach(c => {
+                    if (c.innerText === selectedEarlyTime) c.classList.add('selected');
+                });
+                textComment = textComment.replace(earlyRegex, '').trim();
             }
+            
+            // 5. Шукаємо Пізній виїзд
+            let lateRegex = /🕒 Пізній виїзд: до (\d{2}:\d{2})(\s*\|\s*)?/;
+            let matchLate = textComment.match(lateRegex);
+            if (matchLate) {
+                selectedLateTime = matchLate[1];
+                document.getElementById('adminCardLate').classList.add('active');
+                document.querySelectorAll('#adminCardLate .t-chip').forEach(c => {
+                    if (c.innerText === selectedLateTime) c.classList.add('selected');
+                });
+                textComment = textComment.replace(lateRegex, '').trim();
+            }
+
+            // 6. Фінальна чистка коментаря
+            textComment = textComment.replace(/^Коментар гостя:\s*/, '').replace(/^\|\s*/, '').replace(/\|\s*$/, '').trim();
+
+            if(document.getElementById('adminComment')) document.getElementById('adminComment').value = textComment;
+            if(document.getElementById('adminDayGuests')) document.getElementById('adminDayGuests').value = parsedDayGuests;
             // ---------------------------------------------
             
             const availableRooms = roomsList.filter(r => r.active || r.name === booking.cottage);
@@ -1723,23 +1740,20 @@
         document.getElementById('adminBookingForm').addEventListener('submit', async function(e) {
             e.preventDefault(); const btn = document.getElementById('adminSubmitBtn'); const originalText = btn.innerText; btn.innerText = "Збереження..."; btn.disabled = true;
             
-            // --- ПАКУВАННЯ СИСТЕМНОГО КОМЕНТАРЯ (КРОК 3) ---
-            let sysTags = [];
-            const vatInp = document.getElementById('adminVat');
-            const ubdInp = document.getElementById('adminUBD');
-            const dgInp = document.getElementById('adminDayGuests');
-            
-            if (vatInp && vatInp.value === 'Так') sysTags.push("[🔥 Чан]");
-            if (ubdInp && ubdInp.value === 'Так') sysTags.push("[🇺🇦 УБД]");
-            if (dgInp && parseInt(dgInp.value) > 0) sysTags.push(`[👥 ДГ: ${dgInp.value}]`);
-            if (selectedEarlyTime) sysTags.push(`[⏳ РЗ: ${selectedEarlyTime}]`);
-            if (selectedLateTime) sysTags.push(`[⏳ ПВ: ${selectedLateTime}]`);
-            
-            let clientComment = document.getElementById('adminComment').value.trim();
-            let finalPackedComment = sysTags.length > 0 
-                ? sysTags.join(" ") + (clientComment ? "\n" + clientComment : "") 
-                : clientComment;
-            // ---------------------------------------------
+            // --- ПАКУВАННЯ СИСТЕМНОГО КОМЕНТАРЯ (ЯК НА ПК) ---
+            let rawComment = document.getElementById('adminComment').value.trim();
+            let dayGuests = parseInt(document.getElementById('adminDayGuests').value) || 0;
+
+            let sysComment = [];
+            if (dayGuests > 0) sysComment.push(`👥 Денні гості: ${dayGuests}`);
+            if (document.getElementById('adminVat').value === 'Так') sysComment.push(`♨️ Чан: Так`);
+            if (document.getElementById('adminUBD').value === 'Так') sysComment.push(`🇺🇦 УБД: Так`);
+            if (selectedEarlyTime) sysComment.push(`🕒 Ранній заїзд: з ${selectedEarlyTime}`);
+            if (selectedLateTime) sysComment.push(`🕒 Пізній виїзд: до ${selectedLateTime}`);
+
+            if (sysComment.length > 0) { 
+                rawComment = sysComment.join(' | ') + (rawComment ? '\n\nКоментар гостя: ' + rawComment : '');
+            }
 
             const bookingData = { 
                 checkIn: document.getElementById('adminCheckIn').value, checkOut: document.getElementById('adminCheckOut').value, cottage: document.getElementById('adminCottage').value, 
