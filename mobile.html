@@ -516,7 +516,7 @@
             </div>
 
             <div id="set-rooms" class="settings-tab-content">
-                <button class="btn-primary" style="margin-bottom: 16px;" onclick="openGenericModal('room')">+ Додати номер</button>
+                <button class="btn-primary" style="margin-bottom: 16px;" onclick="openGenericModal('room')">+ Додати котедж</button>
                 <table><tbody id="settingsRoomsTableBody"></tbody></table>
             </div>
 
@@ -820,7 +820,7 @@
                             <label>Котедж:</label>
                             <div class="custom-select-wrapper" id="cottageWrapper">
                                 <div class="custom-select-trigger" onclick="toggleCustomSelect('cottageWrapper')">
-                                    <span id="cottageSelectedText">Оберіть номер</span>
+                                    <span id="cottageSelectedText">Оберіть котедж</span>
                                     <svg width="14" height="14" fill="none" stroke="#6B7280" viewBox="0 0 24 24"><path d="M19 9l-7 7-7-7"></path></svg>
                                 </div>
                                 <div class="custom-select-options" id="cottageOptions"></div>
@@ -1114,7 +1114,7 @@
             const tbody = document.getElementById('settingsDiscountsTableBody'); tbody.innerHTML = '';
             discountsList.forEach(d => {
                 // Міняємо текст прямо при виводі
-                let roomsText = d.rooms.replace('Всі номери', 'Всі котеджі');
+                let roomsText = d.rooms.replace('Всі котеджі', 'Всі котеджі');
                 
                 tbody.innerHTML += `<tr>
                     <td style="flex-direction: row; justify-content: space-between; align-items: flex-start;">
@@ -1158,12 +1158,12 @@
             const title = document.getElementById('gModalTitle'); const body = document.getElementById('gModalBody');
             
             if (type === 'room') {
-                title.innerText = id ? 'Редагувати номер' : 'Додати номер';
+                title.innerText = id ? 'Редагувати котедж' : 'Додати котедж';
                 let r = id ? roomsList.find(x => x.id === id) : {name: '', desc: '', capacity: 2, maxCapacity: 4, extraGuestPrice: 2500, active: true};
                 let currentExtraPrice = r.extraGuestPrice !== undefined ? r.extraGuestPrice : 2500;
 
                 body.innerHTML = `
-                    <div class="form-group"><label>Назва номеру:</label><input type="text" id="mRoomName" value="${r.name}" placeholder="Напр. FAMILY №5"></div>
+                    <div class="form-group"><label>Назва котеджу:</label><input type="text" id="mRoomName" value="${r.name}" placeholder="Напр. FAMILY №5"></div>
                     <div class="form-group"><label>Опис (Коротка назва):</label><input type="text" id="mRoomDesc" value="${r.desc}" placeholder="Сімейний котедж"></div>
                     <div class="form-grid">
                         <div class="form-group"><label>Базова містк.:</label><input type="number" id="mRoomCap" value="${r.capacity}" min="1"></div>
@@ -1277,7 +1277,7 @@
         
         function saveGenericModal() { 
             if (currentEditType === 'room') {
-                const name = document.getElementById('mRoomName').value || 'Новий номер'; const desc = document.getElementById('mRoomDesc').value;
+                const name = document.getElementById('mRoomName').value || 'Новий котедж'; const desc = document.getElementById('mRoomDesc').value;
                 const cap = parseInt(document.getElementById('mRoomCap').value) || 2; const maxCap = parseInt(document.getElementById('mRoomMaxCap').value) || cap;
                 const extraPrice = parseInt(document.getElementById('mRoomExtraPrice').value) || 0; const active = document.getElementById('mRoomStatus').value === 'true';
                 if (currentEditId) { let r = roomsList.find(x => x.id === currentEditId); r.name = name; r.short = name; r.desc = desc; r.capacity = cap; r.maxCapacity = maxCap; r.extraGuestPrice = extraPrice; r.active = active; } 
@@ -1363,24 +1363,27 @@
                 const inDate = new Date(b.checkIn); const outDate = new Date(b.checkOut);
                 const nights = Math.round((outDate - inDate) / (1000 * 60 * 60 * 24)) || 0;
                 
-                // Повна дата без скорочень
-                const dateStr = `${inDate.toLocaleDateString('uk-UA', { day: 'numeric', month: 'short' })} - ${outDate.toLocaleDateString('uk-UA', { day: 'numeric', month: 'short' })}`;
+                const dateStr = `${inDate.toLocaleDateString('uk-UA', { day: 'numeric', month: 'long' })} - ${outDate.toLocaleDateString('uk-UA', { day: 'numeric', month: 'long' })}`;
                 
                 let badgeClass = 'new'; let s = String(b.status).toLowerCase();
                 if(s.includes('підтвердж') || s.includes('заїхав')) badgeClass = 'confirmed';
                 if(s.includes('скас')) badgeClass = 'cancelled';
                 
                 tbody.innerHTML += `<tr>
-                    <td style="flex-direction: row; justify-content: space-between; align-items: center;">
-                        <strong>${String(b.name).replace(' (Ручна бронь)', '')}</strong>
-                        <span style="font-size: 11px; font-weight: 700; color: var(--accent); background: #F0FDF4; padding: 4px 8px; border-radius: 6px; border: 1px solid #DCF1D3;">${b.cottage}</span>
+                    <td style="flex-direction: row; justify-content: space-between; align-items: center; padding-bottom: 8px;">
+                        <strong style="font-size: 15px;">${String(b.name).replace(' (Ручна бронь)', '')}</strong>
+                        <span style="font-size: 11px; font-weight: 800; color: var(--accent); background: #F0FDF4; padding: 4px 10px; border-radius: 8px; border: 1px solid #DCF1D3; text-transform: uppercase; letter-spacing: 0.5px;">${b.cottage}</span>
                     </td>
-                    <td style="font-size:12px; color:#6B7280;">
-                        ${dateStr} — <span style="color:#4B5563; font-weight:600;">${nights} ${getNightWord(nights)}</span>
+                    <td style="font-size:13px; color:#6B7280; padding-bottom: 12px;">
+                        ${dateStr} — <span style="color:#111827; font-weight:700;">${nights} ${getNightWord(nights)}</span>
                     </td>
-                    <td style="flex-direction: row; justify-content:space-between; border-top:1px solid #F3F4F6; margin-top:4px; padding-top:12px; gap: 10px;">
-                        <span class="badge ${badgeClass}" style="flex:1; justify-content:center;">${b.status}</span>
-                        <button class="btn-action" style="padding:12px 20px; border-radius:10px; font-size:14px; flex:1; justify-content:center; background: var(--accent); color: white;" onclick="openDetailsByRow(${b.row})">Деталі броні</button>
+                    <td style="flex-direction: row; align-items: stretch; border-top:1px solid #F3F4F6; margin-top:4px; padding-top:12px; gap: 10px;">
+                        <div class="badge ${badgeClass}" style="flex:1; display:flex; align-items:center; justify-content:center; height: 46px; border-radius: 12px; font-size: 13px; margin: 0; padding: 0;">
+                            ${b.status}
+                        </div>
+                        <button class="btn-primary" style="flex:1.2; height: 46px; border-radius: 12px; font-size: 14px; margin: 0; padding: 0; background: var(--accent);" onclick="openDetailsByRow(${b.row})">
+                            Деталі броні
+                        </button>
                     </td>
                 </tr>`;
             });
@@ -1947,7 +1950,7 @@
             let defaultRoom = prefillRoom || (activeRooms[0] ? activeRooms[0].name : "");
             let defaultDesc = activeRooms.find(r => r.name === defaultRoom)?.desc || "";
             document.getElementById('adminCottage').value = defaultRoom;
-            document.getElementById('cottageSelectedText').innerText = defaultRoom ? `${defaultRoom} (${defaultDesc})` : "Оберіть номер";
+            document.getElementById('cottageSelectedText').innerText = defaultRoom ? `${defaultRoom} (${defaultDesc})` : "Оберіть котедж";
             document.getElementById('adminSource').value = "Instagram"; document.getElementById('sourceSelectedText').innerText = "Instagram";
 
             if (prefillDate) {
@@ -2043,7 +2046,7 @@
             let savedDesc = matchedRoomObj ? matchedRoomObj.desc : "";
             
             document.getElementById('adminCottage').value = savedRoom;
-            document.getElementById('cottageSelectedText').innerText = savedRoom ? `${savedRoom} (${savedDesc})` : "Оберіть номер";
+            document.getElementById('cottageSelectedText').innerText = savedRoom ? `${savedRoom} (${savedDesc})` : "Оберіть котедж";
             checkInPicker.setDate(booking.checkIn); checkOutPicker.setDate(booking.checkOut);
             
             if (document.getElementById('adminPets')) { togglePet((booking.pets === "Так" || booking.pets === true) ? "Так" : "Ні"); }
@@ -2244,7 +2247,7 @@
                         <span class="tt-guests">${b.guests} ${getGuestWord(b.guests)}</span>
                     </div>
                     <div class="tt-body">
-                        <div class="tt-row"><span class="tt-label">Номер:</span> <span class="tt-value">${b.cottage}</span></div>
+                        <div class="tt-row"><span class="tt-label">Котедж:</span> <span class="tt-value">${b.cottage}</span></div>
                         <div class="tt-row"><span class="tt-label">Дати:</span> <span class="tt-value" style="color: var(--accent);">${inDate} — ${outDate}</span></div>
                         <div class="tt-row"><span class="tt-label">Загальна сума:</span> <span class="tt-value">${total} грн</span></div>
                         ${paidRowHtml}
@@ -2505,8 +2508,9 @@
                     let inD = new Date(bDateStr); 
                     let outDStr = b.checkOut.includes('.') ? b.checkOut.split('.').reverse().join('-') : b.checkOut;
                     let outD = new Date(outDStr);
-                    let fIn = inD.toLocaleDateString('uk-UA', { day: 'numeric', month: 'short' }).replace('.', '');
-                    let fOut = outD.toLocaleDateString('uk-UA', { day: 'numeric', month: 'short' }).replace('.', '');
+                    // Було short, ставимо long
+let                 fIn = inD.toLocaleDateString('uk-UA', { day: 'numeric', month: 'long' });
+let                 fOut = outD.toLocaleDateString('uk-UA', { day: 'numeric', month: 'long' });
                     let baseObj = { name: cName, phone: formatPhone(b.phone), date: `${fIn} — ${fOut}`, row: b.row, isTrans: false, rawDate: inD.getTime() };
 
                     if (price > 0) window.bosoDetails.sum.push({...baseObj, amount: price});
@@ -2559,7 +2563,8 @@
                 const tDate = new Date(tDateStr);
                 if (t.type === 'income') {
                     totalIncome += t.amount;
-                    let tObj = { name: t.comment || "Додано вручну", phone: "", date: tDate.toLocaleDateString('uk-UA', { day: 'numeric', month: 'short' }), row: null, amount: t.amount, isTrans: true, id: t.id, rawDate: tDate.getTime() };
+                    // Було short, ставимо long
+                    let tObj = { name: t.comment || "Додано вручну", phone: "", date: tDate.toLocaleDateString('uk-UA', { day: 'numeric', month: 'long' }), row: null, amount: t.amount, isTrans: true, id: t.id, rawDate: tDate.getTime() };
                     if (t.category === "Плата за раннє заселення/пізнє виселення") { currEarlyLate += t.amount; window.bosoDetails.earlyLate.push(tObj); }
                     else if (t.category === "Чан") { currVat += t.amount; window.bosoDetails.vat.push(tObj); }
                     else if (t.category === "Оренда велосипедів") { currBikes += t.amount; window.bosoDetails.bikes.push(tObj); }
@@ -2652,7 +2657,7 @@
 
                 filteredTrans.forEach(t => {
                     let dStr = t.date.includes('.') ? t.date.split('.').reverse().join('-') : t.date;
-                    const dateStr = new Date(dStr).toLocaleDateString('uk-UA', {day: 'numeric', month: 'short'});
+                    const dateStr = new Date(dStr).toLocaleDateString('uk-UA', {day: 'numeric', month: 'long'});
                     tbodyFinance.innerHTML += renderFinRow(t.category, t.comment || dateStr, t.amount, t.type, false, t.id);
                 });
 
