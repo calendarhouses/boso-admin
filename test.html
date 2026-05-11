@@ -1581,7 +1581,58 @@
             document.getElementById('adminName').value = String(booking.name).replace(' (Ручна бронь)', '');
             document.getElementById('adminPhone').value = '+' + formatPhone(booking.phone);
             document.getElementById('adminGuests').value = booking.guests || 2;
-            if(document.getElementById('adminComment')) document.getElementById('adminComment').value = booking.comment || "";
+            
+            // --- СКИДАЄМО ВСІ НОВІ ПОСЛУГИ ПЕРЕД ЗАПОВНЕННЯМ ---
+            if(document.getElementById('adminVat')) toggleVat('Ні');
+            if(document.getElementById('adminUBD')) toggleUBD('Ні');
+            if(document.getElementById('adminDayGuests')) document.getElementById('adminDayGuests').value = 0;
+            selectedEarlyTime = null; selectedLateTime = null;
+            document.querySelectorAll('.service-card').forEach(c => c.classList.remove('active'));
+            document.querySelectorAll('.time-chips .t-chip').forEach(c => c.classList.remove('selected'));
+            if (document.getElementById('adminLabelPriceEarly')) document.getElementById('adminLabelPriceEarly').innerHTML = 'Оберіть час';
+            if (document.getElementById('adminLabelPriceLate')) document.getElementById('adminLabelPriceLate').innerHTML = 'Оберіть час';
+
+            // --- ПАРСИНГ СИСТЕМНОГО КОМЕНТАРЯ (КРОК 3) ---
+            let rawComment = booking.comment ? String(booking.comment) : "";
+            
+            if (rawComment.includes("[🔥 Чан]")) { 
+                if(document.getElementById('adminVat')) toggleVat("Так"); 
+                rawComment = rawComment.replace("[🔥 Чан]", ""); 
+            }
+            if (rawComment.includes("[🇺🇦 УБД]")) { 
+                if(document.getElementById('adminUBD')) toggleUBD("Так"); 
+                rawComment = rawComment.replace("[🇺🇦 УБД]", ""); 
+            }
+            
+            let dgMatch = rawComment.match(/\[👥 ДГ: (\d+)\]/);
+            if (dgMatch) { 
+                if(document.getElementById('adminDayGuests')) document.getElementById('adminDayGuests').value = parseInt(dgMatch[1]); 
+                rawComment = rawComment.replace(dgMatch[0], ""); 
+            }
+            
+            let earlyMatch = rawComment.match(/\[⏳ РЗ: ([\d:]+)\]/);
+            if (earlyMatch) { 
+                selectedEarlyTime = earlyMatch[1];
+                document.getElementById('adminCardEarly').classList.add('active');
+                let chip = Array.from(document.querySelectorAll('#adminCardEarly .t-chip')).find(c => c.innerText === selectedEarlyTime);
+                if(chip) chip.classList.add('selected');
+                rawComment = rawComment.replace(earlyMatch[0], ""); 
+            }
+            
+            let lateMatch = rawComment.match(/\[⏳ ПВ: ([\d:]+)\]/);
+            if (lateMatch) { 
+                selectedLateTime = lateMatch[1];
+                document.getElementById('adminCardLate').classList.add('active');
+                let chip = Array.from(document.querySelectorAll('#adminCardLate .t-chip')).find(c => c.innerText === selectedLateTime);
+                if(chip) chip.classList.add('selected');
+                rawComment = rawComment.replace(lateMatch[0], ""); 
+            }
+
+            // Повертаємо у поле лише чистий клієнтський коментар
+            if(document.getElementById('adminComment')) {
+                document.getElementById('adminComment').value = rawComment.trim();
+            }
+            // ---------------------------------------------
             
             const availableRooms = roomsList.filter(r => r.active || r.name === booking.cottage);
             const cottageOptions = document.getElementById('cottageOptions');
@@ -1616,14 +1667,35 @@
 
         document.getElementById('adminBookingForm').addEventListener('submit', async function(e) {
             e.preventDefault(); const btn = document.getElementById('adminSubmitBtn'); const originalText = btn.innerText; btn.innerText = "Збереження..."; btn.disabled = true;
+            
+            // --- ПАКУВАННЯ СИСТЕМНОГО КОМЕНТАРЯ (КРОК 3) ---
+            let sysTags = [];
+            const vatInp = document.getElementById('adminVat');
+            const ubdInp = document.getElementById('adminUBD');
+            const dgInp = document.getElementById('adminDayGuests');
+            
+            if (vatInp && vatInp.value === 'Так') sysTags.push("[🔥 Чан]");
+            if (ubdInp && ubdInp.value === 'Так') sysTags.push("[🇺🇦 УБД]");
+            if (dgInp && parseInt(dgInp.value) > 0) sysTags.push(`[👥 ДГ: ${dgInp.value}]`);
+            if (selectedEarlyTime) sysTags.push(`[⏳ РЗ: ${selectedEarlyTime}]`);
+            if (selectedLateTime) sysTags.push(`[⏳ ПВ: ${selectedLateTime}]`);
+            
+            let clientComment = document.getElementById('adminComment').value.trim();
+            let finalPackedComment = sysTags.length > 0 
+                ? sysTags.join(" ") + (clientComment ? "\n" + clientComment : "") 
+                : clientComment;
+            // ---------------------------------------------
+
             const bookingData = { 
                 checkIn: document.getElementById('adminCheckIn').value, checkOut: document.getElementById('adminCheckOut').value, cottage: document.getElementById('adminCottage').value, 
                 name: document.getElementById('adminName').value, phone: document.getElementById('adminPhone').value, guests: document.getElementById('adminGuests').value,
                 pets: document.getElementById('adminPets').value, status: document.querySelector('.status-btn.active').getAttribute('data-status'),
                 totalPrice: document.getElementById('adminTotalPrice').value, paidAmount: document.getElementById('adminPaidAmount').value,
-                comment: document.getElementById('adminComment').value
+                comment: finalPackedComment // Відправляємо запакований коментар
             };
+            
             if (editingRowNumber !== null) bookingData.row = editingRowNumber;
+            
             try { 
                 let res = await fetch(API_URL, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify(bookingData) }); 
                 let json = await res.json();
