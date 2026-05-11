@@ -2454,7 +2454,7 @@ if (s.includes('скас')) statusClass = 'status-cancelled';
                                 
                                 extensionsHtml += `<div class="time-extension late" style="width: ${cellWidth * 0.85}px;" 
                                     onmouseenter="event.stopPropagation(); bosoHover(this, ${b.row}, 'late')" 
-                                    onmouseleave="event.stopPropagation(); bosoLeave()">${currentIcon}</div>`;
+                                    onmouseleave="event.stopPropagation(); if(event.relatedTarget && this.parentElement.contains(event.relatedTarget)) bosoHover(this.parentElement, ${b.row}, 'main'); else bosoLeave();">${currentIcon}</div>`;
                                 padRight = (cellWidth * 0.85) + 8;
                             }
                             if (exHasEarly) {
@@ -2463,7 +2463,7 @@ if (s.includes('скас')) statusClass = 'status-cancelled';
                                 
                                 extensionsHtml += `<div class="time-extension early" style="width: ${cellWidth * 0.85}px;" 
                                     onmouseenter="event.stopPropagation(); bosoHover(this, ${b.row}, 'early')" 
-                                    onmouseleave="event.stopPropagation(); bosoLeave()">${iconClock}</div>`;
+                                    onmouseleave="event.stopPropagation(); if(event.relatedTarget && this.parentElement.contains(event.relatedTarget)) bosoHover(this.parentElement, ${b.row}, 'main'); else bosoLeave();">${iconClock}</div>`;
                                 padLeft = (cellWidth * 0.85) + 8;
                             }
 
