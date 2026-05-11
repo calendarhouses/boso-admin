@@ -603,14 +603,14 @@
                             <div class="form-group">
                                 <label>Дорослих:</label>
                                 <div style="display: flex; align-items: center; background: #F9FAFB; border-radius: 12px; border: 1px solid #D1D5DB; height: 48px; overflow: hidden;">
-                                    <button type="button" onclick="changeGuests(-1)" style="width: 50px; height: 100%; background: transparent; color: #4B5563; border: none; border-right: 1px solid #E5E7EB; font-size: 22px; font-weight: 500; cursor: pointer; outline: none;">-</button>
+                                    <button type="button" onclick="changeGuests(-1)" style="width: 50px; height: 100%; background: #FEF2F2; color: #DC2626; border: none; border-right: 1px solid #FECACA; font-size: 24px; font-weight: 600; cursor: pointer; outline: none;">-</button>
                                     <input type="number" id="adminGuests" value="2" min="1" style="flex: 1; text-align: center; background: transparent; border: none; font-size: 16px; font-weight: 700; color: #111827; padding: 0; outline: none; pointer-events: none;" readonly>
-                                    <button type="button" onclick="changeGuests(1)" style="width: 50px; height: 100%; background: transparent; color: #4B5563; border: none; border-left: 1px solid #E5E7EB; font-size: 22px; font-weight: 500; cursor: pointer; outline: none;">+</button>
+                                    <button type="button" onclick="changeGuests(1)" style="width: 50px; height: 100%; background: #F0FDF4; color: #059669; border: none; border-left: 1px solid #A7F3D0; font-size: 22px; font-weight: 600; cursor: pointer; outline: none;">+</button>
                                 </div>
                             </div>
                             <div class="form-group">
                                 <label>Тварини:</label>
-                                <div style="display: flex; background: #F3F4F6; border-radius: 10px; padding: 3px; height: 40px;">
+                                <div style="display: flex; background: #F3F4F6; border-radius: 12px; padding: 4px; height: 48px;">
                                     <div class="pet-btn active" data-val="Ні" onclick="togglePet('Ні')">Ні</div>
                                     <div class="pet-btn" data-val="Так" onclick="togglePet('Так')">Так</div>
                                 </div>
@@ -622,14 +622,14 @@
                             <div class="form-group">
                                 <label>Денні гості:</label>
                                 <div style="display: flex; align-items: center; background: #F9FAFB; border-radius: 12px; border: 1px solid #D1D5DB; height: 48px; overflow: hidden;">
-                                    <button type="button" onclick="changeAdminDayGuests(-1)" style="width: 50px; height: 100%; background: transparent; color: #4B5563; border: none; border-right: 1px solid #E5E7EB; font-size: 22px; font-weight: 500; cursor: pointer; outline: none;">-</button>
+                                    <button type="button" onclick="changeAdminDayGuests(-1)" style="width: 50px; height: 100%; background: #FEF2F2; color: #DC2626; border: none; border-right: 1px solid #FECACA; font-size: 24px; font-weight: 600; cursor: pointer; outline: none;">-</button>
                                     <input type="number" id="adminDayGuests" value="0" min="0" style="flex: 1; text-align: center; background: transparent; border: none; font-size: 16px; font-weight: 700; color: #111827; padding: 0; outline: none; pointer-events: none;" readonly>
-                                    <button type="button" onclick="changeAdminDayGuests(1)" style="width: 50px; height: 100%; background: transparent; color: #4B5563; border: none; border-left: 1px solid #E5E7EB; font-size: 22px; font-weight: 500; cursor: pointer; outline: none;">+</button>
+                                    <button type="button" onclick="changeAdminDayGuests(1)" style="width: 50px; height: 100%; background: #F0FDF4; color: #059669; border: none; border-left: 1px solid #A7F3D0; font-size: 22px; font-weight: 600; cursor: pointer; outline: none;">+</button>
                                 </div>
                             </div>
                             <div class="form-group">
                                 <label>Чан:</label>
-                                <div style="display: flex; background: #F3F4F6; border-radius: 10px; padding: 3px; height: 40px;">
+                                <div style="display: flex; background: #F3F4F6; border-radius: 12px; padding: 4px; height: 48px;">
                                     <div class="vat-btn active" data-val="Ні" onclick="toggleVat('Ні')">Ні</div>
                                     <div class="vat-btn" data-val="Так" onclick="toggleVat('Так')">Так</div>
                                 </div>
@@ -639,7 +639,7 @@
 
                         <div class="form-group">
                             <label>Знижка УБД (-10%):</label>
-                            <div style="display: flex; background: #F3F4F6; border-radius: 10px; padding: 3px; height: 40px;">
+                            <div style="display: flex; background: #F3F4F6; border-radius: 12px; padding: 4px; height: 48px;">
                                 <div class="ubd-btn active" data-val="Ні" onclick="toggleUBD('Ні')">Ні</div>
                                 <div class="ubd-btn" data-val="Так" onclick="toggleUBD('Так')">Так</div>
                             </div>
@@ -1418,6 +1418,13 @@
 
             const room = typeof roomsList !== 'undefined' ? roomsList.find(r => r.name === roomName) : null; 
             if (!room) { cont.innerHTML = ''; return; }
+            // 🟢 АВТО-КОРЕКЦІЯ ГОСТЕЙ (якщо змінили котедж на менший)
+            let maxCap = room.maxCapacity || room.capacity || 10;
+            if (guests > maxCap) {
+                guests = maxCap; 
+                document.getElementById('adminGuests').value = maxCap;
+                showToast(`Кількість гостей зменшено до максимуму (${maxCap})`);
+            }
             
             // Визначаємо акцію ЗАЗДАЛЕГІДЬ, щоб використати для перевірки овербукінгу
             let isPromoLateOut = (nights === 2 && d1.getDay() === 5 && d2.getDay() === 0);
@@ -1591,7 +1598,24 @@
 
         function setHalfPrepayment() { let t = document.getElementById('adminTotalPrice'); let p = document.getElementById('adminPaidAmount'); if (t && p) { p.value = Math.round(Number(t.value) / 2); calculateBalanceLive(); } }
         function setFullPrepayment() { let t = document.getElementById('adminTotalPrice'); let p = document.getElementById('adminPaidAmount'); if (t && p) { p.value = Number(t.value) || 0; calculateBalanceLive(); } }
-        function changeGuests(amount) { let input = document.getElementById('adminGuests'); let newVal = (parseInt(input.value) || 1) + amount; if (newVal >= 1) { input.value = newVal; updatePricePreview(); } }
+       function changeGuests(amount) { 
+            let input = document.getElementById('adminGuests'); 
+            let currentVal = parseInt(input.value) || 1; 
+            
+            // Дізнаємося, який котедж обрано, і шукаємо його максимальну місткість
+            let roomName = document.getElementById('adminCottage').value;
+            let roomObj = roomsList.find(r => r.name === roomName);
+            let maxCap = roomObj ? (roomObj.maxCapacity || roomObj.capacity || 10) : 10;
+
+            let newVal = currentVal + amount; 
+
+            if (newVal >= 1 && newVal <= maxCap) { 
+                input.value = newVal; 
+                updatePricePreview(); 
+            } else if (newVal > maxCap) {
+                showToast(`Максимум для цього котеджу: ${maxCap} гостей`);
+            }
+        }
         
         function calculateBalanceLive() {
             let total = Number(document.getElementById('adminTotalPrice').value) || 0; let paid = Number(document.getElementById('adminPaidAmount').value) || 0;
