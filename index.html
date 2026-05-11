@@ -2269,7 +2269,7 @@ function saveInlineTransaction(type, category, idx) {
             data.forEach((b) => {
                const inDate = parseSafeDate(b.checkIn); const outDate = parseSafeDate(b.checkOut);
                 const nights = Math.round((outDate - inDate) / (1000 * 60 * 60 * 24)) || 0;
-                const dateStr = `${inDate.toLocaleDateString('uk-UA', { day: 'numeric', month: 'short' })} - ${outDate.toLocaleDateString('uk-UA', { day: 'numeric', month: 'short' })}`;
+                const dateStr = `${inDate.toLocaleDateString('uk-UA', { day: 'numeric', month: 'long' })} - ${outDate.toLocaleDateString('uk-UA', { day: 'numeric', month: 'long' })}`;
                 let badgeClass = 'new'; let s = String(b.status).toLowerCase();
                 if(s.includes('підтвердж') || s.includes('заїхав')) badgeClass = 'confirmed';
                 if(s.includes('скас')) badgeClass = 'cancelled';
@@ -3065,8 +3065,8 @@ const checkInPicker = flatpickr("#adminCheckIn", { locale: "uk", dateFormat: "Y-
                     document.getElementById('reportPeriodVal').value = 'custom';
                     
                     // Форматуємо для красивого відображення (напр. "14 трав. — 20 трав.")
-                    const d1 = selectedDates[0].toLocaleDateString('uk-UA', {day: 'numeric', month: 'short'});
-                    const d2 = selectedDates[1].toLocaleDateString('uk-UA', {day: 'numeric', month: 'short'});
+                    const d1 = selectedDates[0].toLocaleDateString('uk-UA', {day: 'numeric', month: 'long'});
+                    const d2 = selectedDates[1].toLocaleDateString('uk-UA', {day: 'numeric', month: 'long'});
                     document.getElementById('reportPeriodText').innerText = `${d1} — ${d2}`;
                     
                     // Знімаємо зелену підсвітку зі стандартних опцій у випадаючому списку
@@ -3510,8 +3510,8 @@ document.addEventListener('click', function(e) {
 
             let inDate = "—"; let outDate = "—";
             try {
-                if (b.checkIn) inDate = parseSafeDate(b.checkIn).toLocaleDateString('uk-UA', {day:'numeric', month:'short'});
-                if (b.checkOut) outDate = parseSafeDate(b.checkOut).toLocaleDateString('uk-UA', {day:'numeric', month:'short'});
+                if (b.checkIn) inDate = parseSafeDate(b.checkIn).toLocaleDateString('uk-UA', {day:'numeric', month: 'long'});
+                if (b.checkOut) outDate = parseSafeDate(b.checkOut).toLocaleDateString('uk-UA', {day:'numeric', month: 'long'});
             } catch(err) {}
 
             const name = b.name ? String(b.name).replace(' (Ручна бронь)', '') : "Клієнт";
@@ -3796,8 +3796,8 @@ function bosoLeave() {
                     // 🟢 НОВИЙ ФОРМАТ ДАТ: Заїзд — Виїзд
                     let inD = parseSafeDate(b.checkIn);
                     let outD = parseSafeDate(b.checkOut);
-                    let fIn = inD.toLocaleDateString('uk-UA', { day: 'numeric', month: 'short' }).replace('.', '');
-                    let fOut = outD.toLocaleDateString('uk-UA', { day: 'numeric', month: 'short' }).replace('.', '');
+                    let fIn = inD.toLocaleDateString('uk-UA', { day: 'numeric', month: 'long' }).replace('.', '');
+                    let fOut = outD.toLocaleDateString('uk-UA', { day: 'numeric', month: 'long' }).replace('.', '');
                     let fullDateStr = `${fIn} — ${fOut}`;
                     
                     let baseObj = { name: cName, phone: cPhone, date: fullDateStr, row: b.row, isTrans: false, rawDate: inD.getTime() };
@@ -3878,7 +3878,7 @@ function bosoLeave() {
                 const tDate = parseSafeDate(t.date);
                 if (t.type === 'income') {
                     totalIncome += t.amount;
-                   let tObj = { name: t.comment || "Додано вручну", phone: "", date: tDate.toLocaleDateString('uk-UA', { day: 'numeric', month: 'short' }), row: null, amount: t.amount, isTrans: true, id: t.id, rawDate: tDate.getTime() };
+                   let tObj = { name: t.comment || "Додано вручну", phone: "", date: tDate.toLocaleDateString('uk-UA', { day: 'numeric', month: 'long' }), row: null, amount: t.amount, isTrans: true, id: t.id, rawDate: tDate.getTime() };
                     
                     if (t.category === "Плата за раннє заселення/пізнє виселення") { currEarlyLate += t.amount; window.bosoDetails.earlyLate.push(tObj); }
                     else if (t.category === "Чан") { currVat += t.amount; window.bosoDetails.vat.push(tObj); }
@@ -4037,7 +4037,7 @@ function bosoLeave() {
                 tbodyFinance.innerHTML += renderFinRow("Гнучкий графік", "Ранні заїзди та пізні виїзди", incomeBreakdown.earlyLate, 'income', true);
 
                 filteredTrans.forEach(t => {
-                    const dateStr = parseSafeDate(t.date).toLocaleDateString('uk-UA', {day: 'numeric', month: 'short'});
+                    const dateStr = parseSafeDate(t.date).toLocaleDateString('uk-UA', {day: 'numeric', month: 'long'});
                     tbodyFinance.innerHTML += renderFinRow(t.category, t.comment || dateStr, t.amount, t.type, false, t.id);
                 });
 
@@ -4187,7 +4187,7 @@ function bosoLeave() {
             const sortedLabels = sortedRawKeys.map(k => {
                 let parts = k.split('-');
                 let d = new Date(parts[0], parts[1] - 1, parts[2]);
-                return d.toLocaleDateString('uk-UA', { day: 'numeric', month: 'short' });
+                return d.toLocaleDateString('uk-UA', { day: 'numeric', month: 'long' });
             });
             const revenueValues = sortedRawKeys.map(k => revenueTimeline[k]);
 
