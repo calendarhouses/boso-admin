@@ -519,7 +519,11 @@
     
     <div id="customConfirmModal" class="modal-overlay" style="z-index: 3000;">
         <div class="modal-box" style="padding-bottom: 20px;">
-            <div style="padding: 20px; text-align: center;">
+            <div class="confirm-header" style="padding-top: 12px; width: 100%; display: flex; justify-content: center; align-items: center; min-height: 30px;">
+                <div class="drag-handle"></div>
+            </div>
+            
+            <div style="padding: 0 20px 20px; text-align: center;">
                 <div style="background: #FEE2E2; color: #DC2626; width: 56px; height: 56px; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 16px;">
                     <svg width="28" height="28" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
                 </div>
@@ -1845,12 +1849,13 @@
             });
         }
         
-        window.onload = () => { 
+       window.onload = () => { 
             switchView('grid'); 
             initApp(); 
-            // Вмикаємо свайпи для обох вікон
+            // Вмикаємо свайпи для всіх вікон
             setupSwipeToClose('bookingDrawer', '.drawer', '.drawer-header', closeDrawer);
             setupSwipeToClose('genericModal', '.modal-box', '.modal-header', closeGenericModal);
+            setupSwipeToClose('customConfirmModal', '.modal-box', '.confirm-header', closeCustomConfirm);
         };
     </script>
 </body>
