@@ -1404,14 +1404,41 @@
             const room = typeof roomsList !== 'undefined' ? roomsList.find(r => r.name === roomName) : null; 
             if (!room) { cont.innerHTML = ''; return; }
             
+            // Визначаємо акцію ЗАЗДАЛЕГІДЬ, щоб використати для перевірки овербукінгу
+            let isPromoLateOut = (nights === 2 && d1.getDay() === 5 && d2.getDay() === 0);
             let isOverlap = false;
+            
             if (typeof allBookings !== 'undefined') {
                 for (let b of allBookings) {
                     if (typeof editingRowNumber !== 'undefined' && editingRowNumber && b.row == editingRowNumber) continue; 
                     if (String(b.status).toLowerCase().includes('скас')) continue; 
                     if (b.cottage === roomName) {
-                        let exIn = new Date(b.checkIn); exIn.setHours(0,0,0,0); let exOut = new Date(b.checkOut); exOut.setHours(0,0,0,0);
-                        let currentIn = new Date(d1); currentIn.setHours(0,0,0,0); let currentOut = new Date(d2); currentOut.setHours(0,0,0,0);
+                        let exIn = new Date(b.checkIn); exIn.setHours(0,0,0,0); 
+                        let exOut = new Date(b.checkOut); exOut.setHours(0,0,0,0);
+                        let currentIn = new Date(d1); currentIn.setHours(0,0,0,0); 
+                        let currentOut = new Date(d2); currentOut.setHours(0,0,0,0);
+
+                        // Перевіряємо коментарі існуючої броні на наявність гнучкого графіка
+                        let bIn = new Date(b.checkIn); let bOut = new Date(b.checkOut);
+                        let bNights = Math.round((bOut - bIn) / (1000 * 60 * 60 * 24));
+                        let isExistingPromo = (bNights === 2 && bIn.getDay() === 5 && bOut.getDay() === 0);
+                        
+                        let exHasLate = b.comment && (b.comment.includes("[⏳ ПВ]") || isExistingPromo);
+                        let exHasEarly = b.comment && b.comment.includes("[⏳ РЗ]");
+
+                        // А) Конфлікт: ми хочемо Ранній заїзд, а попередній гість має Пізній виїзд (або Акцію)
+                        if (currentIn.getTime() === exOut.getTime() && selectedEarlyTime && exHasLate) { isOverlap = true; break; }
+                        
+                        // Б) Конфлікт: ми маємо Пізній виїзд/Акцію, а наступний гість хоче Ранній заїзд
+                        if (currentOut.getTime() === exIn.getTime() && (selectedLateTime || isPromoLateOut) && exHasEarly) { isOverlap = true; break; }
+
+                        // В) ЗАКРИТТЯ НЕДІЛІ: якщо існуюча бронь - це Акція/ПВ, ніхто не може заїхати в день їх виїзду
+                        if (exHasLate && currentIn.getTime() === exOut.getTime()) { isOverlap = true; break; }
+                        
+                        // Г) Навпаки: якщо ми зараз бронюємо Акцію/ПВ, ми "закриваємо" день нашого виїзду
+                        if ((isPromoLateOut || selectedLateTime) && currentOut.getTime() === exIn.getTime()) { isOverlap = true; break; }
+
+                        // Стандартний перетин ночей
                         if (currentIn < exOut && currentOut > exIn) { isOverlap = true; break; }
                     }
                 }
@@ -1441,7 +1468,7 @@
             // РОЗРАХУНОК РАННЬОГО ТА ПІЗНЬОГО ЗАЇЗДУ ВІД 50% ДОБИ
             let earlyFee = 0;
             let lateFee = 0;
-            let isPromoLateOut = (nights === 2 && d1.getDay() === 5 && d2.getDay() === 0);
+            // isPromoLateOut вже розраховано вище
 
             let earlyDayPrice = getDayPrice(room, d1);
             let lateDayPrice = getDayPrice(room, d2);
