@@ -1835,7 +1835,7 @@ function saveInlineTransaction(type, category, idx) {
                 let currentExtraPrice = r.extraGuestPrice !== undefined ? r.extraGuestPrice : 2500;
 
                 body.innerHTML = `
-                    <div class="form-group"><label>Назва номеру:</label><input type="text" id="mRoomName" value="${r.name}" placeholder="Напр. Номер 5"></div>
+                    <div class="form-group"><label>Назва котеджу:</label><input type="text" id="mRoomName" value="${r.name}" placeholder="Напр. Номер 5"></div>
                     <div class="form-group"><label>Опис (Коротка назва):</label><input type="text" id="mRoomDesc" value="${r.desc}" placeholder="Напр. Стандарт"></div>
                     <div class="form-grid">
                         <div class="form-group"><label>Базова місткість (входить в ціну):</label><input type="number" id="mRoomCap" value="${r.capacity}" min="1"></div>
@@ -1920,7 +1920,7 @@ function saveInlineTransaction(type, category, idx) {
                     <div class="form-group"><label>Кількість діб від:</label><input type="number" id="mDiscDays" value="${condVal}" min="1"></div>
                     <div class="form-group"><label>Знижка (%):</label><input type="number" id="mDiscPercent" value="${discVal}" min="1" max="100"></div>
                     <div class="form-group" style="margin-bottom: 0;">
-                        <label>Застосувати до номерів:</label>
+                        <label>Застосувати до котеджів:</label>
                         <div class="chips-container">
                             ${roomsChips}
                         </div>
