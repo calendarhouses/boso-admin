@@ -952,14 +952,6 @@
         let sysServicesList = [];
         let customPrices = {}; 
         
-        let transactions = []; // База транзакцій
-        let globalRoomCounts = {};
-        let globalRoomMoney = {};
-        window.bosoDetails = { sum: [], paid: [], debt: [], count: [], pets: [], guests: [], vat: [], bikes: [], earlyLate: [], other: [] };
-
-        const incomeCategories = ["Плата за раннє заселення/пізнє виселення", "Додаткові гості", "Домашні тварини", "Міні-бар", "Чан", "Оренда велосипедів", "Інший дохід"];
-        const expenseCategories = ["Прибирання", "Прасування", "Користування електроенергією", "Утримання прилеглої території", "Розхідні матеріали", "Реклама", "Адміністрування та SMM", "Податки", "Інші витрати"];
-        
         async function initApp() {
             try {
                 const t = new Date().getTime();
@@ -986,11 +978,16 @@
                 
                 renderSettingsRooms(); renderSettingsDiscounts();
 
-                const preloader = document.getElementById('preloader');
-                if (preloader) { preloader.style.opacity = '0'; setTimeout(() => preloader.style.display = 'none', 500); }
-            } catch (error) { 
+                } catch (error) { 
                 console.error("Помилка завантаження даних:", error); 
-                showToast("Помилка завантаження!"); 
+                showToast("Помилка завантаження з бази!"); 
+            } finally {
+                // ГАРАНТОВАНО ХОВАЄМО ПРЕЛОАДЕР ПРИ БУДЬ-ЯКОМУ СЦЕНАРІЇ
+                const preloader = document.getElementById('preloader');
+                if (preloader) { 
+                    preloader.style.opacity = '0'; 
+                    setTimeout(() => preloader.style.display = 'none', 400); 
+                }
             }
          }
 
