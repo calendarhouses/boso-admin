@@ -32,7 +32,7 @@
             --safe-bottom: env(safe-area-inset-bottom, 16px);
         }
 
-        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Inter', sans-serif; -webkit-tap-highlight-color: transparent; }
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Inter', sans-serif; -webkit-tap-highlight-color: transparent; touch-action: manipulation; }
         
         /* Вбиваємо системні свайпи Safari (Назад/Вперед) */
         html, body { overscroll-behavior-x: none; overscroll-behavior-y: none; } 
@@ -708,6 +708,7 @@
         
         function getGuestWord(count) { let n = Math.abs(parseInt(count)) % 100; let n1 = n % 10; if (n > 10 && n < 20) return "гостей"; if (n1 > 1 && n1 < 5) return "гості"; if (n1 === 1) return "гість"; return "гостей"; }
         function getVisitWord(count) { let n = Math.abs(parseInt(count)) % 100; let n1 = n % 10; if (n > 10 && n < 20) return "заїздів"; if (n1 > 1 && n1 < 5) return "заїзди"; if (n1 === 1) return "заїзд"; return "заїздів"; }
+        function getNightWord(count) { let n = Math.abs(parseInt(count)) % 100; let n1 = n % 10; if (n > 10 && n < 20) return "ночей"; if (n1 > 1 && n1 < 5) return "ночі"; if (n1 === 1) return "ніч"; return "ночей"; }
         
         let allBookings = [];
         let editingRowNumber = null;
@@ -1466,7 +1467,7 @@
 
             cont.innerHTML = `
                 <div class="form-section" style="background:#FDFCFB; border-color: var(--accent); padding: 16px; margin-top: 20px;">
-                    <span class="form-section-title" style="color:var(--accent);">Розшифровка (${nights} ночей)</span>
+                    <span class="form-section-title" style="color:var(--accent);">Розшифровка (${nights} ${getNightWord(nights)})</span>
                     <div style="font-size: 13px; color: #4B5563; margin-bottom: 12px;">
                         <div style="display:flex; justify-content:space-between; margin-bottom:4px;"><span>Проживання:</span><span style="font-weight:600;">${basePriceTotal} ₴</span></div>
                         ${extraGuestFee > 0 ? `<div style="display:flex; justify-content:space-between; margin-bottom:4px;"><span>Дод. гості:</span><span style="font-weight:600;">+${extraGuestFee} ₴</span></div>` : ''}
@@ -1740,38 +1741,38 @@
             if (tt) tt.classList.remove('visible');
         }
         
-// --- ЛОГІКА ДОВГОГО НАТИСКАННЯ (HAPTIC TOUCH) ---
+// --- ЛОГІКА ДОВГОГО НАТИСКАННЯ ТА СВАЙПІВ ---
         let pressTimer;
         let isLongPress = false;
+        let isSwiping = false; // Змінна для відстеження руху пальцем
 
         function handleTouchStart(e, element, rowNumber) {
             isLongPress = false;
-            element.classList.add('pressing'); // Картка підстрибує
-            hidePremiumTooltip(); // Ховаємо старий тултіп, якщо був
+            isSwiping = false; // Скидаємо статус свайпу
+            element.classList.add('pressing');
+            hidePremiumTooltip();
             
-            // Запускаємо таймер. Якщо палець тримають 400 мілісекунд - це Long Press
             pressTimer = setTimeout(() => {
                 isLongPress = true;
-                if (navigator.vibrate) navigator.vibrate(40); // Легка тактильна вібрація на Android/деяких iOS
-                showPremiumTooltip(element, rowNumber); // Показуємо інфу
+                if (navigator.vibrate) navigator.vibrate(40);
+                showPremiumTooltip(element, rowNumber);
             }, 400); 
         }
 
         function handleTouchEnd(e, element, rowNumber) {
             clearTimeout(pressTimer);
-            element.classList.remove('pressing'); // Картка опускається
+            element.classList.remove('pressing');
             
             if (isLongPress) {
-                // Якщо це було довге затискання - блокуємо відкриття шторки
                 if (e.cancelable) e.preventDefault(); 
-            } else {
-                // Якщо палець відпустили швидко - це звичайний тап, відкриваємо шторку
+            } else if (!isSwiping) { 
+                // ВІДКРИВАЄМО ШТОРКУ ТІЛЬКИ ЯКЩО НЕ БУЛО РУХУ ПАЛЬЦЕМ (СВАЙПУ)
                 openDetailsByRow(rowNumber); 
             }
         }
 
         function handleTouchMove(e, element) {
-            // Якщо під час утримання палець поїхав убік (свайп екрану) - скасовуємо таймер
+            isSwiping = true; // Фіксуємо, що палець поїхав! Значить це скрол
             clearTimeout(pressTimer); 
             element.classList.remove('pressing');
         }
