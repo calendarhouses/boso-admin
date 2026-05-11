@@ -836,7 +836,7 @@
                                 <label>Дорослих:</label>
                                 <div style="display: flex; align-items: center; background: #F9FAFB; border-radius: 12px; border: 1px solid #D1D5DB; height: 48px; overflow: hidden;">
                                     <button type="button" onclick="changeGuests(-1)" style="width: 50px; height: 100%; background: #FEF2F2; color: #DC2626; border: none; border-right: 1px solid #FECACA; font-size: 24px; font-weight: 600; cursor: pointer; outline: none;">-</button>
-                                    <input type="number" id="adminGuests" value="2" min="1" style="flex: 1; text-align: center; background: transparent; border: none; font-size: 16px; font-weight: 700; color: #111827; padding: 0; outline: none; pointer-events: none;" readonly>
+                                    <input type="number" inputmode="numeric" pattern="[0-9]*" id="adminGuests" value="2" min="1" style="flex: 1; text-align: center; background: transparent; border: none; font-size: 16px; font-weight: 700; color: #111827; padding: 0; outline: none; pointer-events: none;" readonly>
                                     <button type="button" onclick="changeGuests(1)" style="width: 50px; height: 100%; background: #F0FDF4; color: #059669; border: none; border-left: 1px solid #A7F3D0; font-size: 22px; font-weight: 600; cursor: pointer; outline: none;">+</button>
                                 </div>
                             </div>
@@ -855,7 +855,7 @@
                                 <label>Денні гості:</label>
                                 <div style="display: flex; align-items: center; background: #F9FAFB; border-radius: 12px; border: 1px solid #D1D5DB; height: 48px; overflow: hidden;">
                                     <button type="button" onclick="changeAdminDayGuests(-1)" style="width: 50px; height: 100%; background: #FEF2F2; color: #DC2626; border: none; border-right: 1px solid #FECACA; font-size: 24px; font-weight: 600; cursor: pointer; outline: none;">-</button>
-                                    <input type="number" id="adminDayGuests" value="0" min="0" style="flex: 1; text-align: center; background: transparent; border: none; font-size: 16px; font-weight: 700; color: #111827; padding: 0; outline: none; pointer-events: none;" readonly>
+                                    <input type="number" inputmode="numeric" pattern="[0-9]*" id="adminDayGuests" value="0" min="0" style="flex: 1; text-align: center; background: transparent; border: none; font-size: 16px; font-weight: 700; color: #111827; padding: 0; outline: none; pointer-events: none;" readonly>
                                     <button type="button" onclick="changeAdminDayGuests(1)" style="width: 50px; height: 100%; background: #F0FDF4; color: #059669; border: none; border-left: 1px solid #A7F3D0; font-size: 22px; font-weight: 600; cursor: pointer; outline: none;">+</button>
                                 </div>
                             </div>
@@ -1172,7 +1172,7 @@
 
                 body.innerHTML = `
                     <div class="form-group"><label>Оберіть номери:</label><div class="chips-container">${roomsChips}</div></div>
-                    <div class="form-group"><label>Встановіть ціну (грн):</label><input type="number" id="mPriceAmount" placeholder="0" min="0"></div>
+                    <div class="form-group"><label>Встановіть ціну (грн):</label><input type="number" inputmode="numeric" pattern="[0-9]*" id="mPriceAmount" placeholder="0" min="0"></div>
                     <div class="form-group"><label>Оберіть період:</label>
                         <div class="chips-container" id="periodChipsContainer">
                             <div class="chip-btn active period-chip" data-val="1" onclick="selectPeriodChip(this)">Поточний місяць</div>
@@ -1202,7 +1202,7 @@
                 body.innerHTML = `
                     <div class="form-grid">
                         <div class="form-group"><label>К-сть діб від:</label><input type="number" id="mDiscDays" value="${condVal}" min="1"></div>
-                        <div class="form-group"><label>Знижка (%):</label><input type="number" id="mDiscPercent" value="${discVal}" min="1" max="100"></div>
+                        <div class="form-group"><label>Знижка (%):</label><input type="number" inputmode="numeric" pattern="[0-9]*" id="mDiscPercent" value="${discVal}" min="1" max="100"></div>
                     </div>
                     <div class="form-group" style="margin-bottom: 0;"><label>Номери:</label><div class="chips-container">${roomsChips}</div></div>
                 `;
@@ -1424,9 +1424,9 @@
             const daysArr = ['Нд', 'Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб'];
             const today = new Date();
             
-            document.getElementById('timelineMonthLabel').innerText = startDate.toLocaleString('uk-UA', { month: 'short', year: 'numeric' });
+            document.getElementById('timelineMonthLabel').innerText = startDate.toLocaleString('uk-UA', { month: 'long', year: 'numeric' }).replace(' р.', '');
 
-            let currentMonth = startDate.getMonth(); let monthName = startDate.toLocaleString('uk-UA', { month: 'short' }); let daysInCurrentMonth = 0;
+            let currentMonth = startDate.getMonth(); let monthName = startDate.toLocaleString('uk-UA', { month: 'long' }); let daysInCurrentMonth = 0;
 
             for (let i = 0; i < daysCount; i++) {
                 const d = new Date(startDate); d.setDate(startDate.getDate() + i);
@@ -1558,9 +1558,9 @@
             const startDate = new Date(priceTimelineBaseDate);
             const daysCount = new Date(startDate.getFullYear(), startDate.getMonth() + 1, 0).getDate(); 
             const cellWidth = 60; const daysArr = ['Нд', 'Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб'];
-            document.getElementById('priceMonthLabel').innerText = startDate.toLocaleString('uk-UA', { month: 'short' });
+            document.getElementById('priceMonthLabel').innerText = startDate.toLocaleString('uk-UA', { month: 'long' });
             
-            let monthName = startDate.toLocaleString('uk-UA', { month: 'short' });
+            let monthName = startDate.toLocaleString('uk-UA', { month: 'long' });
             monthsContainer.innerHTML = `<div class="timeline-month-cell" style="width: ${daysCount * cellWidth}px">${monthName}</div>`;
 
             for (let i = 0; i < daysCount; i++) {
@@ -1837,11 +1837,11 @@
                     <div style="border-top: 1px dashed #D1D5DB; padding-top: 12px;">
                         <div class="form-group" style="margin-bottom: 12px;">
                             <label style="color: var(--accent); font-weight: 700;">До сплати:</label>
-                            <input type="number" id="adminTotalPrice" value="${totalPrice}" style="font-weight:bold; font-size: 16px; border-color: var(--accent); background: #FFF; width:100%; padding: 10px; border-radius: 8px; border: 1px solid var(--accent);">
+                            <input type="number" inputmode="numeric" pattern="[0-9]*" id="adminTotalPrice" value="${totalPrice}" style="font-weight:bold; font-size: 16px; border-color: var(--accent); background: #FFF; width:100%; padding: 10px; border-radius: 8px; border: 1px solid var(--accent);">
                         </div>
                         <div class="form-group" style="margin-bottom: 0;">
                             <label style="color: #111827; font-weight: 700;">Внесено (Аванс):</label>
-                            <input type="number" id="adminPaidAmount" value="${savedPaidAmount}" placeholder="0" style="width: 100%; margin-bottom: 12px; font-weight: bold; font-size: 16px; padding: 10px; border-radius: 8px; border: 1px solid #D1D5DB;">
+                            <input type="number" inputmode="numeric" pattern="[0-9]*" id="adminPaidAmount" value="${savedPaidAmount}" placeholder="0" style="width: 100%; margin-bottom: 12px; font-weight: bold; font-size: 16px; padding: 10px; border-radius: 8px; border: 1px solid #D1D5DB;">
                             
                             <div style="display: flex; gap: 10px;">
                                 <button type="button" class="tap-btn" onclick="setHalfPrepayment()" style="flex: 1; padding: 14px; background: #F3F4F6; color: #4B5563; font-size: 14px; font-weight: 700; border-radius: 12px; border: none; outline: none;">50% Аванс</button>
@@ -2603,7 +2603,7 @@
                                 <div class="form-grid" style="gap: 12px; margin-bottom: 12px;">
                                     <div class="form-group" style="margin-bottom: 0;">
                                         <label>Сума (грн)</label>
-                                        <input type="number" id="editAmt-${id}" value="${t.amount}" min="1" style="font-weight:800; font-size:18px; color:${color}; background:#FFF; width:100%;">
+                                       <input type="number" inputmode="numeric" pattern="[0-9]*" id="editAmt-${id}" value="${t.amount}" min="1" style="font-weight:800; font-size:18px; color:${color}; background:#FFF; width:100%;">
                                     </div>
                                     <div class="form-group" style="margin-bottom: 0; position: relative;">
                                         <label>Дата</label>
@@ -2701,7 +2701,7 @@
                         <div class="form-grid" style="gap: 12px; margin-bottom: 12px;">
                             <div class="form-group" style="margin-bottom: 0;">
                                 <label>Сума (грн)</label>
-                                <input type="number" id="itAmt-${idx}" placeholder="0" min="1" style="font-weight: 800; font-size: 18px; color: ${colorHex}; width: 100%;">
+                                <input type="number" inputmode="numeric" pattern="[0-9]*" id="itAmt-${idx}" placeholder="0" min="1" style="font-weight: 800; font-size: 18px; color: ${colorHex}; width: 100%;">
                             </div>
                             <div class="form-group" style="margin-bottom: 0; position: relative;">
                                 <label>Дата</label>
@@ -2989,8 +2989,8 @@
                     onChange: function(selectedDates) {
                         if (selectedDates.length === 2) {
                             document.getElementById('reportPeriodVal').value = 'custom';
-                            const d1 = selectedDates[0].toLocaleDateString('uk-UA', {day: 'numeric', month: 'short'});
-                            const d2 = selectedDates[1].toLocaleDateString('uk-UA', {day: 'numeric', month: 'short'});
+                            const d1 = selectedDates[0].toLocaleDateString('uk-UA', {day: 'numeric', month: 'long'});
+                            const d2 = selectedDates[1].toLocaleDateString('uk-UA', {day: 'numeric', month: 'long'});
                             document.getElementById('reportPeriodText').innerText = `${d1} — ${d2}`;
                             document.querySelectorAll('#reportPeriodWrapper .custom-option').forEach(opt => opt.classList.remove('selected'));
                             calculateAnalytics(); 
