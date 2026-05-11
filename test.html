@@ -1461,19 +1461,47 @@
                 } else lblLate.innerHTML = 'Оберіть час';
             }
 
+            // --- ЗНИЖКИ (АВТОМАТИЧНІ ЗА К-СТЬ ДІБ + УБД) ---
             let discountPercent = 0;
             const currentRoomId = String(room.id);
-            if (typeof discountsList !== 'undefined') {
+            
+            if (typeof discountsList !== 'undefined' && discountsList.length > 0) {
                 discountsList.forEach(d => {
-                    const condNights = parseInt(String(d.condition).replace(/\D/g,'')) || 0;
-                    const dPct = parseInt(String(d.discount).replace(/\D/g,'')) / 100;
+                    // Витягуємо цифри: діб (напр. "Діб в бронюванні: 2" -> 2) та відсоток ("15%" -> 0.15)
+                    let conditionStr = String(d.condition || "0");
+                    const condNights = parseInt(conditionStr.replace(/\D/g, '')) || 0;
+                    
+                    let discountStr = String(d.discount || "0");
+                    const dPct = parseInt(discountStr.replace(/\D/g, '')) / 100;
+                    
+                    // Якщо кількість ночей в броні підходить під умову
                     if (nights >= condNights) {
-                        const appliesToRoom = d.roomsIds && (d.roomsIds.includes("all") || d.roomsIds.includes(currentRoomId));
-                        if (appliesToRoom && dPct > discountPercent) { discountPercent = dPct; }
+                        let appliesToRoom = false;
+                        
+                        // 1. Шукаємо по ID (якщо знижка нова)
+                        if (d.roomsIds && Array.isArray(d.roomsIds) && d.roomsIds.length > 0) {
+                            appliesToRoom = d.roomsIds.includes("all") || d.roomsIds.includes(currentRoomId);
+                        } 
+                        // 2. Шукаємо по тексту (якщо знижка стара або створена інакше)
+                        else if (d.rooms) {
+                            let rText = String(d.rooms).toLowerCase();
+                            appliesToRoom = (rText.includes("всі") || rText.includes(String(room.name).toLowerCase()) || rText.includes("не обрано"));
+                        } 
+                        // 3. Якщо кімнати взагалі не вказані — застосовуємо до всіх
+                        else {
+                            appliesToRoom = true; 
+                        }
+
+                        // Беремо найбільшу знижку, якщо підходить під кілька умов (напр. є і 10%, і 15%)
+                        if (appliesToRoom && dPct > discountPercent) { 
+                            discountPercent = dPct; 
+                        }
                     }
                 });
             }
-            if (isUBD) discountPercent += 0.10; 
+            
+            // Плюсуємо 10% знижки для УБД зверху
+            if (isUBD) discountPercent += 0.10;
 
             let amountToDiscount = basePriceTotal + extraGuestFee + earlyFee + lateFee; 
             let discountAmount = Math.round(amountToDiscount * discountPercent);
