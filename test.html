@@ -1396,7 +1396,7 @@
             const checkInStr = document.getElementById('adminCheckIn') ? document.getElementById('adminCheckIn').value : document.getElementById('adminStart').value; 
             const checkOutStr = document.getElementById('adminCheckOut') ? document.getElementById('adminCheckOut').value : document.getElementById('adminEnd').value;
             const roomName = document.getElementById('adminCottage') ? document.getElementById('adminCottage').value : document.getElementById('adminRoom').value; 
-            const guests = parseInt(document.getElementById('adminGuests') ? document.getElementById('adminGuests').value : 2) || 2;
+            let guests = parseInt(document.getElementById('adminGuests') ? document.getElementById('adminGuests').value : 2) || 2;
             const petsSelect = document.getElementById('adminPets'); const pets = petsSelect ? petsSelect.value : "Ні";
             
             const hasVat = document.getElementById('adminVat') ? document.getElementById('adminVat').value === 'Так' : false;
