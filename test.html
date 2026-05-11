@@ -1250,17 +1250,31 @@
                             let padLeft = 8;
                             let padRight = 8;
 
+                            // Преміум SVG іконки (Годинник та Подарунок)
+                            const iconClock = `<svg width="12" height="12" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>`;
+                            const iconGift = `<svg width="12" height="12" fill="none" stroke="currentColor" viewBox="0 0 24 24"><rect x="3" y="8" width="18" height="4" rx="1" stroke-width="2.5"></rect><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 8v13M19 12v7a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2v-7M7.5 8a2.5 2.5 0 0 1 0-5A4.8 8 0 0 1 12 8a4.8 8 0 0 1 4.5-5 2.5 2.5 0 0 1 0 5"></path></svg>`;
+
                             if (exHasLate) {
                                 blockWidth += (cellWidth * 0.85);
                                 let isPromo = (durationDays === 2 && inDate.getDay() === 5 && outDate.getDay() === 0);
-                                extensionsHtml += `<div class="time-extension late" style="width: ${cellWidth * 0.85}px;">${isPromo ? '<span style="font-size:12px;">🎁</span>' : '<svg width="12" height="12" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>'}</div>`;
-                                padRight = (cellWidth * 0.85) + 8; // Відштовхуємо текст від правого краю
+                                let currentIcon = isPromo ? iconGift : iconClock;
+                                
+                                // Додаємо зупинку поширення події (stopPropagation), щоб клік на хвіст не викликав клік на всю бронь, і передаємо тип 'late'
+                                extensionsHtml += `<div class="time-extension late" style="width: ${cellWidth * 0.85}px;" 
+                                    ontouchstart="event.stopPropagation(); handleTouchStart(event, this.parentElement, ${b.row}, 'late')" 
+                                    ontouchend="event.stopPropagation(); handleTouchEnd(event, this.parentElement, ${b.row}, 'late')" 
+                                    ontouchmove="event.stopPropagation(); handleTouchMove(event, this.parentElement)">${currentIcon}</div>`;
+                                padRight = (cellWidth * 0.85) + 8; 
                             }
                             if (exHasEarly) {
                                 blockLeft -= (cellWidth * 0.85);
                                 blockWidth += (cellWidth * 0.85);
-                                extensionsHtml += `<div class="time-extension early" style="width: ${cellWidth * 0.85}px;"><svg width="12" height="12" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg></div>`;
-                                padLeft = (cellWidth * 0.85) + 8; // Відштовхуємо текст від лівого краю
+                                
+                                extensionsHtml += `<div class="time-extension early" style="width: ${cellWidth * 0.85}px;" 
+                                    ontouchstart="event.stopPropagation(); handleTouchStart(event, this.parentElement, ${b.row}, 'early')" 
+                                    ontouchend="event.stopPropagation(); handleTouchEnd(event, this.parentElement, ${b.row}, 'early')" 
+                                    ontouchmove="event.stopPropagation(); handleTouchMove(event, this.parentElement)">${iconClock}</div>`;
+                                padLeft = (cellWidth * 0.85) + 8; 
                             }
                             
                             // Захист від вильоту за межі екрану
@@ -1903,33 +1917,72 @@
 
             let paidRowHtml = paid > 0 ? `<div class="tt-row"><span class="tt-label">Внесено:</span> <span class="tt-value" style="color: #059669;">${paid} грн</span></div>` : '';
 
-            // 🚀 ДОДАЄМО БЛОК КОМЕНТАРЯ (ЯК НА ПК)
+            // 🚀 ЧИСТИМО КОМЕНТАР ДЛЯ ОСНОВНОГО ТУЛТИПУ
             let rawComment = b.comment ? String(b.comment).trim() : "";
             if (rawComment === "undefined" || rawComment === "null") rawComment = "";
-            let commentHtml = rawComment !== "" 
-                ? `<div style="margin-top: 12px; padding: 10px 12px; background: #F9FAFB; border-left: 3px solid var(--accent); border-radius: 4px 8px 8px 4px; font-size: 12px; color: #4B5563; line-height: 1.4; text-align: left;">
-                     <span style="display: block; font-size: 10px; font-weight: 800; text-transform: uppercase; color: #9CA3AF; margin-bottom: 4px; letter-spacing: 0.5px;">Коментар</span>
-                     <div style="display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; text-overflow: ellipsis; word-break: break-all;">
-                         ${rawComment}
-                     </div>
-                   </div>` 
-                : '';
+            
+            if (type === 'early' || type === 'late') {
+                // МАЛЮЄМО МІНІ-ТУЛТИП ДЛЯ ХВОСТИКІВ
+                let timeText = "";
+                let iconSvg = `<svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="margin-right: 6px;"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>`;
+                
+                if (type === 'early') {
+                    let m = rawComment.match(/🕒 Ранній заїзд: з (\d{2}:\d{2})/);
+                    timeText = m ? `Заїзд з ${m[1]}` : 'Ранній заїзд';
+                } else {
+                    let m = rawComment.match(/🕒 Пізній виїзд: до (\d{2}:\d{2})/);
+                    if (m) {
+                        timeText = `Виїзд до ${m[1]}`;
+                    } else {
+                        iconSvg = `<svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="margin-right: 6px;"><rect x="3" y="8" width="18" height="4" rx="1" stroke-width="2.5"></rect><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 8v13M19 12v7a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2v-7M7.5 8a2.5 2.5 0 0 1 0-5A4.8 8 0 0 1 12 8a4.8 8 0 0 1 4.5-5 2.5 2.5 0 0 1 0 5"></path></svg>`;
+                        timeText = `Акційний виїзд (до 14:00)`;
+                    }
+                }
 
-            // МАЛЮЄМО КАРТКУ (Додали ${commentHtml} в кінці)
-            tooltip.innerHTML = `
-                <div class="tt-header">
-                    <span class="tt-name">${guestName}</span>
-                    <span class="tt-guests">${b.guests} ${getGuestWord(b.guests)}</span>
-                </div>
-                <div class="tt-body">
-                    <div class="tt-row"><span class="tt-label">Номер:</span> <span class="tt-value">${b.cottage}</span></div>
-                    <div class="tt-row"><span class="tt-label">Дати:</span> <span class="tt-value" style="color: var(--accent);">${inDate} — ${outDate}</span></div>
-                    <div class="tt-row"><span class="tt-label">Загальна сума:</span> <span class="tt-value">${total} грн</span></div>
-                    ${paidRowHtml}
-                    <div class="tt-status" style="background: ${finBg}; color: ${finColor};">${finText}</div>
-                    ${commentHtml}
-                </div>
-            `;
+                tooltip.innerHTML = `<div style="display: flex; align-items: center; justify-content: center; padding: 4px; font-weight: 700; color: #111827; font-size: 14px;">${iconSvg}${timeText}</div>`;
+                tooltip.style.width = 'auto'; // Робимо його вузеньким і акуратним
+                tooltip.style.minWidth = '140px';
+
+            } else {
+                // МАЛЮЄМО СТАНДАРТНИЙ ВЕЛИКИЙ ТУЛТИП
+                tooltip.style.width = '260px'; // Повертаємо стандартну ширину
+
+                // Вирізаємо ранній/пізній заїзд з основного коментаря, бо для них є свої тултипи
+                let cleanComment = rawComment.replace(/🕒 Ранній заїзд: з \d{2}:\d{2}(\s*\|\s*)?/g, '')
+                                             .replace(/🕒 Пізній виїзд: до \d{2}:\d{2}(\s*\|\s*)?/g, '')
+                                             .replace(/^\|\s*/, '')
+                                             .replace(/\|\s*$/, '')
+                                             .trim();
+                
+                // Якщо після чистки залишилось тільки "Коментар гостя:", прибираємо і його
+                if (cleanComment === "Коментар гостя:" || cleanComment.startsWith("Коментар гостя:") && cleanComment.length < 17) {
+                    cleanComment = "";
+                }
+
+                let commentHtml = cleanComment !== "" 
+                    ? `<div style="margin-top: 12px; padding: 10px 12px; background: #F9FAFB; border-left: 3px solid var(--accent); border-radius: 4px 8px 8px 4px; font-size: 12px; color: #4B5563; line-height: 1.4; text-align: left;">
+                         <span style="display: block; font-size: 10px; font-weight: 800; text-transform: uppercase; color: #9CA3AF; margin-bottom: 4px; letter-spacing: 0.5px;">Додатково</span>
+                         <div style="display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; text-overflow: ellipsis; word-break: break-all;">
+                             ${cleanComment}
+                         </div>
+                       </div>` 
+                    : '';
+
+                tooltip.innerHTML = `
+                    <div class="tt-header">
+                        <span class="tt-name">${guestName}</span>
+                        <span class="tt-guests">${b.guests} ${getGuestWord(b.guests)}</span>
+                    </div>
+                    <div class="tt-body">
+                        <div class="tt-row"><span class="tt-label">Номер:</span> <span class="tt-value">${b.cottage}</span></div>
+                        <div class="tt-row"><span class="tt-label">Дати:</span> <span class="tt-value" style="color: var(--accent);">${inDate} — ${outDate}</span></div>
+                        <div class="tt-row"><span class="tt-label">Загальна сума:</span> <span class="tt-value">${total} грн</span></div>
+                        ${paidRowHtml}
+                        <div class="tt-status" style="background: ${finBg}; color: ${finColor};">${finText}</div>
+                        ${commentHtml}
+                    </div>
+                `;
+            }
 
             // МАГІЯ ПОЗИЦІОНУВАННЯ ДЛЯ МОБІЛКИ
             const rect = element.getBoundingClientRect();
@@ -1964,27 +2017,27 @@
         let isLongPress = false;
         let isSwiping = false; // Змінна для відстеження руху пальцем
 
-        function handleTouchStart(e, element, rowNumber) {
+        function handleTouchStart(e, element, rowNumber, type = 'main') {
             isLongPress = false;
-            isSwiping = false; // Скидаємо статус свайпу
+            isSwiping = false; 
             element.classList.add('pressing');
             hidePremiumTooltip();
             
             pressTimer = setTimeout(() => {
                 isLongPress = true;
                 if (navigator.vibrate) navigator.vibrate(40);
-                showPremiumTooltip(element, rowNumber);
+                showPremiumTooltip(element, rowNumber, type); // Передаємо ТИП в тултип
             }, 400); 
         }
 
-        function handleTouchEnd(e, element, rowNumber) {
+        function handleTouchEnd(e, element, rowNumber, type = 'main') {
             clearTimeout(pressTimer);
             element.classList.remove('pressing');
             
             if (isLongPress) {
                 if (e.cancelable) e.preventDefault(); 
             } else if (!isSwiping) { 
-                // ВІДКРИВАЄМО ШТОРКУ ТІЛЬКИ ЯКЩО НЕ БУЛО РУХУ ПАЛЬЦЕМ (СВАЙПУ)
+                // Відкриваємо вікно броні, навіть якщо просто клікнули на хвостик
                 openDetailsByRow(rowNumber); 
             }
         }
