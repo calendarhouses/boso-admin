@@ -658,6 +658,14 @@
                         <div class="mc-header"><div class="metric-icon" style="background:#F3E8FF; color:#6D28D9;"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg></div></div>
                         <div class="mc-body"><span class="metric-title">Гнуч. графік</span><span class="metric-val" id="metEarlyLate" style="font-size: 16px;">0 грн</span></div>
                     </div>
+                    <div class="metric-card" id="cardBikes" onclick="openUniversalDetails('bikes', 'Велосипеди', '#047857', '#ECFDF5', 'Дохід')">
+                        <div class="mc-header"><div class="metric-icon" style="background:#ECFDF5; color:#047857;"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg></div></div>
+                        <div class="mc-body"><span class="metric-title">Велосипеди</span><span class="metric-val" id="metBikes" style="font-size: 16px;">0 грн</span></div>
+                    </div>
+                    <div class="metric-card" id="cardOther" onclick="openUniversalDetails('other', 'Інший дохід', '#4B5563', '#F3F4F6', 'Дохід')">
+                        <div class="mc-header"><div class="metric-icon" style="background:#F3F4F6; color:#4B5563;"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"></path></svg></div></div>
+                        <div class="mc-body"><span class="metric-title">Інший дохід</span><span class="metric-val" id="metOther" style="font-size: 16px;">0 грн</span></div>
+                    </div>
                 </div>
 
                 <div class="charts-grid">
@@ -671,6 +679,7 @@
                             <div class="mode-toggle" style="margin: 0; padding: 2px;">
                                 <div id="chartModeCount" class="mode-btn active" style="padding: 4px 8px; font-size: 10px;" onclick="toggleRoomsChart('count')">Броні</div>
                                 <div id="chartModeMoney" class="mode-btn" style="padding: 4px 8px; font-size: 10px;" onclick="toggleRoomsChart('money')">Дохід</div>
+                                <div id="chartModeNights" class="mode-btn" style="padding: 4px 8px; font-size: 10px;" onclick="toggleRoomsChart('nights')">Ночі</div>
                             </div>
                         </h3>
                         <div style="position: relative; height: 180px; width: 100%;"><canvas id="roomsChart"></canvas></div>
@@ -2767,20 +2776,22 @@
         function toggleEditFinRow(id) {
             const editRow = document.getElementById(`editRow-${id}`);
             const mainRow = document.getElementById(`mainRow-${id}`);
+            
             if (editRow.style.display === 'none') {
+                // 🟢 МАГІЯ ТУТ: Повертаємо всім головним рядкам видимість, а форми ховаємо
                 document.querySelectorAll('div[id^="editRow-"]').forEach(row => row.style.display = 'none');
-                editRow.style.display = 'block';
-                if (mainRow) mainRow.style.display = 'none'; 
+                document.querySelectorAll('div[id^="mainRow-"]').forEach(row => row.style.display = 'flex');
                 
-                // 🟢 ІНІЦІАЛІЗУЄМО КАЛЕНДАР ПРИ ВІДКРИТТІ
+                editRow.style.display = 'block';
+                if (mainRow) mainRow.style.display = 'none'; // Ховаємо головний рядок, показуємо форму
+                
                 const dateInput = document.getElementById(`editDate-${id}`);
                 if (!dateInput._flatpickr) {
                     flatpickr(dateInput, { locale: "uk", dateFormat: "Y-m-d", altInput: true, altFormat: "d.m.Y", disableMobile: "true" });
                 }
-                
             } else {
                 editRow.style.display = 'none';
-                if (mainRow) mainRow.style.display = 'flex';
+                if (mainRow) mainRow.style.display = 'flex'; // Повертаємо назад!
             }
         }
 
@@ -2822,10 +2833,15 @@
             currentChartMode = mode;
             document.getElementById('chartModeCount').classList.toggle('active', mode === 'count');
             document.getElementById('chartModeMoney').classList.toggle('active', mode === 'money');
+            document.getElementById('chartModeNights').classList.toggle('active', mode === 'nights');
             if (roomsChartInstance) {
-                let dataArr = mode === 'count' ? Object.values(globalRoomCounts) : Object.values(globalRoomMoney);
+                let dataArr, labelTxt;
+                if(mode === 'count') { dataArr = Object.values(globalRoomCounts); labelTxt = 'Кількість броней'; }
+                else if(mode === 'money') { dataArr = Object.values(globalRoomMoney); labelTxt = 'Дохід (грн)'; }
+                else { dataArr = Object.values(globalRoomNights); labelTxt = 'Продані ночі'; }
+                
                 roomsChartInstance.data.datasets[0].data = dataArr;
-                roomsChartInstance.data.datasets[0].label = mode === 'count' ? 'Броні' : 'Дохід (грн)';
+                roomsChartInstance.data.datasets[0].label = labelTxt;
                 roomsChartInstance.update();
             }
         }
@@ -2858,10 +2874,31 @@
                 }
             });
 
+            // 🟢 Анімація нових карток та сортування
+            if (typeof animateValue !== 'undefined') {
+                animateValue('metBikes', 0, window.bosoDetails.bikes ? window.bosoDetails.bikes.reduce((a,b)=>a+b.amount,0) : 0, 800);
+                animateValue('metOther', 0, window.bosoDetails.other ? window.bosoDetails.other.reduce((a,b)=>a+b.amount,0) : 0, 800);
+                
+                const services = [
+                    { id: 'cardPets', val: window.bosoDetails.pets ? window.bosoDetails.pets.reduce((a,b)=>a+b.amount,0) : 0 },
+                    { id: 'cardGuests', val: window.bosoDetails.guests ? window.bosoDetails.guests.reduce((a,b)=>a+b.amount,0) : 0 },
+                    { id: 'cardVat', val: window.bosoDetails.vat ? window.bosoDetails.vat.reduce((a,b)=>a+b.amount,0) : 0 },
+                    { id: 'cardBikes', val: window.bosoDetails.bikes ? window.bosoDetails.bikes.reduce((a,b)=>a+b.amount,0) : 0 },
+                    { id: 'cardEarlyLate', val: window.bosoDetails.earlyLate ? window.bosoDetails.earlyLate.reduce((a,b)=>a+b.amount,0) : 0 },
+                    { id: 'cardOther', val: window.bosoDetails.other ? window.bosoDetails.other.reduce((a,b)=>a+b.amount,0) : 0 }
+                ];
+                services.sort((a, b) => b.val - a.val);
+                services.forEach((service, index) => {
+                    let el = document.getElementById(service.id);
+                    if (el) el.style.order = index;
+                });
+            }
+
             Chart.defaults.font.family = "'Inter', sans-serif";
             Chart.defaults.color = '#6B7280';
             const bosoColors = ['#556B2F', '#D2B48C', '#2C2C2C', '#8FBC8F', '#BC8F8F'];
 
+            // ГРАФІК ПОПУЛЯРНОСТІ
             const ctxRooms = document.getElementById('roomsChart').getContext('2d');
             if (roomsChartInstance) roomsChartInstance.destroy(); 
             roomsChartInstance = new Chart(ctxRooms, {
@@ -2869,18 +2906,25 @@
                 data: {
                     labels: Object.keys(globalRoomCounts),
                     datasets: [{
-                        label: currentChartMode === 'count' ? 'Броні' : 'Дохід',
-                        data: currentChartMode === 'count' ? Object.values(globalRoomCounts) : Object.values(globalRoomMoney),
-                        backgroundColor: bosoColors[0], borderRadius: 4, maxBarThickness: 20 
+                        label: currentChartMode === 'count' ? 'Броні' : (currentChartMode === 'money' ? 'Дохід' : 'Ночі'),
+                        data: currentChartMode === 'count' ? Object.values(globalRoomCounts) : (currentChartMode === 'money' ? Object.values(globalRoomMoney) : Object.values(globalRoomNights)),
+                        backgroundColor: bosoColors[0], borderRadius: 4, maxBarThickness: 24 
                     }]
                 },
                 options: {
                     responsive: true, maintainAspectRatio: false, layout: { padding: { top: 10 } }, 
                     plugins: { legend: { display: false } },
-                    scales: { y: { beginAtZero: true, grid: { display: false } }, x: { grid: { display: false } } } 
+                    scales: { 
+                        y: { beginAtZero: true, grid: { display: false } }, 
+                        x: { 
+                            grid: { display: false },
+                            ticks: { maxRotation: 45, minRotation: 45, font: {size: 10} } // 🟢 НАХИЛ ТЕКСТУ, ЩОБ НЕ НАЇЖДЖАВ
+                        } 
+                    } 
                 } 
             });
 
+            // ГРАФІК ЗВІДКИ ГОСТІ (Додано більше повітря)
             const ctxSource = document.getElementById('sourceChart').getContext('2d');
             if (sourceChartInstance) sourceChartInstance.destroy();
             const activeSources = Object.keys(sourceCounts).filter(k => sourceCounts[k] > 0);
@@ -2891,12 +2935,20 @@
                     datasets: [{
                         data: activeSources.length > 0 ? activeSources.map(k => sourceCounts[k]) : [1],
                         backgroundColor: activeSources.length > 0 ? bosoColors : ['#F3F4F6'],
-                        borderWidth: 0, hoverOffset: 2
+                        borderWidth: 0, hoverOffset: 4
                     }]
                 },
-                options: { responsive: true, maintainAspectRatio: false, layout: { padding: 10 }, cutout: '75%', plugins: { legend: { position: 'bottom', labels: { usePointStyle: true, boxWidth: 8, font: {size: 11} } } } }
+                options: { 
+                    responsive: true, maintainAspectRatio: false, 
+                    layout: { padding: { bottom: 20 } }, // 🟢 ТРОХИ ПОВІТРЯ ЗНИЗУ
+                    cutout: '65%', // 🟢 РОБИМО КІЛЬЦЕ ТОВЩИМ
+                    plugins: { 
+                        legend: { position: 'bottom', labels: { usePointStyle: true, boxWidth: 8, font: {size: 11}, padding: 15 } } 
+                    } 
+                }
             });
 
+            // ЛІНІЙНИЙ ГРАФІК (Вирівняно відступи та зменшено к-сть дат внизу)
             const ctxLine = document.getElementById('revenueLineChart').getContext('2d');
             if (revenueLineChartInstance) revenueLineChartInstance.destroy();
             const sortedRawKeys = Object.keys(revenueTimeline).sort(); 
@@ -2911,7 +2963,15 @@
                         borderWidth: 2, fill: true, tension: 0.4, pointBackgroundColor: '#FFF', pointBorderColor: '#556B2F', pointRadius: 3
                     }]
                 },
-                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, border: { dash: [4, 4] } }, x: { grid: { display: false } } } }
+                options: { 
+                    responsive: true, maintainAspectRatio: false, 
+                    layout: { padding: { left: 5, right: 15 } }, // 🟢 ДАЄМО МІСЦЕ СПРАВА
+                    plugins: { legend: { display: false } }, 
+                    scales: { 
+                        y: { beginAtZero: true, border: { dash: [4, 4] } }, 
+                        x: { grid: { display: false }, ticks: { maxTicksLimit: 6 } } // 🟢 ОБМЕЖУЄМО КІЛЬКІСТЬ ДАТ ВНИЗУ
+                    } 
+                }
             });
         }
 
@@ -2955,6 +3015,7 @@
             setupSwipeToClose('bookingDrawer', '.drawer', '.drawer-header', closeDrawer);
             setupSwipeToClose('genericModal', '.modal-box', '.modal-header', closeGenericModal);
             setupSwipeToClose('customConfirmModal', '.modal-box', '.confirm-header', closeCustomConfirm);
+            setupSwipeToClose('uniDetailsModal', '.modal-box', '.modal-header', () => document.getElementById('uniDetailsModal').classList.remove('active'));
         };
     </script>
 </body>
