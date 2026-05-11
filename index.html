@@ -668,7 +668,7 @@ input[type="number"] {
             <svg class="chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
         </div>
         <div class="submenu" id="settings-submenu">
-            <div class="submenu-item active" onclick="switchSettingsTab('rooms', this)">Номери</div>
+            <div class="submenu-item active" onclick="switchSettingsTab('rooms', this)">Котеджі</div>
             <div class="submenu-item" onclick="switchSettingsTab('prices', this)">Конструктор цін</div>
             <div class="submenu-item" onclick="switchSettingsTab('discounts', this)">Знижки</div>
         </div>
@@ -729,7 +729,7 @@ input[type="number"] {
             
             <div class="timeline-wrapper">
                 <div class="timeline-sidebar">
-                    <div class="timeline-sidebar-header">Номери</div>
+                    <div class="timeline-sidebar-header">Котеджі</div>
                     <div id="timelineRooms"></div>
                 </div>
                 <div class="timeline-grid-container" id="timelineScroll">
@@ -983,7 +983,7 @@ input[type="number"] {
                 
                 <div id="set-rooms" class="settings-tab-content">
                     <div class="settings-title">
-                        Категорії та Номери
+                        Категорії та Котеджі
                         <button class="btn-primary" style="padding: 10px 16px; font-size: 13px;" onclick="openGenericModal('room')">+ Додати номер</button>
                     </div>
                     <table>
@@ -1020,7 +1020,7 @@ input[type="number"] {
 
                     <div class="timeline-wrapper" style="margin-top: 20px;">
                         <div class="timeline-sidebar">
-                            <div class="timeline-sidebar-header">Номери</div>
+                            <div class="timeline-sidebar-header">Котеджі</div>
                             <div id="priceRoomsList"></div>
                         </div>
                         <div class="timeline-grid-container" id="priceScroll">
@@ -1036,7 +1036,7 @@ input[type="number"] {
                     <p style="color: #6B7280; font-size: 14px; margin-bottom: 24px; max-width: 600px; line-height: 1.5;">Створюйте знижки, які будуть автоматично застосовуватися при бронюванні. Збільшуйте тривалість бронювань, надаючи знижки для гостей.</p> 
                     
                     <table> 
-                        <thead><tr><th>Умова</th><th>Знижка</th><th>Номери</th><th>Дії</th></tr></thead> 
+                        <thead><tr><th>Умова</th><th>Знижка</th><th>Котеджі</th><th>Дії</th></tr></thead> 
                         <tbody id="settingsDiscountsTableBody"> 
                         </tbody> 
                     </table> 
@@ -1046,7 +1046,7 @@ input[type="number"] {
                 <div id="set-services" class="settings-tab-content" style="display: none;"> 
                     <div class="settings-title">Системні додаткові послуги</div> 
                     <table style="margin-bottom: 40px;"> 
-                        <thead><tr><th>Назва</th><th>Номери</th><th>Ціна (грн)</th><th>Доступність</th><th>Дії</th></tr></thead> 
+                        <thead><tr><th>Назва</th><th>Котеджі</th><th>Ціна (грн)</th><th>Доступність</th><th>Дії</th></tr></thead> 
                         <tbody id="settingsSysServicesTableBody"> 
                         </tbody> 
                     </table> 
@@ -1058,7 +1058,7 @@ input[type="number"] {
                     <p style="color: #6B7280; font-size: 14px; margin-bottom: 24px;">Створюйте додаткові послуги, які ви можете додавати до бронювань (наприклад, Чан, Дрова).</p> 
                     
                     <table> 
-                        <thead><tr><th>Назва</th><th>Номери</th><th>Ціна (грн)</th><th>Подобова</th><th>За гостя</th><th>Доступність</th><th>Дії</th></tr></thead> 
+                        <thead><tr><th>Назва</th><th>Котеджі</th><th>Ціна (грн)</th><th>Подобова</th><th>За гостя</th><th>Доступність</th><th>Дії</th></tr></thead> 
                         <tbody id="settingsServicesTableBody"> 
                         </tbody> 
                     </table> 
@@ -1369,8 +1369,8 @@ function getVisitWord(count) {
         ];
 
         let discountsList = [
-            { id: 1, condition: "Діб в бронюванні: 2", discount: "15%", rooms: "Всі номери" },
-            { id: 2, condition: "Діб в бронюванні: 3", discount: "20%", rooms: "Всі номери" }
+            { id: 1, condition: "Діб в бронюванні: 2", discount: "15%", rooms: "Всі котеджі" },
+            { id: 2, condition: "Діб в бронюванні: 3", discount: "20%", rooms: "Всі котеджі" }
         ];
 
         let customServicesList = [
@@ -1857,14 +1857,14 @@ function saveInlineTransaction(type, category, idx) {
                 title.innerText = 'Конструктор цін';
                 
                 // 1. Номери (ЗА ЗАМОВЧУВАННЯМ УСІ СІРІ - без класу active)
-                let roomsChips = `<div class="chip-btn" id="chip-room-all" onclick="toggleAllRoomsChip()">Усі номери</div>`;
+                let roomsChips = `<div class="chip-btn" id="chip-room-all" onclick="toggleAllRoomsChip()">Усі котеджі</div>`;
                 roomsChips += roomsList.map(r => 
                     `<div class="chip-btn room-chip" data-id="${r.id}" onclick="toggleSingleRoomChip(this)">${r.name}</div>`
                 ).join('');
 
                 body.innerHTML = `
                     <div class="form-group">
-                        <label>Оберіть номери:</label>
+                        <label>Оберіть котеджі:</label>
                         <div class="chips-container">
                             ${roomsChips}
                         </div>
@@ -1906,11 +1906,11 @@ function saveInlineTransaction(type, category, idx) {
 
                 // 2. Читаємо збережені номери (Залишив перевірку "id &&", щоб старі створені знижки не злетіли)
                 let selectedIds = d.roomsIds || [];
-                if (id && selectedIds.length === 0 && d.rooms === "Всі номери") selectedIds = ["all"];
+                if (id && selectedIds.length === 0 && d.rooms === "Всі котеджі") selectedIds = ["all"];
                 let isAllSelected = selectedIds.includes("all");
 
                 // 3. Генеруємо кнопочки
-                let roomsChips = `<div class="chip-btn ${isAllSelected ? 'active' : ''}" id="chip-disc-room-all" onclick="toggleAllDiscRooms()">Усі номери</div>`;
+                let roomsChips = `<div class="chip-btn ${isAllSelected ? 'active' : ''}" id="chip-disc-room-all" onclick="toggleAllDiscRooms()">Усі котеджі</div>`;
                 roomsChips += roomsList.map(r => {
                     let isActive = isAllSelected || selectedIds.includes(String(r.id));
                     return `<div class="chip-btn disc-room-chip ${isActive ? 'active' : ''}" data-id="${r.id}" onclick="toggleSingleDiscRoom(this)">${r.name}</div>`;
@@ -2109,7 +2109,7 @@ function saveInlineTransaction(type, category, idx) {
 
                 if (allBtn && allBtn.classList.contains('active')) {
                     savedIds = ["all"];
-                    displayRoomsText = "Всі номери";
+                    displayRoomsText = "Всі котеджі";
                 } else {
                     const activeChips = document.querySelectorAll('.disc-room-chip.active');
                     let names = [];
