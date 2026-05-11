@@ -602,10 +602,10 @@
                         <div class="form-grid">
                             <div class="form-group">
                                 <label>Дорослих:</label>
-                                <div style="display: flex; align-items: center; gap: 4px;">
-                                    <button type="button" onclick="changeGuests(-1)" style="width: 40px; height: 40px; background: #FEF2F2; color: #DC2626; border: 1px solid #FECACA; border-radius: 10px; font-size: 18px; font-weight: bold; cursor: pointer;">-</button>
-                                    <input type="number" id="adminGuests" value="2" min="1" style="text-align: center; width: 100%; padding: 10px 0;">
-                                    <button type="button" onclick="changeGuests(1)" style="width: 40px; height: 40px; background: #D1FAE5; color: #059669; border: 1px solid #A7F3D0; border-radius: 10px; font-size: 18px; font-weight: bold; cursor: pointer;">+</button>
+                                <div style="display: flex; align-items: center; background: #F9FAFB; border-radius: 12px; border: 1px solid #D1D5DB; height: 48px; overflow: hidden;">
+                                    <button type="button" onclick="changeGuests(-1)" style="width: 50px; height: 100%; background: transparent; color: #4B5563; border: none; border-right: 1px solid #E5E7EB; font-size: 22px; font-weight: 500; cursor: pointer; outline: none;">-</button>
+                                    <input type="number" id="adminGuests" value="2" min="1" style="flex: 1; text-align: center; background: transparent; border: none; font-size: 16px; font-weight: 700; color: #111827; padding: 0; outline: none; pointer-events: none;" readonly>
+                                    <button type="button" onclick="changeGuests(1)" style="width: 50px; height: 100%; background: transparent; color: #4B5563; border: none; border-left: 1px solid #E5E7EB; font-size: 22px; font-weight: 500; cursor: pointer; outline: none;">+</button>
                                 </div>
                             </div>
                             <div class="form-group">
@@ -621,10 +621,10 @@
                         <div class="form-grid">
                             <div class="form-group">
                                 <label>Денні гості:</label>
-                                <div style="display: flex; align-items: center; gap: 4px;">
-                                    <button type="button" onclick="changeAdminDayGuests(-1)" style="width: 40px; height: 40px; background: #FEF2F2; color: #DC2626; border: 1px solid #FECACA; border-radius: 10px; font-size: 18px; font-weight: bold; cursor: pointer;">-</button>
-                                    <input type="number" id="adminDayGuests" value="0" min="0" style="text-align: center; width: 100%; padding: 10px 0;">
-                                    <button type="button" onclick="changeAdminDayGuests(1)" style="width: 40px; height: 40px; background: #D1FAE5; color: #059669; border: 1px solid #A7F3D0; border-radius: 10px; font-size: 18px; font-weight: bold; cursor: pointer;">+</button>
+                                <div style="display: flex; align-items: center; background: #F9FAFB; border-radius: 12px; border: 1px solid #D1D5DB; height: 48px; overflow: hidden;">
+                                    <button type="button" onclick="changeAdminDayGuests(-1)" style="width: 50px; height: 100%; background: transparent; color: #4B5563; border: none; border-right: 1px solid #E5E7EB; font-size: 22px; font-weight: 500; cursor: pointer; outline: none;">-</button>
+                                    <input type="number" id="adminDayGuests" value="0" min="0" style="flex: 1; text-align: center; background: transparent; border: none; font-size: 16px; font-weight: 700; color: #111827; padding: 0; outline: none; pointer-events: none;" readonly>
+                                    <button type="button" onclick="changeAdminDayGuests(1)" style="width: 50px; height: 100%; background: transparent; color: #4B5563; border: none; border-left: 1px solid #E5E7EB; font-size: 22px; font-weight: 500; cursor: pointer; outline: none;">+</button>
                                 </div>
                             </div>
                             <div class="form-group">
