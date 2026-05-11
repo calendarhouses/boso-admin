@@ -3062,6 +3062,8 @@ document.getElementById('adminGuests').addEventListener('change', updatePricePre
             if(document.getElementById('adminCardEarly')) document.getElementById('adminCardEarly').classList.remove('active');
             if(document.getElementById('adminCardLate')) document.getElementById('adminCardLate').classList.remove('active');
             document.querySelectorAll('.t-chip').forEach(c => c.classList.remove('selected'));
+            if (document.getElementById('adminLabelPriceEarly')) document.getElementById('adminLabelPriceEarly').innerHTML = 'Оберіть час';
+            if (document.getElementById('adminLabelPriceLate')) document.getElementById('adminLabelPriceLate').innerHTML = 'Оберіть час';
 
             document.getElementById('adminDeleteBtn').style.display = 'none';
             document.getElementById('liveCalculatorContainer').innerHTML = '';
@@ -3127,6 +3129,21 @@ document.getElementById('adminGuests').addEventListener('change', updatePricePre
             document.getElementById('adminName').value = String(booking.name).replace(' (Ручна бронь)', '');
             document.getElementById('adminPhone').value = '+' + formatPhone(booking.phone);
             document.getElementById('adminGuests').value = booking.guests || 2;
+            
+            // 🟢 СКИДАЄМО ВСІ СТАРІ СТАНИ ПЕРЕД ЗАПОВНЕННЯМ (як у мобільній версії)
+            if(document.getElementById('adminVat')) toggleVat('Ні');
+            if(document.getElementById('adminUBD')) toggleUBD('Ні');
+            if(document.getElementById('adminDayGuests')) document.getElementById('adminDayGuests').value = 0;
+            
+            selectedEarlyTime = null;
+            selectedLateTime = null;
+            if(document.getElementById('adminCardEarly')) document.getElementById('adminCardEarly').classList.remove('active');
+            if(document.getElementById('adminCardLate')) document.getElementById('adminCardLate').classList.remove('active');
+            document.querySelectorAll('.t-chip').forEach(c => c.classList.remove('selected'));
+            
+            if (document.getElementById('adminLabelPriceEarly')) document.getElementById('adminLabelPriceEarly').innerHTML = 'Оберіть час';
+            if (document.getElementById('adminLabelPriceLate')) document.getElementById('adminLabelPriceLate').innerHTML = 'Оберіть час';
+            // 🟢 КІНЕЦЬ ОЧИЩЕННЯ
             
             if(document.getElementById('adminComment')) {
             let textComment = booking.comment || "";
