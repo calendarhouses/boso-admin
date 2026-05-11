@@ -1418,13 +1418,6 @@
 
             const room = typeof roomsList !== 'undefined' ? roomsList.find(r => r.name === roomName) : null; 
             if (!room) { cont.innerHTML = ''; return; }
-            // 🟢 АВТО-КОРЕКЦІЯ ГОСТЕЙ (якщо змінили котедж на менший)
-            let maxCap = room.maxCapacity || room.capacity || 10;
-            if (guests > maxCap) {
-                guests = maxCap; 
-                document.getElementById('adminGuests').value = maxCap;
-                showToast(`Кількість гостей зменшено до максимуму (${maxCap})`);
-            }
             
             // Визначаємо акцію ЗАЗДАЛЕГІДЬ, щоб використати для перевірки овербукінгу
             let isPromoLateOut = (nights === 2 && d1.getDay() === 5 && d2.getDay() === 0);
@@ -1750,8 +1743,11 @@
             const cottageOptions = document.getElementById('cottageOptions');
             cottageOptions.innerHTML = availableRooms.map(r => `<div class="custom-option" onclick="selectOption('cottageWrapper', 'adminCottage', '${r.name}', this, '${r.name} (${r.desc})')"><div>${r.name} <span style="font-size:11px; color:#9CA3AF; display:block;">${r.desc}</span></div></div>`).join('');
 
-            let savedRoom = roomsList.some(r => r.name === booking.cottage) ? booking.cottage : (availableRooms[0] ? availableRooms[0].name : "");
-            let savedDesc = roomsList.find(r => r.name === savedRoom)?.desc || "";
+            // Розумний пошук котеджу (шукає не тільки по точній назві, а й по короткій, напр. FAMILY 2)
+            let matchedRoomObj = roomsList.find(r => r.name === booking.cottage || r.short === booking.cottage || (booking.cottage && booking.cottage.includes(r.short)));
+            let savedRoom = matchedRoomObj ? matchedRoomObj.name : (availableRooms[0] ? availableRooms[0].name : "");
+            let savedDesc = matchedRoomObj ? matchedRoomObj.desc : "";
+            
             document.getElementById('adminCottage').value = savedRoom;
             document.getElementById('cottageSelectedText').innerText = savedRoom ? `${savedRoom} (${savedDesc})` : "Оберіть номер";
             checkInPicker.setDate(booking.checkIn); checkOutPicker.setDate(booking.checkOut);
