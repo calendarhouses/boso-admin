@@ -2,6 +2,7 @@
 <html lang="uk">
 <head>
     <meta charset="UTF-8">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     
     <meta name="apple-mobile-web-app-capable" content="yes">
@@ -366,6 +367,62 @@
         .tt-label { color: #6B7280; font-weight: 500;}
         .tt-value { font-weight: 700; color: #111827; }
         .tt-status { margin-top: 10px; display: flex; align-items: center; justify-content: center; padding: 8px; border-radius: 10px; font-size: 12px; font-weight: 800; text-align: center; border: 1px solid rgba(0,0,0,0.05);}
+
+        /* --- ЗВІТИ ТА АНАЛІТИКА (MOBILE) --- */
+        .reports-tabs { display: flex; gap: 6px; background: #E5E7EB; padding: 4px; border-radius: 12px; width: 100%; margin-bottom: 16px; }
+        .r-tab { flex: 1; text-align: center; padding: 10px 0; font-size: 13px; font-weight: 600; color: #6B7280; cursor: pointer; border-radius: 10px; transition: 0.2s; display: flex; align-items: center; justify-content: center; gap: 6px;}
+        .r-tab.active { background: #FFFFFF; color: var(--success); box-shadow: 0 2px 6px rgba(0,0,0,0.08); }
+        .r-tab.active svg { stroke: var(--success); }
+        
+        .metrics-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 20px; }
+        .metric-card { background: #FFF; border: 1px solid #E5E7EB; border-radius: 16px; padding: 16px; display: flex; flex-direction: column; justify-content: space-between; box-shadow: 0 4px 6px rgba(0,0,0,0.02); min-height: 120px;}
+        .mc-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 12px; }
+        .metric-icon { width: 32px; height: 32px; border-radius: 8px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+        .metric-icon svg { width: 18px; height: 18px; }
+        
+        .mc-body { display: flex; flex-direction: column; gap: 4px; }
+        .metric-title { font-size: 10px; font-weight: 800; color: #6B7280; text-transform: uppercase; letter-spacing: 0.5px; line-height: 1.2;}
+        .metric-val { font-size: 18px; font-weight: 800; color: var(--text-main); letter-spacing: -0.5px; line-height: 1;}
+        
+        .charts-grid { display: flex; flex-direction: column; gap: 16px; margin-bottom: 24px;}
+        .chart-card { background: #FFF; border: 1px solid #E5E7EB; border-radius: 16px; padding: 16px; box-shadow: 0 4px 6px rgba(0,0,0,0.02); display: flex; flex-direction: column; }
+        .chart-card h3 { font-size: 15px; font-weight: 700; color: var(--text-main); margin-bottom: 16px; letter-spacing: -0.3px; display: flex; justify-content: space-between; align-items: center;}
+
+        .finance-summary { display: flex; flex-direction: column; gap: 12px; margin-bottom: 20px; margin-top: 10px; }
+        .fin-box { padding: 20px; border-radius: 16px; display: flex; flex-direction: column; gap: 6px; position: relative; border: 2px solid transparent;}
+        .fin-box.income { background: #F0FDF4; border-color: #A7F3D0; }
+        .fin-box.expense { background: #FEF2F2; border-color: #FECACA; }
+        .fin-box.profit { background: #F8FAF7; border-color: #BFE0A6; }
+        .fin-box span { font-size: 12px; font-weight: 800; text-transform: uppercase; letter-spacing: 1px; }
+        .fin-box h3 { font-size: 26px; font-weight: 800; margin: 0; letter-spacing: -1px; }
+        .fin-box.income span, .fin-box.income h3 { color: #059669; }
+        .fin-box.expense span, .fin-box.expense h3 { color: #DC2626; }
+        .fin-box.profit span { color: var(--accent); } .fin-box.profit h3 { color: var(--text-main); }
+        .fin-box .add-btn { position: absolute; top: 16px; right: 16px; width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 20px; font-weight: bold; }
+        .fin-box.income .add-btn { background: #D1FAE5; color: #059669; }
+        .fin-box.expense .add-btn { background: #FEE2E2; color: #DC2626; }
+        .fin-box.profit .add-btn { background: #E5E7EB; color: #4B5563; font-size: 14px;}
+
+        .fade-section { transition: opacity 0.3s ease, transform 0.3s ease; }
+        .fade-hidden { opacity: 0; transform: scale(0.98) translateY(10px); pointer-events: none; position: absolute; width: 100%; visibility: hidden; z-index: -1; height: 0; overflow: hidden; }
+        .fade-visible { opacity: 1; transform: scale(1) translateY(0); pointer-events: auto; position: relative; visibility: visible; z-index: 1; height: auto; overflow: visible; }
+
+        .inline-trans-grid { display: flex; flex-direction: column; gap: 12px; width: 100%; }
+        .it-card { background: #fff; border: 1px solid #E5E7EB; border-radius: 16px; overflow: hidden; display: flex; flex-direction: column; transition: 0.3s;}
+        .it-card.active { border-color: var(--accent); box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
+        .it-header { padding: 16px; display: flex; align-items: center; gap: 12px; }
+        .it-icon { width: 40px; height: 40px; border-radius: 12px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+        .it-title { font-size: 14px; font-weight: 600; color: var(--text-main); line-height: 1.3; }
+        .it-body { max-height: 0; opacity: 0; padding: 0 16px; overflow: hidden; transition: 0.4s; }
+        .it-card.active .it-body { max-height: 500px; opacity: 1; padding: 0 16px 16px; }
+
+        .finance-mob-table { display: flex; flex-direction: column; gap: 12px; }
+        .fin-mob-row { display: flex; flex-direction: column; background: #FFF; border: 1px solid #E5E7EB; border-radius: 16px; padding: 16px; gap: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.02);}
+        .fin-mob-row-header { display: flex; justify-content: space-between; align-items: flex-start; }
+        .fin-mob-title { font-size: 14px; font-weight: 700; color: #111827; }
+        .fin-mob-desc { font-size: 12px; color: #6B7280; margin-top: 2px;}
+        .fin-mob-amt { font-size: 16px; font-weight: 800; letter-spacing: -0.5px;}
+        .fin-mob-actions { display: flex; gap: 8px; margin-top: 8px; padding-top: 12px; border-top: 1px solid #F3F4F6;}
     </style>
 </head>
 <body>
@@ -480,14 +537,136 @@
             </div> 
         </div>
 
-        <div id="view-reports" style="display: none; height: 100%; justify-content: center; align-items: center;">
-            <div style="text-align: center; color: #6B7280;"> 
-                <div style="background: #E5E7EB; width: 64px; height: 64px; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 16px;"> 
-                    <svg width="32" height="32" fill="none" stroke="#4B5563" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg> 
-                </div> 
-                <h3 style="font-size: 18px; font-weight: 700; color: #374151; margin-bottom: 8px;">Розділ у розробці</h3> 
-                <p style="font-size: 13px;">Мобільна аналітика з'явиться незабаром.</p> 
-            </div> 
+        <div id="view-reports" style="display: none; flex-direction: column; height: 100%; padding-bottom: 30px;">
+            <div class="reports-tabs">
+                <div class="r-tab active" onclick="switchReportTab('finance', this)">
+                    <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6v12m-3-2.818l.879.659c1.171.879 3.07.879 4.242 0 1.172-.879 1.172-2.303 0-3.182C13.536 12.219 12.768 12 12 12c-.725 0-1.45-.22-2.003-.659-1.106-.879-1.106-2.303 0-3.182s2.9-.879 4.006 0l.415.33M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg> Фінанси
+                </div>
+                <div class="r-tab" onclick="switchReportTab('analytics', this)">
+                    <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 0 1 3 19.875v-6.75ZM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 0 1-1.125-1.125V8.625ZM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 0 1-1.125-1.125V4.125Z"></path></svg> Аналітика
+                </div>
+            </div>
+
+            <div style="display: flex; gap: 12px; align-items: center; margin-bottom: 20px;">
+                <div style="position: relative; flex-shrink: 0;">
+                    <div style="width: 46px; height: 46px; border-radius: 12px; border: 1px solid #D1D5DB; background: #FFF; display: flex; align-items: center; justify-content: center; color: #4B5563;">
+                        <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 0 1 2.25-2.25h13.5A2.25 2.25 0 0 1 21 7.5v11.25m-18 0A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75m-18 0v-7.5A2.25 2.25 0 0 1 5.25 9h13.5A2.25 2.25 0 0 1 21 11.25v7.5"></path></svg>
+                    </div>
+                    <input type="text" id="customReportRange" style="position: absolute; top:0; left:0; width:100%; height:100%; opacity:0; cursor: pointer;">
+                </div>
+                <div class="custom-select-wrapper" id="reportPeriodWrapper" style="flex: 1;">
+                    <div class="custom-select-trigger" onclick="toggleCustomSelect('reportPeriodWrapper')">
+                        <span id="reportPeriodText">Поточний місяць</span>
+                        <svg width="16" height="16" fill="none" stroke="#6B7280" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                    </div>
+                    <div class="custom-select-options">
+                        <div class="custom-option selected" onclick="selectOption('reportPeriodWrapper', 'reportPeriodVal', 'current', this, 'Поточний місяць')">Поточний місяць</div>
+                        <div class="custom-option" onclick="selectOption('reportPeriodWrapper', 'reportPeriodVal', 'prev', this, 'Минулий місяць')">Минулий місяць</div>
+                        <div class="custom-option" onclick="selectOption('reportPeriodWrapper', 'reportPeriodVal', 'year', this, 'За весь рік')">За весь рік</div>
+                        <div class="custom-option" onclick="selectOption('reportPeriodWrapper', 'reportPeriodVal', 'all', this, 'За весь час')">За весь час</div>
+                    </div>
+                </div>
+                <input type="hidden" id="reportPeriodVal" value="current">
+            </div>
+
+            <div id="rep-finance" style="display: block;">
+                <div class="finance-summary">
+                    <div class="fin-box income" onclick="openFinanceInlineCards('income')">
+                        <div class="add-btn">+</div>
+                        <span>Доходи</span><h3 id="finIncome">0 грн</h3>
+                    </div>
+                    <div class="fin-box expense" onclick="openFinanceInlineCards('expense')">
+                        <div class="add-btn">+</div>
+                        <span>Витрати</span><h3 id="finExpense">0 грн</h3>
+                    </div>
+                    <div class="fin-box profit" onclick="openFinanceTable()">
+                        <div class="add-btn"><svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M4 6h16M4 10h16M4 14h16M4 18h16"></path></svg></div>
+                        <span>Чистий Прибуток</span><h3 id="finProfit">0 грн</h3>
+                    </div>
+                </div>
+
+                <div style="position: relative;">
+                    <div id="financeTableWrap" class="fade-section fade-visible">
+                        <span class="form-section-title" style="margin: 16px 0;">Історія транзакцій</span>
+                        <div class="finance-mob-table" id="financeTableBody"></div>
+                    </div>
+                    <div id="financeCardsWrap" class="fade-section fade-hidden">
+                        <div style="margin: 16px 0 12px; display: flex; justify-content: space-between; align-items: center;">
+                            <span class="form-section-title" id="fcTitle" style="margin: 0; color: #059669;">Оберіть категорію</span>
+                            <button class="btn-action" style="padding: 6px 12px; font-size: 12px;" onclick="openFinanceTable()">✕ Закрити</button>
+                        </div>
+                        <div class="inline-trans-grid" id="fcGrid"></div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="rep-analytics" style="display: none;">
+                <div style="background: linear-gradient(to right, #F0FDF4, #ECFDF5); border: 1px solid #A7F3D0; border-radius: 12px; padding: 16px; margin-bottom: 20px; display: flex; align-items: center; gap: 12px;">
+                    <span style="font-size: 24px;">✨</span>
+                    <span id="aiSummaryText" style="font-size: 12px; font-weight: 500; color: #065F46; line-height: 1.4;">Генеруємо аналітику...</span>
+                </div>
+
+                <span class="form-section-title">Головні показники</span>
+                <div class="metrics-grid">
+                    <div class="metric-card" onclick="openUniversalDetails('sum', 'Сума бронювань (Всі)', '#059669', '#F0FDF4', 'Прогноз')">
+                        <div class="mc-header"><div class="metric-icon" style="background:#F0FDF4; color:#059669;"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg></div></div>
+                        <div class="mc-body"><span class="metric-title">Сума (Всі)</span><span class="metric-val" id="metTotalSum">0 грн</span></div>
+                    </div>
+                    <div class="metric-card" onclick="openUniversalDetails('paid', 'Фактично оплачено', '#047857', '#D1FAE5', 'Оплачено')">
+                        <div class="mc-header"><div class="metric-icon" style="background:#D1FAE5; color:#047857;"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg></div></div>
+                        <div class="mc-body"><span class="metric-title">Сплачено</span><span class="metric-val" id="metPaid" style="color: #059669;">0 грн</span></div>
+                    </div>
+                    <div class="metric-card danger-card" onclick="openUniversalDetails('debt', 'Список боржників', '#DC2626', '#FEF2F2', 'Борг')">
+                        <div class="mc-header"><div class="metric-icon" style="background:#FEE2E2; color:#DC2626;"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg></div></div>
+                        <div class="mc-body"><span class="metric-title" style="color: #DC2626;">Борг гостей</span><span class="metric-val" id="metDebt" style="color: #DC2626;">0 грн</span></div>
+                    </div>
+                    <div class="metric-card" onclick="openUniversalDetails('count', 'Список броней', '#2563EB', '#EFF6FF', '')">
+                        <div class="mc-header"><div class="metric-icon" style="background:#EFF6FF; color:#2563EB;"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"></path></svg></div></div>
+                        <div class="mc-body"><span class="metric-title">Броней</span><span class="metric-val" id="metCount">0</span></div>
+                    </div>
+                </div>
+
+                <span class="form-section-title">Деталізація доходу</span>
+                <div class="metrics-grid">
+                    <div class="metric-card" id="cardGuests" onclick="openUniversalDetails('guests', 'Додаткові гості', '#1D4ED8', '#E0E7FF', 'Дохід')">
+                        <div class="mc-header"><div class="metric-icon" style="background:#E0E7FF; color:#1D4ED8;"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"></path></svg></div></div>
+                        <div class="mc-body"><span class="metric-title">Дод. гості</span><span class="metric-val" id="metGuests" style="font-size: 16px;">0 грн</span></div>
+                    </div>
+                    <div class="metric-card" id="cardPets" onclick="openUniversalDetails('pets', 'Тварини', '#E11D48', '#FCE7F3', 'Дохід')">
+                        <div class="mc-header"><div class="metric-icon" style="background:#FCE7F3; color:#E11D48;"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"></path></svg></div></div>
+                        <div class="mc-body"><span class="metric-title">Тварини</span><span class="metric-val" id="metPets" style="font-size: 16px;">0 грн</span></div>
+                    </div>
+                    <div class="metric-card" id="cardVat" onclick="openUniversalDetails('vat', 'Чан', '#B45309', '#FFEDD5', 'Дохід')">
+                        <div class="mc-header"><div class="metric-icon" style="background:#FFEDD5; color:#B45309;"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 18.657A8 8 0 016.343 7.343S7 9 9 10c0-2 .5-5 2.986-7C14 5 16.09 5.777 17.656 7.343A7.975 7.975 0 0120 13a7.975 7.975 0 01-2.343 5.657z"></path></svg></div></div>
+                        <div class="mc-body"><span class="metric-title">Чан</span><span class="metric-val" id="metVat" style="font-size: 16px;">0 грн</span></div>
+                    </div>
+                    <div class="metric-card" id="cardEarlyLate" onclick="openUniversalDetails('earlyLate', 'Гнучкий графік', '#6D28D9', '#F3E8FF', 'Дохід')">
+                        <div class="mc-header"><div class="metric-icon" style="background:#F3E8FF; color:#6D28D9;"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg></div></div>
+                        <div class="mc-body"><span class="metric-title">Гнуч. графік</span><span class="metric-val" id="metEarlyLate" style="font-size: 16px;">0 грн</span></div>
+                    </div>
+                </div>
+
+                <div class="charts-grid">
+                    <div class="chart-card">
+                        <h3>Динаміка</h3>
+                        <div style="position: relative; height: 180px; width: 100%;"><canvas id="revenueLineChart"></canvas></div>
+                    </div>
+                    <div class="chart-card">
+                        <h3>
+                            Популярність
+                            <div class="mode-toggle" style="margin: 0; padding: 2px;">
+                                <div id="chartModeCount" class="mode-btn active" style="padding: 4px 8px; font-size: 10px;" onclick="toggleRoomsChart('count')">Броні</div>
+                                <div id="chartModeMoney" class="mode-btn" style="padding: 4px 8px; font-size: 10px;" onclick="toggleRoomsChart('money')">Дохід</div>
+                            </div>
+                        </h3>
+                        <div style="position: relative; height: 180px; width: 100%;"><canvas id="roomsChart"></canvas></div>
+                    </div>
+                    <div class="chart-card">
+                        <h3>Звідки гості</h3>
+                        <div style="position: relative; height: 180px; width: 100%;"><canvas id="sourceChart"></canvas></div>
+                    </div>
+                </div>
+            </div>
         </div>
 
     </div>
@@ -532,6 +711,25 @@
             </div>
         </div>
     </div> 
+
+    <div id="uniDetailsModal" class="modal-overlay">
+        <div class="modal-box">
+            <div class="modal-header" style="flex-direction: column; align-items: stretch; padding: 12px 20px 16px;">
+                <div class="drag-handle"></div>
+                <div style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
+                    <span style="display:flex; align-items:center; gap:8px;">
+                        <span id="uniModalIcon" style="display:flex; align-items:center;">
+                            <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                        </span>
+                        <span id="uniModalTitle" style="font-size: 16px;">Деталі</span>
+                    </span>
+                    <button class="close-btn" onclick="document.getElementById('uniDetailsModal').classList.remove('active')">✕</button>
+                </div>
+            </div>
+            <div class="modal-body" id="uniModalBody" style="padding: 20px; overflow-y: auto; background: #FDFCFB;">
+                </div>
+        </div>
+    </div>
     
     <div id="customConfirmModal" class="modal-overlay" style="z-index: 3000;">
         <div class="modal-box" style="padding-bottom: 20px;">
@@ -754,6 +952,14 @@
         let sysServicesList = [];
         let customPrices = {}; 
         
+        let transactions = []; // База транзакцій
+        let globalRoomCounts = {};
+        let globalRoomMoney = {};
+        window.bosoDetails = { sum: [], paid: [], debt: [], count: [], pets: [], guests: [], vat: [], bikes: [], earlyLate: [], other: [] };
+
+        const incomeCategories = ["Плата за раннє заселення/пізнє виселення", "Додаткові гості", "Домашні тварини", "Міні-бар", "Чан", "Оренда велосипедів", "Інший дохід"];
+        const expenseCategories = ["Прибирання", "Прасування", "Користування електроенергією", "Утримання прилеглої території", "Розхідні матеріали", "Реклама", "Адміністрування та SMM", "Податки", "Інші витрати"];
+        
         async function initApp() {
             try {
                 const t = new Date().getTime();
@@ -771,6 +977,7 @@
                     if (settingsData.customServicesList) customServicesList = settingsData.customServicesList;
                     if (settingsData.sysServicesList) sysServicesList = settingsData.sysServicesList;
                     if (settingsData.customPrices) customPrices = settingsData.customPrices; 
+                    if (settingsData.transactions) transactions = settingsData.transactions;
                 }
 
                 if (document.getElementById('view-grid').style.display === 'flex') { renderTimeline(); } 
@@ -788,7 +995,7 @@
          }
 
         async function saveSettingsToCloud() {
-            const settingsToSave = { roomsList, discountsList, customServicesList, sysServicesList, customPrices };
+            const settingsToSave = { roomsList, discountsList, customServicesList, sysServicesList, customPrices, transactions }; // <--- ДОДАЙ transactions
             try { await fetch(API_URL, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify({ action: 'saveSettings', settings: settingsToSave }) });
             } catch (error) { alert("Помилка збереження!"); }
         }
@@ -2100,6 +2307,562 @@
                 }
             });
         }
+
+        // ==========================================
+        // 🔥 МОБІЛЬНА АНАЛІТИКА ТА ФІНАНСИ (START) 🔥
+        // ==========================================
+        
+        let globalRoomNights = {};
+
+        // 🚀 АНІМАЦІЯ ЦИФР
+        function animateValue(id, start, end, duration) {
+            const obj = document.getElementById(id);
+            if (!obj) return;
+            let startTimestamp = null;
+            const isCurrency = !id.includes('Count');
+            const step = (timestamp) => {
+                if (!startTimestamp) startTimestamp = timestamp;
+                const progress = Math.min((timestamp - startTimestamp) / duration, 1);
+                const easeOut = 1 - Math.pow(1 - progress, 4); 
+                const current = Math.floor(easeOut * (end - start) + start);
+                obj.innerText = current.toLocaleString('uk-UA') + (isCurrency ? ' грн' : '');
+                if (progress < 1) window.requestAnimationFrame(step);
+                else obj.innerText = end.toLocaleString('uk-UA') + (isCurrency ? ' грн' : '');
+            };
+            window.requestAnimationFrame(step);
+        }
+
+        // 🚀 УНІВЕРСАЛЬНА МОДАЛКА ДЕТАЛЕЙ
+        function openUniversalDetails(type, title, colorHex, bgHex, valLabel) {
+            const modal = document.getElementById('uniDetailsModal');
+            const body = document.getElementById('uniModalBody');
+            document.getElementById('uniModalTitle').innerText = title;
+            document.getElementById('uniModalIcon').style.color = colorHex;
+            
+            let data = window.bosoDetails[type] || [];
+            data.sort((a, b) => a.rawDate - b.rawDate);
+            let html = '';
+
+            if (data.length === 0) {
+                html = `
+                <div style="padding: 40px 20px; text-align: center; display: flex; flex-direction: column; align-items: center; gap: 12px;">
+                    <div style="width: 56px; height: 56px; background: ${bgHex}; color: ${colorHex}; border-radius: 50%; display: flex; align-items: center; justify-content: center;">
+                        <svg width="28" height="28" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                    </div>
+                    <div style="font-size: 16px; font-weight: 700; color: #111827;">Тут поки порожньо</div>
+                </div>`;
+            } else {
+                data.forEach(item => {
+                    let initial = item.name.charAt(0).toUpperCase();
+                    if(!initial || initial === '+' || initial === 'І') initial = '👤';
+                    let amountHtml = item.amount > 0 ? `${item.amount.toLocaleString('uk-UA')} ₴` : '—';
+                    let labelHtml = valLabel ? `<div style="font-size: 10px; color: ${colorHex}; text-transform: uppercase; font-weight: 700; letter-spacing: 0.5px; opacity: 0.8;">${valLabel}</div>` : '';
+
+                    let actionBtn = item.isTrans 
+                        ? `<button class="btn-action" style="flex:1; justify-content:center;" onclick="jumpToFinanceAndEdit(${item.id})">Редагувати запис</button>`
+                        : `<button class="btn-action" style="flex:1; justify-content:center;" onclick="document.getElementById('uniDetailsModal').classList.remove('active'); switchView('grid'); openDetailsByRow(${item.row});">Відкрити бронь</button>`;
+                    
+                    let tgBtn = item.phone ? `<a href="https://t.me/+${item.phone}" target="_blank" class="btn-action" style="flex:1; justify-content:center; background:#EFF6FF; color:#2563EB;">Telegram</a>` : '';
+
+                    html += `
+                    <div style="display: flex; flex-direction: column; padding: 16px; background: #FFFFFF; border: 1px solid #E5E7EB; border-radius: 16px; margin-bottom: 12px; box-shadow: 0 2px 4px rgba(0,0,0,0.02);">
+                        <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 16px;">
+                            <div style="display: flex; gap: 12px; align-items: center;">
+                                <div style="width: 40px; height: 40px; border-radius: 50%; background: ${bgHex}; color: ${colorHex}; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 15px; flex-shrink: 0;">${initial}</div>
+                                <div>
+                                    <div style="font-weight: 700; color: #111827; font-size: 14px; margin-bottom: 2px;">${item.name}</div>
+                                    <div style="font-size: 11px; color: #6B7280;">Дати: <strong style="color: #4B5563;">${item.date}</strong></div>
+                                </div>
+                            </div>
+                            <div style="text-align: right; background: ${bgHex}; padding: 6px 10px; border-radius: 8px;">
+                                <div style="font-weight: 800; color: ${colorHex}; font-size: 14px; letter-spacing: -0.5px;">${amountHtml}</div>
+                                ${labelHtml}
+                            </div>
+                        </div>
+                        <div style="display: flex; gap: 8px; border-top: 1px solid #F3F4F6; padding-top: 12px;">${actionBtn}${tgBtn}</div>
+                    </div>`;
+                });
+            }
+            body.innerHTML = html;
+            modal.classList.add('active');
+        }
+
+        // 🚀 ГОЛОВНИЙ ПРОЦЕСОР АНАЛІТИКИ
+        function calculateAnalytics() {
+            const period = document.getElementById('reportPeriodVal').value;
+            const now = new Date();
+            let startDate, endDate;
+
+            if (period === 'current') {
+                startDate = new Date(now.getFullYear(), now.getMonth(), 1);
+                endDate = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59);
+            } else if (period === 'prev') {
+                startDate = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+                endDate = new Date(now.getFullYear(), now.getMonth(), 0, 23, 59, 59);
+            } else if (period === 'year') {
+                startDate = new Date(now.getFullYear(), 0, 1);
+                endDate = new Date(now.getFullYear(), 11, 31, 23, 59, 59);
+            } else if (period === 'custom') { 
+                const dates = document.getElementById('customReportRange')._flatpickr.selectedDates;
+                if (dates.length === 2) {
+                    startDate = new Date(dates[0]); startDate.setHours(0,0,0,0);
+                    endDate = new Date(dates[1]); endDate.setHours(23,59,59,999);
+                } else {
+                    startDate = new Date(2000, 0, 1); endDate = new Date(2100, 0, 1);
+                }
+            } else {
+                startDate = new Date(2000, 0, 1); endDate = new Date(2100, 0, 1);
+            }
+
+            let currSum = 0, currCount = 0, currPaid = 0;
+            let currGuests = 0, currPets = 0, currEarlyLate = 0, currVat = 0, currBikes = 0, currOther = 0;
+            let topRoomsCount = {}; 
+            let totalIncome = 0, totalExpense = 0;
+            let incomeBreakdown = { base: 0, guests: 0, pets: 0, earlyLate: 0 };
+
+            window.bosoDetails = { sum: [], paid: [], debt: [], count: [], pets: [], guests: [], vat: [], bikes: [], earlyLate: [], other: [] };
+
+            allBookings.forEach(b => {
+                if (String(b.status).toLowerCase().includes('скас')) return; 
+                let bDateStr = b.checkIn;
+                if (bDateStr.includes('.')) bDateStr = bDateStr.split('.').reverse().join('-');
+                const bDate = new Date(bDateStr);
+                const price = Number(b.totalPrice) || 0;
+                const paid = Number(b.paidAmount) || 0;
+                
+                if (bDate >= startDate && bDate <= endDate) {
+                    currSum += price; currPaid += paid; currCount++;
+                    if (b.cottage) {
+                        const matchedRoom = roomsList.find(r => b.cottage.includes(r.name) || b.cottage.includes(r.short));
+                        const roomName = matchedRoom ? matchedRoom.name : b.cottage;
+                        topRoomsCount[roomName] = (topRoomsCount[roomName] || 0) + 1;
+                    }
+
+                    let cName = String(b.name).replace(' (Ручна бронь)', '').trim() || "Клієнт";
+                    let inD = new Date(bDateStr); 
+                    let outDStr = b.checkOut.includes('.') ? b.checkOut.split('.').reverse().join('-') : b.checkOut;
+                    let outD = new Date(outDStr);
+                    let fIn = inD.toLocaleDateString('uk-UA', { day: 'numeric', month: 'short' }).replace('.', '');
+                    let fOut = outD.toLocaleDateString('uk-UA', { day: 'numeric', month: 'short' }).replace('.', '');
+                    let baseObj = { name: cName, phone: formatPhone(b.phone), date: `${fIn} — ${fOut}`, row: b.row, isTrans: false, rawDate: inD.getTime() };
+
+                    if (price > 0) window.bosoDetails.sum.push({...baseObj, amount: price});
+                    if (paid > 0) { window.bosoDetails.paid.push({...baseObj, amount: paid}); totalIncome += paid; }
+                    window.bosoDetails.count.push({...baseObj, amount: 0});
+                    
+                    let balance = price - paid;
+                    if (balance > 0 && price > 0) window.bosoDetails.debt.push({...baseObj, amount: balance});
+                    let nights = Math.max(1, Math.round((outD - inD) / 86400000));
+                    
+                    let room = roomsList.find(r => b.cottage && b.cottage.includes(r.short));
+                    let extraPrice = room && room.extraGuestPrice !== undefined ? room.extraGuestPrice : 2500;
+                    let cap = room ? room.capacity : 2;
+                    let feeGuests = Math.max(0, (parseInt(b.guests) || 2) - cap) * extraPrice * nights;
+                    let feePets = (b.pets === "Так" || b.pets === true) ? (500 + 200 * nights) : 0;
+
+                    if (feeGuests > 0) { currGuests += feeGuests; window.bosoDetails.guests.push({...baseObj, amount: feeGuests}); }
+                    if (feePets > 0) { currPets += feePets; window.bosoDetails.pets.push({...baseObj, amount: feePets}); }
+
+                    let rawComment = b.comment ? String(b.comment) : "";
+                    let feeEarlyLate = 0;
+                    
+                    if (rawComment.includes('🕒 Ранній заїзд:')) feeEarlyLate += Math.round(getDayPrice(room, inD) * 0.5);
+                    if (rawComment.includes('🕒 Пізній виїзд:')) {
+                        if (!(nights === 2 && inD.getDay() === 5 && outD.getDay() === 0)) feeEarlyLate += Math.round(getDayPrice(room, outD) * 0.5);
+                    }
+                    if (feeEarlyLate > 0) { currEarlyLate += feeEarlyLate; window.bosoDetails.earlyLate.push({...baseObj, amount: feeEarlyLate}); }
+                    
+                    if (paid > 0) {
+                        let ratio = (price > 0) ? (paid / price) : 1;
+                        incomeBreakdown.pets += (feePets * ratio);
+                        incomeBreakdown.guests += (feeGuests * ratio);
+                        incomeBreakdown.earlyLate += (feeEarlyLate * ratio);
+                        incomeBreakdown.base += (paid - (feePets * ratio) - (feeGuests * ratio) - (feeEarlyLate * ratio));
+                    }
+                }
+            });
+
+            // Транзакції
+            let filteredTrans = (typeof transactions !== 'undefined' ? transactions : []).filter(t => {
+                let tDateStr = t.date;
+                if (tDateStr.includes('.')) tDateStr = tDateStr.split('.').reverse().join('-');
+                const tDate = new Date(tDateStr);
+                return tDate >= startDate && tDate <= endDate;
+            }).sort((a, b) => new Date(b.date) - new Date(a.date));
+
+            filteredTrans.forEach(t => {
+                let tDateStr = t.date;
+                if (tDateStr.includes('.')) tDateStr = tDateStr.split('.').reverse().join('-');
+                const tDate = new Date(tDateStr);
+                if (t.type === 'income') {
+                    totalIncome += t.amount;
+                    let tObj = { name: t.comment || "Додано вручну", phone: "", date: tDate.toLocaleDateString('uk-UA', { day: 'numeric', month: 'short' }), row: null, amount: t.amount, isTrans: true, id: t.id, rawDate: tDate.getTime() };
+                    if (t.category === "Плата за раннє заселення/пізнє виселення") { currEarlyLate += t.amount; window.bosoDetails.earlyLate.push(tObj); }
+                    else if (t.category === "Чан") { currVat += t.amount; window.bosoDetails.vat.push(tObj); }
+                    else if (t.category === "Оренда велосипедів") { currBikes += t.amount; window.bosoDetails.bikes.push(tObj); }
+                    else if (t.category === "Інший дохід" || t.category === "Міні-бар") { currOther += t.amount; window.bosoDetails.other.push(tObj); }
+                } else {
+                    totalExpense += t.amount;
+                }
+            });
+
+            animateValue('metTotalSum', 0, currSum, 800);
+            animateValue('metPaid', 0, currPaid, 800);
+            animateValue('metDebt', 0, Math.max(0, currSum - currPaid), 800);
+            animateValue('metCount', 0, currCount, 800);
+            animateValue('metPets', 0, currPets, 800);
+            animateValue('metGuests', 0, currGuests, 800);
+            animateValue('metVat', 0, currVat, 800);
+            animateValue('metEarlyLate', 0, currEarlyLate, 800);
+
+            // AI Текст
+            if(document.getElementById('aiSummaryText')) {
+                let bestRoom = "не визначено"; let maxR = 0;
+                for (let r in topRoomsCount) { if (topRoomsCount[r] > maxR) { maxR = topRoomsCount[r]; bestRoom = r; } }
+                let text = currSum === 0 ? "Даних ще немає. Час запускати рекламу!" : `Загальний дохід: <b>${currSum.toLocaleString('uk-UA')} ₴</b>. Хіт продажів — <b>${bestRoom}</b>.`;
+                document.getElementById('aiSummaryText').innerHTML = text;
+            }
+
+            // Рендер Мобільної Таблиці Фінансів
+            const tbodyFinance = document.getElementById('financeTableBody');
+            if(tbodyFinance) {
+                tbodyFinance.innerHTML = '';
+                function renderFinRow(title, desc, amount, type, isSystem, id = null) {
+                    if (Math.round(amount) <= 0) return '';
+                    const isInc = type === 'income';
+                    const badge = isInc ? `<span style="font-size:10px; font-weight:700; color:#059669; background:#D1FAE5; padding:2px 6px; border-radius:4px;">Дохід</span>` : `<span style="font-size:10px; font-weight:700; color:#DC2626; background:#FEE2E2; padding:2px 6px; border-radius:4px;">Витрата</span>`;
+                    const color = isInc ? '#059669' : '#DC2626';
+                    
+                    const actions = isSystem ? `<span style="color:#9CA3AF; font-size:11px; font-weight:700;">Автоматичний запис (з броні)</span>` : `
+                        <button class="btn-secondary" style="flex:1; padding:8px; font-size:12px;" onclick="event.stopPropagation(); toggleEditFinRow(${id})">Редагувати</button>
+                        <button class="btn-outline-danger" style="padding:8px 12px; font-size:12px;" onclick="event.stopPropagation(); deleteGenericItem('transaction', ${id})"><svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg></button>`;
+
+                    let mainRow = `
+                    <div class="fin-mob-row" id="mainRow-${id || Date.now()}" ${!isSystem && id ? `onclick="toggleEditFinRow(${id})"` : ''}>
+                        <div class="fin-mob-row-header">
+                            <div><div class="fin-mob-title">${title}</div><div class="fin-mob-desc">${desc}</div></div>
+                            <div style="text-align:right; display:flex; flex-direction:column; align-items:flex-end; gap:4px;">
+                                <div class="fin-mob-amt" style="color: ${color};">${isInc?'+':'-'}${Math.round(amount).toLocaleString('uk-UA')} ₴</div>
+                                ${badge}
+                            </div>
+                        </div>
+                        <div class="fin-mob-actions">${actions}</div>
+                    </div>`;
+
+                    let editHtml = '';
+                    if (!isSystem && id) {
+                        const t = transactions.find(x => x.id === id);
+                        if (t) {
+                            editHtml = `
+                            <div id="editRow-${id}" style="display: none; background: #FAFAFA; border: 1px solid #E5E7EB; border-radius: 12px; padding: 16px; margin-bottom: 12px; border-left: 4px solid ${color};">
+                                <div class="form-group"><label>Сума (грн)</label><input type="number" id="editAmt-${id}" value="${t.amount}" min="1" style="font-weight:800; font-size:18px; color:${color}; background:#FFF;"></div>
+                                <div class="form-group"><label>Дата</label><input type="date" id="editDate-${id}" value="${t.date}" style="background:#FFF;"></div>
+                                <div class="form-group"><label>Коментар</label><input type="text" id="editComm-${id}" value="${t.comment || ''}" style="background:#FFF;"></div>
+                                <div style="display:flex; gap:8px;">
+                                    <button class="btn-secondary" style="flex:1;" onclick="event.stopPropagation(); toggleEditFinRow(${id})">Скасувати</button>
+                                    <button class="btn-primary" style="flex:1; background:${color}; border-color:${color};" onclick="event.stopPropagation(); saveInlineEdit(${id})">Зберегти</button>
+                                </div>
+                            </div>`;
+                        }
+                    }
+                    return mainRow + editHtml;
+                }
+
+                tbodyFinance.innerHTML += renderFinRow("Оренда котеджів", "Оплачена базова вартість", incomeBreakdown.base, 'income', true);
+                tbodyFinance.innerHTML += renderFinRow("Додаткові гості", "Оплати за додаткові місця", incomeBreakdown.guests, 'income', true);
+                tbodyFinance.innerHTML += renderFinRow("Тварини", "Оплати за улюбленців", incomeBreakdown.pets, 'income', true);
+                tbodyFinance.innerHTML += renderFinRow("Гнучкий графік", "Ранні/пізні заїзди", incomeBreakdown.earlyLate, 'income', true);
+
+                filteredTrans.forEach(t => {
+                    let dStr = t.date.includes('.') ? t.date.split('.').reverse().join('-') : t.date;
+                    const dateStr = new Date(dStr).toLocaleDateString('uk-UA', {day: 'numeric', month: 'short'});
+                    tbodyFinance.innerHTML += renderFinRow(t.category, t.comment || dateStr, t.amount, t.type, false, t.id);
+                });
+
+                if (totalIncome === 0 && filteredTrans.length === 0) {
+                    tbodyFinance.innerHTML = '<div style="text-align:center; padding:30px; color:#9CA3AF; font-size:13px;">Немає фінансових операцій</div>';
+                }
+            }
+
+            const finIncEl = document.getElementById('finIncome');
+            const finExpEl = document.getElementById('finExpense');
+            const finProfEl = document.getElementById('finProfit');
+            if(finIncEl && finExpEl && finProfEl) {
+                const profit = totalIncome - totalExpense;
+                finIncEl.innerText = Math.round(totalIncome).toLocaleString('uk-UA') + ' ₴';
+                finExpEl.innerText = Math.round(totalExpense).toLocaleString('uk-UA') + ' ₴';
+                finProfEl.innerText = Math.round(profit).toLocaleString('uk-UA') + ' ₴';
+                finProfEl.style.color = profit >= 0 ? 'var(--text-main)' : '#DC2626';
+            }
+            renderCharts(startDate, endDate);
+        }
+
+        // 🚀 КАРТКИ ВВОДУ ТРАНЗАКЦІЙ
+        const incomeCategories = ["Плата за раннє заселення/пізнє виселення", "Додаткові гості", "Домашні тварини", "Міні-бар", "Чан", "Оренда велосипедів", "Інший дохід"];
+        const expenseCategories = ["Прибирання", "Прасування", "Користування електроенергією", "Утримання прилеглої території", "Розхідні матеріали", "Реклама", "Адміністрування та SMM", "Податки", "Інші витрати"];
+        let transactions = [];
+
+        function openFinanceInlineCards(type) {
+            const isIncome = type === 'income';
+            const categories = isIncome ? incomeCategories : expenseCategories;
+            const colorHex = isIncome ? '#059669' : '#DC2626';
+            const bgHex = isIncome ? '#ECFDF5' : '#FEF2F2';
+            document.getElementById('fcTitle').innerText = isIncome ? "Категорія доходу" : "Категорія витрати";
+            document.getElementById('fcTitle').style.color = colorHex;
+
+            let html = '';
+            categories.forEach((cat, idx) => {
+                html += `
+                <div class="it-card" id="itCard-${idx}" onclick="toggleInlineCard(${idx})">
+                    <div class="it-header">
+                        <div class="it-icon" style="background: ${bgHex}; color: ${colorHex};"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/></svg></div>
+                        <div class="it-title">${cat}</div>
+                    </div>
+                    <div class="it-body" id="itBody-${idx}" onclick="event.stopPropagation()">
+                        <div class="form-group"><label>Сума (грн)</label><input type="number" id="itAmt-${idx}" placeholder="0" min="1" style="font-weight: 800; font-size: 20px; color: ${colorHex}; width: 100%;"></div>
+                        <div class="form-group"><label>Дата</label><input type="date" id="itDate-${idx}" value="${new Date().toISOString().split('T')[0]}" style="width: 100%;"></div>
+                        <div class="form-group"><label>Коментар (необов'язково)</label><input type="text" id="itComm-${idx}" placeholder="Деталі..." style="width: 100%;"></div>
+                        <div style="display: flex; gap: 8px;">
+                            <button class="btn-secondary" style="flex:1;" onclick="toggleInlineCard(${idx}); event.stopPropagation();">Скасувати</button>
+                            <button class="btn-primary" style="flex:1; background:${colorHex}; border-color:${colorHex};" onclick="saveInlineTransaction('${type}', '${cat}', ${idx}); event.stopPropagation();">Зберегти</button>
+                        </div>
+                    </div>
+                </div>`;
+            });
+
+            const wrapper = document.getElementById('financeCardsWrap');
+            const tableWrap = document.getElementById('financeTableWrap');
+
+            const renderAndShowCards = () => {
+                document.getElementById('fcGrid').innerHTML = html;
+                tableWrap.style.display = 'none'; wrapper.style.display = 'block';
+                void wrapper.offsetWidth;
+                wrapper.classList.replace('fade-hidden', 'fade-visible');
+                setTimeout(() => wrapper.scrollIntoView({ behavior: 'smooth', block: 'start' }), 50);
+            };
+
+            if (wrapper.classList.contains('fade-visible')) {
+                wrapper.classList.replace('fade-visible', 'fade-hidden');
+                setTimeout(renderAndShowCards, 300);
+            } else {
+                tableWrap.classList.replace('fade-visible', 'fade-hidden');
+                setTimeout(renderAndShowCards, 300);
+            }
+        }
+
+        function openFinanceTable() {
+            const wrapper = document.getElementById('financeCardsWrap');
+            const tableWrap = document.getElementById('financeTableWrap');
+            if (wrapper.classList.contains('fade-visible')) {
+                wrapper.classList.replace('fade-visible', 'fade-hidden');
+                setTimeout(() => {
+                    wrapper.style.display = 'none'; tableWrap.style.display = 'block';
+                    void tableWrap.offsetWidth;
+                    tableWrap.classList.replace('fade-hidden', 'fade-visible');
+                    setTimeout(() => document.querySelector('.finance-summary').scrollIntoView({ behavior: 'smooth', block: 'start' }), 50);
+                }, 300);
+            }
+        }
+
+        function toggleInlineCard(index) {
+            const clickedCard = document.getElementById('itCard-' + index);
+            const isAlreadyActive = clickedCard.classList.contains('active');
+            document.querySelectorAll('.it-card').forEach(card => card.classList.remove('active'));
+            if (!isAlreadyActive) {
+                clickedCard.classList.add('active');
+                setTimeout(() => clickedCard.scrollIntoView({ behavior: 'smooth', block: 'center' }), 150); 
+            }
+        }
+
+        function saveInlineTransaction(type, category, idx) {
+            const amount = parseInt(document.getElementById('itAmt-' + idx).value) || 0;
+            const dateInput = document.getElementById('itDate-' + idx).value;
+            const comment = document.getElementById('itComm-' + idx).value.trim();
+            if (amount <= 0) { showToast("Сума має бути більше нуля!"); return; }
+
+            transactions.push({ id: Date.now(), type: type, category: category, amount: amount, date: dateInput, comment: comment });
+            saveSettingsToCloud(); 
+            calculateAnalytics();  
+            showToast("Запис успішно додано!");
+            openFinanceTable();    
+        }
+
+        function toggleEditFinRow(id) {
+            const editRow = document.getElementById(`editRow-${id}`);
+            const mainRow = document.getElementById(`mainRow-${id}`);
+            if (editRow.style.display === 'none') {
+                document.querySelectorAll('div[id^="editRow-"]').forEach(row => row.style.display = 'none');
+                editRow.style.display = 'block';
+                if (mainRow) mainRow.style.display = 'none'; // Ховаємо головний рядок в мобілці, показуємо форму
+            } else {
+                editRow.style.display = 'none';
+                if (mainRow) mainRow.style.display = 'flex';
+            }
+        }
+
+        function saveInlineEdit(id) {
+            const t = transactions.find(x => x.id === id);
+            if (!t) return;
+            const newAmt = parseInt(document.getElementById(`editAmt-${id}`).value) || 0;
+            const newDate = document.getElementById(`editDate-${id}`).value;
+            const newComm = document.getElementById(`editComm-${id}`).value.trim();
+            if (newAmt <= 0) { showToast("Сума має бути більше нуля!"); return; }
+            t.amount = newAmt; t.date = newDate; t.comment = newComm;
+            saveSettingsToCloud(); calculateAnalytics(); 
+            showToast("Зміни успішно збережено!");
+        }
+
+        function jumpToFinanceAndEdit(id) {
+            document.getElementById('uniDetailsModal').classList.remove('active');
+            switchReportTab('finance', document.querySelectorAll('.r-tab')[0]);
+            const tableWrap = document.getElementById('financeTableWrap');
+            if (tableWrap.classList.contains('fade-hidden')) openFinanceTable();
+            setTimeout(() => {
+                const editRow = document.getElementById(`editRow-${id}`);
+                if (editRow) {
+                    if (editRow.style.display === 'none') toggleEditFinRow(id);
+                    else document.getElementById(`mainRow-${id}`).scrollIntoView({ behavior: 'smooth', block: 'center' });
+                }
+            }, 400); 
+        }
+
+        // 🚀 ГРАФІКИ
+        let roomsChartInstance = null;
+        let sourceChartInstance = null;
+        let revenueLineChartInstance = null;
+        let currentChartMode = 'count'; 
+        let globalRoomCounts = {};
+        let globalRoomMoney = {};
+
+        function toggleRoomsChart(mode) {
+            currentChartMode = mode;
+            document.getElementById('chartModeCount').classList.toggle('active', mode === 'count');
+            document.getElementById('chartModeMoney').classList.toggle('active', mode === 'money');
+            if (roomsChartInstance) {
+                let dataArr = mode === 'count' ? Object.values(globalRoomCounts) : Object.values(globalRoomMoney);
+                roomsChartInstance.data.datasets[0].data = dataArr;
+                roomsChartInstance.data.datasets[0].label = mode === 'count' ? 'Броні' : 'Дохід (грн)';
+                roomsChartInstance.update();
+            }
+        }
+
+        function renderCharts(startDate, endDate) {
+            globalRoomCounts = {}; globalRoomMoney = {}; globalRoomNights = {};
+            const sourceCounts = {}; const revenueTimeline = {}; 
+            roomsList.forEach(r => { globalRoomCounts[r.name] = 0; globalRoomMoney[r.name] = 0; globalRoomNights[r.name] = 0; });
+            ['Instagram', 'Telegram', 'Сайт', 'Телефон'].forEach(s => sourceCounts[s] = 0);
+
+            allBookings.forEach(b => {
+                if (String(b.status).toLowerCase().includes('скас')) return;
+                let bDateStr = b.checkIn.includes('.') ? b.checkIn.split('.').reverse().join('-') : b.checkIn;
+                const bDate = new Date(bDateStr);
+                
+                if (bDate >= startDate && bDate <= endDate) {
+                    if (b.cottage) {
+                        const matchedRoom = roomsList.find(r => b.cottage.includes(r.name) || b.cottage.includes(r.short));
+                        const roomName = matchedRoom ? matchedRoom.name : b.cottage;
+                        let outDStr = b.checkOut.includes('.') ? b.checkOut.split('.').reverse().join('-') : b.checkOut;
+                        let nights = Math.max(1, Math.round((new Date(outDStr) - bDate) / 86400000));
+                        globalRoomCounts[roomName] = (globalRoomCounts[roomName] || 0) + 1;
+                        globalRoomMoney[roomName] = (globalRoomMoney[roomName] || 0) + Number(b.totalPrice || 0);
+                        globalRoomNights[roomName] = (globalRoomNights[roomName] || 0) + nights;
+                    }
+                    let src = String(b.source).replace(' Бот', '');
+                    sourceCounts[src] = (sourceCounts[src] || 0) + 1;
+                    let rawDateKey = `${bDate.getFullYear()}-${String(bDate.getMonth() + 1).padStart(2, '0')}-${String(bDate.getDate()).padStart(2, '0')}`;
+                    revenueTimeline[rawDateKey] = (revenueTimeline[rawDateKey] || 0) + Number(b.totalPrice || 0);
+                }
+            });
+
+            Chart.defaults.font.family = "'Inter', sans-serif";
+            Chart.defaults.color = '#6B7280';
+            const bosoColors = ['#556B2F', '#D2B48C', '#2C2C2C', '#8FBC8F', '#BC8F8F'];
+
+            const ctxRooms = document.getElementById('roomsChart').getContext('2d');
+            if (roomsChartInstance) roomsChartInstance.destroy(); 
+            roomsChartInstance = new Chart(ctxRooms, {
+                type: 'bar',
+                data: {
+                    labels: Object.keys(globalRoomCounts),
+                    datasets: [{
+                        label: currentChartMode === 'count' ? 'Броні' : 'Дохід',
+                        data: currentChartMode === 'count' ? Object.values(globalRoomCounts) : Object.values(globalRoomMoney),
+                        backgroundColor: bosoColors[0], borderRadius: 4, maxBarThickness: 20 
+                    }]
+                },
+                options: {
+                    responsive: true, maintainAspectRatio: false, layout: { padding: { top: 10 } }, 
+                    plugins: { legend: { display: false } },
+                    scales: { y: { beginAtZero: true, grid: { display: false } }, x: { grid: { display: false } } } 
+                } 
+            });
+
+            const ctxSource = document.getElementById('sourceChart').getContext('2d');
+            if (sourceChartInstance) sourceChartInstance.destroy();
+            const activeSources = Object.keys(sourceCounts).filter(k => sourceCounts[k] > 0);
+            sourceChartInstance = new Chart(ctxSource, {
+                type: 'doughnut',
+                data: {
+                    labels: activeSources.length > 0 ? activeSources : ['Немає даних'],
+                    datasets: [{
+                        data: activeSources.length > 0 ? activeSources.map(k => sourceCounts[k]) : [1],
+                        backgroundColor: activeSources.length > 0 ? bosoColors : ['#F3F4F6'],
+                        borderWidth: 0, hoverOffset: 2
+                    }]
+                },
+                options: { responsive: true, maintainAspectRatio: false, layout: { padding: 10 }, cutout: '75%', plugins: { legend: { position: 'bottom', labels: { usePointStyle: true, boxWidth: 8, font: {size: 11} } } } }
+            });
+
+            const ctxLine = document.getElementById('revenueLineChart').getContext('2d');
+            if (revenueLineChartInstance) revenueLineChartInstance.destroy();
+            const sortedRawKeys = Object.keys(revenueTimeline).sort(); 
+            const sortedLabels = sortedRawKeys.map(k => { let parts = k.split('-'); return new Date(parts[0], parts[1] - 1, parts[2]).toLocaleDateString('uk-UA', { day: 'numeric', month: 'short' }); });
+            
+            revenueLineChartInstance = new Chart(ctxLine, {
+                type: 'line',
+                data: {
+                    labels: sortedLabels,
+                    datasets: [{
+                        label: 'Дохід', data: sortedRawKeys.map(k => revenueTimeline[k]), borderColor: '#556B2F', backgroundColor: 'rgba(85, 107, 47, 0.1)',
+                        borderWidth: 2, fill: true, tension: 0.4, pointBackgroundColor: '#FFF', pointBorderColor: '#556B2F', pointRadius: 3
+                    }]
+                },
+                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, border: { dash: [4, 4] } }, x: { grid: { display: false } } } }
+            });
+        }
+
+        // --- ПЕРЕМИКАЧ ВКЛАДОК (Авалітика / Фінанси)
+        function switchReportTab(tabName, el) {
+            document.querySelectorAll('.r-tab').forEach(t => t.classList.remove('active'));
+            if(el) el.classList.add('active');
+            
+            document.getElementById('rep-analytics').style.display = 'none';
+            document.getElementById('rep-finance').style.display = 'none';
+            document.getElementById('rep-' + tabName).style.display = 'block';
+            
+            if (tabName === 'analytics' || tabName === 'finance') {
+                calculateAnalytics(); 
+            }
+        }
+        
+        // Ініціалізація Календаря Звітів
+        document.addEventListener('DOMContentLoaded', () => {
+            if(document.getElementById('customReportRange')) {
+                flatpickr("#customReportRange", { 
+                    locale: "uk", mode: "range", dateFormat: "Y-m-d", disableMobile: "true",
+                    onChange: function(selectedDates) {
+                        if (selectedDates.length === 2) {
+                            document.getElementById('reportPeriodVal').value = 'custom';
+                            const d1 = selectedDates[0].toLocaleDateString('uk-UA', {day: 'numeric', month: 'short'});
+                            const d2 = selectedDates[1].toLocaleDateString('uk-UA', {day: 'numeric', month: 'short'});
+                            document.getElementById('reportPeriodText').innerText = `${d1} — ${d2}`;
+                            document.querySelectorAll('#reportPeriodWrapper .custom-option').forEach(opt => opt.classList.remove('selected'));
+                            calculateAnalytics(); 
+                        }
+                    } 
+                });
+            }
+        });
         
        window.onload = () => { 
             switchView('grid'); 
