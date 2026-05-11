@@ -1887,7 +1887,7 @@
         }
 
         // --- ЛОГІКА ПРЕМІУМ-КАРТКИ (TOOLTIP) ---
-        function showPremiumTooltip(element, rowNumber) {
+        function showPremiumTooltip(element, rowNumber, type = 'main') {
             const tooltip = document.getElementById('premiumTooltip');
             const b = allBookings.find(x => x.row == rowNumber);
             if (!b) return;
@@ -1917,13 +1917,13 @@
 
             let paidRowHtml = paid > 0 ? `<div class="tt-row"><span class="tt-label">Внесено:</span> <span class="tt-value" style="color: #059669;">${paid} грн</span></div>` : '';
 
-            // 🚀 ЧИСТИМО КОМЕНТАР ДЛЯ ОСНОВНОГО ТУЛТИПУ
             let rawComment = b.comment ? String(b.comment).trim() : "";
             if (rawComment === "undefined" || rawComment === "null") rawComment = "";
             
             if (type === 'early' || type === 'late') {
                 // МАЛЮЄМО МІНІ-ТУЛТИП ДЛЯ ХВОСТИКІВ
                 let timeText = "";
+                // Преміальна SVG іконка годинника
                 let iconSvg = `<svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="margin-right: 6px;"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>`;
                 
                 if (type === 'early') {
@@ -1934,27 +1934,27 @@
                     if (m) {
                         timeText = `Виїзд до ${m[1]}`;
                     } else {
+                        // Преміальна SVG іконка подарунка для акції
                         iconSvg = `<svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="margin-right: 6px;"><rect x="3" y="8" width="18" height="4" rx="1" stroke-width="2.5"></rect><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 8v13M19 12v7a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2v-7M7.5 8a2.5 2.5 0 0 1 0-5A4.8 8 0 0 1 12 8a4.8 8 0 0 1 4.5-5 2.5 2.5 0 0 1 0 5"></path></svg>`;
                         timeText = `Акційний виїзд (до 14:00)`;
                     }
                 }
 
-                tooltip.innerHTML = `<div style="display: flex; align-items: center; justify-content: center; padding: 4px; font-weight: 700; color: #111827; font-size: 14px;">${iconSvg}${timeText}</div>`;
-                tooltip.style.width = 'auto'; // Робимо його вузеньким і акуратним
+                tooltip.innerHTML = `<div style="display: flex; align-items: center; justify-content: center; padding: 4px; font-weight: 700; color: #111827; font-size: 13px;">${iconSvg}${timeText}</div>`;
+                tooltip.style.width = 'auto'; 
                 tooltip.style.minWidth = '140px';
 
             } else {
                 // МАЛЮЄМО СТАНДАРТНИЙ ВЕЛИКИЙ ТУЛТИП
-                tooltip.style.width = '260px'; // Повертаємо стандартну ширину
+                tooltip.style.width = '260px'; 
 
-                // Вирізаємо ранній/пізній заїзд з основного коментаря, бо для них є свої тултипи
+                // Вирізаємо ранній/пізній заїзд з коментаря
                 let cleanComment = rawComment.replace(/🕒 Ранній заїзд: з \d{2}:\d{2}(\s*\|\s*)?/g, '')
                                              .replace(/🕒 Пізній виїзд: до \d{2}:\d{2}(\s*\|\s*)?/g, '')
                                              .replace(/^\|\s*/, '')
                                              .replace(/\|\s*$/, '')
                                              .trim();
                 
-                // Якщо після чистки залишилось тільки "Коментар гостя:", прибираємо і його
                 if (cleanComment === "Коментар гостя:" || cleanComment.startsWith("Коментар гостя:") && cleanComment.length < 17) {
                     cleanComment = "";
                 }
@@ -1984,16 +1984,12 @@
                 `;
             }
 
-            // МАГІЯ ПОЗИЦІОНУВАННЯ ДЛЯ МОБІЛКИ
+            // МАГІЯ ПОЗИЦІОНУВАННЯ
             const rect = element.getBoundingClientRect();
-            
-            // Центруємо рівно по центру екрану по горизонталі
             let left = (window.innerWidth - tooltip.offsetWidth) / 2;
-            
-            // Ставимо вище пальця (над броНню)
             let top = rect.top - tooltip.offsetHeight - 20;
 
-            // Якщо зверху мало місця (бронь в самому верху екрану) - кидаємо картку під палець
+            // Якщо зверху мало місця - ставимо під броНню
             if (top < 40) {
                 top = rect.bottom + 20;
             }
@@ -2001,7 +1997,6 @@
             tooltip.style.top = top + 'px';
             tooltip.style.left = left + 'px';
             
-            // Запускаємо анімацію
             requestAnimationFrame(() => {
                 tooltip.classList.add('visible');
             });
