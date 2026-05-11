@@ -525,6 +525,24 @@ input[type="number"] {
 .bt-status.gray { background: #F3F4F6; color: #6B7280; }
 .bt-status.yellow { background: #FEF3C7; color: #B45309; }
 
+        /* --- ПРЕМІУМ-ІНДИКАТОРИ РАННЬОГО/ПІЗНЬОГО ЗАЇЗДУ --- */
+        .time-extension {
+            position: absolute;
+            top: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.12); /* Легке затемнення */
+            background-image: repeating-linear-gradient(45deg, transparent, transparent 4px, rgba(255,255,255,0.15) 4px, rgba(255,255,255,0.15) 8px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1;
+            transition: 0.2s ease;
+        }
+        .time-extension:hover { background: rgba(0, 0, 0, 0.2); }
+        .time-extension.early { left: 0; border-right: 1px solid rgba(0,0,0,0.05); border-radius: 6px 0 0 6px; }
+        .time-extension.late { right: 0; border-left: 1px solid rgba(0,0,0,0.05); border-radius: 0 6px 6px 0;}
+        .time-extension svg { stroke: rgba(255,255,255,0.9); }
+        
         /* --- ЗВІТИ ТА АНАЛІТИКА --- */
         .reports-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; }
         .reports-tabs { display: flex; gap: 8px; background: #F3F4F6; padding: 6px; border-radius: 12px; width: max-content; }
@@ -2413,24 +2431,45 @@ let s = String(b.status).toLowerCase();
 if (s.includes('підтвердж') || s.includes('заїхав')) statusClass = 'status-confirmed';
 if (s.includes('скас')) statusClass = 'status-cancelled';
 
-// 🟢 ВІЗУАЛЬНИЙ ГНУЧКИЙ ГРАФІК: Читаємо, чи є ранній/пізній заїзд або акція Пт-Нд
-let exComment = b.comment ? String(b.comment) : "";
-let exHasEarly = exComment.includes('Ранній заїзд');
-let exHasLate = exComment.includes('Пізній виїзд') || (durationDays === 2 && inDate.getDay() === 5 && outDate.getDay() === 0);
+// 🟢 ВІЗУАЛЬНИЙ ГНУЧКИЙ ГРАФІК: Читаємо, чи є ранній/пізній заїзд
+                            let exComment = b.comment ? String(b.comment) : "";
+                            let exHasEarly = exComment.includes('Ранній заїзд');
+                            let exHasLate = exComment.includes('Пізній виїзд') || (durationDays === 2 && inDate.getDay() === 5 && outDate.getDay() === 0);
 
-let blockLeft = offsetDays * cellWidth; 
-let blockWidth = durationDays * cellWidth; 
+                            let blockLeft = offsetDays * cellWidth; 
+                            let blockWidth = durationDays * cellWidth; 
 
-// 🟢 Розширюємо плашку візуально, щоб вона "з'їла" зайнятий день
-if (exHasLate) blockWidth += (cellWidth * 0.85); // Тягнемо майже на весь день виїзду
-if (exHasEarly) {
-    blockLeft -= (cellWidth * 0.85); // Тягнемо назад на день заїзду
-    blockWidth += (cellWidth * 0.85);
-}
+                            // ЗМІННІ ДЛЯ ПРЕМІУМ-ВІЗУАЛУ
+                            let extensionsHtml = "";
+                            let padLeft = 8;
+                            let padRight = 8;
 
-// Захист від вильоту за межі екрану
-if (offsetDays < 0) { blockWidth = (durationDays + offsetDays) * cellWidth; blockLeft = 0; }
-if (offsetDays + durationDays > daysCount) { blockWidth = (daysCount - offsetDays) * cellWidth; }
+                            const iconClock = `<svg width="12" height="12" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>`;
+                            const iconGift = `<svg width="12" height="12" fill="none" stroke="currentColor" viewBox="0 0 24 24"><rect x="3" y="8" width="18" height="4" rx="1" stroke-width="2.5"></rect><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 8v13M19 12v7a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2v-7M7.5 8a2.5 2.5 0 0 1 0-5A4.8 8 0 0 1 12 8a4.8 8 0 0 1 4.5-5 2.5 2.5 0 0 1 0 5"></path></svg>`;
+
+                            if (exHasLate) {
+                                blockWidth += (cellWidth * 0.85);
+                                let isPromo = (durationDays === 2 && inDate.getDay() === 5 && outDate.getDay() === 0);
+                                let currentIcon = isPromo ? iconGift : iconClock;
+                                
+                                extensionsHtml += `<div class="time-extension late" style="width: ${cellWidth * 0.85}px;" 
+                                    onmouseenter="event.stopPropagation(); bosoHover(this, ${b.row}, 'late')" 
+                                    onmouseleave="event.stopPropagation(); bosoLeave()">${currentIcon}</div>`;
+                                padRight = (cellWidth * 0.85) + 8;
+                            }
+                            if (exHasEarly) {
+                                blockLeft -= (cellWidth * 0.85);
+                                blockWidth += (cellWidth * 0.85);
+                                
+                                extensionsHtml += `<div class="time-extension early" style="width: ${cellWidth * 0.85}px;" 
+                                    onmouseenter="event.stopPropagation(); bosoHover(this, ${b.row}, 'early')" 
+                                    onmouseleave="event.stopPropagation(); bosoLeave()">${iconClock}</div>`;
+                                padLeft = (cellWidth * 0.85) + 8;
+                            }
+
+                            // Захист від вильоту за межі екрану
+                            if (offsetDays < 0) { blockWidth = (durationDays + offsetDays) * cellWidth; blockLeft = 0; padLeft = 8; extensionsHtml = extensionsHtml.replace(/early/g, 'early" style="display:none;"'); }
+                            if (offsetDays + durationDays > daysCount) { blockWidth = (daysCount - offsetDays) * cellWidth; padRight = 8; extensionsHtml = extensionsHtml.replace(/late/g, 'late" style="display:none;"'); }
 
                             let total = Number(b.totalPrice) || 0;
                             let paid = Number(b.paidAmount) || 0;
@@ -2446,18 +2485,20 @@ if (offsetDays + durationDays > daysCount) { blockWidth = (daysCount - offsetDay
 
                             let guestName = String(b.name).replace(' (Ручна бронь)', '');
 
-                           // 🚀 ЧИСТА ПЛАШКА БЕЗ ЗАЙВИХ EVENT'ІВ
+                            // 🚀 ЧИСТА ПЛАШКА
                             rowHtml += `
-                                <div class="booking-block ${statusClass}" style="left: ${blockLeft}px; width: ${blockWidth}px; padding: 6px 8px; justify-content: flex-start;" 
-         onclick="openDetailsByRow(event, ${b.row})"
-         onmouseenter="bosoHover(this, ${b.row})" 
-         onmouseleave="bosoLeave()">
+                                <div class="booking-block ${statusClass}" style="left: ${blockLeft}px; width: ${blockWidth}px; padding-left: ${padLeft}px; padding-right: ${padRight}px; justify-content: flex-start;" 
+                                     onclick="openDetailsByRow(event, ${b.row})"
+                                     onmouseenter="bosoHover(this, ${b.row}, 'main')" 
+                                     onmouseleave="bosoLeave()">
                                     
-                                    <div style="font-size: 12px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; line-height: 1.2;">
+                                    ${extensionsHtml}
+                                    
+                                    <div style="position: relative; z-index: 2; font-size: 12px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; line-height: 1.2;">
                                         ${guestName}
                                     </div>
                                     
-                                    <div style="margin-top: 4px; display: flex; overflow: hidden;">
+                                    <div style="position: relative; z-index: 2; margin-top: 4px; display: flex; overflow: hidden;">
                                         <span style="background: ${badgeBg}; color: ${badgeColor}; font-size: 9px; font-weight: 700; padding: 2px 6px; border-radius: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; box-shadow: 0 1px 2px rgba(0,0,0,0.1);">
                                             ${finText}
                                         </span>
@@ -2468,7 +2509,7 @@ if (offsetDays + durationDays > daysCount) { blockWidth = (daysCount - offsetDay
                 });
 
                 rowHtml += `</div>`; 
-                gridContainer.innerHTML += rowHtml; // Додаємо всю зібрану лінію одразу!
+                gridContainer.innerHTML += rowHtml;
             });
             
             if (timelineMode === 'month') {
@@ -3455,103 +3496,130 @@ document.addEventListener('click', function(e) {
             initApp();          // Підтягуємо дані з бази
         };
 
-        // 🚀 РОБОЧИЙ РЕНДЕР КАРТКИ (ТВІЙ КОД + ПРЕМІУМ КОМЕНТАР + ПОЗИЦІЯ ВГОРУ)
-function bosoHover(element, rowId) {
-    // Шукаємо або створюємо вікно з нуля
-    let tt = document.getElementById('boso-tooltip');
-    if (!tt) {
-        tt = document.createElement('div');
-        tt.id = 'boso-tooltip';
-        document.body.appendChild(tt);
-    }
-    
-    const b = allBookings.find(x => x.row == rowId);
-    if (!b) return;
+        // 🚀 РОБОЧИЙ РЕНДЕР КАРТКИ (ТВІЙ КОД + ПРЕМІУМ КОМЕНТАР + РОЗУМНІ ХВОСТИКИ)
+        function bosoHover(element, rowId, type = 'main') {
+            let tt = document.getElementById('boso-tooltip');
+            if (!tt) {
+                tt = document.createElement('div');
+                tt.id = 'boso-tooltip';
+                document.body.appendChild(tt);
+            }
+            
+            const b = allBookings.find(x => x.row == rowId);
+            if (!b) return;
 
-    // 1. Форматуємо дати 
-    let inDate = "—"; let outDate = "—";
-    try {
-        if (b.checkIn) inDate = parseSafeDate(b.checkIn).toLocaleDateString('uk-UA', {day:'numeric', month:'short'});
-        if (b.checkOut) outDate = parseSafeDate(b.checkOut).toLocaleDateString('uk-UA', {day:'numeric', month:'short'});
-    } catch(err) {}
+            let inDate = "—"; let outDate = "—";
+            try {
+                if (b.checkIn) inDate = parseSafeDate(b.checkIn).toLocaleDateString('uk-UA', {day:'numeric', month:'short'});
+                if (b.checkOut) outDate = parseSafeDate(b.checkOut).toLocaleDateString('uk-UA', {day:'numeric', month:'short'});
+            } catch(err) {}
 
-    // 2. Інформація
-    const name = b.name ? String(b.name).replace(' (Ручна бронь)', '') : "Клієнт";
-    const guests = b.guests || 2;
-    const room = b.cottage || "—";
-    const total = Number(b.totalPrice) || 0;
-    const paid = Number(b.paidAmount) || 0;
-    const balance = total - paid;
+            const name = b.name ? String(b.name).replace(' (Ручна бронь)', '') : "Клієнт";
+            const guests = b.guests || 2;
+            const room = b.cottage || "—";
+            const total = Number(b.totalPrice) || 0;
+            const paid = Number(b.paidAmount) || 0;
+            const balance = total - paid;
 
-    // 3. Статус-блок (Нижня кольорова плашка)
-    let statusHtml = "";
-    let sClass = String(b.status).toLowerCase();
-    
-    if (sClass.includes('скас')) {
-        statusHtml = `<div class="bt-status gray">Скасовано</div>`;
-    } else if (total === 0) {
-        statusHtml = `<div class="bt-status gray">Очікує ціни</div>`;
-    } else if (balance <= 0) {
-        statusHtml = `<div class="bt-status green">Оплачено повністю</div>`;
-    } else if (paid > 0 && balance > 0) {
-        statusHtml = `<div class="bt-status red">Залишок до сплати: ${balance} грн</div>`;
-    } else {
-        statusHtml = `<div class="bt-status yellow">Очікує аванс: ${Math.round(total/2)} грн</div>`;
-    }
+            let statusHtml = "";
+            let sClass = String(b.status).toLowerCase();
+            
+            if (sClass.includes('скас')) {
+                statusHtml = `<div class="bt-status gray">Скасовано</div>`;
+            } else if (total === 0) {
+                statusHtml = `<div class="bt-status gray">Очікує ціни</div>`;
+            } else if (balance <= 0) {
+                statusHtml = `<div class="bt-status green">Оплачено повністю</div>`;
+            } else if (paid > 0 && balance > 0) {
+                statusHtml = `<div class="bt-status red">Залишок до сплати: ${balance} грн</div>`;
+            } else {
+                statusHtml = `<div class="bt-status yellow">Очікує аванс: ${Math.round(total/2)} грн</div>`;
+            }
 
-    // 🚀 ПРЕМІУМ КОМЕНТАР
-    let rawComment = b.comment ? String(b.comment).trim() : "";
-    if (rawComment === "undefined" || rawComment === "null") rawComment = "";
-    let commentHtml = rawComment !== "" 
-        ? `<div style="margin-top: 16px; padding: 12px 14px; background: #F9FAFB; border-left: 3px solid var(--accent); border-radius: 4px 8px 8px 4px; font-size: 13px; color: #4B5563; line-height: 1.4; text-align: left;">
-             <span style="display: block; font-size: 10px; font-weight: 800; text-transform: uppercase; color: #9CA3AF; margin-bottom: 4px; letter-spacing: 0.5px;">Коментар</span>
-             <div style="display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; text-overflow: ellipsis; word-break: break-all;">
-                 ${rawComment}
-             </div>
-           </div>` 
-        : '';
+            let rawComment = b.comment ? String(b.comment).trim() : "";
+            if (rawComment === "undefined" || rawComment === "null") rawComment = "";
 
-    // 5. Малюємо HTML
-    tt.innerHTML = `
-        <div class="bt-head">
-            <span class="bt-name">${name}</span>
-            <span class="bt-guests">${guests} ${getGuestWord(guests)}</span>
-        </div>
-        <div class="bt-row"><span class="bt-label">Номер:</span> <span class="bt-val">${room}</span></div>
-        <div class="bt-row"><span class="bt-label">Дати:</span> <span class="bt-val">${inDate} — ${outDate}</span></div>
-        <div class="bt-row"><span class="bt-label">Загальна сума:</span> <span class="bt-val">${total} грн</span></div>
-        <div class="bt-row"><span class="bt-label">Внесено:</span> <span class="bt-val green">${paid} грн</span></div>
-        ${statusHtml}
-        ${commentHtml}
-    `;
+            if (type === 'early' || type === 'late') {
+                // МАЛЮЄМО МІНІ-ТУЛТИП ДЛЯ ХВОСТИКІВ
+                let timeText = "";
+                let iconSvg = `<svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="margin-right: 6px;"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>`;
+                
+                if (type === 'early') {
+                    let m = rawComment.match(/🕒 Ранній заїзд: з (\d{2}:\d{2})/);
+                    timeText = m ? `Заїзд з ${m[1]}` : 'Ранній заїзд';
+                } else {
+                    let m = rawComment.match(/🕒 Пізній виїзд: до (\d{2}:\d{2})/);
+                    if (m) {
+                        timeText = `Виїзд до ${m[1]}`;
+                    } else {
+                        iconSvg = `<svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="margin-right: 6px;"><rect x="3" y="8" width="18" height="4" rx="1" stroke-width="2.5"></rect><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 8v13M19 12v7a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2v-7M7.5 8a2.5 2.5 0 0 1 0-5A4.8 8 0 0 1 12 8a4.8 8 0 0 1 4.5-5 2.5 2.5 0 0 1 0 5"></path></svg>`;
+                        timeText = `Акційний виїзд (до 14:00)`;
+                    }
+                }
 
-    // 6. Жорстка прив'язка позиції (без event, беремо від element)
-    const targetRect = element.getBoundingClientRect();
-    
-    // 🚀 МАГІЯ: Чекаємо мілісекунду, щоб браузер проковтнув текст і знав точну висоту вікна
-    requestAnimationFrame(() => {
-        // Центруємо над блоком
-        let leftPos = targetRect.left + (targetRect.width / 2) - (tt.offsetWidth / 2); 
-        
-        // ПРІОРИТЕТ 1: СТАВИМО ВГОРУ НАД БРОННЮ
-        let topPos = targetRect.top - tt.offsetHeight - 12;
+                tt.innerHTML = `<div style="display: flex; align-items: center; justify-content: center; padding: 4px; font-weight: 700; color: #111827; font-size: 13px;">${iconSvg}${timeText}</div>`;
+                tt.style.width = 'auto'; 
+                tt.style.minWidth = '140px';
 
-        // ПРІОРИТЕТ 2: ЯКЩО ЗВЕРХУ НЕМАЄ МІСЦЯ - ПРИТИСКАЄМО ДО СТЕЛІ, ВНИЗ НЕ КИДАЄМО
-        if (topPos < 10) {
-            topPos = 10; 
+            } else {
+                // МАЛЮЄМО ВЕЛИКИЙ ТУЛТИП (БЕЗ ГОДИН ЗАЇЗДУ)
+                tt.style.width = '260px'; 
+                
+                let cleanComment = rawComment.replace(/🕒 Ранній заїзд: з \d{2}:\d{2}(\s*\|\s*)?/g, '')
+                                             .replace(/🕒 Пізній виїзд: до \d{2}:\d{2}(\s*\|\s*)?/g, '')
+                                             .replace(/^\|\s*/, '')
+                                             .replace(/\|\s*$/, '')
+                                             .trim();
+                
+                if (cleanComment === "Коментар гостя:" || cleanComment.startsWith("Коментар гостя:") && cleanComment.length < 17) {
+                    cleanComment = "";
+                }
+
+                let commentHtml = cleanComment !== "" 
+                    ? `<div style="margin-top: 16px; padding: 12px 14px; background: #F9FAFB; border-left: 3px solid var(--accent); border-radius: 4px 8px 8px 4px; font-size: 13px; color: #4B5563; line-height: 1.4; text-align: left;">
+                         <span style="display: block; font-size: 10px; font-weight: 800; text-transform: uppercase; color: #9CA3AF; margin-bottom: 4px; letter-spacing: 0.5px;">Додатково</span>
+                         <div style="display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; text-overflow: ellipsis; word-break: break-all;">
+                             ${cleanComment}
+                         </div>
+                       </div>` 
+                    : '';
+
+                tt.innerHTML = `
+                    <div class="bt-head">
+                        <span class="bt-name">${name}</span>
+                        <span class="bt-guests">${guests} ${getGuestWord(guests)}</span>
+                    </div>
+                    <div class="bt-row"><span class="bt-label">Номер:</span> <span class="bt-val">${room}</span></div>
+                    <div class="bt-row"><span class="bt-label">Дати:</span> <span class="bt-val">${inDate} — ${outDate}</span></div>
+                    <div class="bt-row"><span class="bt-label">Загальна сума:</span> <span class="bt-val">${total} грн</span></div>
+                    <div class="bt-row"><span class="bt-label">Внесено:</span> <span class="bt-val green">${paid} грн</span></div>
+                    ${statusHtml}
+                    ${commentHtml}
+                `;
+            }
+
+            const targetRect = element.getBoundingClientRect();
+            
+            requestAnimationFrame(() => {
+                let leftPos = targetRect.left + (targetRect.width / 2) - (tt.offsetWidth / 2); 
+                
+                // ПРІОРИТЕТ 1: СТАВИМО ВГОРУ НАД БРОННЮ (АБО НАД ХВОСТИКОМ)
+                let topPos = targetRect.top - tt.offsetHeight - 12;
+
+                // ПРІОРИТЕТ 2: ЯКЩО ЗВЕРХУ НЕМАЄ МІСЦЯ - СТАВИМО ПІД БРОННЮ
+                if (topPos < 10) {
+                    topPos = targetRect.bottom + 12; 
+                }
+
+                if (leftPos < 10) leftPos = 10;
+                if (leftPos + tt.offsetWidth > window.innerWidth) leftPos = window.innerWidth - tt.offsetWidth - 10;
+
+                tt.style.top = topPos + 'px';
+                tt.style.left = leftPos + 'px';
+                
+                tt.classList.add('show');
+            });
         }
-
-        // Захист від вильоту за екран по боках
-        if (leftPos < 10) leftPos = 10;
-        if (leftPos + tt.offsetWidth > window.innerWidth) leftPos = window.innerWidth - tt.offsetWidth - 10;
-
-        tt.style.top = topPos + 'px';
-        tt.style.left = leftPos + 'px';
-        
-        // Вмикаємо!
-        tt.classList.add('show');
-    });
-}
 
 function bosoLeave() {
     const tt = document.getElementById('boso-tooltip');
