@@ -670,23 +670,18 @@
 
                 <div class="charts-grid">
                     <div class="chart-card">
-                        <h3>Динаміка</h3>
-                        <div style="position: relative; height: 180px; width: 100%;"><canvas id="revenueLineChart"></canvas></div>
+                        <h3 style="margin-bottom: 12px;">Популярність</h3>
+                        <div class="mode-toggle" style="margin: 0 0 16px 0; padding: 4px; width: 100%;">
+                            <div id="chartModeCount" class="mode-btn active" style="padding: 6px 4px; font-size: 11px;" onclick="toggleRoomsChart('count')">Броні</div>
+                            <div id="chartModeMoney" class="mode-btn" style="padding: 6px 4px; font-size: 11px;" onclick="toggleRoomsChart('money')">Дохід</div>
+                            <div id="chartModeNights" class="mode-btn" style="padding: 6px 4px; font-size: 11px;" onclick="toggleRoomsChart('nights')">Ночі</div>
+                        </div>
+                        <div style="position: relative; height: 200px; width: 100%;"><canvas id="roomsChart"></canvas></div>
                     </div>
+                    
                     <div class="chart-card">
-                        <h3>
-                            Популярність
-                            <div class="mode-toggle" style="margin: 0; padding: 2px;">
-                                <div id="chartModeCount" class="mode-btn active" style="padding: 4px 8px; font-size: 10px;" onclick="toggleRoomsChart('count')">Броні</div>
-                                <div id="chartModeMoney" class="mode-btn" style="padding: 4px 8px; font-size: 10px;" onclick="toggleRoomsChart('money')">Дохід</div>
-                                <div id="chartModeNights" class="mode-btn" style="padding: 4px 8px; font-size: 10px;" onclick="toggleRoomsChart('nights')">Ночі</div>
-                            </div>
-                        </h3>
-                        <div style="position: relative; height: 180px; width: 100%;"><canvas id="roomsChart"></canvas></div>
-                    </div>
-                    <div class="chart-card">
-                        <h3>Звідки гості</h3>
-                        <div style="position: relative; height: 180px; width: 100%;"><canvas id="sourceChart"></canvas></div>
+                        <h3 style="margin-bottom: 8px;">Звідки гості</h3>
+                        <div style="position: relative; height: 240px; width: 100%;"><canvas id="sourceChart"></canvas></div>
                     </div>
                 </div>
             </div>
@@ -2648,9 +2643,12 @@
             const finProfEl = document.getElementById('finProfit');
             if(finIncEl && finExpEl && finProfEl) {
                 const profit = totalIncome - totalExpense;
-                finIncEl.innerText = Math.round(totalIncome).toLocaleString('uk-UA') + ' ₴';
-                finExpEl.innerText = Math.round(totalExpense).toLocaleString('uk-UA') + ' ₴';
-                finProfEl.innerText = Math.round(profit).toLocaleString('uk-UA') + ' ₴';
+                
+                // 🟢 ЖИВІ ЦИФРИ (запускаємо анімацію замість простого тексту)
+                animateValue('finIncome', 0, Math.round(totalIncome), 800);
+                animateValue('finExpense', 0, Math.round(totalExpense), 800);
+                animateValue('finProfit', 0, Math.round(profit), 800);
+                
                 finProfEl.style.color = profit >= 0 ? 'var(--text-main)' : '#DC2626';
             }
             renderCharts(startDate, endDate);
@@ -2937,7 +2935,8 @@
                         y: { beginAtZero: true, grid: { display: false } }, 
                         x: { 
                             grid: { display: false },
-                            ticks: { maxRotation: 45, minRotation: 45, font: {size: 10} } // 🟢 НАХИЛ ТЕКСТУ, ЩОБ НЕ НАЇЖДЖАВ
+                            // 🟢 ПРИБРАЛИ КУТ 45 ГРАДУСІВ (робимо рівно)
+                            ticks: { maxRotation: 0, minRotation: 0, font: {size: 11} } 
                         } 
                     } 
                 } 
@@ -2959,36 +2958,10 @@
                 },
                 options: { 
                     responsive: true, maintainAspectRatio: false, 
-                    layout: { padding: { bottom: 20 } }, // 🟢 ТРОХИ ПОВІТРЯ ЗНИЗУ
-                    cutout: '65%', // 🟢 РОБИМО КІЛЬЦЕ ТОВЩИМ
+                    layout: { padding: { bottom: 10, top: 10 } }, // 🟢 ДОДАЛИ ПОВІТРЯ
+                    cutout: '70%', // 🟢 РОБИМО КІЛЬЦЕ ТРОХИ ТОНШИМ
                     plugins: { 
-                        legend: { position: 'bottom', labels: { usePointStyle: true, boxWidth: 8, font: {size: 11}, padding: 15 } } 
-                    } 
-                }
-            });
-
-            // ЛІНІЙНИЙ ГРАФІК (Вирівняно відступи та зменшено к-сть дат внизу)
-            const ctxLine = document.getElementById('revenueLineChart').getContext('2d');
-            if (revenueLineChartInstance) revenueLineChartInstance.destroy();
-            const sortedRawKeys = Object.keys(revenueTimeline).sort(); 
-            const sortedLabels = sortedRawKeys.map(k => { let parts = k.split('-'); return new Date(parts[0], parts[1] - 1, parts[2]).toLocaleDateString('uk-UA', { day: 'numeric', month: 'short' }); });
-            
-            revenueLineChartInstance = new Chart(ctxLine, {
-                type: 'line',
-                data: {
-                    labels: sortedLabels,
-                    datasets: [{
-                        label: 'Дохід', data: sortedRawKeys.map(k => revenueTimeline[k]), borderColor: '#556B2F', backgroundColor: 'rgba(85, 107, 47, 0.1)',
-                        borderWidth: 2, fill: true, tension: 0.4, pointBackgroundColor: '#FFF', pointBorderColor: '#556B2F', pointRadius: 3
-                    }]
-                },
-                options: { 
-                    responsive: true, maintainAspectRatio: false, 
-                    layout: { padding: { left: 5, right: 15 } }, // 🟢 ДАЄМО МІСЦЕ СПРАВА
-                    plugins: { legend: { display: false } }, 
-                    scales: { 
-                        y: { beginAtZero: true, border: { dash: [4, 4] } }, 
-                        x: { grid: { display: false }, ticks: { maxTicksLimit: 6 } } // 🟢 ОБМЕЖУЄМО КІЛЬКІСТЬ ДАТ ВНИЗУ
+                        legend: { position: 'bottom', labels: { usePointStyle: true, boxWidth: 8, font: {size: 12}, padding: 20 } } 
                     } 
                 }
             });
