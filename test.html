@@ -1221,7 +1221,22 @@
                             let statusClass = 'status-new'; let s = String(b.status).toLowerCase();
                             if (s.includes('підтвердж') || s.includes('заїхав')) statusClass = 'status-confirmed';
                             
-                            let blockLeft = offsetDays * cellWidth; let blockWidth = durationDays * cellWidth; 
+                            // 🟢 Читаємо, чи є ранній/пізній заїзд або акція Пт-Нд
+                            let exComment = b.comment ? String(b.comment) : "";
+                            let exHasEarly = exComment.includes('🕒 Ранній заїзд');
+                            let exHasLate = exComment.includes('🕒 Пізній виїзд') || (durationDays === 2 && inDate.getDay() === 5 && outDate.getDay() === 0);
+
+                            let blockLeft = offsetDays * cellWidth; 
+                            let blockWidth = durationDays * cellWidth; 
+
+                            // 🟢 Розширюємо плашку візуально, щоб вона "з'їла" зайнятий день
+                            if (exHasLate) blockWidth += (cellWidth * 0.85); // Тягнемо вправо
+                            if (exHasEarly) {
+                                blockLeft -= (cellWidth * 0.85); // Тягнемо вліво
+                                blockWidth += (cellWidth * 0.85);
+                            }
+                            
+                            // Захист від вильоту за межі екрану
                             if (offsetDays < 0) { blockWidth = (durationDays + offsetDays) * cellWidth; blockLeft = 0; }
                             if (offsetDays + durationDays > daysCount) { blockWidth = (daysCount - offsetDays) * cellWidth; }
 
@@ -1423,8 +1438,9 @@
                         let bNights = Math.round((bOut - bIn) / (1000 * 60 * 60 * 24));
                         let isExistingPromo = (bNights === 2 && bIn.getDay() === 5 && bOut.getDay() === 0);
                         
-                        let exHasLate = b.comment && (b.comment.includes("[⏳ ПВ]") || isExistingPromo);
-                        let exHasEarly = b.comment && b.comment.includes("[⏳ РЗ]");
+                        let exComment = b.comment ? String(b.comment) : "";
+                        let exHasLate = exComment.includes('🕒 Пізній виїзд') || isExistingPromo;
+                        let exHasEarly = exComment.includes('🕒 Ранній заїзд');
 
                         // А) Конфлікт: ми хочемо Ранній заїзд, а попередній гість має Пізній виїзд (або Акцію)
                         if (currentIn.getTime() === exOut.getTime() && selectedEarlyTime && exHasLate) { isOverlap = true; break; }
