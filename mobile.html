@@ -490,7 +490,7 @@
             
             <div class="timeline-wrapper">
                 <div class="timeline-sidebar">
-                    <div class="timeline-sidebar-header">Номери</div>
+                    <div class="timeline-sidebar-header">Котеджі</div>
                     <div id="timelineRooms"></div>
                 </div>
                 <div class="timeline-grid-container" id="timelineScroll">
@@ -534,7 +534,7 @@
                 </div>
                 <div class="timeline-wrapper" style="height: 40vh; min-height: 300px;">
                     <div class="timeline-sidebar">
-                        <div class="timeline-sidebar-header">Номери</div>
+                        <div class="timeline-sidebar-header">Котеджі</div>
                         <div id="priceRoomsList"></div>
                     </div>
                     <div class="timeline-grid-container" id="priceScroll">
@@ -1182,11 +1182,11 @@
                 `;
             } else if (type === 'price') {
                 title.innerText = 'Конструктор цін';
-                let roomsChips = `<div class="chip-btn" id="chip-room-all" onclick="toggleAllRoomsChip()">Усі номери</div>`;
+                let roomsChips = `<div class="chip-btn" id="chip-room-all" onclick="toggleAllRoomsChip()">Усі котеджі</div>`;
                 roomsChips += roomsList.map(r => `<div class="chip-btn room-chip" data-id="${r.id}" onclick="toggleSingleRoomChip(this)">${r.name}</div>`).join('');
 
                 body.innerHTML = `
-                    <div class="form-group"><label>Оберіть номери:</label><div class="chips-container">${roomsChips}</div></div>
+                    <div class="form-group"><label>Оберіть котеджі:</label><div class="chips-container">${roomsChips}</div></div>
                     <div class="form-group"><label>Встановіть ціну (грн):</label><input type="number" inputmode="numeric" pattern="[0-9]*" id="mPriceAmount" placeholder="0" min="0"></div>
                     <div class="form-group"><label>Оберіть період:</label>
                         <div class="chips-container" id="periodChipsContainer">
@@ -1208,10 +1208,10 @@
                 title.innerText = id ? 'Редагувати знижку' : 'Додати знижку';
                 let d = id ? discountsList.find(x => x.id === id) : {condition: "Діб в бронюванні: 2", discount: "15%", rooms: "Не обрано", roomsIds: []};
                 let condVal = parseInt(String(d.condition).replace(/\D/g,'')) || 2; let discVal = parseInt(String(d.discount).replace(/\D/g,'')) || 15;
-                let selectedIds = d.roomsIds || []; if (id && selectedIds.length === 0 && d.rooms === "Всі номери") selectedIds = ["all"];
+                let selectedIds = d.roomsIds || []; if (id && selectedIds.length === 0 && d.rooms === "Всі котеджі") selectedIds = ["all"];
                 let isAllSelected = selectedIds.includes("all");
 
-                let roomsChips = `<div class="chip-btn ${isAllSelected ? 'active' : ''}" id="chip-disc-room-all" onclick="toggleAllDiscRooms()">Усі номери</div>`;
+                let roomsChips = `<div class="chip-btn ${isAllSelected ? 'active' : ''}" id="chip-disc-room-all" onclick="toggleAllDiscRooms()">Усі котеджі</div>`;
                 roomsChips += roomsList.map(r => { let isActive = isAllSelected || selectedIds.includes(String(r.id)); return `<div class="chip-btn disc-room-chip ${isActive ? 'active' : ''}" data-id="${r.id}" onclick="toggleSingleDiscRoom(this)">${r.name}</div>`; }).join('');
 
                 body.innerHTML = `
@@ -1219,7 +1219,7 @@
                         <div class="form-group"><label>К-сть діб від:</label><input type="number" id="mDiscDays" value="${condVal}" min="1"></div>
                         <div class="form-group"><label>Знижка (%):</label><input type="number" inputmode="numeric" pattern="[0-9]*" id="mDiscPercent" value="${discVal}" min="1" max="100"></div>
                     </div>
-                    <div class="form-group" style="margin-bottom: 0;"><label>Номери:</label><div class="chips-container">${roomsChips}</div></div>
+                    <div class="form-group" style="margin-bottom: 0;"><label>Котеджі:</label><div class="chips-container">${roomsChips}</div></div>
                 `;
             } else if (type === 'customService') {
                 title.innerText = id ? 'Редагувати послугу' : 'Додати послугу';
@@ -1286,7 +1286,7 @@
             } else if (currentEditType === 'discount') {
                 const days = document.getElementById('mDiscDays').value || 2; const pct = document.getElementById('mDiscPercent').value || 15;
                 const allBtn = document.getElementById('chip-disc-room-all'); let savedIds = []; let displayRoomsText = "";
-                if (allBtn && allBtn.classList.contains('active')) { savedIds = ["all"]; displayRoomsText = "Всі номери"; } 
+                if (allBtn && allBtn.classList.contains('active')) { savedIds = ["all"]; displayRoomsText = "Всі котеджі"; } 
                 else { const activeChips = document.querySelectorAll('.disc-room-chip.active'); let names = []; activeChips.forEach(chip => { savedIds.push(chip.getAttribute('data-id')); names.push(chip.innerText); }); displayRoomsText = names.length > 0 ? names.join(', ') : "Не обрано"; }
                 if (currentEditId) { let d = discountsList.find(x => x.id === currentEditId); d.condition = `Діб в бронюванні: ${days}`; d.discount = `${pct}%`; d.roomsIds = savedIds; d.rooms = displayRoomsText; } 
                 else { discountsList.push({ id: Date.now(), condition: `Діб в бронюванні: ${days}`, discount: `${pct}%`, roomsIds: savedIds, rooms: displayRoomsText }); }
