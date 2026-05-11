@@ -1075,8 +1075,15 @@
                 document.getElementById('view-reports').style.display = 'flex';
                 topTitle.innerText = 'Звіти';
                 document.getElementById('mainActionButton').style.display = 'none'; 
+                
+                // 🟢 МАГІЯ ТУТ: Активуємо першу вкладку (Фінанси) і запускаємо розрахунок
+                const firstTab = document.querySelector('.r-tab');
+                if (firstTab) {
+                    switchReportTab('finance', firstTab);
+                } else {
+                    calculateAnalytics(); 
+                }
             }
-        }
 
         function switchSettingsTab(tabName, el) {
             document.querySelectorAll('.m-tab').forEach(nav => nav.classList.remove('active'));
@@ -2753,10 +2760,16 @@
         function toggleInlineCard(index) {
             const clickedCard = document.getElementById('itCard-' + index);
             const isAlreadyActive = clickedCard.classList.contains('active');
+            
             document.querySelectorAll('.it-card').forEach(card => card.classList.remove('active'));
+            
             if (!isAlreadyActive) {
                 clickedCard.classList.add('active');
-                setTimeout(() => clickedCard.scrollIntoView({ behavior: 'smooth', block: 'center' }), 150); 
+                
+                // 🟢 СКРОЛ ДО ВІДКРИТОЇ КАРТКИ
+                setTimeout(() => {
+                    clickedCard.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }, 300); // Тут затримка трохи більша, бо анімація картки довша
             }
         }
 
@@ -2778,20 +2791,25 @@
             const mainRow = document.getElementById(`mainRow-${id}`);
             
             if (editRow.style.display === 'none') {
-                // 🟢 МАГІЯ ТУТ: Повертаємо всім головним рядкам видимість, а форми ховаємо
                 document.querySelectorAll('div[id^="editRow-"]').forEach(row => row.style.display = 'none');
                 document.querySelectorAll('div[id^="mainRow-"]').forEach(row => row.style.display = 'flex');
                 
                 editRow.style.display = 'block';
-                if (mainRow) mainRow.style.display = 'none'; // Ховаємо головний рядок, показуємо форму
+                if (mainRow) mainRow.style.display = 'none'; 
                 
                 const dateInput = document.getElementById(`editDate-${id}`);
                 if (!dateInput._flatpickr) {
                     flatpickr(dateInput, { locale: "uk", dateFormat: "Y-m-d", altInput: true, altFormat: "d.m.Y", disableMobile: "true" });
                 }
+
+                // 🟢 ПОКРАЩЕНИЙ АВТОСКРОЛ ДЛЯ МОБІЛКИ
+                setTimeout(() => {
+                    editRow.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                }, 150); // Даємо 150мс, щоб елемент встиг з'явитися в DOM
+
             } else {
                 editRow.style.display = 'none';
-                if (mainRow) mainRow.style.display = 'flex'; // Повертаємо назад!
+                if (mainRow) mainRow.style.display = 'flex';
             }
         }
 
