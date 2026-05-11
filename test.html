@@ -1351,13 +1351,23 @@
         }
 
         function updatePricePreview() {
-            const checkInStr = document.getElementById('adminCheckIn').value; const checkOutStr = document.getElementById('adminCheckOut').value;
-            const roomName = document.getElementById('adminCottage').value; const guests = parseInt(document.getElementById('adminGuests').value) || 2;
+            // [1] Отримуємо всі поля (підтримує як старі ID мобілки, так і нові з ПК)
+            const checkInStr = document.getElementById('adminCheckIn') ? document.getElementById('adminCheckIn').value : document.getElementById('adminStart').value; 
+            const checkOutStr = document.getElementById('adminCheckOut') ? document.getElementById('adminCheckOut').value : document.getElementById('adminEnd').value;
+            const roomName = document.getElementById('adminCottage') ? document.getElementById('adminCottage').value : document.getElementById('adminRoom').value; 
+            const guests = parseInt(document.getElementById('adminGuests') ? document.getElementById('adminGuests').value : 2) || 2;
             const petsSelect = document.getElementById('adminPets'); const pets = petsSelect ? petsSelect.value : "Ні";
+            
+            // Наші НОВІ поля з Кроку 1
+            const hasVat = document.getElementById('adminVat') ? document.getElementById('adminVat').value === 'Так' : false;
+            const isUBD = document.getElementById('adminUBD') ? document.getElementById('adminUBD').value === 'Так' : false;
+            const dayGuests = parseInt(document.getElementById('adminDayGuests') ? document.getElementById('adminDayGuests').value : 0) || 0;
+
             const cont = document.getElementById('liveCalculatorContainer');
 
             if (!checkInStr || !checkOutStr || !roomName) { cont.innerHTML = ''; return; }
 
+            // Збереження введеного авансу при перемальовці
             let savedPaidAmount = 0;
             if (document.getElementById('adminPaidAmount')) { savedPaidAmount = Number(document.getElementById('adminPaidAmount').value) || 0; }
 
@@ -1367,41 +1377,69 @@
             const d1 = new Date(safeIn); const d2 = new Date(safeOut);
             let nights = Math.round((d2 - d1) / (1000 * 60 * 60 * 24)); if (nights < 1 || isNaN(nights)) nights = 1;
 
-            const room = roomsList.find(r => r.name === roomName); if (!room) { cont.innerHTML = ''; return; }
+            // Знаходимо кімнату в налаштуваннях
+            const room = typeof roomsList !== 'undefined' ? roomsList.find(r => r.name === roomName) : (typeof settings !== 'undefined' && settings.rooms ? settings.rooms.find(r => r.name === roomName) : null); 
+            if (!room) { cont.innerHTML = ''; return; }
             
+            // [2] Перевірка на ОВЕРБУКІНГ (Твоя логіка з ПК)
             let isOverlap = false;
-            for (let b of allBookings) {
-                if (editingRowNumber && b.row == editingRowNumber) continue; 
-                if (String(b.status).toLowerCase().includes('скас')) continue; 
-                if (b.cottage === roomName) {
-                    let exIn = new Date(b.checkIn); exIn.setHours(0,0,0,0); let exOut = new Date(b.checkOut); exOut.setHours(0,0,0,0);
-                    let currentIn = new Date(d1); currentIn.setHours(0,0,0,0); let currentOut = new Date(d2); currentOut.setHours(0,0,0,0);
-                    if (currentIn < exOut && currentOut > exIn) { isOverlap = true; break; }
+            if (typeof allBookings !== 'undefined') {
+                for (let b of allBookings) {
+                    if (typeof editingRowNumber !== 'undefined' && editingRowNumber && b.row == editingRowNumber) continue; 
+                    if (String(b.status).toLowerCase().includes('скас')) continue; 
+                    if (b.cottage === roomName) {
+                        let exIn = new Date(b.checkIn); exIn.setHours(0,0,0,0); let exOut = new Date(b.checkOut); exOut.setHours(0,0,0,0);
+                        let currentIn = new Date(d1); currentIn.setHours(0,0,0,0); let currentOut = new Date(d2); currentOut.setHours(0,0,0,0);
+                        if (currentIn < exOut && currentOut > exIn) { isOverlap = true; break; }
+                    }
                 }
             }
 
-            const submitBtn = document.getElementById('adminSubmitBtn');
+            const submitBtn = document.getElementById('adminSubmitBtn') || document.getElementById('adminSaveBtn');
             if (isOverlap) {
-                submitBtn.disabled = true; submitBtn.style.opacity = '0.5';
+                if(submitBtn) { submitBtn.disabled = true; submitBtn.style.opacity = '0.5'; }
                 cont.innerHTML = `<div class="form-section" style="background:#FEF2F2; border-color: #EF4444; padding: 20px;"><div style="color: #DC2626; font-weight: bold; font-size: 13px; text-align: center;">ОБЕРЕЖНО: ОВЕРБУКІНГ! Дати зайняті.</div></div>`;
                 return;
-            } else { submitBtn.disabled = false; submitBtn.style.opacity = '1'; }
+            } else { 
+                if(submitBtn) { submitBtn.disabled = false; submitBtn.style.opacity = '1'; }
+            }
 
+            // [3] БАЗОВА ЦІНА (Кастомні ціни + вихідні)
             let basePriceTotal = 0;
             for (let i = 0; i < nights; i++) {
                 let curr = new Date(d1); curr.setDate(curr.getDate() + i);
                 let ds = `${curr.getFullYear()}-${String(curr.getMonth()+1).padStart(2,'0')}-${String(curr.getDate()).padStart(2,'0')}`;
                 let isWeekend = (curr.getDay() === 0 || curr.getDay() === 6);
-                let dp = isWeekend ? room.priceWeekend : room.priceWeekday;
-                if (customPrices[room.id] && customPrices[room.id][ds]) dp = customPrices[room.id][ds];
-                basePriceTotal += dp;
+                let dp = isWeekend ? (room.priceWeekend || room.priceWeekday || room.price) : (room.priceWeekday || room.price);
+                if (typeof customPrices !== 'undefined' && customPrices[room.id] && customPrices[room.id][ds]) dp = customPrices[room.id][ds];
+                basePriceTotal += parseInt(dp) || 0;
             }
 
-            let extraGuests = Math.max(0, guests - room.capacity);
+            // [4] ДОПЛАТИ (Гості, Тварини + НАШІ НОВІ: Денні гості, Ранній/Пізній заїзд)
+            let extraGuests = Math.max(0, guests - (room.capacity || 2));
             let dynamicExtraPrice = room.extraGuestPrice !== undefined ? room.extraGuestPrice : 2500;
             let extraGuestFee = extraGuests * dynamicExtraPrice * nights;
             let petFee = (pets === "Так") ? (500 + 200 * nights) : 0;
+            let dayGuestsFee = dayGuests * 500; // 500 грн за денного гостя
 
+            // Ранній та пізній заїзд (50% від базової ціни буднього дня)
+            let baseForTimeCalc = parseInt(room.priceWeekday || room.price) || 2500; 
+            let earlyFee = selectedEarlyTime ? (baseForTimeCalc * 0.5) : 0;
+            
+            let isPromoLateOut = (nights === 2 && d1.getDay() === 5 && d2.getDay() === 0);
+            let lateFee = (selectedLateTime && !isPromoLateOut) ? (baseForTimeCalc * 0.5) : 0;
+
+            // Оновлюємо текст в акордеонах часу (в шторці)
+            const lblEarly = document.getElementById('adminLabelPriceEarly');
+            if (lblEarly) lblEarly.innerHTML = selectedEarlyTime ? `+${earlyFee} ₴ <span style="font-size:11px; color:#9CA3AF;">(${selectedEarlyTime})</span>` : 'Оберіть час';
+            const lblLate = document.getElementById('adminLabelPriceLate');
+            if (lblLate) {
+                if (selectedLateTime) {
+                    lblLate.innerHTML = isPromoLateOut ? `<span style="color:#059669;">🎁 Акція (0 ₴)</span> <span style="font-size:11px; color:#9CA3AF;">(${selectedLateTime})</span>` : `+${lateFee} ₴ <span style="font-size:11px; color:#9CA3AF;">(${selectedLateTime})</span>`;
+                } else lblLate.innerHTML = 'Оберіть час';
+            }
+
+            // [5] ЗНИЖКИ (Твоя логіка + УБД)
             let discountPercent = 0;
             const currentRoomId = String(room.id);
             if (typeof discountsList !== 'undefined') {
@@ -1414,41 +1452,51 @@
                     }
                 });
             }
+            if (isUBD) discountPercent += 0.10; // Додаємо 10% для УБД
 
-            let amountToDiscount = basePriceTotal + extraGuestFee;
+            let amountToDiscount = basePriceTotal + extraGuestFee + earlyFee + lateFee; 
             let discountAmount = Math.round(amountToDiscount * discountPercent);
-            let totalPrice = amountToDiscount - discountAmount + petFee;
+            let totalPrice = amountToDiscount - discountAmount + petFee + dayGuestsFee; // Тварини і денні гості без знижки
 
+            // [6] ВІДМАЛЬОВКА ЧЕКУ (Твій дизайн з авансами + Нові послуги)
             cont.innerHTML = `
-                <div class="form-section" style="background:#FDFCFB; border-color: var(--accent); padding: 16px;">
+                <div class="form-section" style="background:#FDFCFB; border-color: var(--accent); padding: 16px; margin-top: 20px;">
                     <span class="form-section-title" style="color:var(--accent);">Розшифровка (${nights} ночей)</span>
                     <div style="font-size: 13px; color: #4B5563; margin-bottom: 12px;">
-                        <div style="display:flex; justify-content:space-between; margin-bottom:4px;"><span>Базова:</span><span>${basePriceTotal} грн</span></div>
-                        ${extraGuestFee > 0 ? `<div style="display:flex; justify-content:space-between; margin-bottom:4px;"><span>Дод. гості:</span><span>+${extraGuestFee} грн</span></div>` : ''}
-                        ${petFee > 0 ? `<div style="display:flex; justify-content:space-between; margin-bottom:4px;"><span>Тварини:</span><span>+${petFee} грн</span></div>` : ''}
-                        ${discountAmount > 0 ? `<div style="display:flex; justify-content:space-between; margin-bottom:4px; color:var(--danger);"><span>Знижка:</span><span>-${discountAmount} грн</span></div>` : ''}
+                        <div style="display:flex; justify-content:space-between; margin-bottom:4px;"><span>Проживання:</span><span style="font-weight:600;">${basePriceTotal} ₴</span></div>
+                        ${extraGuestFee > 0 ? `<div style="display:flex; justify-content:space-between; margin-bottom:4px;"><span>Дод. гості:</span><span style="font-weight:600;">+${extraGuestFee} ₴</span></div>` : ''}
+                        ${petFee > 0 ? `<div style="display:flex; justify-content:space-between; margin-bottom:4px;"><span>🐾 Тварини:</span><span style="font-weight:600;">+${petFee} ₴</span></div>` : ''}
+                        ${dayGuestsFee > 0 ? `<div style="display:flex; justify-content:space-between; margin-bottom:4px;"><span>👥 Денні гості (${dayGuests}):</span><span style="font-weight:600;">+${dayGuestsFee} ₴</span></div>` : ''}
+                        ${hasVat ? `<div style="display:flex; justify-content:space-between; margin-bottom:4px;"><span>🔥 Чан:</span><span style="font-weight:600; color:#059669;">Замовлено</span></div>` : ''}
+                        ${selectedEarlyTime ? `<div style="display:flex; justify-content:space-between; margin-bottom:4px;"><span>⏳ Ранній заїзд:</span><span style="font-weight:600;">+${earlyFee} ₴</span></div>` : ''}
+                        ${selectedLateTime ? `<div style="display:flex; justify-content:space-between; margin-bottom:4px;"><span style="color:${isPromoLateOut?'#059669':'inherit'}">${isPromoLateOut ? '🎁 Акційний виїзд:' : '⏳ Пізній виїзд:'}</span><span style="font-weight:600;">${isPromoLateOut ? '0 ₴' : '+'+lateFee+' ₴'}</span></div>` : ''}
+                        ${discountAmount > 0 ? `<div style="display:flex; justify-content:space-between; margin-bottom:4px; color:#DC2626;"><span>🔻 Знижка (${Math.round(discountPercent*100)}%):</span><span style="font-weight:600;">-${discountAmount} ₴</span></div>` : ''}
                     </div>
-                    <div style="border-top: 1px solid #E5E7EB; padding-top: 12px;">
+                    <div style="border-top: 1px dashed #D1D5DB; padding-top: 12px;">
                         <div class="form-group" style="margin-bottom: 12px;">
                             <label style="color: var(--accent); font-weight: 700;">До сплати:</label>
-                            <input type="number" id="adminTotalPrice" value="${totalPrice}" style="font-weight:bold; font-size: 16px; border-color: var(--accent); background: #FFF;">
+                            <input type="number" id="adminTotalPrice" value="${totalPrice}" style="font-weight:bold; font-size: 16px; border-color: var(--accent); background: #FFF; width:100%; padding: 10px; border-radius: 8px; border: 1px solid var(--accent);">
                         </div>
-                       <div class="form-group" style="margin-bottom: 0;">
-                            <label style="color: var(--text-main); font-weight: 700;">Внесено (Аванс):</label>
-                            <input type="number" id="adminPaidAmount" value="${savedPaidAmount}" placeholder="0" style="width: 100%; margin-bottom: 12px; font-weight: bold; font-size: 16px;">
+                        <div class="form-group" style="margin-bottom: 0;">
+                            <label style="color: #111827; font-weight: 700;">Внесено (Аванс):</label>
+                            <input type="number" id="adminPaidAmount" value="${savedPaidAmount}" placeholder="0" style="width: 100%; margin-bottom: 12px; font-weight: bold; font-size: 16px; padding: 10px; border-radius: 8px; border: 1px solid #D1D5DB;">
                             
                             <div style="display: flex; gap: 10px;">
                                 <button type="button" class="tap-btn" onclick="setHalfPrepayment()" style="flex: 1; padding: 14px; background: #F3F4F6; color: #4B5563; font-size: 14px; font-weight: 700; border-radius: 12px; border: none; outline: none;">50% Аванс</button>
                                 <button type="button" class="tap-btn" onclick="setFullPrepayment()" style="flex: 1; padding: 14px; background: #D1FAE5; color: #065F46; font-size: 14px; font-weight: 700; border-radius: 12px; border: none; outline: none;">100% Оплата</button>
                             </div>
                         </div>
-                        <div style="margin-top: 12px; padding: 10px; font-size: 14px; font-weight: bold; border-radius: 10px; text-align: center;" id="adminBalance">0 грн</div>
+                        <div style="margin-top: 12px; padding: 10px; font-size: 14px; font-weight: bold; border-radius: 10px; text-align: center; background: #F3F4F6;" id="adminBalance">0 грн</div>
                     </div>
                 </div>
             `;
-            document.getElementById('adminTotalPrice').addEventListener('input', calculateBalanceLive);
-            document.getElementById('adminPaidAmount').addEventListener('input', calculateBalanceLive);
-            calculateBalanceLive();
+            
+            // Вішаємо слухачі для перерахунку залишку
+            const totalInp = document.getElementById('adminTotalPrice');
+            const paidInp = document.getElementById('adminPaidAmount');
+            if (totalInp && typeof calculateBalanceLive === 'function') totalInp.addEventListener('input', calculateBalanceLive);
+            if (paidInp && typeof calculateBalanceLive === 'function') paidInp.addEventListener('input', calculateBalanceLive);
+            if (typeof calculateBalanceLive === 'function') calculateBalanceLive();
         }
 
         function setHalfPrepayment() { let t = document.getElementById('adminTotalPrice'); let p = document.getElementById('adminPaidAmount'); if (t && p) { p.value = Math.round(Number(t.value) / 2); calculateBalanceLive(); } }
