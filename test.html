@@ -1776,7 +1776,7 @@
                 name: document.getElementById('adminName').value, phone: document.getElementById('adminPhone').value, guests: document.getElementById('adminGuests').value,
                 pets: document.getElementById('adminPets').value, status: document.querySelector('.status-btn.active').getAttribute('data-status'),
                 totalPrice: document.getElementById('adminTotalPrice').value, paidAmount: document.getElementById('adminPaidAmount').value,
-                comment: finalPackedComment // Відправляємо запакований коментар
+               comment: rawComment // Відправляємо запакований коментар
             };
             
             if (editingRowNumber !== null) bookingData.row = editingRowNumber;
