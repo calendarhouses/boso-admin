@@ -1272,10 +1272,28 @@
         }
         function confirmDeleteGenericItem() {
             closeCustomConfirm(); 
-            if (currentEditType === 'room') { roomsList = roomsList.filter(r => r.id !== currentEditId); renderSettingsRooms(); if(document.getElementById('set-prices').style.display === 'block') renderPriceGrid(); } 
-            else if (currentEditType === 'discount') { discountsList = discountsList.filter(d => d.id !== currentEditId); renderSettingsDiscounts(); } 
-            else if (currentEditType === 'service') { customServicesList = customServicesList.filter(s => s.id !== currentEditId); renderSettingsServices(); }
-            saveSettingsToCloud(); closeGenericModal(); showToast("Видалено!");
+            if (currentEditType === 'room') { 
+                roomsList = roomsList.filter(r => r.id !== currentEditId); 
+                renderSettingsRooms(); 
+                if(document.getElementById('set-prices').style.display === 'block') renderPriceGrid(); 
+            } 
+            else if (currentEditType === 'discount') { 
+                discountsList = discountsList.filter(d => d.id !== currentEditId); 
+                renderSettingsDiscounts(); 
+            } 
+            else if (currentEditType === 'service') { 
+                customServicesList = customServicesList.filter(s => s.id !== currentEditId); 
+                renderSettingsServices(); 
+            } 
+            else if (currentEditType === 'transaction') {
+                // 🟢 МАГІЯ ТУТ: Видаляємо транзакцію з бази і одразу перемальовуємо фінанси
+                transactions = transactions.filter(t => t.id !== currentEditId);
+                calculateAnalytics(); 
+            }
+            
+            saveSettingsToCloud(); 
+            closeGenericModal(); 
+            showToast("Видалено!");
         }
         
         function saveGenericModal() { 
