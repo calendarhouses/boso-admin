@@ -2026,8 +2026,9 @@ function saveInlineTransaction(type, category, idx) {
             // Миттєво перемальовуємо екрани
             if (document.getElementById('view-grid').style.display === 'flex') renderTimeline();
             if (document.getElementById('view-list').style.display === 'block') {
-                const activeTab = document.querySelector('#bookingsTabs .m-tab.active');
-                if (activeTab) filterBookings('all', activeTab);
+                const activeTab = document.querySelector('.filter-btn.active');
+                if (activeTab) activeTab.click();
+                else renderTable(allBookings);
             }
 
             // 🟢 ФОНОВА ВІДПРАВКА В GOOGLE (Без блокування екрану)
@@ -3375,8 +3376,9 @@ document.getElementById('adminGuests').addEventListener('change', updatePricePre
             // Перемальовуємо те, що зараз бачимо
             if (document.getElementById('view-grid').style.display === 'flex') renderTimeline();
             if (document.getElementById('view-list').style.display === 'block') {
-                const activeTab = document.querySelector('#bookingsTabs .m-tab.active');
-                if (activeTab) filterBookings('all', activeTab);
+                const activeTab = document.querySelector('.filter-btn.active');
+                if (activeTab) activeTab.click();
+                else renderTable(allBookings);
             }
 
             btn.innerText = originalText; 
