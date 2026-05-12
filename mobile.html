@@ -2160,25 +2160,25 @@
             
             if (editingRowNumber !== null) bookingData.row = editingRowNumber;
 
-            // 🟢 ОПТИМІСТИЧНЕ ОНОВЛЕННЯ (МИТТЄВО)
+            // 🟢 МАГІЯ ТУТ: Робимо ЧИСТУ копію для відправки в Google (без тимчасових ID)
+            const payloadForServer = { ...bookingData };
+
+            // 🟢 ОПТИМІСТИЧНЕ ОНОВЛЕННЯ (МИТТЄВО В ПАМ'ЯТІ ТЕЛЕФОНУ)
             if (editingRowNumber) {
-                // Оновлюємо існуючу в пам'яті
                 let idx = allBookings.findIndex(b => b.row == editingRowNumber);
                 if (idx !== -1) allBookings[idx] = bookingData;
             } else {
-                // Додаємо нову (тимчасово)
                 bookingData.row = 'temp_' + Date.now();
                 allBookings.push(bookingData);
             }
 
-            // ЗАКРИВАЄМО ШТОРКУ ВІДРАЗУ!
+            // Закриваємо вікно і перемальовуємо
             closeDrawer(); 
             showToast("Збережено!");
             
-            // Перемальовуємо те, що зараз бачимо
             if (document.getElementById('view-grid').style.display === 'flex') renderTimeline();
             if (document.getElementById('view-list').style.display === 'block') {
-                const activeTab = document.querySelector('#bookingsTabs .m-tab.active');
+                const activeTab = document.querySelector('.m-tab.active, .filter-btn.active');
                 if (activeTab) activeTab.click();
                 else renderTable(allBookings);
             }
@@ -2186,18 +2186,17 @@
             btn.innerText = originalText; 
             btn.disabled = false;
 
-            // 🟢 ФОНОВА ВІДПРАВКА В GOOGLE
+            // 🟢 ФОНОВА ВІДПРАВКА В GOOGLE (відправляємо чисту копію)
             fetch(API_URL, { 
                 method: 'POST', 
                 headers: { 'Content-Type': 'text/plain;charset=utf-8' }, 
-                body: JSON.stringify(bookingData) 
+                body: JSON.stringify(payloadForServer) 
             }).then(res => res.json()).then(json => {
                 if (json.error === "OVERLAP") { 
                     alert("❌ ПОМИЛКА: Ці дати щойно були зайняті."); 
-                    initApp(); // Якщо помилка — відкочуємо зміни
-                } else {
-                    initApp(); // Тихе оновлення, щоб отримати реальні ID рядків
                 }
+                // Фоново підтягуємо базу, щоб тимчасовий ID замінився на справжній
+                initApp(); 
             }).catch(error => {
                 showToast("Помилка синхронізації!");
             });
