@@ -1277,7 +1277,8 @@
             if (document.getElementById('view-grid').style.display === 'flex') renderTimeline();
             if (document.getElementById('view-list').style.display === 'block') {
                 const activeTab = document.querySelector('#bookingsTabs .m-tab.active');
-                if (activeTab) filterBookings('all', activeTab);
+                if (activeTab) activeTab.click();
+                else renderTable(allBookings);
             }
 
             // 🟢 ФОНОВА ВІДПРАВКА В GOOGLE (Без блокування екрану)
@@ -2178,7 +2179,8 @@
             if (document.getElementById('view-grid').style.display === 'flex') renderTimeline();
             if (document.getElementById('view-list').style.display === 'block') {
                 const activeTab = document.querySelector('#bookingsTabs .m-tab.active');
-                if (activeTab) filterBookings('all', activeTab);
+                if (activeTab) activeTab.click();
+                else renderTable(allBookings);
             }
 
             btn.innerText = originalText; 
