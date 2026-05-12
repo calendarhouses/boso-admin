@@ -2010,26 +2010,40 @@ function saveInlineTransaction(type, category, idx) {
 
         async function confirmDeleteBooking() {
             closeCustomConfirm(); 
-            const btn = document.getElementById('adminDeleteBtn');
-            const originalText = btn.innerHTML;
-            btn.innerHTML = "Видалення...";
+            const btn = document.getElementById('adminDeleteBtn'); 
+            const originalText = btn.innerHTML; 
+            btn.innerHTML = "Видал..."; 
             btn.disabled = true;
-
-            try {
-                let res = await fetch(API_URL, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-                    body: JSON.stringify({ action: 'deleteBooking', row: editingRowNumber })
-                });
-                closeDrawer(); 
-                showToast("Бронювання успішно видалено");
-                await initApp(); 
-            } catch (error) {
-                alert("Помилка видалення!");
-            } finally {
-                btn.innerHTML = originalText;
-                btn.disabled = false;
+            
+            // 🟢 ОПТИМІСТИЧНЕ ОНОВЛЕННЯ (МИТТЄВО)
+            const rowToDelete = editingRowNumber;
+            // Видаляємо з пам'яті прямо зараз
+            allBookings = allBookings.filter(b => b.row != rowToDelete); 
+            
+            closeDrawer(); 
+            showToast("Успішно видалено");
+            
+            // Миттєво перемальовуємо екрани
+            if (document.getElementById('view-grid').style.display === 'flex') renderTimeline();
+            if (document.getElementById('view-list').style.display === 'block') {
+                const activeTab = document.querySelector('#bookingsTabs .m-tab.active');
+                if (activeTab) filterBookings('all', activeTab);
             }
+
+            // 🟢 ФОНОВА ВІДПРАВКА В GOOGLE (Без блокування екрану)
+            fetch(API_URL, { 
+                method: 'POST', 
+                headers: { 'Content-Type': 'text/plain;charset=utf-8' }, 
+                body: JSON.stringify({ action: 'deleteBooking', row: rowToDelete }) 
+            }).then(() => {
+                // Тихо оновлюємо базу на фоні, щоб все було синхронізовано
+                initApp(); 
+            }).catch(() => {
+                showToast("Помилка синхронізації!");
+            });
+
+            btn.innerHTML = originalText; 
+            btn.disabled = false; 
         }
 
         // --- УНІВЕРСАЛЬНЕ ВИДАЛЕННЯ (НОМЕРИ, ЗНИЖКИ, ПОСЛУГИ) ---
@@ -3305,77 +3319,84 @@ document.getElementById('adminGuests').addEventListener('change', updatePricePre
             document.getElementById('bookingDrawer').classList.remove('active'); 
         }
 
-        // --- ЗБЕРЕЖЕННЯ БРОНІ (КНОПКА В ПАНЕЛІ) ---
-        document.getElementById('adminBookingForm').addEventListener('submit', async function(e) {
+       document.getElementById('adminBookingForm').addEventListener('submit', function(e) {
             e.preventDefault(); 
             const btn = document.getElementById('adminSubmitBtn'); 
             const originalText = btn.innerText; 
             btn.innerText = "Збереження..."; 
             btn.disabled = true;
             
-            // 🟢 Беремо дати прямо. Flatpickr завжди тримає YYYY-MM-DD в основному value, 
-            // навіть якщо на екрані показує з крапками (через altFormat).
-            let safeIn = document.getElementById('adminCheckIn').value;
-            let safeOut = document.getElementById('adminCheckOut').value;
-
-            // 🟢 Збираємо коментар та денних гостей ДО створення об'єкта
+            // Формуємо системний коментар
             let rawComment = document.getElementById('adminComment').value.trim();
             let dayGuests = parseInt(document.getElementById('adminDayGuests').value) || 0;
-
             let sysComment = [];
-if (dayGuests > 0) sysComment.push(`👥 Денні гості: ${dayGuests}`);
-if (document.getElementById('adminVat').value === 'Так') sysComment.push(`♨️ Чан: Так`);
-if (document.getElementById('adminUBD').value === 'Так') sysComment.push(`🇺🇦 УБД: Так`);
-if (selectedEarlyTime) sysComment.push(`🕒 Ранній заїзд: з ${selectedEarlyTime}`);
-if (selectedLateTime) sysComment.push(`🕒 Пізній виїзд: до ${selectedLateTime}`);
+            if (dayGuests > 0) sysComment.push(`👥 Денні гості: ${dayGuests}`);
+            if (document.getElementById('adminVat').value === 'Так') sysComment.push(`♨️ Чан: Так`);
+            if (document.getElementById('adminUBD').value === 'Так') sysComment.push(`🇺🇦 УБД: Так`);
+            if (selectedEarlyTime) sysComment.push(`🕒 Ранній заїзд: з ${selectedEarlyTime}`);
+            if (selectedLateTime) sysComment.push(`🕒 Пізній виїзд: до ${selectedLateTime}`);
 
-if (sysComment.length > 0) { 
+            if (sysComment.length > 0) { 
                 rawComment = sysComment.join(' | ') + (rawComment ? '\n\nКоментар гостя: ' + rawComment : '');
             }
 
-            // 🟢 Формуємо ЄДИНИЙ об'єкт для відправки
+            // Збираємо дані броні
             const bookingData = { 
-                checkIn: safeIn, 
-                checkOut: safeOut, 
+                checkIn: document.getElementById('adminCheckIn').value, 
+                checkOut: document.getElementById('adminCheckOut').value, 
                 cottage: document.getElementById('adminCottage').value, 
                 name: document.getElementById('adminName').value, 
                 phone: document.getElementById('adminPhone').value, 
                 guests: document.getElementById('adminGuests').value,
-                pets: document.getElementById('adminPets').value,
+                pets: document.getElementById('adminPets').value, 
                 status: document.querySelector('.status-btn.active').getAttribute('data-status'),
-                totalPrice: document.getElementById('adminTotalPrice').value,
+                totalPrice: document.getElementById('adminTotalPrice').value, 
                 paidAmount: document.getElementById('adminPaidAmount').value,
-                source: document.getElementById('adminSource').value,
-                comment: rawComment // 🚀 Передаємо наш склеєний коментар!
+                comment: rawComment
             };
             
             if (editingRowNumber !== null) bookingData.row = editingRowNumber;
-            
-            try { 
-                let res = await fetch(API_URL, { 
-                    method: 'POST', 
-                    headers: { 'Content-Type': 'text/plain;charset=utf-8' }, 
-                    body: JSON.stringify(bookingData) 
-                }); 
-                
-                let json = await res.json();
-                
-                if (json.error === "OVERLAP") {
-                    alert("❌ ПОМИЛКА: Ці дати щойно були зайняті іншим клієнтом. Оновіть сторінку.");
-                    return; // Бронь не зберігається, вікно не закривається
-                }
-                
-                closeDrawer(); 
-                showToast("Бронь успішно збережена"); 
-                await initApp(); 
-                
-            } catch (error) { 
-                console.error("Помилка:", error);
-                alert("Помилка збереження!"); 
-            } finally { 
-                btn.innerText = originalText; 
-                btn.disabled = false; 
+
+            // 🟢 ОПТИМІСТИЧНЕ ОНОВЛЕННЯ (МИТТЄВО)
+            if (editingRowNumber) {
+                // Оновлюємо існуючу в пам'яті
+                let idx = allBookings.findIndex(b => b.row == editingRowNumber);
+                if (idx !== -1) allBookings[idx] = bookingData;
+            } else {
+                // Додаємо нову (тимчасово)
+                bookingData.row = 'temp_' + Date.now();
+                allBookings.push(bookingData);
             }
+
+            // ЗАКРИВАЄМО ШТОРКУ ВІДРАЗУ!
+            closeDrawer(); 
+            showToast("Збережено!");
+            
+            // Перемальовуємо те, що зараз бачимо
+            if (document.getElementById('view-grid').style.display === 'flex') renderTimeline();
+            if (document.getElementById('view-list').style.display === 'block') {
+                const activeTab = document.querySelector('#bookingsTabs .m-tab.active');
+                if (activeTab) filterBookings('all', activeTab);
+            }
+
+            btn.innerText = originalText; 
+            btn.disabled = false;
+
+            // 🟢 ФОНОВА ВІДПРАВКА В GOOGLE
+            fetch(API_URL, { 
+                method: 'POST', 
+                headers: { 'Content-Type': 'text/plain;charset=utf-8' }, 
+                body: JSON.stringify(bookingData) 
+            }).then(res => res.json()).then(json => {
+                if (json.error === "OVERLAP") { 
+                    alert("❌ ПОМИЛКА: Ці дати щойно були зайняті."); 
+                    initApp(); // Якщо помилка — відкочуємо зміни
+                } else {
+                    initApp(); // Тихе оновлення, щоб отримати реальні ID рядків
+                }
+            }).catch(error => {
+                showToast("Помилка синхронізації!");
+            });
         });
 
 
