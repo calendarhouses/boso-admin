@@ -1689,12 +1689,24 @@ function saveInlineTransaction(type, category, idx) {
 
         function showToast(message) {
             const container = document.getElementById('toast-container');
+            
+            // Очищаємо контейнер від старих сповіщень
+            container.innerHTML = '';
+
             const toast = document.createElement('div');
             toast.className = 'toast';
             toast.innerHTML = `<svg class="toast-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg> ${message}`;
             container.appendChild(toast);
+            
             setTimeout(() => toast.classList.add('show'), 10);
-            setTimeout(() => { toast.classList.remove('show'); setTimeout(() => toast.remove(), 400); }, 3000);
+            
+            setTimeout(() => { 
+                toast.classList.remove('show'); 
+                setTimeout(() => {
+                    // Перевіряємо, чи елемент ще є
+                    if (container.contains(toast)) toast.remove();
+                }, 400); 
+            }, 3000);
         }
 
         function switchView(viewName) {
