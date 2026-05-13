@@ -2327,7 +2327,7 @@ function saveInlineTransaction(type, category, idx) {
                     <td><strong>${dateStr}</strong><br><span style="color: #6B7280; font-size: 12px;">${nights} ночей</span></td>
                     <td><strong>${String(b.name).replace(' (Ручна бронь)', '')}</strong><br><span style="color: #6B7280; font-size: 12px;">+${cleanPhone}</span></td>
                     <td>${b.cottage}</td><td><span class="badge ${badgeClass}">${b.status}</span></td>
-                    <td><button class="btn-action arrow" onclick="openDetailsByRow(event, ${b.row})">Деталі <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"></path></svg></button></td>
+                   <td><button class="btn-action arrow" onclick="openDetailsByRow(event, '${b.row}')">Деталі <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"></path></svg></button></td>
                 </tr>`;
             });
         }
@@ -2502,8 +2502,8 @@ if (s.includes('скас')) statusClass = 'status-cancelled';
                                 let currentIcon = isPromo ? iconGift : iconClock;
                                 
                                 extensionsHtml += `<div class="time-extension late" style="width: ${cellWidth * 0.85}px;" 
-                                    onmouseenter="event.stopPropagation(); bosoHover(this, ${b.row}, 'late')" 
-                                    onmouseleave="event.stopPropagation(); if(event.relatedTarget && this.parentElement.contains(event.relatedTarget)) bosoHover(this.parentElement, ${b.row}, 'main'); else bosoLeave();">${currentIcon}</div>`;
+                                    onmouseenter="event.stopPropagation(); bosoHover(this, '${b.row}', 'late')" 
+                                    onmouseleave="event.stopPropagation(); if(event.relatedTarget && this.parentElement.contains(event.relatedTarget)) bosoHover(this.parentElement, '${b.row}', 'main'); else bosoLeave();">${currentIcon}</div>`;
                                 padRight = (cellWidth * 0.85) + 8;
                             }
                             if (exHasEarly) {
@@ -2511,8 +2511,8 @@ if (s.includes('скас')) statusClass = 'status-cancelled';
                                 blockWidth += (cellWidth * 0.85);
                                 
                                 extensionsHtml += `<div class="time-extension early" style="width: ${cellWidth * 0.85}px;" 
-                                    onmouseenter="event.stopPropagation(); bosoHover(this, ${b.row}, 'early')" 
-                                    onmouseleave="event.stopPropagation(); if(event.relatedTarget && this.parentElement.contains(event.relatedTarget)) bosoHover(this.parentElement, ${b.row}, 'main'); else bosoLeave();">${iconClock}</div>`;
+                                    onmouseenter="event.stopPropagation(); bosoHover(this, '${b.row}', 'early')" 
+                                    onmouseleave="event.stopPropagation(); if(event.relatedTarget && this.parentElement.contains(event.relatedTarget)) bosoHover(this.parentElement, '${b.row}', 'main'); else bosoLeave();">${iconClock}</div>`;
                                 padLeft = (cellWidth * 0.85) + 8;
                             }
 
@@ -2537,8 +2537,8 @@ if (s.includes('скас')) statusClass = 'status-cancelled';
                             // 🚀 ЧИСТА ПЛАШКА
                             rowHtml += `
                                 <div class="booking-block ${statusClass}" style="left: ${blockLeft}px; width: ${blockWidth}px; padding-left: ${padLeft}px; padding-right: ${padRight}px; justify-content: flex-start;" 
-                                     onclick="openDetailsByRow(event, ${b.row})"
-                                     onmouseenter="bosoHover(this, ${b.row}, 'main')" 
+                                     onclick="openDetailsByRow(event, '${b.row}')"
+                                     onmouseenter="bosoHover(this, '${b.row}', 'main')" 
                                      onmouseleave="bosoLeave()">
                                     
                                     ${extensionsHtml}
