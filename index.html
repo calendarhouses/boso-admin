@@ -2941,7 +2941,8 @@ function getDayPrice(room, dateObj) {
 }
         
         // --- ПАНЕЛЬ ДЕТАЛЕЙ БРОНЮВАННЯ ТА ЖИВИЙ КАЛЬКУЛЯТОР ---
-        function updatePricePreview() {
+        function updatePricePreview(isInitialLoad) {
+    if (typeof isInitialLoad !== 'boolean') isInitialLoad = false; // Захист від випадкових спрацювань
     const checkInStr = document.getElementById('adminCheckIn').value;
     const checkOutStr = document.getElementById('adminCheckOut').value;
     const roomName = document.getElementById('adminCottage').value;
@@ -3095,11 +3096,26 @@ if (guests > maxCap) {
         isPromoLateOut = true;
     }
 
-    // Знаходимо ціну за перший і останній день
     let earlyDayPrice = getDayPrice(room, d1);
     let lateDayPrice = getDayPrice(room, d2);
     let early50 = Math.round(earlyDayPrice * 0.5);
     let late50 = Math.round(lateDayPrice * 0.5);
+
+    if (selectedEarlyTime) earlyFee = early50;
+    if (selectedLateTime && !isPromoLateOut) lateFee = late50;
+
+    // 🟢 МАГІЯ ТУТ: ПІДТЯГУЄМО РУЧНІ ЗНАЧЕННЯ З БАЗИ ПРИ ВІДКРИТТІ БРОНІ
+    if (isInitialLoad && editingRowNumber) {
+        const b = allBookings.find(x => x.row == editingRowNumber);
+        if (b) {
+            if (b.basePrice !== undefined && b.basePrice !== "") basePriceTotal = Number(b.basePrice);
+            if (b.extraGuestFee !== undefined && b.extraGuestFee !== "") extraGuestFee = Number(b.extraGuestFee);
+            if (b.petFee !== undefined && b.petFee !== "") petFee = Number(b.petFee);
+            if (b.dayGuestFee !== undefined && b.dayGuestFee !== "") dayGuestFee = Number(b.dayGuestFee);
+            if (b.earlyFee !== undefined && b.earlyFee !== "") earlyFee = Number(b.earlyFee);
+            if (b.lateFee !== undefined && b.lateFee !== "") lateFee = Number(b.lateFee);
+        }
+    }
 
     // Оновлюємо UI на самих картках
     const labelEarly = document.getElementById('adminLabelPriceEarly');
@@ -3171,6 +3187,17 @@ const appliesToRoom =
     let amountToDiscount = basePriceTotal + extraGuestFee;
     let discountAmount = Math.round(amountToDiscount * discountPercent);
     let totalPrice = amountToDiscount - discountAmount + petFee + dayGuestFee + earlyFee + lateFee;
+
+    // 🟢 ВІДНОВЛЮЄМО РУЧНУ ЗНИЖКУ/ЗАГАЛЬНУ ЦІНУ
+    if (isInitialLoad && editingRowNumber) {
+        const b = allBookings.find(x => x.row == editingRowNumber);
+        if (b && b.totalPrice !== undefined && b.totalPrice !== "") {
+            totalPrice = Number(b.totalPrice);
+            // Реверсивно вираховуємо суму знижки, щоб математика зійшлася
+            discountAmount = (basePriceTotal + extraGuestFee + petFee + dayGuestFee + earlyFee + lateFee) - totalPrice;
+            if (discountAmount < 0) discountAmount = 0; 
+        }
+    }
 
     // МАЛЮЄМО НОВУ КРАСИВУ РОЗШИФРОВКУ З ПОЛЯМИ ВВОДУ
     cont.innerHTML = `
@@ -3753,8 +3780,8 @@ document.getElementById('adminGuests').addEventListener('change', updatePricePre
             if(matched) matched.classList.add('active'); 
             else document.querySelector('.status-btn[data-status="Нова бронь"]').classList.add('active');
 
-            setTimeout(() => {
-                updatePricePreview();
+           setTimeout(() => {
+                updatePricePreview(true); // 🟢 ПЕРЕДАЄМО true, щоб підтягнулись ручні цифри
                 setTimeout(() => {
                     if(document.getElementById('adminTotalPrice')) {
                         document.getElementById('adminTotalPrice').value = booking.totalPrice || 0;
