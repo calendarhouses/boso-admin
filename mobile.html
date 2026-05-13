@@ -1309,9 +1309,9 @@
             showToast("Успішно видалено");
             
             // Миттєво перемальовуємо екрани
-            if (document.getElementById('view-grid').style.display === 'flex') renderTimeline();
+            if (document.getElementById('view-grid').style.display === 'flex') renderTimeline(true);
             if (document.getElementById('view-list').style.display === 'block') {
-                const activeTab = document.querySelector('#bookingsTabs .m-tab.active');
+                const activeTab = document.querySelector('.m-tab.active, .filter-btn.active');
                 if (activeTab) activeTab.click();
                 else renderTable(allBookings);
             }
@@ -1322,8 +1322,7 @@
                 headers: { 'Content-Type': 'text/plain;charset=utf-8' }, 
                 body: JSON.stringify({ action: 'deleteBooking', row: rowToDelete }) 
             }).then(() => {
-                // Тихо оновлюємо базу на фоні, щоб все було синхронізовано
-                initApp(); 
+                silentSync(); // 🟢 ТИХЕ ОНОВЛЕННЯ!
             }).catch(() => {
                 showToast("Помилка синхронізації!");
             });
@@ -2053,6 +2052,10 @@
         }
 
         function openDetailsByRow(rowNumber) {
+            if (String(rowNumber).startsWith('temp_')) {
+                showToast('⏳ Бронь ще записується на сервер. Зачекайте 2 секунди...');
+                return;
+            }
             const booking = allBookings.find(b => b.row == rowNumber); if (!booking) return;
             editingRowNumber = rowNumber; document.getElementById('drawerTitle').innerText = `Деталі броні`;
             document.getElementById('adminDeleteBtn').style.display = 'flex';
@@ -2217,7 +2220,7 @@
             closeDrawer(); 
             showToast("Збережено!");
             
-            if (document.getElementById('view-grid').style.display === 'flex') renderTimeline();
+            if (document.getElementById('view-grid').style.display === 'flex') renderTimeline(true);
             if (document.getElementById('view-list').style.display === 'block') {
                 const activeTab = document.querySelector('.m-tab.active, .filter-btn.active');
                 if (activeTab) activeTab.click();
@@ -2236,12 +2239,10 @@
                 if (json.error === "OVERLAP") { 
                     alert("❌ ПОМИЛКА: Ці дати щойно були зайняті."); 
                 }
-                // Фоново підтягуємо базу, щоб тимчасовий ID замінився на справжній
-                initApp(); 
+                silentSync(); // 🟢 ТИХЕ ОНОВЛЕННЯ!
             }).catch(error => {
                 showToast("Помилка синхронізації!");
             });
-        });
 
         // CUSTOM SELECT ЛОГІКА
         function toggleCustomSelect(wrapperId) {
@@ -2423,6 +2424,10 @@
         let isSwiping = false; // Змінна для відстеження руху пальцем
 
         function handleTouchStart(e, element, rowNumber, type = 'main') {
+            if (String(rowNumber).startsWith('temp_')) {
+                showToast('⏳ Бронь ще записується...');
+                return;
+            }
             isLongPress = false;
             isSwiping = false; 
             element.classList.add('pressing');
