@@ -3123,7 +3123,7 @@ if (guests > maxCap) {
 
     if (labelEarly) {
         if (selectedEarlyTime) {
-            earlyFee = early50;
+            // 🚀 Прибрали earlyFee = early50; Тепер воно зберігає підтягнуте або ручне значення
             labelEarly.innerHTML = `<span style="color:#111827; font-weight:500; font-size:12px; margin-right:6px;">з ${selectedEarlyTime}</span> +${earlyFee} грн`;
         } else {
             labelEarly.innerHTML = `+${early50} грн (50% доби)`;
@@ -3136,7 +3136,7 @@ if (guests > maxCap) {
                 lateFee = 0;
                 labelLate.innerHTML = `<span style="color:#111827; font-weight:500; font-size:12px; margin-right:6px;">до ${selectedLateTime}</span> <span style="color:var(--success)">Безкоштовно (Акція)</span>`;
             } else {
-                lateFee = late50;
+                // 🚀 Прибрали lateFee = late50;
                 labelLate.innerHTML = `<span style="color:#111827; font-weight:500; font-size:12px; margin-right:6px;">до ${selectedLateTime}</span> +${lateFee} грн`;
             }
         } else {
