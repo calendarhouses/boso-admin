@@ -3238,7 +3238,6 @@ const appliesToRoom =
                 </div>` : `<input type="hidden" id="manualLate" value="0">`}
                 
                 ${isVat === "Так" ? `<div style="display:flex; justify-content:space-between; margin-bottom:4px; color:var(--accent);"><span>Чан:</span><span style="font-weight:600; text-align:right;">Оплата по факту</span></div>` : ''}
-                
                 ${discountAmount > 0 ? `
                 <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px; color:var(--danger);">
                     <span>Знижка (${Math.round(discountPercent*100)}%):</span>
@@ -3249,6 +3248,12 @@ const appliesToRoom =
                     </div>
                 </div>` : `<input type="hidden" id="manualDiscount" value="0">`}
                 
+                <input type="hidden" id="hiddenBasePrice" value="${basePriceTotal}">
+                <input type="hidden" id="hiddenExtraGuestFee" value="${extraGuestFee}">
+                <input type="hidden" id="hiddenPetFee" value="${petFee}">
+                <input type="hidden" id="hiddenDayGuestFee" value="${dayGuestFee}">
+                <input type="hidden" id="hiddenEarlyFee" value="${earlyFee}">
+                <input type="hidden" id="hiddenLateFee" value="${lateFee}">
                 <input type="hidden" id="hiddenDiscountPercent" value="${discountPercent}">
                 <input type="hidden" id="manualDiscountEdited" value="false">
             </div>
@@ -3787,7 +3792,7 @@ document.getElementById('adminGuests').addEventListener('change', updatePricePre
                 rawComment = sysComment.join(' | ') + (rawComment ? '\n\nКоментар гостя: ' + rawComment : '');
             }
 
-            // Збираємо дані броні
+            // Збираємо дані броні з урахуванням ручних правок розшифровки
             const bookingData = { 
                 checkIn: document.getElementById('adminCheckIn').value, 
                 checkOut: document.getElementById('adminCheckOut').value, 
@@ -3799,7 +3804,16 @@ document.getElementById('adminGuests').addEventListener('change', updatePricePre
                 status: document.querySelector('.status-btn.active').getAttribute('data-status'),
                 totalPrice: document.getElementById('adminTotalPrice').value, 
                 paidAmount: document.getElementById('adminPaidAmount').value,
-                comment: rawComment
+                comment: rawComment,
+                
+                // Нові поля для ідеальної аналітики
+                basePrice: document.getElementById('manualBasePrice')?.value || 0,
+                extraGuestFee: document.getElementById('manualExtraGuest')?.value || 0,
+                petFee: document.getElementById('manualPet')?.value || 0,
+                dayGuestFee: document.getElementById('manualDayGuest')?.value || 0,
+                earlyFee: document.getElementById('manualEarly')?.value || 0,
+                lateFee: document.getElementById('manualLate')?.value || 0,
+                discountAmount: document.getElementById('manualDiscount')?.value || 0
             };
             
             if (editingRowNumber !== null) bookingData.row = editingRowNumber;
@@ -4359,40 +4373,30 @@ function bosoLeave() {
                     let extraPrice = room && room.extraGuestPrice !== undefined ? room.extraGuestPrice : 2500;
                     
                     let extraGuests = Math.max(0, (parseInt(b.guests) || 2) - cap);
-                    let feeGuests = extraGuests * extraPrice * nights;
-                    let feePets = (b.pets === "Так" || b.pets === true) ? (500 + 200 * nights) : 0;
+                    // --- 🟢 ПРІОРИТЕТ РУЧНИМ ПРАВКАМ ДЛЯ ТОЧНОСТІ ДО ГРИВНІ ---
+                    let feeGuests = b.extraGuestFee !== undefined && b.extraGuestFee !== "" ? Number(b.extraGuestFee) : (extraGuests * extraPrice * nights);
+                    let feePets = b.petFee !== undefined && b.petFee !== "" ? Number(b.petFee) : ((b.pets === "Так" || b.pets === true) ? (500 + 200 * nights) : 0);
+                    let feeDayGuests = b.dayGuestFee !== undefined && b.dayGuestFee !== "" ? Number(b.dayGuestFee) : 0;
 
-                    if (feeGuests > 0) {
-                        currGuests += feeGuests;
-                        window.bosoDetails.guests.push({...baseObj, amount: feeGuests});
-                    }
-                    if (feePets > 0) {
-                        currPets += feePets;
-                        window.bosoDetails.pets.push({...baseObj, amount: feePets});
-                    }
+                    if (feeGuests > 0) { currGuests += feeGuests; window.bosoDetails.guests.push({...baseObj, amount: feeGuests}); }
+                    if (feePets > 0) { currPets += feePets; window.bosoDetails.pets.push({...baseObj, amount: feePets}); }
+                    // Денних гостей кидаємо в "Інший дохід"
+                    if (feeDayGuests > 0) { currOther += feeDayGuests; window.bosoDetails.other.push({...baseObj, amount: feeDayGuests, name: baseObj.name + " (Денні гості)"}); }
 
-                    // --- 🟢 ЗЧИТУЄМО ГНУЧКИЙ ГРАФІК З КОМЕНТАРЯ ---
-                    let rawComment = b.comment ? String(b.comment) : "";
                     let feeEarlyLate = 0;
-                    
-                    if (rawComment.includes('🕒 Ранній заїзд:')) {
-                        let earlyDayPrice = getDayPrice(room, inD);
-                        feeEarlyLate += Math.round(earlyDayPrice * 0.5);
-                    }
-                    
-                    if (rawComment.includes('🕒 Пізній виїзд:')) {
-                        // Перевіряємо чи це не безкоштовна акція (Пт-Нд)
-                        let isPromo = (nights === 2 && inD.getDay() === 5 && outD.getDay() === 0);
-                        if (!isPromo) {
-                            let lateDayPrice = getDayPrice(room, outD);
-                            feeEarlyLate += Math.round(lateDayPrice * 0.5);
+                    if ((b.earlyFee !== undefined && b.earlyFee !== "") || (b.lateFee !== undefined && b.lateFee !== "")) {
+                        // Якщо в базі є збережені ручні поля - беремо їх!
+                        feeEarlyLate = (Number(b.earlyFee) || 0) + (Number(b.lateFee) || 0);
+                    } else {
+                        // Якщо бронь стара (до оновлення) - беремо з коментаря
+                        let rawComment = b.comment ? String(b.comment) : "";
+                        if (rawComment.includes('🕒 Ранній заїзд:')) feeEarlyLate += Math.round(getDayPrice(room, inD) * 0.5);
+                        if (rawComment.includes('🕒 Пізній виїзд:')) {
+                            let isPromo = (nights === 2 && inD.getDay() === 5 && outD.getDay() === 0);
+                            if (!isPromo) feeEarlyLate += Math.round(getDayPrice(room, outD) * 0.5);
                         }
                     }
-
-                    if (feeEarlyLate > 0) {
-                        currEarlyLate += feeEarlyLate;
-                        window.bosoDetails.earlyLate.push({...baseObj, amount: feeEarlyLate});
-                    }
+                    if (feeEarlyLate > 0) { currEarlyLate += feeEarlyLate; window.bosoDetails.earlyLate.push({...baseObj, amount: feeEarlyLate}); }
                     
                     // Розбивка фінансів
                     if (paid > 0) {
