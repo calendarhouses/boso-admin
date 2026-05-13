@@ -1012,6 +1012,41 @@
             }
          }
 
+        // 🟢 ТИХА СИНХРОНІЗАЦІЯ (Без стрибків екрану)
+        async function silentSync() {
+            try {
+                const res = await fetch(API_URL + "?action=initData&t=" + new Date().getTime());
+                const data = await res.json();
+                
+                if (data && data.bookings) {
+                    allBookings = data.bookings;
+                    const sd = data.settings || {};
+                    if (sd.roomsList) roomsList = sd.roomsList;
+                    if (sd.discountsList) discountsList = sd.discountsList;
+                    if (sd.customPrices) customPrices = sd.customPrices;
+                    if (sd.transactions) transactions = sd.transactions;
+
+                    // Зберігаємо поточні позиції скролу
+                    const tlScroll = document.getElementById('timelineScroll');
+                    const savedTlScrollX = tlScroll ? tlScroll.scrollLeft : 0;
+                    const savedWindowScrollY = window.scrollY;
+
+                    if (document.getElementById('view-grid').style.display === 'flex') { 
+                        renderTimeline(true); // Перемальовуємо, КАЖУЧИ НЕ ЧІПАТИ СКРОЛ
+                        if (tlScroll) tlScroll.scrollLeft = savedTlScrollX;
+                    } 
+                    else if (document.getElementById('view-list').style.display === 'block') { 
+                        const activeTab = document.querySelector('.tab.active'); // Для ПК тут клас tab
+                        if (activeTab) activeTab.click();
+                        else renderTable(allBookings);
+                        window.scrollTo(0, savedWindowScrollY);
+                    }
+                }
+            } catch (error) { 
+                console.error("Помилка фонового оновлення:", error); 
+            }
+        }
+        
         async function saveSettingsToCloud() {
             const settingsToSave = { roomsList, discountsList, customServicesList, sysServicesList, customPrices, transactions }; // <--- ДОДАЙ transactions
             try { await fetch(API_URL, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify({ action: 'saveSettings', settings: settingsToSave }) });
@@ -1488,7 +1523,7 @@
             renderTimeline(); 
         }
 
-        function renderTimeline() {
+        function renderTimeline(preserveScroll = false) {
             const monthsContainer = document.getElementById('timelineMonths'); const datesContainer = document.getElementById('timelineDates');
             const gridContainer = document.getElementById('timelineGrid'); const roomsContainer = document.getElementById('timelineRooms');
             monthsContainer.innerHTML = ''; datesContainer.innerHTML = ''; gridContainer.innerHTML = ''; roomsContainer.innerHTML = '';
@@ -1615,11 +1650,17 @@
                 });
             });
             
-            if (timelineMode === 'month') {
-                if (timelineBaseDate.getMonth() === today.getMonth() && timelineBaseDate.getFullYear() === today.getFullYear()) {
-                    document.getElementById('timelineScroll').scrollLeft = Math.max(0, (today.getDate() - 2) * cellWidth); 
-                } else { document.getElementById('timelineScroll').scrollLeft = 0; }
-            } else if (timelineMode === 'continuous') { document.getElementById('timelineScroll').scrollLeft = 0; }
+            if (!preserveScroll) {
+                if (timelineMode === 'month') {
+                    if (timelineBaseDate.getMonth() === today.getMonth() && timelineBaseDate.getFullYear() === today.getFullYear()) {
+                        document.getElementById('timelineScroll').scrollLeft = Math.max(0, (today.getDate() - 3) * cellWidth); 
+                    } else {
+                        document.getElementById('timelineScroll').scrollLeft = 0;
+                    }
+                } else if (timelineMode === 'continuous') {
+                    document.getElementById('timelineScroll').scrollLeft = 0; 
+                }
+            }
         }
 
         /* --- СІТКА ЦІН --- */
