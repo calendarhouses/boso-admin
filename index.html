@@ -4417,31 +4417,28 @@ function jumpToFinanceAndEdit(id) {
 }
         
         function autoScaleDashboard() {
-            // 1440 - це стандартна ширина екрану MacBook/ноутбука, де адмінка виглядає ідеально.
-            // Можеш змінити цю цифру на свою, якщо в тебе інша роздільна здатність.
-            const baseWidth = 1440; 
+            // 1. Скидаємо масштаб перед вимірюванням екрану, щоб цифри були точними
+            document.documentElement.style.zoom = 1;
             
-            // Беремо реальну ширину вікна браузера на поточному пристрої
+            // Твій еталонний монітор
+            const baseWidth = 1440; 
             const currentWidth = window.innerWidth;
 
-            // Якщо екран власника більший за твій (наприклад, iMac з його 2500px+)
-            if (currentWidth > 1500) {
-                // Вираховуємо точну математичну пропорцію
+            if (currentWidth > 1440) {
+                // 2. Рахуємо точний коефіцієнт (БЕЗ 0.95!)
                 const scaleRatio = currentWidth / baseWidth;
                 
-                // Застосовуємо цей точний масштаб до всієї сторінки
-                // Множимо на 0.95, щоб залишити трохи "повітря" і не притискати все впритул до країв
-                document.body.style.zoom = scaleRatio * 0.95; 
-            } else {
-                // На твоєму ноуті або менших екранах нічого не змінюємо
-                document.body.style.zoom = 1;
+                // 3. Застосовуємо zoom до HTML, а не BODY. 
+                // Це гарантує, що не буде обрізаних країв і сірих полос
+                document.documentElement.style.zoom = scaleRatio;
+                
+                // Про всяк випадок заливаємо фон підкладки твоїм фірмовим кольором
+                document.documentElement.style.backgroundColor = 'var(--bg-color)';
             }
         }
 
-        // Запускаємо перевірку одразу при завантаженні сторінки
+        // Запускаємо при старті та зміні розміру вікна
         window.addEventListener('DOMContentLoaded', autoScaleDashboard);
-        
-        // І також перераховуємо, якщо вікно браузера змінили вручну
         window.addEventListener('resize', autoScaleDashboard);
     </script>
 </body>
