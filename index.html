@@ -3824,6 +3824,15 @@ document.getElementById('adminGuests').addEventListener('change', updatePricePre
             btn.innerText = "Збереження..."; 
             btn.disabled = true;
             
+            // 🟢 ФУНКЦІЯ ДЛЯ ПРАВИЛЬНОГО ЧИТАННЯ ЦИФР З СПАНІВ ТА ІНПУТІВ
+            const getVal = (id) => {
+                const el = document.getElementById(id);
+                if (!el) return 0;
+                // Якщо це інпут - беремо value, якщо спан (наша розшифровка) - беремо innerText
+                const val = el.tagName === 'INPUT' ? el.value : el.innerText;
+                return Number(String(val).replace(/\s/g, '')) || 0; 
+            };
+
             // Формуємо системний коментар
             let rawComment = document.getElementById('adminComment').value.trim();
             let dayGuests = parseInt(document.getElementById('adminDayGuests').value) || 0;
@@ -3838,7 +3847,7 @@ document.getElementById('adminGuests').addEventListener('change', updatePricePre
                 rawComment = sysComment.join(' | ') + (rawComment ? '\n\nКоментар гостя: ' + rawComment : '');
             }
 
-            // Збираємо дані броні з урахуванням ручних правок розшифровки
+            // 🟢 ТЕПЕР ЗБИРАЄМО ДАНІ ЧЕРЕЗ getVal()
             const bookingData = { 
                 checkIn: document.getElementById('adminCheckIn').value, 
                 checkOut: document.getElementById('adminCheckOut').value, 
@@ -3848,18 +3857,18 @@ document.getElementById('adminGuests').addEventListener('change', updatePricePre
                 guests: document.getElementById('adminGuests').value,
                 pets: document.getElementById('adminPets').value, 
                 status: document.querySelector('.status-btn.active').getAttribute('data-status'),
-                totalPrice: document.getElementById('adminTotalPrice').value, 
-                paidAmount: document.getElementById('adminPaidAmount').value,
+                totalPrice: getVal('adminTotalPrice'), 
+                paidAmount: getVal('adminPaidAmount'),
                 comment: rawComment,
                 
-                // Нові поля для ідеальної аналітики
-                basePrice: document.getElementById('manualBasePrice')?.value || 0,
-                extraGuestFee: document.getElementById('manualExtraGuest')?.value || 0,
-                petFee: document.getElementById('manualPet')?.value || 0,
-                dayGuestFee: document.getElementById('manualDayGuest')?.value || 0,
-                earlyFee: document.getElementById('manualEarly')?.value || 0,
-                lateFee: document.getElementById('manualLate')?.value || 0,
-                discountAmount: document.getElementById('manualDiscount')?.value || 0
+                // Збираємо ручні правки з розшифровки (тепер вони не будуть нулями)
+                basePrice: getVal('manualBasePrice'),
+                extraGuestFee: getVal('manualExtraGuest'),
+                petFee: getVal('manualPet'),
+                dayGuestFee: getVal('manualDayGuest'),
+                earlyFee: getVal('manualEarly'),
+                lateFee: getVal('manualLate'),
+                discountAmount: getVal('manualDiscount')
             };
             
             if (editingRowNumber !== null) bookingData.row = editingRowNumber;
