@@ -2395,7 +2395,8 @@ function saveInlineTransaction(type, category, idx) {
 
         // --- ТАБЛИЦЯ БРОНЮВАНЬ ---
         function renderTable(data) {
-            const tbody = document.getElementById('bookingsTableBody');
+    data.sort((a, b) => new Date(a.checkIn) - new Date(b.checkIn)); 
+    const tbody = document.getElementById('bookingsTableBody');
             tbody.innerHTML = '';
             if (!data || data.length === 0) { tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; padding: 30px; color: #9CA3AF;">Нічого не знайдено</td></tr>'; return; }
             data.forEach((b) => {
@@ -2428,9 +2429,11 @@ function saveInlineTransaction(type, category, idx) {
                     <td style="padding: 16px 20px;">
                         <div style="display:flex; flex-direction:column; gap:4px;">
                             <div style="display:flex; align-items:center; gap:8px; font-weight:600; color:var(--text-main); font-size: 14px;">
-                                <span style="background: #F3F4F6; padding: 6px 10px; border-radius: 8px; color: #374151;">${dateStr}</span>
+                                <span style="background: #F3F4F6; padding: 6px 12px; border-radius: 8px; color: #374151; display: flex; align-items: center; gap: 8px;">
+                                    ${iconCal} ${dateStr}
+                                </span>
                             </div>
-                            <div style="display:flex; align-items:center; gap:6px; color:#6B7280; font-size:12px; font-weight:600; padding-left: 2px;">
+                            <div style="display:flex; align-items:center; gap:6px; color:#6B7280; font-size:12px; font-weight:600; padding-left: 4px;">
                                 ${iconMoon} <span style="text-transform: uppercase; letter-spacing: 0.5px;">${nights} ${nightWord(nights)}</span>
                             </div>
                         </div>
