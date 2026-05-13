@@ -2421,24 +2421,62 @@
                 tooltip.style.minWidth = '140px';
 
             } else {
-                // МАЛЮЄМО СТАНДАРТНИЙ ВЕЛИКИЙ ТУЛТИП
+                // МАЛЮЄМО СТАНДАРТНИЙ ВЕЛИКИЙ ТУЛТИП (БЕЗ ГОДИН ЗАЇЗДУ)
                 tooltip.style.width = '260px'; 
-
-                // Вирізаємо ранній/пізній заїзд з коментаря
-                let cleanComment = rawComment.replace(/🕒 Ранній заїзд: з \d{2}:\d{2}(\s*\|\s*)?/g, '')
-                                             .replace(/🕒 Пізній виїзд: до \d{2}:\d{2}(\s*\|\s*)?/g, '')
-                                             .replace(/^\|\s*/, '')
-                                             .replace(/\|\s*$/, '')
-                                             .trim();
                 
-                if (cleanComment === "Коментар гостя:" || cleanComment.startsWith("Коментар гостя:") && cleanComment.length < 17) {
+                // 🟢 НОВИЙ ПАРСИНГ ДЛЯ МОБІЛКИ: Замінюємо смайлики на преміум SVG-рядки
+                let extraRowsHtml = "";
+                const iconUsers = `<svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="margin-right: 6px;"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>`;
+                const iconVat = `<svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="margin-right: 6px;"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 18.657A8 8 0 016.343 7.343S7 9 9 10c0-2 .5-5 2.986-7C14 5 16.09 5.777 17.656 7.343A7.975 7.975 0 0120 13a7.975 7.975 0 01-2.343 5.657z"></path></svg>`;
+                const iconShield = `<svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="margin-right: 6px;"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path></svg>`;
+                const iconClockMini = `<svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="margin-right: 6px;"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>`;
+
+                let cleanComment = rawComment;
+
+                // Шукаємо Денних гостей
+                let matchDay = rawComment.match(/👥 Денні гості[^:]*:\s*(\d+)/);
+                if (matchDay) {
+                    extraRowsHtml += `<div class="tt-row"><span class="tt-label" style="display:flex;align-items:center;">${iconUsers} Денні гості:</span> <span class="tt-value">${matchDay[1]}</span></div>`;
+                    cleanComment = cleanComment.replace(/👥 Денні гості[^|]+(\|\s*)?/, '');
+                }
+
+                // Шукаємо Чан
+                if (rawComment.includes('♨️ Чан: Так')) {
+                    extraRowsHtml += `<div class="tt-row"><span class="tt-label" style="display:flex;align-items:center;">${iconVat} Чан:</span> <span class="tt-value" style="color:var(--accent);">Так</span></div>`;
+                    cleanComment = cleanComment.replace(/♨️ Чан: Так\s*(\|\s*)?/, '');
+                }
+
+                // Шукаємо УБД
+                if (rawComment.includes('🇺🇦 УБД: Так')) {
+                    extraRowsHtml += `<div class="tt-row"><span class="tt-label" style="display:flex;align-items:center;">${iconShield} УБД:</span> <span class="tt-value" style="color:var(--accent);">Так (-10%)</span></div>`;
+                    cleanComment = cleanComment.replace(/🇺🇦 УБД: Так\s*(\|\s*)?/, '');
+                }
+
+                // Шукаємо Ранній заїзд
+                let matchEarly = rawComment.match(/🕒 Ранній заїзд: з (\d{2}:\d{2})/);
+                if (matchEarly) {
+                    extraRowsHtml += `<div class="tt-row"><span class="tt-label" style="display:flex;align-items:center;">${iconClockMini} Ранній заїзд:</span> <span class="tt-value">з ${matchEarly[1]}</span></div>`;
+                    cleanComment = cleanComment.replace(/🕒 Ранній заїзд: з \d{2}:\d{2}(\s*\|\s*)?/, '');
+                }
+
+                // Шукаємо Пізній виїзд
+                let matchLate = rawComment.match(/🕒 Пізній виїзд: до (\d{2}:\d{2})/);
+                if (matchLate) {
+                    extraRowsHtml += `<div class="tt-row"><span class="tt-label" style="display:flex;align-items:center;">${iconClockMini} Пізній виїзд:</span> <span class="tt-value">до ${matchLate[1]}</span></div>`;
+                    cleanComment = cleanComment.replace(/🕒 Пізній виїзд: до \d{2}:\d{2}(\s*\|\s*)?/, '');
+                }
+
+                // Фінальна чистка від "Коментар гостя:" та паличок
+                cleanComment = cleanComment.replace(/^Коментар гостя:\s*/, '').replace(/^\|\s*/, '').replace(/\|\s*$/, '').trim();
+                
+                if (cleanComment === "undefined" || cleanComment === "null" || cleanComment === "Коментар гостя:") {
                     cleanComment = "";
                 }
 
                 let commentHtml = cleanComment !== "" 
-                    ? `<div style="margin-top: 12px; padding: 10px 12px; background: #F9FAFB; border-left: 3px solid var(--accent); border-radius: 4px 8px 8px 4px; font-size: 12px; color: #4B5563; line-height: 1.4; text-align: left;">
-                         <span style="display: block; font-size: 10px; font-weight: 800; text-transform: uppercase; color: #9CA3AF; margin-bottom: 4px; letter-spacing: 0.5px;">Додатково</span>
-                         <div style="display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; text-overflow: ellipsis; word-break: break-all;">
+                    ? `<div style="margin-top: 12px; padding: 10px 12px; background: #F9FAFB; border-left: 3px solid var(--accent); border-radius: 4px 8px 8px 4px; font-size: 13px; color: #4B5563; line-height: 1.4; text-align: left;">
+                         <span style="display: block; font-size: 10px; font-weight: 800; text-transform: uppercase; color: #9CA3AF; margin-bottom: 4px; letter-spacing: 0.5px;">Коментар гостя</span>
+                         <div style="display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; text-overflow: ellipsis; word-break: break-all;">
                              ${cleanComment}
                          </div>
                        </div>` 
@@ -2452,9 +2490,12 @@
                     <div class="tt-body">
                         <div class="tt-row"><span class="tt-label">Котедж:</span> <span class="tt-value">${b.cottage}</span></div>
                         <div class="tt-row"><span class="tt-label">Дати:</span> <span class="tt-value" style="color: var(--accent);">${inDate} — ${outDate}</span></div>
+                        
+                        ${extraRowsHtml ? `<div style="margin: 8px 0; border-top: 1px dashed #E5E7EB; border-bottom: 1px dashed #E5E7EB; padding: 10px 0;">${extraRowsHtml}</div>` : ''}
+                        
                         <div class="tt-row"><span class="tt-label">Загальна сума:</span> <span class="tt-value">${total} грн</span></div>
                         ${paidRowHtml}
-                        <div class="tt-status" style="background: ${finBg}; color: ${finColor};">${finText}</div>
+                        <div class="tt-status" style="background: ${finBg}; color: ${finColor}; margin-top: 10px;">${finText}</div>
                         ${commentHtml}
                     </div>
                 `;
