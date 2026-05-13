@@ -2053,7 +2053,7 @@
 
         function openDetailsByRow(rowNumber) {
             if (String(rowNumber).startsWith('temp_')) {
-                showToast('⏳ Бронь ще записується на сервер. Зачекайте 2 секунди...');
+                showToast('Бронь ще записується на сервер. Зачекайте 2 секунди...');
                 return;
             }
             const booking = allBookings.find(b => b.row == rowNumber); if (!booking) return;
