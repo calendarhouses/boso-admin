@@ -3820,23 +3820,37 @@ document.addEventListener('click', function(e) {
             const targetRect = element.getBoundingClientRect();
             
             requestAnimationFrame(() => {
-                let leftPos = targetRect.left + (targetRect.width / 2) - (tt.offsetWidth / 2); 
-                
-                // ПРІОРИТЕТ 1: СТАВИМО ВГОРУ НАД БРОННЮ (АБО НАД ХВОСТИКОМ)
-                let topPos = targetRect.top - tt.offsetHeight - 12;
+                // Визначаємо реальні розміри тултипа після того, як в нього завантажився текст
+                const ttElement = document.getElementById('boso-tooltip') || document.getElementById('premiumTooltip');
+                const ttHeight = ttElement.offsetHeight;
+                const ttWidth = ttElement.offsetWidth;
 
-                // ПРІОРИТЕТ 2: ЯКЩО ЗВЕРХУ НЕМАЄ МІСЦЯ - СТАВИМО ПІД БРОННЮ
+                let leftPos = targetRect.left + (targetRect.width / 2) - (ttWidth / 2); 
+                
+                // ПРІОРИТЕТ 1: Пробуємо поставити зверху над бронню
+                let topPos = targetRect.top - ttHeight - 12;
+
+                // ПРІОРИТЕТ 2: Якщо зверху не влізає (виходить за екран)
                 if (topPos < 10) {
-                    topPos = targetRect.bottom + 12; 
+                    // Ставимо під бронь
+                    topPos = targetRect.bottom + 12;
+                    
+                    // ПРІОРИТЕТ 3: Якщо і знизу не влізає (обрізається нижнім краєм екрану)
+                    if (topPos + ttHeight > window.innerHeight - 10) {
+                        // Жорстко притискаємо до нижнього краю екрану. 
+                        // Тултип перекриє бронь, але оскільки він прозорий для кліку (pointer-events: none), це не заважатиме!
+                        topPos = window.innerHeight - ttHeight - 10;
+                    }
                 }
 
+                // Захист по горизонталі (щоб не вилазив за лівий чи правий край)
                 if (leftPos < 10) leftPos = 10;
-                if (leftPos + tt.offsetWidth > window.innerWidth) leftPos = window.innerWidth - tt.offsetWidth - 10;
+                if (leftPos + ttWidth > window.innerWidth) leftPos = window.innerWidth - ttWidth - 10;
 
-                tt.style.top = topPos + 'px';
-                tt.style.left = leftPos + 'px';
+                ttElement.style.top = topPos + 'px';
+                ttElement.style.left = leftPos + 'px';
                 
-                tt.classList.add('show');
+                ttElement.classList.add(ttElement.id === 'boso-tooltip' ? 'show' : 'visible');
             });
         }
 
