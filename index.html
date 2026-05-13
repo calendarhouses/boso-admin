@@ -188,6 +188,23 @@
         .timeline-cell { width: 60px; flex-shrink: 0; border-right: 1px solid #F3F4F6; }
         .timeline-cell.weekend { background: #F9FAFB; }
 
+        /* Забороняємо виділяти текст, коли тягнемо мишкою */
+        .timeline-wrapper {
+            user-select: none;
+            -webkit-user-select: none;
+        }
+
+        /* Преміум підсвітка обраних дат при перетягуванні */
+        .timeline-cell.cell-selected {
+            background-color: rgba(85, 107, 47, 0.15) !important;
+            border-top: 2px solid var(--accent) !important;
+            border-bottom: 2px solid var(--accent) !important;
+            z-index: 5;
+        }
+        /* Закруглюємо краї на початку і в кінці виділення */
+        .timeline-cell.cell-selected-start { border-left: 2px solid var(--accent) !important; border-radius: 8px 0 0 8px; }
+        .timeline-cell.cell-selected-end { border-right: 2px solid var(--accent) !important; border-radius: 0 8px 8px 0; }
+        
         /* --- БЛОКИ БРОНЮВАННЯ НА ШАХМАТЦІ --- */
         .booking-block { 
             position: absolute; 
@@ -2471,7 +2488,7 @@ function saveInlineTransaction(type, category, idx) {
                     const d = new Date(startDate); d.setDate(startDate.getDate() + i);
                     const isWeekend = d.getDay() === 0 || d.getDay() === 5 || d.getDay() === 6;
                     const dateString = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
-                    rowHtml += `<div class="timeline-cell ${isWeekend ? 'weekend' : ''}" onclick="openNewBookingDrawer('${room.name}', '${dateString}')"></div>`;
+                    rowHtml += `<div class="timeline-cell ${isWeekend ? 'weekend' : ''}" data-room="${room.name}" data-date="${dateString}" onmousedown="startCellDrag(this)" onmouseenter="enterCellDrag(this)"></div>`;
                 }
                 
                 allBookings.forEach((b) => {
@@ -3149,7 +3166,86 @@ document.querySelectorAll('.status-btn').forEach(btn => {
 document.getElementById('adminGuests').addEventListener('input', updatePricePreview);
 document.getElementById('adminGuests').addEventListener('change', updatePricePreview);
 
-        function openNewBookingDrawer(prefillRoom = null, prefillDate = null) {
+        // --- МАГІЯ ПЕРЕТЯГУВАННЯ ДАТ (DRAG & SELECT) ---
+        let isGridDragging = false;
+        let dragRoom = null;
+        let dragStartDate = null;
+        let dragEndDate = null;
+
+        function startCellDrag(cell) {
+            isGridDragging = true;
+            dragRoom = cell.getAttribute('data-room');
+            dragStartDate = cell.getAttribute('data-date');
+            dragEndDate = dragStartDate;
+            updateCellHighlight();
+        }
+
+        function enterCellDrag(cell) {
+            if (!isGridDragging) return;
+            // Дозволяємо тягнути тільки в межах одного котеджу (одного рядка)
+            if (cell.getAttribute('data-room') !== dragRoom) return; 
+            dragEndDate = cell.getAttribute('data-date');
+            updateCellHighlight();
+        }
+
+        function updateCellHighlight() {
+            // Очищаємо старе виділення
+            document.querySelectorAll('.timeline-cell').forEach(c => {
+                c.classList.remove('cell-selected', 'cell-selected-start', 'cell-selected-end');
+            });
+            if (!dragStartDate || !dragEndDate) return;
+
+            let d1 = new Date(dragStartDate);
+            let d2 = new Date(dragEndDate);
+            // Якщо потягнули задом наперед (справа наліво) - міняємо місцями
+            if (d1 > d2) { let temp = d1; d1 = d2; d2 = temp; }
+
+            let cellsToHighlight = [];
+            document.querySelectorAll('.timeline-cell').forEach(c => {
+                if (c.getAttribute('data-room') === dragRoom) {
+                    let cDate = new Date(c.getAttribute('data-date'));
+                    if (cDate >= d1 && cDate <= d2) {
+                        cellsToHighlight.push(c);
+                    }
+                }
+            });
+
+            // Фарбуємо і додаємо закруглення краям
+            cellsToHighlight.forEach((c, index) => {
+                c.classList.add('cell-selected');
+                if (index === 0) c.classList.add('cell-selected-start');
+                if (index === cellsToHighlight.length - 1) c.classList.add('cell-selected-end');
+            });
+        }
+
+        // Глобальний слухач: коли відпустили мишку будь-де на екрані
+        document.addEventListener('mouseup', function() {
+            if (isGridDragging) {
+                isGridDragging = false;
+                if (dragRoom && dragStartDate && dragEndDate) {
+                    let d1 = new Date(dragStartDate);
+                    let d2 = new Date(dragEndDate);
+                    if (d1 > d2) { let temp = d1; d1 = d2; d2 = temp; }
+
+                    let checkInStr = d1.toISOString().split('T')[0];
+                    // Виїзд завжди на наступний день після останньої виділеної ночі
+                    d2.setDate(d2.getDate() + 1);
+                    let checkOutStr = d2.toISOString().split('T')[0];
+
+                    openNewBookingDrawer(dragRoom, checkInStr, checkOutStr);
+                }
+                
+                // Плавно прибираємо виділення після відкриття шторки
+                setTimeout(() => {
+                    document.querySelectorAll('.timeline-cell').forEach(c => {
+                        c.classList.remove('cell-selected', 'cell-selected-start', 'cell-selected-end');
+                    });
+                    dragRoom = null; dragStartDate = null; dragEndDate = null;
+                }, 300);
+            }
+        });
+        
+        function openNewBookingDrawer(prefillRoom = null, prefillDateStart = null, prefillDateEnd = null) {
             editingRowNumber = null; 
             document.getElementById('drawerTitle').innerText = 'Нове бронювання'; 
             document.getElementById('adminBookingForm').reset();
@@ -3201,13 +3297,19 @@ document.getElementById('adminGuests').addEventListener('change', updatePricePre
                 if (opt.innerText.trim() === "Instagram") opt.classList.add('selected');
             });
 
-            // Якщо ми клікнули з шахматки - підставляємо дату
-            if (prefillDate) {
-                checkInPicker.setDate(prefillDate);
-                // Автоматично ставимо дату виїзду на наступний день
-                let nextDay = new Date(prefillDate);
-                nextDay.setDate(nextDay.getDate() + 1);
-                checkOutPicker.setDate(nextDay);
+            // 🟢 2. ОНОВЛЕНИЙ БЛОК ПІДСТАНОВКИ ДАТ:
+            if (prefillDateStart) {
+                checkInPicker.setDate(prefillDateStart);
+                
+                if (prefillDateEnd) {
+                    // Якщо ми потягнули мишкою і є дата виїзду
+                    checkOutPicker.setDate(prefillDateEnd);
+                } else {
+                    // Якщо це просто один клік - ставимо виїзд на наступний день
+                    let nextDay = new Date(prefillDateStart);
+                    nextDay.setDate(nextDay.getDate() + 1);
+                    checkOutPicker.setDate(nextDay);
+                }
             } else {
                 checkInPicker.clear(); 
                 checkOutPicker.clear(); 
