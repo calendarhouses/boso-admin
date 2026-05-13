@@ -1063,13 +1063,28 @@
         }
 
         function showToast(message) {
-            const container = document.getElementById('toast-container');
-            const toast = document.createElement('div'); toast.className = 'toast';
-            toast.innerHTML = message;
-            container.appendChild(toast);
-            setTimeout(() => toast.classList.add('show'), 10);
-            setTimeout(() => { toast.classList.remove('show'); setTimeout(() => toast.remove(), 400); }, 3000);
-        }
+    const container = document.getElementById('toast-container');
+    
+    // Очищаємо контейнер від старих повідомлень перед додаванням нового
+    container.innerHTML = '';
+
+    const toast = document.createElement('div'); 
+    toast.className = 'toast';
+    toast.innerHTML = message;
+    container.appendChild(toast);
+    
+    setTimeout(() => toast.classList.add('show'), 10);
+    
+    setTimeout(() => { 
+        toast.classList.remove('show'); 
+        setTimeout(() => {
+            // Перевіряємо, чи елемент ще існує (щоб уникнути помилок при швидких кліках)
+            if (container.contains(toast)) {
+                toast.remove();
+            }
+        }, 400); 
+    }, 3000);
+}
 
         // МОБІЛЬНА ЛОГІКА ПЕРЕМИКАННЯ МЕНЮ
         function switchView(viewName) {
