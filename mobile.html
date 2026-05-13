@@ -1514,6 +1514,7 @@
         }
         document.getElementById('guestSearch').addEventListener('input', (e) => renderGuests(e.target.value));
 
+        // --- ТАБЛИЦЯ БРОНЮВАНЬ (MOBILE) ---
         function renderTable(data) {
             // Сортуємо: найближчі заїзди зверху
             data.sort((a, b) => new Date(a.checkIn) - new Date(b.checkIn));
@@ -1521,8 +1522,8 @@
             const tbody = document.getElementById('bookingsTableBody'); tbody.innerHTML = '';
             if (!data || data.length === 0) { tbody.innerHTML = '<div style="text-align:center; padding: 30px; color: #9CA3AF; font-size: 14px;">Немає броней</div>'; return; }
 
-            const iconCal = `<svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2" ry="2" stroke-width="2"></rect><line x1="16" y1="2" x2="16" y2="6" stroke-width="2"></line><line x1="8" y1="2" x2="8" y2="6" stroke-width="2"></line><line x1="3" y1="10" x2="21" y2="10" stroke-width="2"></line></svg>`;
-            const iconMoon = `<svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path></svg>`;
+            const iconCal = `<svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>`;
+            const iconMoon = `<svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path></svg>`;
             const iconPhone = `<svg width="14" height="14" fill="none" stroke="#9CA3AF" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"></path></svg>`;
 
             data.forEach((b) => {
@@ -1539,31 +1540,44 @@
                 let cleanPhone = formatPhone(b.phone);
 
                 tbody.innerHTML += `<tr>
-                    <td style="flex-direction: row; justify-content: flex-start; align-items: center; padding-bottom: 12px; gap: 12px;">
-                        <div style="width: 42px; height: 42px; border-radius: 50%; background: #F0FDF4; color: #059669; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 16px; border: 1px solid #A7F3D0; flex-shrink: 0;">${initial}</div>
-                        <div style="display:flex; flex-direction:column; gap:3px;">
-                            <strong style="font-size: 15px; color: var(--text-main);">${cleanName}</strong>
-                            <div style="display:flex; align-items:center; gap:6px; color:#6B7280; font-size:13px; font-weight:600; padding: 2px 6px; margin-left: -6px; border-radius: 6px; background: #F9FAFB;" onclick="copyToClipboard('+${cleanPhone}', event)">
-                                ${iconPhone} +${cleanPhone}
+                    <td style="padding-bottom: 12px; border-bottom: 1px solid #F3F4F6 !important; align-items: center;">
+                        <div style="display:flex; align-items:center; gap:8px;">
+                            <div style="background: #F3F4F6; padding: 6px; border-radius: 8px; color: #4B5563; display: flex;">
+                                ${iconCal}
                             </div>
+                            <strong style="font-size: 15px; color: var(--text-main);">${dateStr}</strong>
+                        </div>
+                        <div style="display:flex; align-items:center; gap:6px; color:#6B7280; font-size:13px; font-weight:600;">
+                            ${iconMoon} ${nights} ${getNightWord(nights)}
                         </div>
                     </td>
-                    <td style="padding-bottom: 8px;">
-                        <div style="display:flex; flex-direction:column; gap:6px; width:100%;">
-                            <div style="display:flex; justify-content:space-between; align-items:center; width:100%;">
-                                <span style="background: #F3F4F6; padding: 6px 10px; border-radius: 8px; color: #374151; display:flex; align-items:center; gap:6px; font-size:13px; font-weight:600;">${iconCal} ${dateStr}</span>
-                                <span style="font-size: 11px; font-weight: 800; color: var(--accent); background: #F0FDF4; padding: 6px 10px; border-radius: 8px; border: 1px solid #DCF1D3; text-transform: uppercase;">${b.cottage}</span>
+                    
+                    <td style="padding: 10px 0; border-bottom: none !important;">
+                        
+                        <div style="display:flex; align-items:center; gap:10px; flex: 1; min-width: 0;">
+                            <div style="width: 38px; height: 38px; border-radius: 50%; background: #F0FDF4; color: #059669; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 15px; border: 1px solid #A7F3D0; flex-shrink: 0;">
+                                ${initial}
                             </div>
-                            <div style="display:flex; align-items:center; gap:6px; color:#6B7280; font-size:12px; font-weight:600; padding-left: 2px;">
-                                ${iconMoon} <span style="text-transform: uppercase;">${nights} ${getNightWord(nights)}</span>
+                            <div style="display:flex; flex-direction:column; gap:2px; overflow: hidden;">
+                                <div style="font-weight:700; color:var(--text-main); font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${cleanName}</div>
+                                <div style="display:inline-flex; align-items:center; gap:4px; color:#6B7280; font-size:12px; font-weight:600; padding: 2px 6px; margin-left: -6px; border-radius: 6px; background: transparent; transition: 0.2s;" onclick="copyToClipboard('+${cleanPhone}', event)">
+                                    ${iconPhone} +${cleanPhone}
+                                </div>
                             </div>
                         </div>
+                        
+                        <div style="flex: 1; display: flex; justify-content: flex-end; padding-left: 10px;">
+                            <span style="font-size: 11px; font-weight: 800; color: var(--accent); background: #F0FDF4; padding: 6px 12px; border-radius: 8px; border: 1px solid #DCF1D3; text-transform: uppercase; text-align: center; max-width: 100%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+                                ${b.cottage}
+                            </span>
+                        </div>
                     </td>
-                    <td style="flex-direction: row; align-items: stretch; border-top:1px solid #F3F4F6; margin-top:4px; padding-top:12px; gap: 8px;">
-                        <div class="badge ${badgeClass}" style="flex:1; display:flex; align-items:center; justify-content:center; height: 40px; border-radius: 10px; font-size: 12px; margin: 0; padding: 0;">
+                    
+                    <td style="flex-direction: row; align-items: stretch; margin-top: 4px; gap: 10px; padding: 0; border-bottom: none !important;">
+                        <div class="badge ${badgeClass}" style="flex:1; display:flex; align-items:center; justify-content:center; height: 42px; border-radius: 10px; font-size: 13px; margin: 0; padding: 0;">
                             ${b.status}
                         </div>
-                        <button class="btn-primary" style="flex:1; height: 40px; border-radius: 10px; font-size: 13px; margin: 0; padding: 0; background: var(--accent);" onclick="openDetailsByRow('${b.row}')">
+                        <button class="btn-primary" style="flex:1; height: 42px; border-radius: 10px; font-size: 13px; margin: 0; padding: 0; background: var(--accent); justify-content: center;" onclick="openDetailsByRow('${b.row}')">
                             Деталі
                         </button>
                     </td>
