@@ -2507,36 +2507,50 @@
                 `;
             }
 
-            // МАГІЯ ПОЗИЦІОНУВАННЯ
+            // МАГІЯ ПОЗИЦІОНУВАННЯ (РОЗУМНИЙ АЛГОРИТМ)
             const rect = element.getBoundingClientRect();
             
             requestAnimationFrame(() => {
                 const ttHeight = tooltip.offsetHeight;
+                const ttWidth = tooltip.offsetWidth;
+                const gap = 12;
                 
-                // На мобілці завжди центруємо по горизонталі
-                let left = (window.innerWidth - tooltip.offsetWidth) / 2;
-                
-                // ПРІОРИТЕТ 1: Ставимо над бронню
-                let top = rect.top - ttHeight - 20;
+                // Базово центруємо по горизонталі
+                let left = rect.left + (rect.width / 2) - (ttWidth / 2);
+                let top = 0;
 
-                // ПРІОРИТЕТ 2: Якщо зверху мало місця (не влізає)
-                if (top < 40) {
-                    // Ставимо під бронь
-                    top = rect.bottom + 20;
-                    
-                    // ПРІОРИТЕТ 3: Якщо і знизу обрізається краєм екрану телефону
-                    if (top + ttHeight > window.innerHeight - 10) {
-                        // Жорстко притискаємо до низу
-                        top = window.innerHeight - ttHeight - 10;
-                    }
+                // ПРІОРИТЕТ 1: Зверху
+                if (rect.top - ttHeight - gap >= 10) {
+                    top = rect.top - ttHeight - gap;
+                } 
+                // ПРІОРИТЕТ 2: Знизу
+                else if (rect.bottom + ttHeight + gap <= window.innerHeight - 10) {
+                    top = rect.bottom + gap;
+                } 
+                // ПРІОРИТЕТ 3: Справа
+                else if (rect.right + ttWidth + gap <= window.innerWidth - 10) {
+                    left = rect.right + gap;
+                    top = rect.top + (rect.height / 2) - (ttHeight / 2);
+                } 
+                // ПРІОРИТЕТ 4: Зліва
+                else if (rect.left - ttWidth - gap >= 10) {
+                    left = rect.left - ttWidth - gap;
+                    top = rect.top + (rect.height / 2) - (ttHeight / 2);
+                } 
+                // ПРІОРИТЕТ 5: Екстремальний випадок
+                else {
+                    top = rect.bottom + gap; 
                 }
+
+                // Фінальний захист від вильоту за екран
+                left = Math.max(10, Math.min(left, window.innerWidth - ttWidth - 10));
+                top = Math.max(10, Math.min(top, window.innerHeight - ttHeight - 10));
 
                 tooltip.style.top = top + 'px';
                 tooltip.style.left = left + 'px';
                 
                 tooltip.classList.add('visible');
             });
-        }
 
         function hidePremiumTooltip() {
             const tt = document.getElementById('premiumTooltip');
