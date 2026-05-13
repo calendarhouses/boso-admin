@@ -162,6 +162,7 @@
 /* Ефект натискання для мобільних кнопок */
         .tap-btn { transition: transform 0.1s, opacity 0.1s; }
         .tap-btn:active { transform: scale(0.95); opacity: 0.8; }
+     
         /* --- МОБІЛЬНА ШАХМАТКА --- */
         .timeline-toolbar { display: flex; flex-direction: column; gap: 12px; margin-bottom: 16px; }
         .timeline-nav-row { display: flex; justify-content: space-between; align-items: center; width: 100%; }
@@ -174,7 +175,12 @@
         .mode-btn.active { background: #FFFFFF; color: #111827; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
 
         .timeline-wrapper { display: flex; border: 1px solid #E5E7EB; border-radius: 12px; overflow: hidden; background: white; box-shadow: 0 2px 8px rgba(0,0,0,0.04); height: 60vh; min-height: 400px;}
-        
+        /* Забороняємо синє системне виділення тексту на iOS */
+        .timeline-wrapper * {
+            -webkit-user-select: none !important;
+            user-select: none !important;
+            -webkit-touch-callout: none !important;
+        }
         /* ЗБІЛЬШЕНО: Ширина колонки номерів */
         .timeline-sidebar { width: 90px; flex-shrink: 0; border-right: 1px solid #E5E7EB; background: #F9FAFB; display: flex; flex-direction: column; z-index: 10; }
         .timeline-sidebar-header { 
@@ -1593,7 +1599,7 @@
                     const d = new Date(startDate); d.setDate(startDate.getDate() + i);
                     const isWeekend = d.getDay() === 0 || d.getDay() === 6;
                     const dateString = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
-                    rowHtml += `<div class="timeline-cell ${isWeekend ? 'weekend' : ''}" data-room="${room.name}" data-date="${dateString}" ontouchstart="startTouchDrag(event, this)" ontouchmove="moveTouchDrag(event)" ontouchend="endTouchDrag(event)"></div>`;
+                    rowHtml += `<div class="timeline-cell ${isWeekend ? 'weekend' : ''}" data-room="${room.name}" data-date="${dateString}" ontouchstart="startTouchDrag(event, this)" ontouchmove="moveTouchDrag(event)" ontouchend="endTouchDrag(event, this)"></div>`;
                 }
                 rowHtml += `</div>`; gridContainer.innerHTML += rowHtml;
                 
@@ -3243,64 +3249,90 @@ let                 fOut = outD.toLocaleDateString('uk-UA', { day: 'numeric', mo
             setupSwipeToClose('uniDetailsModal', '.modal-box', '.modal-header', () => document.getElementById('uniDetailsModal').classList.remove('active'));
         };
 
-        // --- МАГІЯ СВАЙПУ ПО ДАТАХ (TOUCH SELECT) ---
-        let isGridDragging = false;
-        let dragRoom = null;
-        let dragStartDate = null;
-        let dragEndDate = null;
+        // --- МАГІЯ СВАЙПУ ПО ДАТАХ (TOUCH SELECT) З ЗАТИСКАННЯМ ---
+        let touchHoldTimer = null;
+        let isTouchSelecting = false; // Режим виділення
+        let hasMoved = false; // Чи рухав клієнт пальцем
 
         function startTouchDrag(e, cell) {
-            isGridDragging = true;
-            dragRoom = cell.getAttribute('data-room');
-            dragStartDate = cell.getAttribute('data-date');
-            dragEndDate = dragStartDate;
-            updateCellHighlight();
+            hasMoved = false;
+            isGridDragging = false; 
+            isTouchSelecting = false;
+            
+            // Запускаємо таймер: якщо палець тримають 400мс - починаємо виділення
+            touchHoldTimer = setTimeout(() => {
+                isTouchSelecting = true;
+                isGridDragging = true;
+                
+                dragRoom = cell.getAttribute('data-room');
+                dragStartDate = cell.getAttribute('data-date');
+                dragEndDate = dragStartDate;
+                
+                updateCellHighlight();
+                
+                // Легка вібрація, щоб клієнт відчув, що можна тягнути
+                if (navigator.vibrate) navigator.vibrate(40);
+            }, 400); 
         }
 
         function moveTouchDrag(e) {
-            if (!isGridDragging) return;
+            hasMoved = true;
             
-            // ВАЖЛИВО: Забороняємо екрану скролитися, поки ми тягнемо дати
+            // Якщо клієнт потягнув палець швидше, ніж пройшло 400мс — це звичайний скрол
+            if (!isTouchSelecting) {
+                clearTimeout(touchHoldTimer); // Скасовуємо виділення
+                return; // Дозволяємо системі скролити екран
+            }
+
+            // Якщо режим виділення УВІМКНЕНО - блокуємо скрол і фарбуємо клітинки
             if (e.cancelable) e.preventDefault(); 
             
-            // Беремо координати пальця на екрані
             let touch = e.touches[0];
-            
-            // Знаходимо елемент, над яким зараз знаходиться палець
             let targetCell = document.elementFromPoint(touch.clientX, touch.clientY);
             
-            // Якщо палець над клітинкою того ж котеджу - оновлюємо виділення
             if (targetCell && targetCell.classList.contains('timeline-cell') && targetCell.getAttribute('data-room') === dragRoom) {
                 dragEndDate = targetCell.getAttribute('data-date');
                 updateCellHighlight();
             }
         }
 
-        function endTouchDrag(e) {
-            if (!isGridDragging) return;
-            isGridDragging = false;
+        function endTouchDrag(e, cell) {
+            clearTimeout(touchHoldTimer); // Обов'язково чистимо таймер
             
-            if (dragRoom && dragStartDate && dragEndDate) {
-                let d1 = new Date(dragStartDate);
-                let d2 = new Date(dragEndDate);
-                // Якщо свайпнули справа наліво - міняємо місцями
-                if (d1 > d2) { let temp = d1; d1 = d2; d2 = temp; }
+            if (isTouchSelecting) {
+                // Якщо ми закінчили тягнути виділення
+                isGridDragging = false;
+                isTouchSelecting = false;
+                
+                if (dragRoom && dragStartDate && dragEndDate) {
+                    let d1 = new Date(dragStartDate);
+                    let d2 = new Date(dragEndDate);
+                    if (d1 > d2) { let temp = d1; d1 = d2; d2 = temp; }
 
-                let checkInStr = d1.toISOString().split('T')[0];
-                d2.setDate(d2.getDate() + 1); // Виїзд завжди на наступний день після останньої виділеної ночі
-                let checkOutStr = d2.toISOString().split('T')[0];
+                    let checkInStr = d1.toISOString().split('T')[0];
+                    d2.setDate(d2.getDate() + 1); 
+                    let checkOutStr = d2.toISOString().split('T')[0];
 
-                // Відкриваємо шторку і передаємо обидві дати
-                openNewBookingDrawer(dragRoom, checkInStr, checkOutStr);
+                    openNewBookingDrawer(dragRoom, checkInStr, checkOutStr);
+                }
+                
+                setTimeout(() => {
+                    document.querySelectorAll('.timeline-cell').forEach(c => {
+                        c.classList.remove('cell-selected', 'cell-selected-start', 'cell-selected-end');
+                    });
+                    dragRoom = null; dragStartDate = null; dragEndDate = null;
+                }, 300);
+                
+            } else {
+                // Якщо це було НЕ затискання.
+                // Якщо палець не рухався (або майже не рухався) — це звичайний швидкий клік!
+                if (!hasMoved) {
+                    let room = cell.getAttribute('data-room');
+                    let dateStr = cell.getAttribute('data-date');
+                    // Відкриваємо шторку на 1 день (без виїзду, функція сама додасть +1 день)
+                    openNewBookingDrawer(room, dateStr);
+                }
             }
-            
-            // Плавно прибираємо виділення після відкриття
-            setTimeout(() => {
-                document.querySelectorAll('.timeline-cell').forEach(c => {
-                    c.classList.remove('cell-selected', 'cell-selected-start', 'cell-selected-end');
-                });
-                dragRoom = null; dragStartDate = null; dragEndDate = null;
-            }, 300);
         }
 
         function updateCellHighlight() {
