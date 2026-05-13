@@ -2503,18 +2503,31 @@
 
             // МАГІЯ ПОЗИЦІОНУВАННЯ
             const rect = element.getBoundingClientRect();
-            let left = (window.innerWidth - tooltip.offsetWidth) / 2;
-            let top = rect.top - tooltip.offsetHeight - 20;
-
-            // Якщо зверху мало місця - ставимо під броНню
-            if (top < 40) {
-                top = rect.bottom + 20;
-            }
-
-            tooltip.style.top = top + 'px';
-            tooltip.style.left = left + 'px';
             
             requestAnimationFrame(() => {
+                const ttHeight = tooltip.offsetHeight;
+                
+                // На мобілці завжди центруємо по горизонталі
+                let left = (window.innerWidth - tooltip.offsetWidth) / 2;
+                
+                // ПРІОРИТЕТ 1: Ставимо над бронню
+                let top = rect.top - ttHeight - 20;
+
+                // ПРІОРИТЕТ 2: Якщо зверху мало місця (не влізає)
+                if (top < 40) {
+                    // Ставимо під бронь
+                    top = rect.bottom + 20;
+                    
+                    // ПРІОРИТЕТ 3: Якщо і знизу обрізається краєм екрану телефону
+                    if (top + ttHeight > window.innerHeight - 10) {
+                        // Жорстко притискаємо до низу
+                        top = window.innerHeight - ttHeight - 10;
+                    }
+                }
+
+                tooltip.style.top = top + 'px';
+                tooltip.style.left = left + 'px';
+                
                 tooltip.classList.add('visible');
             });
         }
