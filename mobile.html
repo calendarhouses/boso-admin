@@ -452,16 +452,28 @@
             -webkit-touch-callout: none;
         }
 
-        /* Преміум підсвітка обраних дат при свайпі */
+        /* Преміум підсвітка (використовуємо inset тіні замість border, щоб не ламало краї) */
         .timeline-cell.cell-selected {
             background-color: rgba(85, 107, 47, 0.15) !important;
-            border-top: 2px solid var(--accent) !important;
-            border-bottom: 2px solid var(--accent) !important;
+            box-shadow: inset 0 2px 0 var(--accent), inset 0 -2px 0 var(--accent) !important;
             z-index: 5;
         }
         /* Закруглюємо краї на початку і в кінці виділення */
-        .timeline-cell.cell-selected-start { border-left: 2px solid var(--accent) !important; border-radius: 8px 0 0 8px; }
-        .timeline-cell.cell-selected-end { border-right: 2px solid var(--accent) !important; border-radius: 0 8px 8px 0; }
+        .timeline-cell.cell-selected-start { 
+            box-shadow: inset 0 2px 0 var(--accent), inset 0 -2px 0 var(--accent), inset 2px 0 0 var(--accent) !important;
+            border-top-left-radius: 8px !important; 
+            border-bottom-left-radius: 8px !important; 
+        }
+        .timeline-cell.cell-selected-end { 
+            box-shadow: inset 0 2px 0 var(--accent), inset 0 -2px 0 var(--accent), inset -2px 0 0 var(--accent) !important;
+            border-top-right-radius: 8px !important; 
+            border-bottom-right-radius: 8px !important; 
+        }
+        /* Якщо виділено лише один день */
+        .timeline-cell.cell-selected-start.cell-selected-end {
+            box-shadow: inset 0 0 0 2px var(--accent) !important;
+            border-radius: 8px !important;
+        }
     </style>
 </head>
 <body>
@@ -3249,17 +3261,24 @@ let                 fOut = outD.toLocaleDateString('uk-UA', { day: 'numeric', mo
             setupSwipeToClose('uniDetailsModal', '.modal-box', '.modal-header', () => document.getElementById('uniDetailsModal').classList.remove('active'));
         };
 
-        // --- МАГІЯ СВАЙПУ ПО ДАТАХ (TOUCH SELECT) З ЗАТИСКАННЯМ ---
+        // --- МАГІЯ СВАЙПУ ПО ДАТАХ З АВТОСКРОЛОМ ---
         let touchHoldTimer = null;
-        let isTouchSelecting = false; // Режим виділення
-        let hasMoved = false; // Чи рухав клієнт пальцем
+        let isTouchSelecting = false;
+        let hasMoved = false;
+        
+        // Змінні для двигуна автоскролу
+        let currentTouchX = null;
+        let currentTouchY = null;
+        let autoScrollReq = null;
 
         function startTouchDrag(e, cell) {
             hasMoved = false;
             isGridDragging = false; 
             isTouchSelecting = false;
             
-            // Запускаємо таймер: якщо палець тримають 400мс - починаємо виділення
+            // Якщо працював старий скрол - зупиняємо
+            if (autoScrollReq) cancelAnimationFrame(autoScrollReq);
+
             touchHoldTimer = setTimeout(() => {
                 isTouchSelecting = true;
                 isGridDragging = true;
@@ -3268,39 +3287,84 @@ let                 fOut = outD.toLocaleDateString('uk-UA', { day: 'numeric', mo
                 dragStartDate = cell.getAttribute('data-date');
                 dragEndDate = dragStartDate;
                 
-                updateCellHighlight();
+                // Фіксуємо координати пальця
+                let touch = e.touches[0];
+                currentTouchX = touch.clientX;
+                currentTouchY = touch.clientY;
                 
-                // Легка вібрація, щоб клієнт відчув, що можна тягнути
+                updateCellHighlight();
                 if (navigator.vibrate) navigator.vibrate(40);
+                
+                // Запускаємо двигун автоскролу
+                autoScrollReq = requestAnimationFrame(autoScrollLoop);
             }, 400); 
         }
 
         function moveTouchDrag(e) {
             hasMoved = true;
             
-            // Якщо клієнт потягнув палець швидше, ніж пройшло 400мс — це звичайний скрол
+            // Якщо не затиснули палець на 400мс - це звичайний скрол сторінки
             if (!isTouchSelecting) {
-                clearTimeout(touchHoldTimer); // Скасовуємо виділення
-                return; // Дозволяємо системі скролити екран
+                clearTimeout(touchHoldTimer);
+                return;
             }
 
-            // Якщо режим виділення УВІМКНЕНО - блокуємо скрол і фарбуємо клітинки
+            // Забороняємо системі скролити екран, бо ми виділяємо дати
             if (e.cancelable) e.preventDefault(); 
             
+            // Оновлюємо координати пальця для автоскролу
             let touch = e.touches[0];
-            let targetCell = document.elementFromPoint(touch.clientX, touch.clientY);
+            currentTouchX = touch.clientX;
+            currentTouchY = touch.clientY;
+            
+            checkElementUnderFinger();
+        }
+
+        // Функція для визначення, на якій клітинці стоїть палець
+        function checkElementUnderFinger() {
+            if (!currentTouchX || !currentTouchY) return;
+            
+            let targetCell = document.elementFromPoint(currentTouchX, currentTouchY);
             
             if (targetCell && targetCell.classList.contains('timeline-cell') && targetCell.getAttribute('data-room') === dragRoom) {
-                dragEndDate = targetCell.getAttribute('data-date');
-                updateCellHighlight();
+                let newDate = targetCell.getAttribute('data-date');
+                if (dragEndDate !== newDate) {
+                    dragEndDate = newDate;
+                    updateCellHighlight();
+                }
             }
         }
 
+        // ДВИГУН: Крутиться 60 разів на секунду і скролить, якщо палець біля краю
+        function autoScrollLoop() {
+            if (!isTouchSelecting) return;
+            
+            let scrollContainer = document.getElementById('timelineScroll');
+            if (scrollContainer && currentTouchX !== null) {
+                let speed = 12; // Швидкість прокрутки
+                
+                // Зліва: від 90px (це ширина сірого сайдбару) до 150px
+                if (currentTouchX > 80 && currentTouchX < 160) {
+                    scrollContainer.scrollLeft -= speed;
+                    checkElementUnderFinger(); // Перевіряємо клітинки під час руху сітки
+                } 
+                // Справа: останні 60px екрану телефону
+                else if (currentTouchX > window.innerWidth - 60) {
+                    scrollContainer.scrollLeft += speed;
+                    checkElementUnderFinger(); 
+                }
+            }
+            // Крутимо цикл далі
+            autoScrollReq = requestAnimationFrame(autoScrollLoop);
+        }
+
         function endTouchDrag(e, cell) {
-            clearTimeout(touchHoldTimer); // Обов'язково чистимо таймер
+            clearTimeout(touchHoldTimer);
+            if (autoScrollReq) cancelAnimationFrame(autoScrollReq); // Зупиняємо двигун
+            currentTouchX = null;
+            currentTouchY = null;
             
             if (isTouchSelecting) {
-                // Якщо ми закінчили тягнути виділення
                 isGridDragging = false;
                 isTouchSelecting = false;
                 
@@ -3324,19 +3388,15 @@ let                 fOut = outD.toLocaleDateString('uk-UA', { day: 'numeric', mo
                 }, 300);
                 
             } else {
-                // Якщо це було НЕ затискання.
-                // Якщо палець не рухався (або майже не рухався) — це звичайний швидкий клік!
                 if (!hasMoved) {
                     let room = cell.getAttribute('data-room');
                     let dateStr = cell.getAttribute('data-date');
-                    // Відкриваємо шторку на 1 день (без виїзду, функція сама додасть +1 день)
                     openNewBookingDrawer(room, dateStr);
                 }
             }
         }
 
         function updateCellHighlight() {
-            // Очищаємо старе виділення
             document.querySelectorAll('.timeline-cell').forEach(c => {
                 c.classList.remove('cell-selected', 'cell-selected-start', 'cell-selected-end');
             });
@@ -3356,7 +3416,6 @@ let                 fOut = outD.toLocaleDateString('uk-UA', { day: 'numeric', mo
                 }
             });
 
-            // Фарбуємо і додаємо закруглення краям
             cellsToHighlight.forEach((c, index) => {
                 c.classList.add('cell-selected');
                 if (index === 0) c.classList.add('cell-selected-start');
