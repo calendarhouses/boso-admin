@@ -3822,42 +3822,53 @@ document.addEventListener('click', function(e) {
                 `;
             }
 
+            // МАГІЯ ПОЗИЦІОНУВАННЯ (РОЗУМНИЙ АЛГОРИТМ)
             const targetRect = element.getBoundingClientRect();
             
             requestAnimationFrame(() => {
-                // Визначаємо реальні розміри тултипа після того, як в нього завантажився текст
-                const ttElement = document.getElementById('boso-tooltip') || document.getElementById('premiumTooltip');
+                const ttElement = document.getElementById('boso-tooltip');
                 const ttHeight = ttElement.offsetHeight;
                 const ttWidth = ttElement.offsetWidth;
+                const gap = 12; // Відступ від броні
 
-                let leftPos = targetRect.left + (targetRect.width / 2) - (ttWidth / 2); 
-                
-                // ПРІОРИТЕТ 1: Пробуємо поставити зверху над бронню
-                let topPos = targetRect.top - ttHeight - 12;
+                // Базово центруємо по горизонталі
+                let leftPos = targetRect.left + (targetRect.width / 2) - (ttWidth / 2);
+                let topPos = 0;
 
-                // ПРІОРИТЕТ 2: Якщо зверху не влізає (виходить за екран)
-                if (topPos < 10) {
-                    // Ставимо під бронь
-                    topPos = targetRect.bottom + 12;
-                    
-                    // ПРІОРИТЕТ 3: Якщо і знизу не влізає (обрізається нижнім краєм екрану)
-                    if (topPos + ttHeight > window.innerHeight - 10) {
-                        // Жорстко притискаємо до нижнього краю екрану. 
-                        // Тултип перекриє бронь, але оскільки він прозорий для кліку (pointer-events: none), це не заважатиме!
-                        topPos = window.innerHeight - ttHeight - 10;
-                    }
+                // ПРІОРИТЕТ 1: Зверху
+                if (targetRect.top - ttHeight - gap >= 10) {
+                    topPos = targetRect.top - ttHeight - gap;
+                } 
+                // ПРІОРИТЕТ 2: Знизу
+                else if (targetRect.bottom + ttHeight + gap <= window.innerHeight - 10) {
+                    topPos = targetRect.bottom + gap;
+                } 
+                // ПРІОРИТЕТ 3: Справа
+                else if (targetRect.right + ttWidth + gap <= window.innerWidth - 10) {
+                    leftPos = targetRect.right + gap;
+                    // Центруємо по вертикалі відносно самої броні
+                    topPos = targetRect.top + (targetRect.height / 2) - (ttHeight / 2);
+                } 
+                // ПРІОРИТЕТ 4: Зліва
+                else if (targetRect.left - ttWidth - gap >= 10) {
+                    leftPos = targetRect.left - ttWidth - gap;
+                    // Центруємо по вертикалі відносно самої броні
+                    topPos = targetRect.top + (targetRect.height / 2) - (ttHeight / 2);
+                } 
+                // ПРІОРИТЕТ 5: Якщо ніде не влазить (дуже малий екран) - ліпимо як є, але в межах екрану
+                else {
+                    topPos = targetRect.bottom + gap; 
                 }
 
-                // Захист по горизонталі (щоб не вилазив за лівий чи правий край)
-                if (leftPos < 10) leftPos = 10;
-                if (leftPos + ttWidth > window.innerWidth) leftPos = window.innerWidth - ttWidth - 10;
+                // Фінальна перевірка: жорстко не даємо тултипу вилізти за межі браузера
+                leftPos = Math.max(10, Math.min(leftPos, window.innerWidth - ttWidth - 10));
+                topPos = Math.max(10, Math.min(topPos, window.innerHeight - ttHeight - 10));
 
                 ttElement.style.top = topPos + 'px';
                 ttElement.style.left = leftPos + 'px';
                 
-                ttElement.classList.add(ttElement.id === 'boso-tooltip' ? 'show' : 'visible');
+                ttElement.classList.add('show');
             });
-        }
 
 function bosoLeave() {
     const tt = document.getElementById('boso-tooltip');
