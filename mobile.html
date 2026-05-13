@@ -3335,7 +3335,7 @@ let                 fOut = outD.toLocaleDateString('uk-UA', { day: 'numeric', mo
             }
         }
 
-        // ДВИГУН: Крутиться 60 разів на секунду і скролить, якщо палець біля краю
+       // ДВИГУН: Крутиться 60 разів на секунду і скролить, якщо палець біля краю
         function autoScrollLoop() {
             if (!isTouchSelecting) return;
             
@@ -3343,8 +3343,9 @@ let                 fOut = outD.toLocaleDateString('uk-UA', { day: 'numeric', mo
             if (scrollContainer && currentTouchX !== null) {
                 let speed = 12; // Швидкість прокрутки
                 
-                // Зліва: від 90px (це ширина сірого сайдбару) до 150px
-                if (currentTouchX > 80 && currentTouchX < 160) {
+                // Зліва: якщо палець на відстані менше 150px від лівого краю екрана
+                // (навіть якщо він заїхав на сірий сайдбар з назвами)
+                if (currentTouchX < 150) {
                     scrollContainer.scrollLeft -= speed;
                     checkElementUnderFinger(); // Перевіряємо клітинки під час руху сітки
                 } 
