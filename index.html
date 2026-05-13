@@ -3786,8 +3786,13 @@ document.addEventListener('click', function(e) {
                 cleanComment = cleanComment.replace(/🕒 Пізній виїзд: до \d{2}:\d{2}(\s*\|\s*)?/g, '');
 
                 // Фінальна чистка коментаря
-                cleanComment = cleanComment.replace(/^Коментар гостя:\s*/, '').replace(/^\|\s*/, '').replace(/\|\s*$/, '').trim();
-                if (cleanComment === "undefined" || cleanComment === "null" || cleanComment === "Коментар гостя:") {
+                cleanComment = cleanComment.trim();
+                cleanComment = cleanComment.replace(/^\|\s*/, '').replace(/\|\s*$/, '').trim();
+                
+                // Видаляємо фразу "Коментар гостя:" де б вона не була (разом з можливими переносами)
+                cleanComment = cleanComment.replace(/Коментар гостя:/gi, '').trim();
+                
+                if (cleanComment === "undefined" || cleanComment === "null" || cleanComment === "") {
                     cleanComment = "";
                 }
 
