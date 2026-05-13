@@ -1053,69 +1053,78 @@
             if(typeof renderSettingsDiscounts === 'function') renderSettingsDiscounts();
         }
 
-        // --- 🚀 ГОЛОВНА ФУНКЦІЯ ЗАВАНТАЖЕННЯ (РОЗУМНИЙ КЕШ) ---
+        // --- 🚀 ІНІЦІАЛІЗАЦІЯ (БЕЗ КЕШУ, ЧЕКАЄМО СЕРВЕР) ---
         async function initApp() {
             try {
-                const cacheStr = localStorage.getItem('bosoDataCache');
-                const cacheTime = localStorage.getItem('bosoDataCacheTime');
-                const now = new Date().getTime();
+                // Використовуємо запит, який стартував ще на самому початку скрипта
+                const data = await initialFetchPromise;
                 
-                // Кеш вважаємо "свіжим" 30 хвилин
-                const isCacheFresh = cacheTime && (now - parseInt(cacheTime) < 1000 * 60 * 30);
+                allBookings = data.bookings || [];
+                const settingsData = data.settings || {};
                 
-                if (cacheStr && isCacheFresh) {
-                    // МИТТЄВИЙ СТАРТ: Показуємо дані з пам'яті телефону/ПК
-                    applyServerData(JSON.parse(cacheStr), false);
-                    
-                    const preloader = document.getElementById('preloader');
-                    if (preloader) {
-                        preloader.style.opacity = '0';
-                        setTimeout(() => preloader.style.display = 'none', 300);
-                    }
+                if (settingsData && Object.keys(settingsData).length > 0) {
+                    if (settingsData.roomsList) roomsList = settingsData.roomsList;
+                    if (settingsData.discountsList) discountsList = settingsData.discountsList;
+                    if (settingsData.customServicesList) customServicesList = settingsData.customServicesList;
+                    if (settingsData.sysServicesList) sysServicesList = settingsData.sysServicesList;
+                    if (settingsData.customPrices) customPrices = settingsData.customPrices;
+                    if (settingsData.transactions) transactions = settingsData.transactions;
                 }
 
-                // Паралельно чекаємо на свіжі дані від Google
-                const data = await initialFetchPromise;
-                const freshStr = JSON.stringify(data);
-                
-                // Перевіряємо, чи реально щось змінилося в базі
-                if (cacheStr !== freshStr) {
-                    localStorage.setItem('bosoDataCache', freshStr);
-                    localStorage.setItem('bosoDataCacheTime', now.toString());
-                    
-                    // Оновлюємо екран. Якщо користувач вже бачив кеш - оновлюємо "тихо"
-                    applyServerData(data, !!(cacheStr && isCacheFresh));
-                    
-                    if (cacheStr && isCacheFresh) {
-                        showToast("🔄 Дані оновлено");
-                    }
+                // Визначаємо, який екран зараз відкритий і малюємо його
+                if (document.getElementById('view-grid').style.display === 'flex' || document.getElementById('view-grid').style.display === 'block') {
+                    renderTimeline();
+                } else if (document.getElementById('view-guests') && document.getElementById('view-guests').style.display === 'block') {
+                    renderGuests(document.getElementById('guestSearch') ? document.getElementById('guestSearch').value : "");
                 } else {
-                    // Якщо дані ті ж самі - просто оновлюємо час кешу, нічого не перемальовуємо
-                    localStorage.setItem('bosoDataCacheTime', now.toString());
+                    renderTable(allBookings);
                 }
+                
+                if(typeof renderSettingsRooms === 'function') renderSettingsRooms();
+                if(typeof renderSettingsDiscounts === 'function') renderSettingsDiscounts();
+                if(typeof renderSettingsServices === 'function') renderSettingsServices();
 
             } catch (error) {
-                console.error("Помилка:", error); 
-                showToast("Помилка синхронізації!");
+                console.error("Помилка завантаження даних:", error); 
+                showToast("Помилка завантаження з бази!");
             } finally {
+                // 🟢 ХОВАЄМО ПРЕЛОАДЕР ТІЛЬКИ ПІСЛЯ ТОГО, ЯК УСІ ДАНІ З'ЯВИЛИСЯ
                 const preloader = document.getElementById('preloader');
-                if (preloader && preloader.style.display !== 'none') {
+                if (preloader) {
                     preloader.style.opacity = '0';
-                    setTimeout(() => preloader.style.display = 'none', 300);
+                    setTimeout(() => preloader.style.display = 'none', 400);
                 }
             }
         }
 
-        // --- 🟢 ТИХА СИНХРОНІЗАЦІЯ (Після ваших дій) ---
+        // --- 🟢 ТИХА СИНХРОНІЗАЦІЯ (Фонове оновлення після твоїх дій) ---
         async function silentSync() {
             try {
                 const res = await fetch(API_URL + "?action=initData&t=" + new Date().getTime());
                 const data = await res.json();
                 
                 if (data && data.bookings) {
-                    localStorage.setItem('bosoDataCache', JSON.stringify(data)); 
-                    localStorage.setItem('bosoDataCacheTime', new Date().getTime().toString());
-                    applyServerData(data, true);
+                    allBookings = data.bookings;
+                    const sd = data.settings || {};
+                    if (sd.roomsList) roomsList = sd.roomsList;
+                    if (sd.discountsList) discountsList = sd.discountsList;
+                    if (sd.customPrices) customPrices = sd.customPrices;
+                    if (sd.transactions) transactions = sd.transactions;
+
+                    const tlScroll = document.getElementById('timelineScroll');
+                    const savedTlScrollX = tlScroll ? tlScroll.scrollLeft : 0;
+                    const savedWindowScrollY = window.scrollY;
+
+                    if (document.getElementById('view-grid').style.display === 'flex' || document.getElementById('view-grid').style.display === 'block') { 
+                        renderTimeline(true); 
+                        if (tlScroll) tlScroll.scrollLeft = savedTlScrollX;
+                    } 
+                    else if (document.getElementById('view-list') && document.getElementById('view-list').style.display === 'block') { 
+                        const activeTab = document.querySelector('.tab.active') || document.querySelector('.m-tab.active');
+                        if (activeTab) activeTab.click();
+                        else renderTable(allBookings);
+                        window.scrollTo(0, savedWindowScrollY);
+                    }
                 }
             } catch (error) { 
                 console.error("Помилка фонового оновлення:", error); 
