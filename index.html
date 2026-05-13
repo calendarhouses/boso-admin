@@ -4415,6 +4415,34 @@ function jumpToFinanceAndEdit(id) {
         }
     }, 400); 
 }
+        
+        function autoScaleDashboard() {
+            // 1440 - це стандартна ширина екрану MacBook/ноутбука, де адмінка виглядає ідеально.
+            // Можеш змінити цю цифру на свою, якщо в тебе інша роздільна здатність.
+            const baseWidth = 1440; 
+            
+            // Беремо реальну ширину вікна браузера на поточному пристрої
+            const currentWidth = window.innerWidth;
+
+            // Якщо екран власника більший за твій (наприклад, iMac з його 2500px+)
+            if (currentWidth > 1500) {
+                // Вираховуємо точну математичну пропорцію
+                const scaleRatio = currentWidth / baseWidth;
+                
+                // Застосовуємо цей точний масштаб до всієї сторінки
+                // Множимо на 0.95, щоб залишити трохи "повітря" і не притискати все впритул до країв
+                document.body.style.zoom = scaleRatio * 0.95; 
+            } else {
+                // На твоєму ноуті або менших екранах нічого не змінюємо
+                document.body.style.zoom = 1;
+            }
+        }
+
+        // Запускаємо перевірку одразу при завантаженні сторінки
+        window.addEventListener('DOMContentLoaded', autoScaleDashboard);
+        
+        // І також перераховуємо, якщо вікно браузера змінили вручну
+        window.addEventListener('resize', autoScaleDashboard);
     </script>
 </body>
 </html>
