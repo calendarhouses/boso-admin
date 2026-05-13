@@ -1467,7 +1467,7 @@
                         <div class="badge ${badgeClass}" style="flex:1; display:flex; align-items:center; justify-content:center; height: 46px; border-radius: 12px; font-size: 13px; margin: 0; padding: 0;">
                             ${b.status}
                         </div>
-                        <button class="btn-primary" style="flex:1.2; height: 46px; border-radius: 12px; font-size: 14px; margin: 0; padding: 0; background: var(--accent);" onclick="openDetailsByRow(${b.row})">
+                        <button class="btn-primary" style="flex:1.2; height: 46px; border-radius: 12px; font-size: 14px; margin: 0; padding: 0; background: var(--accent);" onclick="openDetailsByRow('${b.row}')">
                             Деталі броні
                         </button>
                     </td>
@@ -1603,8 +1603,8 @@
                                 
                                 // Додаємо зупинку поширення події (stopPropagation), щоб клік на хвіст не викликав клік на всю бронь, і передаємо тип 'late'
                                 extensionsHtml += `<div class="time-extension late" style="width: ${cellWidth * 0.85}px;" 
-                                    ontouchstart="event.stopPropagation(); handleTouchStart(event, this.parentElement, ${b.row}, 'late')" 
-                                    ontouchend="event.stopPropagation(); handleTouchEnd(event, this.parentElement, ${b.row}, 'late')" 
+                                    ontouchstart="event.stopPropagation(); handleTouchStart(event, this.parentElement, '${b.row}', 'late')" 
+                                    ontouchend="event.stopPropagation(); handleTouchEnd(event, this.parentElement, '${b.row}', 'late')" 
                                     ontouchmove="event.stopPropagation(); handleTouchMove(event, this.parentElement)">${currentIcon}</div>`;
                                 padRight = (cellWidth * 0.85) + 8; 
                             }
@@ -1613,8 +1613,8 @@
                                 blockWidth += (cellWidth * 0.85);
                                 
                                 extensionsHtml += `<div class="time-extension early" style="width: ${cellWidth * 0.85}px;" 
-                                    ontouchstart="event.stopPropagation(); handleTouchStart(event, this.parentElement, ${b.row}, 'early')" 
-                                    ontouchend="event.stopPropagation(); handleTouchEnd(event, this.parentElement, ${b.row}, 'early')" 
+                                    ontouchstart="event.stopPropagation(); handleTouchStart(event, this.parentElement, '${b.row}', 'early')" 
+                                    ontouchend="event.stopPropagation(); handleTouchEnd(event, this.parentElement, '${b.row}', 'early')" 
                                     ontouchmove="event.stopPropagation(); handleTouchMove(event, this.parentElement)">${iconClock}</div>`;
                                 padLeft = (cellWidth * 0.85) + 8; 
                             }
@@ -1634,8 +1634,8 @@
 
                             currentRow.innerHTML += `
                                 <div class="booking-block ${statusClass}" style="left: ${blockLeft}px; width: ${blockWidth}px; padding-left: ${padLeft}px; padding-right: ${padRight}px;" 
-                                     ontouchstart="handleTouchStart(event, this, ${b.row})"
-                                     ontouchend="handleTouchEnd(event, this, ${b.row})"
+                                     ontouchstart="handleTouchStart(event, this, '${b.row}')"
+                                     ontouchend="handleTouchEnd(event, this, '${b.row}')"
                                      ontouchmove="handleTouchMove(event, this)"
                                      oncontextmenu="event.preventDefault();">
                                      ${extensionsHtml}
