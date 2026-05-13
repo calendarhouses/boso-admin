@@ -1529,7 +1529,7 @@
             data.forEach((b) => {
                 const inDate = new Date(b.checkIn); const outDate = new Date(b.checkOut);
                 const nights = Math.round((outDate - inDate) / (1000 * 60 * 60 * 24)) || 0;
-                const dateStr = `${inDate.toLocaleDateString('uk-UA', { day: 'numeric', month: 'short' })} - ${outDate.toLocaleDateString('uk-UA', { day: 'numeric', month: 'short' })}`;
+                const dateStr = `${inDate.toLocaleDateString('uk-UA', { day: 'numeric', month: 'long' })} - ${outDate.toLocaleDateString('uk-UA', { day: 'numeric', month: 'long' })}`;
 
                 let badgeClass = 'new'; let s = String(b.status).toLowerCase();
                 if(s.includes('підтвердж') || s.includes('заїхав')) badgeClass = 'confirmed';
