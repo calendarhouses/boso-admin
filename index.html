@@ -301,17 +301,17 @@
 
         /* 🟢 ПРЕМІУМ-ІНПУТИ ДЛЯ РУЧНОГО РЕДАГУВАННЯ РОЗШИФРОВКИ */
         .editable-price {
-            width: 75px;
+            width: 55px; /* Жорстка ширина, щоб знаки + та грн вишикувались в лінію */
             text-align: right;
             font-weight: 700;
-            font-size: 15px; /* Зробили трохи більшими */
-            color: #059669; /* Зеленуватий колір */
+            font-size: 14px;
+            color: var(--accent); /* Оливковий колір, як у "Чан: Оплата по факту" */
             background: transparent;
             border: 1px dashed transparent;
             border-radius: 6px;
-            padding: 4px 8px;
-            margin: 0 4px; /* Чіткі відступи від знаку і валюти */
-            transition: all 0.2s ease;
+            padding: 2px 4px; /* Мінімальні відступи для щільності */
+            margin: 0 4px; 
+            transition: all 0.2s;
             -moz-appearance: textfield;
             font-family: inherit;
         }
@@ -321,9 +321,9 @@
             margin: 0;
         }
         .editable-price:hover {
-            background: #F0FDF4; /* Світло-зелений фон при наведенні */
-            border-color: #A7F3D0; /* Легка зелена рамка */
-            cursor: pointer;
+            background: #F8FAF7;
+            border-color: #D1D5DB;
+            cursor: text;
         }
         .editable-price:focus {
             background: #FFFFFF;
@@ -331,7 +331,6 @@
             border-color: var(--accent);
             box-shadow: 0 0 0 3px rgba(85, 107, 47, 0.15);
             outline: none;
-            cursor: text;
         }
         
         .it-date-picker {
@@ -3209,72 +3208,71 @@ const appliesToRoom =
                 
                 <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
                     <span style="font-weight:500;">Базова:</span>
-                    <div style="display:flex; align-items:center; width: 140px; justify-content: flex-end;">
-                        <span style="width:15px; text-align:center;"></span>
-                        <input type="number" id="manualBasePrice" class="editable-price" value="${basePriceTotal}" oninput="recalculateFromManual()">
-                        <span style="font-weight:600; color:#9CA3AF; width:30px; text-align:right;">грн</span>
+                    <div style="display:flex; align-items:center;">
+                        <span style="width:10px;"></span> <input type="number" id="manualBasePrice" class="editable-price" value="${basePriceTotal}" oninput="recalculateFromManual()">
+                        <span style="font-weight:600; color:#9CA3AF; font-size:13px;">грн</span>
                     </div>
                 </div>
                 
                 ${extraGuestFee > 0 ? `
                 <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
                     <span style="font-weight:500;">Дод. гості:</span>
-                    <div style="display:flex; align-items:center; width: 140px; justify-content: flex-end;">
-                        <span style="color:#9CA3AF; font-weight:700; width:15px; text-align:center;">+</span>
+                    <div style="display:flex; align-items:center;">
+                        <span style="color:#9CA3AF; font-weight:700; font-size:14px; width:10px; text-align:center;">+</span>
                         <input type="number" id="manualExtraGuest" class="editable-price" value="${extraGuestFee}" oninput="recalculateFromManual()">
-                        <span style="font-weight:600; color:#9CA3AF; width:30px; text-align:right;">грн</span>
+                        <span style="font-weight:600; color:#9CA3AF; font-size:13px;">грн</span>
                     </div>
                 </div>` : `<input type="hidden" id="manualExtraGuest" value="0">`}
                 
                 ${petFee > 0 ? `
                 <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
                     <span style="font-weight:500;">Тварини:</span>
-                    <div style="display:flex; align-items:center; width: 140px; justify-content: flex-end;">
-                        <span style="color:#9CA3AF; font-weight:700; width:15px; text-align:center;">+</span>
+                    <div style="display:flex; align-items:center;">
+                        <span style="color:#9CA3AF; font-weight:700; font-size:14px; width:10px; text-align:center;">+</span>
                         <input type="number" id="manualPet" class="editable-price" value="${petFee}" oninput="recalculateFromManual()">
-                        <span style="font-weight:600; color:#9CA3AF; width:30px; text-align:right;">грн</span>
+                        <span style="font-weight:600; color:#9CA3AF; font-size:13px;">грн</span>
                     </div>
                 </div>` : `<input type="hidden" id="manualPet" value="0">`}
                 
                 ${dayGuestFee > 0 ? `
                 <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
                     <span style="font-weight:500;">Денні гості:</span>
-                    <div style="display:flex; align-items:center; width: 140px; justify-content: flex-end;">
-                        <span style="color:#9CA3AF; font-weight:700; width:15px; text-align:center;">+</span>
+                    <div style="display:flex; align-items:center;">
+                        <span style="color:#9CA3AF; font-weight:700; font-size:14px; width:10px; text-align:center;">+</span>
                         <input type="number" id="manualDayGuest" class="editable-price" value="${dayGuestFee}" oninput="recalculateFromManual()">
-                        <span style="font-weight:600; color:#9CA3AF; width:30px; text-align:right;">грн</span>
+                        <span style="font-weight:600; color:#9CA3AF; font-size:13px;">грн</span>
                     </div>
                 </div>` : `<input type="hidden" id="manualDayGuest" value="0">`}
                 
                 ${selectedEarlyTime ? `
                 <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
                     <span style="font-weight:500;">Ранній заїзд <span style="color:#9CA3AF; font-size: 11px;">(з ${selectedEarlyTime})</span>:</span>
-                    <div style="display:flex; align-items:center; width: 140px; justify-content: flex-end;">
-                        <span style="color:#9CA3AF; font-weight:700; width:15px; text-align:center;">+</span>
+                    <div style="display:flex; align-items:center;">
+                        <span style="color:#9CA3AF; font-weight:700; font-size:14px; width:10px; text-align:center;">+</span>
                         <input type="number" id="manualEarly" class="editable-price" value="${earlyFee}" oninput="recalculateFromManual()">
-                        <span style="font-weight:600; color:#9CA3AF; width:30px; text-align:right;">грн</span>
+                        <span style="font-weight:600; color:#9CA3AF; font-size:13px;">грн</span>
                     </div>
                 </div>` : `<input type="hidden" id="manualEarly" value="0">`}
                 
                 ${selectedLateTime ? `
                 <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
                     <span style="font-weight:500;">Пізній виїзд <span style="color:#9CA3AF; font-size: 11px;">(до ${selectedLateTime})</span>:</span>
-                    ${isPromoLateOut ? `<span style="color:var(--success);font-weight:700; width:140px; text-align:right;">Безкоштовно<input type="hidden" id="manualLate" value="0"></span>` : `
-                    <div style="display:flex; align-items:center; width: 140px; justify-content: flex-end;">
-                        <span style="color:#9CA3AF; font-weight:700; width:15px; text-align:center;">+</span>
+                    ${isPromoLateOut ? `<span style="color:var(--success);font-weight:700; font-size:13px; text-align:right;">Безкоштовно<input type="hidden" id="manualLate" value="0"></span>` : `
+                    <div style="display:flex; align-items:center;">
+                        <span style="color:#9CA3AF; font-weight:700; font-size:14px; width:10px; text-align:center;">+</span>
                         <input type="number" id="manualLate" class="editable-price" value="${lateFee}" oninput="recalculateFromManual()">
-                        <span style="font-weight:600; color:#9CA3AF; width:30px; text-align:right;">грн</span>
+                        <span style="font-weight:600; color:#9CA3AF; font-size:13px;">грн</span>
                     </div>`}
                 </div>` : `<input type="hidden" id="manualLate" value="0">`}
                 
                 ${isVat === "Так" ? `<div style="display:flex; justify-content:space-between; margin-bottom:6px; color:var(--accent);"><span style="font-weight:500;">Чан:</span><span style="font-weight:700; text-align:right;">Оплата по факту</span></div>` : ''}
                 
-                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px; color:var(--danger);">
-                    <span>Знижка (${Math.round(discountPercent*100)}%):</span>
-                    <div style="display:flex; align-items:center; width: 140px; justify-content: flex-end;">
-                        <span style="font-weight:600; color:var(--danger); width:15px; text-align:center;">-</span>
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-top:10px; padding-top:8px; border-top:1px dashed #E5E7EB; color:var(--danger);">
+                    <span style="font-weight:600;">Знижка (${Math.round(discountPercent*100)}%):</span>
+                    <div style="display:flex; align-items:center;">
+                        <span style="font-weight:800; color:var(--danger); font-size:14px; width:10px; text-align:center;">-</span>
                         <input type="number" id="manualDiscount" class="editable-price" style="color:var(--danger); background: #FEF2F2; border-color: #FECACA;" value="${discountAmount}" oninput="recalculateFromManual(true)">
-                        <span style="font-weight:600; width:30px; text-align:right; color:var(--danger);">грн</span>
+                        <span style="font-weight:600; color:var(--danger); font-size:13px;">грн</span>
                     </div>
                 </div>
                 
