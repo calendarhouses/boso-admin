@@ -2351,20 +2351,43 @@ function saveInlineTransaction(type, category, idx) {
                 const dateStr = g.lastVisit.getFullYear() > 2000 ? g.lastVisit.toLocaleDateString('uk-UA', { day: 'numeric', month: 'long', year: 'numeric' }) : 'Немає заїздів';
                 const cleanPhone = g.phone;
                 
-                tbody.innerHTML += `<tr>
-                    <td><strong>${g.name}</strong></td><td style="color: #4B5563;">+${cleanPhone}</td>
-                    
-                    <td>
+               // --- ПРЕМІУМ ДИЗАЙН БАЗИ ГОСТЕЙ ---
+                const initial = g.name.charAt(0).toUpperCase() || '👤';
+                
+                // Стиль для копіювання номера
+                const copyStyle = `cursor:pointer; transition:0.2s; border-radius:6px; padding:4px 8px; margin-left:-8px; display:inline-flex; align-items:center; gap:6px; background: transparent; border: 1px solid transparent;`;
+                const hoverEvents = `onmouseover="this.style.background='#F3F4F6'; this.style.color='var(--accent)'; this.style.borderColor='#E5E7EB'; this.querySelector('svg').style.stroke='var(--accent)'" onmouseout="this.style.background='transparent'; this.style.color='#6B7280'; this.style.borderColor='transparent'; this.querySelector('svg').style.stroke='#9CA3AF'"`;
+                const iconPhone = `<svg width="14" height="14" fill="none" stroke="#9CA3AF" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"></path></svg>`;
+
+                tbody.innerHTML += `<tr style="transition: all 0.2s ease; border-bottom: 1px solid #F3F4F6;" onmouseover="this.style.background='#FAFAFA'" onmouseout="this.style.background='transparent'">
+                    <td style="padding: 16px 20px;">
+                        <div style="display:flex; align-items:center; gap:12px;">
+                            <div style="width: 40px; height: 40px; border-radius: 50%; background: #F3F4F6; color: #4B5563; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 16px; flex-shrink: 0;">
+                                ${initial}
+                            </div>
+                            <strong style="font-size: 15px; color: var(--text-main);">${g.name}</strong>
+                        </div>
+                    </td>
+                    <td style="padding: 16px 20px;">
+                        <div style="${copyStyle} color:#4B5563; font-size:14px; font-weight:600;" ${hoverEvents} onclick="copyToClipboard('+${cleanPhone}', event)" title="Скопіювати номер">
+                            ${iconPhone} +${cleanPhone}
+                        </div>
+                    </td>
+                    <td style="padding: 16px 20px;">
                         <span class="badge new" onclick="showGuestBookings('${cleanPhone}', '${g.name}')" 
-                              style="cursor: pointer; transition: 0.2s; box-shadow: 0 2px 4px rgba(30, 64, 175, 0.1);" 
+                              style="cursor: pointer; transition: 0.2s; box-shadow: 0 2px 4px rgba(30, 64, 175, 0.1); padding: 6px 12px; font-size: 13px;" 
                               onmouseover="this.style.transform='scale(1.05)'; this.style.background='#BFDBFE'" 
                               onmouseout="this.style.transform='scale(1)'; this.style.background='#DBEAFE'">
                             ${g.count} ${getVisitWord(g.count)}
                         </span>
                     </td>
-                    
-                    <td style="color: #6B7280;">${dateStr}</td>
-                    <td><div style="display: flex; gap: 6px;"><a href="https://t.me/+${cleanPhone}" target="_blank" class="contact-btn tg">Telegram</a><a href="https://wa.me/${cleanPhone}" target="_blank" class="contact-btn" style="background: #25D366; color: white;">WhatsApp</a></div></td>
+                    <td style="padding: 16px 20px; color: #6B7280; font-weight: 500; font-size: 14px;">${dateStr}</td>
+                    <td style="padding: 16px 20px;">
+                        <div style="display: flex; gap: 8px;">
+                            <a href="https://t.me/+${cleanPhone}" target="_blank" class="contact-btn tg" style="display:flex; align-items:center; gap:4px; padding: 8px 12px;"><svg width="14" height="14" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm4.64 6.8c-.15 1.58-.8 5.42-1.13 7.19-.14.75-.42 1-.68 1.03-.58.05-1.02-.38-1.58-.75-.88-.58-1.38-.94-2.23-1.5-.99-.65-.35-1.01.22-1.59.15-.15 2.71-2.48 2.76-2.69a.2.2 0 00-.05-.18c-.06-.05-.14-.03-.21-.02-.09.02-1.46.93-4.12 2.73-.39.27-.74.4-1.05.39-.34-.01-1-.19-1.48-.35-.6-.19-.11-.29.31-.48 1.18-.54 3.93-1.68 5.25-2.24 2.5-.1 3.02-1.28 3.12-1.3.02 0 .06-.01.1 0 .04.01.07.03.08.06.01.03.02.08.01.14z"/></svg> Telegram</a>
+                            <a href="https://wa.me/${cleanPhone}" target="_blank" class="contact-btn" style="background: #25D366; color: white; display:flex; align-items:center; gap:4px; padding: 8px 12px;"><svg width="14" height="14" fill="currentColor" viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51a12.8 12.8 0 0 0-.57-.01c-.198 0-.52.074-.792.372s-1.04 1.016-1.04 2.479 1.065 2.876 1.213 3.074c.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 0 1-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 0 1-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 0 1 2.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0 0 12.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 0 0 5.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 0 0-3.48-8.413Z"/></svg> WhatsApp</a>
+                        </div>
+                    </td>
                 </tr>`;
             });
         }
@@ -2394,28 +2417,48 @@ function saveInlineTransaction(type, category, idx) {
                 const iconPhone = `<svg width="14" height="14" fill="none" stroke="#9CA3AF" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"></path></svg>`;
                 const iconHome = `<svg width="14" height="14" fill="none" stroke="#9CA3AF" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path></svg>`;
 
-                // Стиль для інтерактивного копіювання
-                const copyStyle = `cursor:pointer; transition:0.2s; border-radius:6px; padding:2px 6px; margin-left:-6px; display:inline-flex; align-items:center; gap:6px;`;
-                const hoverEvents = `onmouseover="this.style.background='#F3F4F6'; this.style.color='var(--accent)'; this.querySelector('svg').style.stroke='var(--accent)'" onmouseout="this.style.background='transparent'; this.style.color='#6B7280'; this.querySelector('svg').style.stroke='#9CA3AF'"`;
+               // --- ПРЕМІУМ ДИЗАЙН РЯДКА БРОНЮВАННЯ ---
+                const initial = clientName.charAt(0).toUpperCase() || '👤';
+                
+                // Стиль для копіювання номера
+                const copyStyle = `cursor:pointer; transition:0.2s; border-radius:6px; padding:4px 8px; margin-left:-8px; display:inline-flex; align-items:center; gap:6px; background: transparent; border: 1px solid transparent;`;
+                const hoverEvents = `onmouseover="this.style.background='#F3F4F6'; this.style.color='var(--accent)'; this.style.borderColor='#E5E7EB'; this.querySelector('svg').style.stroke='var(--accent)'" onmouseout="this.style.background='transparent'; this.style.color='#6B7280'; this.style.borderColor='transparent'; this.querySelector('svg').style.stroke='#9CA3AF'"`;
 
-                tbody.innerHTML += `<tr>
-                    <td>
-                        <div style="display:flex; flex-direction:column; gap:6px;">
-                            <div style="display:flex; align-items:center; gap:8px; font-weight:600; color:var(--text-main);">${iconCal} ${dateStr}</div>
-                            <div style="display:flex; align-items:center; gap:8px; color:#6B7280; font-size:13px; font-weight:500;">${iconMoon} ${nights} ночей</div>
+                tbody.innerHTML += `<tr style="transition: all 0.2s ease; border-bottom: 1px solid #F3F4F6;" onmouseover="this.style.background='#FAFAFA'" onmouseout="this.style.background='transparent'">
+                    <td style="padding: 16px 20px;">
+                        <div style="display:flex; flex-direction:column; gap:4px;">
+                            <div style="display:flex; align-items:center; gap:8px; font-weight:600; color:var(--text-main); font-size: 14px;">
+                                <span style="background: #F3F4F6; padding: 6px 10px; border-radius: 8px; color: #374151;">${dateStr}</span>
+                            </div>
+                            <div style="display:flex; align-items:center; gap:6px; color:#6B7280; font-size:12px; font-weight:600; padding-left: 2px;">
+                                ${iconMoon} <span style="text-transform: uppercase; letter-spacing: 0.5px;">${nights} ночей</span>
+                            </div>
                         </div>
                     </td>
-                    <td>
-                        <div style="display:flex; flex-direction:column; gap:6px;">
-                            <div style="display:flex; align-items:center; gap:8px; font-weight:600; color:var(--text-main);">${iconUser} ${clientName}</div>
-                            <div style="${copyStyle} color:#6B7280; font-size:13px; font-weight:500;" ${hoverEvents} onclick="copyToClipboard('+${cleanPhone}', event)" title="Скопіювати номер">${iconPhone} +${cleanPhone}</div>
+                    <td style="padding: 16px 20px;">
+                        <div style="display:flex; align-items:center; gap:12px;">
+                            <div style="width: 40px; height: 40px; border-radius: 50%; background: #F0FDF4; color: #059669; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 16px; border: 1px solid #A7F3D0; flex-shrink: 0;">
+                                ${initial}
+                            </div>
+                            <div style="display:flex; flex-direction:column; gap:2px;">
+                                <div style="font-weight:700; color:var(--text-main); font-size: 15px;">${clientName}</div>
+                                <div style="${copyStyle} color:#6B7280; font-size:13px; font-weight:600;" ${hoverEvents} onclick="copyToClipboard('+${cleanPhone}', event)" title="Скопіювати номер">
+                                    ${iconPhone} +${cleanPhone}
+                                </div>
+                            </div>
                         </div>
                     </td>
-                    <td>
-                        <div style="display:flex; align-items:center; gap:8px; font-weight:600; color:var(--text-main);">${iconHome} ${b.cottage}</div>
+                    <td style="padding: 16px 20px;">
+                        <div style="display:flex; align-items:center; gap:8px; font-weight:700; color:#374151; background: #F9FAFB; padding: 8px 12px; border-radius: 8px; border: 1px solid #E5E7EB; width: max-content;">
+                            ${iconHome} ${b.cottage}
+                        </div>
                     </td>
-                    <td><span class="badge ${badgeClass}">${b.status}</span></td>
-                    <td><button class="btn-action arrow" onclick="openDetailsByRow(event, '${b.row}')">Деталі <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"></path></svg></button></td>
+                    <td style="padding: 16px 20px;"><span class="badge ${badgeClass}" style="font-size: 13px; padding: 6px 12px;">${b.status}</span></td>
+                    <td style="padding: 16px 20px;">
+                        <button class="btn-action arrow" style="background: #FFFFFF; border: 1px solid #D1D5DB; box-shadow: 0 2px 4px rgba(0,0,0,0.02);" onclick="openDetailsByRow(event, '${b.row}')" onmouseover="this.style.borderColor='var(--accent)'; this.style.color='var(--accent)'" onmouseout="this.style.borderColor='#D1D5DB'; this.style.color='#374151'">
+                            Деталі <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"></path></svg>
+                        </button>
+                    </td>
                 </tr>`;
             });
         }
@@ -4291,16 +4334,34 @@ function bosoLeave() {
                             <button class="btn-icon-only danger" onclick="event.stopPropagation(); deleteGenericItem('transaction', ${id})"><svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg></button>
                         </div>`;
 
-                    // 🟢 РОБИМО РЯДОК КЛІКАБЕЛЬНИМ (якщо це не системний запис)
+                   // --- ПРЕМІУМ ДИЗАЙН РЯДКА ФІНАНСІВ З ІКОНКАМИ ---
                     const rowAttrs = (!isSystem && id) 
                         ? `id="mainRow-${id}" onclick="toggleEditFinRow(${id})" style="cursor: pointer; transition: 0.2s;" onmouseover="this.style.background='#F9FAFB'" onmouseout="this.style.background='transparent'"` 
                         : `id="mainRow-${id || Date.now()}"`;
 
+                    // Дістаємо іконку або ставимо дефолтну
+                    const defaultIcon = '<path stroke-linecap="round" stroke-linejoin="round" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />';
+                    const svgPath = globalCatIcons[title] || defaultIcon;
+                    
+                    // Кольори для іконки
+                    const iconBg = isInc ? '#ECFDF5' : '#FEF2F2';
+                    const iconColor = isInc ? '#059669' : '#DC2626';
+
                     let mainRow = `<tr ${rowAttrs}>
-                        <td><strong>${title}</strong><br><span style="font-size:12px; color:#6B7280;">${desc}</span></td>
-                        <td>${badge}</td>
-                        <td><strong style="color: ${color};">${sign}${Math.round(amount).toLocaleString('uk-UA')} грн</strong></td>
-                        <td>${actions}</td>
+                        <td style="padding: 16px 20px;">
+                            <div style="display: flex; align-items: center; gap: 14px;">
+                                <div style="width: 44px; height: 44px; border-radius: 12px; background: ${iconBg}; color: ${iconColor}; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                                    <svg width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">${svgPath}</svg>
+                                </div>
+                                <div style="display: flex; flex-direction: column; gap: 4px;">
+                                    <strong style="font-size: 15px; color: var(--text-main);">${title}</strong>
+                                    <span style="font-size: 13px; color: #6B7280; line-height: 1.2;">${desc}</span>
+                                </div>
+                            </div>
+                        </td>
+                        <td style="padding: 16px 20px; vertical-align: middle;">${badge}</td>
+                        <td style="padding: 16px 20px; vertical-align: middle;"><strong style="color: ${color}; font-size: 15px;">${sign}${Math.round(amount).toLocaleString('uk-UA')} грн</strong></td>
+                        <td style="padding: 16px 20px; vertical-align: middle;">${actions}</td>
                     </tr>`;
 
                     let editHtml = '';
