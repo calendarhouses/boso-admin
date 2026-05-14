@@ -3986,7 +3986,7 @@ let                 fOut = outD.toLocaleDateString('uk-UA', { day: 'numeric', mo
         }
 
       // ==========================================
-        // 🚀 ФІЗИЧНИЙ СВАЙП V10 (ІДЕАЛЬНИЙ СКРОЛ + ПРИКЛЕЄНЕ МЕНЮ)
+        // 🚀 ФІЗИЧНИЙ СВАЙП V11 (GHOST HEADER SNAPSHOT)
         // ==========================================
         const mainArea = document.querySelector('.main-content');
         
@@ -4000,19 +4000,39 @@ let                 fOut = outD.toLocaleDateString('uk-UA', { day: 'numeric', mo
         let isSingleContainer = false;
         let isAnimating = false;
         let startScrollY = 0; 
-        let activeSwipeMenus = []; // Масив для менюшок, які ми будемо тягнути
 
-        // Функція для очищення менюшок
-        function restoreMenus() {
-            activeSwipeMenus.forEach(m => {
-                if (!m) return;
-                m.style.transition = 'none';
-                m.style.transform = m._origTransform || '';
-                m.style.opacity = m._origOpacity || '';
-                m.style.zIndex = m._origZIndex || '';
-                m.style.backgroundColor = m._origBg || '';
+        function cleanupSwipe(nextIdx) {
+            if (nextIdx !== tActiveIndex) mainArea.scrollTop = 0; 
+
+            let ghost = tParentNode ? tParentNode.querySelector('.swipe-ghost') : null;
+            if (ghost) ghost.remove();
+
+            if (tParentNode) {
+                tParentNode.style.minHeight = '';
+                tParentNode.style.position = '';
+                tParentNode.style.overflowX = '';
+            }
+            
+            tTabsContent.forEach((el, i) => {
+                if (!el) return;
+                el.style.transform = '';
+                el.style.position = '';
+                el.style.top = '';
+                el.style.left = '';
+                el.style.width = '';
+                el.style.transition = '';
+                if (!isSingleContainer) {
+                    el.style.display = (i === nextIdx) ? 'block' : 'none';
+                } else {
+                    el.style.opacity = '1';
+                }
             });
-            activeSwipeMenus = [];
+            
+            if (nextIdx !== tActiveIndex) tActiveNavs[nextIdx].click(); 
+            
+            mainArea.style.overflowY = 'auto'; // 🟢 Повертаємо вертикальний скрол
+            isAnimating = false;
+            swipeInitialized = false;
         }
 
         mainArea.addEventListener('touchstart', e => {
@@ -4025,7 +4045,6 @@ let                 fOut = outD.toLocaleDateString('uk-UA', { day: 'numeric', mo
             tStartY = e.touches[0].clientY; 
             isTDragging = true;
             swipeInitialized = false;
-            restoreMenus(); // Очищаємо попередні, якщо раптом залишились
 
             let viewReports = document.getElementById('view-reports');
             let viewSettings = document.getElementById('view-settings');
@@ -4048,8 +4067,7 @@ let                 fOut = outD.toLocaleDateString('uk-UA', { day: 'numeric', mo
                 });
                 tParentNode = viewSettings;
             } else if (viewList && viewList.style.display === 'block') {
-                let guestFilter = document.getElementById('guestFilterTab');
-                if (guestFilter && guestFilter.style.display !== 'none') {
+                if (document.getElementById('guestFilterTab') && document.getElementById('guestFilterTab').style.display !== 'none') {
                     isTDragging = false; return;
                 }
                 tActiveNavs = document.querySelectorAll('#bookingsTabs .m-tab');
@@ -4083,84 +4101,87 @@ let                 fOut = outD.toLocaleDateString('uk-UA', { day: 'numeric', mo
                     swipeInitialized = true;
                     startScrollY = mainArea.scrollTop; 
                     
-                    // 🟢 МАГІЯ МЕНЮ: Знаходимо меню і календар, щоб зсунути їх вниз
+                    // 🟢 Блокуємо вертикальний скрол на час свайпу
+                    mainArea.style.overflowY = 'hidden';
+
+                    let menusToClone = [];
                     if (tParentNode.id === 'view-reports') {
                         let tabs = tParentNode.querySelector('.reports-tabs');
-                        if (tabs) {
-                            activeSwipeMenus.push(tabs);
-                            if (tabs.nextElementSibling) activeSwipeMenus.push(tabs.nextElementSibling); // Календар
-                        }
+                        let period = tParentNode.querySelector('.custom-select-wrapper')?.parentElement;
+                        if (tabs) menusToClone.push(tabs);
+                        if (period) menusToClone.push(period);
                     } else if (tParentNode.id === 'view-settings') {
                         let tabs = tParentNode.querySelector('.mobile-settings-tabs');
-                        if (tabs) activeSwipeMenus.push(tabs);
+                        if (tabs) menusToClone.push(tabs);
                     } else if (tParentNode.id === 'view-list') {
                         let tabs = tParentNode.querySelector('#bookingsTabs');
-                        if (tabs) activeSwipeMenus.push(tabs);
+                        if (tabs) menusToClone.push(tabs);
                     }
 
-                    // 🟢 Зсуваємо меню до рівня пальця і плавно проявляємо
-                    if (startScrollY > 10) {
-                        activeSwipeMenus.forEach(m => {
-                            if (!m) return;
-                            m._origTransform = m.style.transform;
-                            m._origOpacity = m.style.opacity;
-                            m._origZIndex = m.style.zIndex;
-                            m._origBg = m.style.backgroundColor;
-                            
-                            m.style.transition = 'none';
-                            m.style.transform = `translate3d(0, ${startScrollY}px, 0)`;
-                            m.style.zIndex = '95';
-                            m.style.backgroundColor = 'var(--bg-color)'; 
-                            
-                            m.style.opacity = '0';
-                            requestAnimationFrame(() => {
-                                requestAnimationFrame(() => {
-                                    m.style.transition = 'opacity 0.2s ease';
-                                    m.style.opacity = '1';
-                                });
-                            });
-                        });
-                    }
+                    let activeEl = tTabsContent[isSingleContainer ? 0 : tActiveIndex];
+                    let naturalContentTop = activeEl ? activeEl.offsetTop : 0;
 
-                    if (!isSingleContainer) {
-                        tParentNode.style.position = 'relative'; 
-                        let activeEl = tTabsContent[tActiveIndex];
-                        let contentTop = activeEl ? activeEl.offsetTop : 0;
+                    // 🟢 Створюємо фейкове меню (Ghost Header), яке ідеально перекриє контент
+                    if (startScrollY > 5 && menusToClone.length > 0) {
+                        let ghostHeader = document.createElement('div');
+                        ghostHeader.className = 'swipe-ghost';
+                        ghostHeader.style.position = 'absolute';
+                        ghostHeader.style.top = (startScrollY - 16) + 'px';
+                        ghostHeader.style.left = '-16px'; 
+                        ghostHeader.style.width = '100vw';
+                        ghostHeader.style.padding = '16px 16px 10px 16px'; 
+                        ghostHeader.style.backgroundColor = 'var(--bg-color)';
+                        ghostHeader.style.zIndex = '99';
                         
-                        let maxHeight = 0;
-                        tTabsContent.forEach((el) => {
-                            if (!el) return;
-                            let originalDisplay = el.style.display;
-                            el.style.display = 'block';
-                            let h = el.offsetHeight;
-                            if (h > maxHeight) maxHeight = h;
-                            el.style.display = originalDisplay;
-                        });
+                        let shadow = document.createElement('div');
+                        shadow.style.position = 'absolute';
+                        shadow.style.bottom = '-15px';
+                        shadow.style.left = '0';
+                        shadow.style.width = '100%';
+                        shadow.style.height = '15px';
+                        shadow.style.background = 'linear-gradient(to bottom, var(--bg-color), transparent)';
+                        ghostHeader.appendChild(shadow);
 
-                        tParentNode.style.minHeight = (contentTop + Math.max(maxHeight, startScrollY + window.innerHeight)) + 'px';
-                        tParentNode.style.overflowX = 'hidden';
-
-                        tTabsContent.forEach((el, i) => {
-                            if (!el) return;
-                            el.style.transition = 'none';
-                            el.style.position = 'absolute';
-                            
-                            if (i === tActiveIndex) {
-                                el.style.top = contentTop + 'px'; 
-                            } else {
-                                el.style.top = (contentTop + startScrollY) + 'px'; 
-                            }
-                            
-                            el.style.left = '0';
-                            el.style.width = '100%';
-                            el.style.display = 'block'; 
-                            let offset = (i - tActiveIndex) * tScreenWidth;
-                            el.style.transform = `translate3d(${offset}px, 0, 0)`; 
+                        menusToClone.forEach(m => {
+                            let clone = m.cloneNode(true);
+                            clone.querySelectorAll('[id]').forEach(el => el.removeAttribute('id'));
+                            clone.removeAttribute('id');
+                            let compStyle = window.getComputedStyle(m);
+                            clone.style.marginTop = compStyle.marginTop;
+                            clone.style.marginBottom = compStyle.marginBottom;
+                            ghostHeader.appendChild(clone);
                         });
-                    } else {
-                        tParentNode.style.minHeight = tTabsContent[0].offsetHeight + 'px';
-                        tTabsContent[0].style.transition = 'none';
+                        
+                        tParentNode.appendChild(ghostHeader);
                     }
+
+                    let forcedTop = startScrollY > 5 ? (startScrollY + naturalContentTop) : naturalContentTop;
+                    
+                    let maxHeight = 0;
+                    tTabsContent.forEach((el) => {
+                        if (!el) return;
+                        let originalDisplay = el.style.display;
+                        el.style.display = 'block';
+                        if (el.offsetHeight > maxHeight) maxHeight = el.offsetHeight;
+                        el.style.display = originalDisplay;
+                    });
+
+                    tParentNode.style.minHeight = (forcedTop + maxHeight) + 'px';
+                    tParentNode.style.position = 'relative';
+                    tParentNode.style.overflowX = 'hidden';
+
+                    tTabsContent.forEach((el, i) => {
+                        if (!el) return;
+                        el.style.transition = 'none';
+                        el.style.position = 'absolute';
+                        el.style.top = forcedTop + 'px'; // 🟢 Тепер нова вкладка завжди буде прямо під пальцем!
+                        el.style.left = '0';
+                        el.style.width = '100%';
+                        el.style.display = 'block'; 
+                        let offset = isSingleContainer ? 0 : (i - tActiveIndex) * tScreenWidth;
+                        el.style.transform = `translate3d(${offset}px, 0, 0)`; 
+                    });
+
                 } else {
                     return; 
                 }
@@ -4188,7 +4209,7 @@ let                 fOut = outD.toLocaleDateString('uk-UA', { day: 'numeric', mo
             if (!isTDragging || !swipeInitialized || isAnimating) {
                 isTDragging = false;
                 swipeInitialized = false;
-                restoreMenus();
+                mainArea.style.overflowY = 'auto'; // Відновлюємо скрол при скасуванні
                 return;
             }
             
@@ -4212,36 +4233,7 @@ let                 fOut = outD.toLocaleDateString('uk-UA', { day: 'numeric', mo
                     el.style.transform = `translate3d(${finalOffset}px, 0, 0)`;
                 });
 
-                setTimeout(() => {
-                    if (nextIdx !== tActiveIndex) {
-                        mainArea.scrollTop = 0; 
-                    }
-                    
-                    restoreMenus(); // 🟢 Повертаємо меню на законне місце миттєво
-
-                    if (tParentNode) {
-                        tParentNode.style.minHeight = '';
-                        tParentNode.style.position = '';
-                        tParentNode.style.overflowX = '';
-                    }
-                    
-                    tTabsContent.forEach((el, i) => {
-                        if (!el) return;
-                        el.style.transform = '';
-                        el.style.position = '';
-                        el.style.top = '';
-                        el.style.left = '';
-                        el.style.width = '';
-                        el.style.transition = '';
-                        el.style.display = (i === nextIdx) ? 'block' : 'none';
-                    });
-                    
-                    if (nextIdx !== tActiveIndex) {
-                        tActiveNavs[nextIdx].click(); 
-                    }
-                    isAnimating = false;
-                    swipeInitialized = false;
-                }, 300);
+                setTimeout(() => cleanupSwipe(nextIdx), 300);
             } else {
                 if (nextIdx !== tActiveIndex) {
                     let flyOut = diffX > 0 ? tScreenWidth : -tScreenWidth;
@@ -4250,8 +4242,9 @@ let                 fOut = outD.toLocaleDateString('uk-UA', { day: 'numeric', mo
                     tTabsContent[0].style.opacity = '0';
                     
                     setTimeout(() => {
-                        mainArea.scrollTop = 0;
-                        restoreMenus(); 
+                        if (nextIdx !== tActiveIndex) mainArea.scrollTop = 0;
+                        let ghost = tParentNode.querySelector('.swipe-ghost');
+                        if (ghost) ghost.remove();
                         
                         tActiveNavs[nextIdx].click(); 
                         tTabsContent[0].style.transition = 'none';
@@ -4263,13 +4256,7 @@ let                 fOut = outD.toLocaleDateString('uk-UA', { day: 'numeric', mo
                                 tTabsContent[0].style.transform = 'translate3d(0px, 0, 0)';
                                 tTabsContent[0].style.opacity = '1';
                                 
-                                setTimeout(() => {
-                                    tTabsContent[0].style.transition = '';
-                                    tTabsContent[0].style.transform = '';
-                                    if(tParentNode) tParentNode.style.minHeight = '';
-                                    isAnimating = false;
-                                    swipeInitialized = false;
-                                }, 300);
+                                setTimeout(() => cleanupSwipe(nextIdx), 300);
                             });
                         });
                     }, 200);
@@ -4277,14 +4264,7 @@ let                 fOut = outD.toLocaleDateString('uk-UA', { day: 'numeric', mo
                     tTabsContent[0].style.transition = 'transform 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94), opacity 0.3s ease';
                     tTabsContent[0].style.transform = 'translate3d(0px, 0, 0)';
                     tTabsContent[0].style.opacity = '1';
-                    setTimeout(() => {
-                        tTabsContent[0].style.transition = '';
-                        tTabsContent[0].style.transform = '';
-                        restoreMenus();
-                        if(tParentNode) tParentNode.style.minHeight = '';
-                        isAnimating = false;
-                        swipeInitialized = false;
-                    }, 300);
+                    setTimeout(() => cleanupSwipe(nextIdx), 300);
                 }
             }
         });
