@@ -2762,10 +2762,6 @@ function saveInlineTransaction(type, category, idx) {
                             if (offsetDays < 0) { blockWidth = (durationDays + offsetDays) * cellWidth; blockLeft = 0; padLeft = 8; extensionsHtml = extensionsHtml.replace(/early/g, 'early" style="display:none;"'); }
                             if (offsetDays + durationDays > daysCount) { blockWidth = (daysCount - offsetDays) * cellWidth; padRight = 8; extensionsHtml = extensionsHtml.replace(/late/g, 'late" style="display:none;"'); }
 
-                            let total = Number(b.totalPrice) || 0;
-                            let paid = Number(b.paidAmount) || 0;
-                            let balance = total - paid;
-
                             let finText = ""; let badgeBg = ""; let badgeColor = "#FFFFFF";
 
                             if (statusClass === 'status-cancelled') { finText = "Скасовано"; badgeBg = "rgba(0,0,0,0.05)"; badgeColor = "#9CA3AF"; } 
