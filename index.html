@@ -3464,7 +3464,7 @@ function calculateBalanceLive() {
 
     // РОЗУМНЕ ОНОВЛЕННЯ ТЕКСТУ НА ЗЕЛЕНІЙ КНОПЦІ 50%
     let prepayBtnText = document.getElementById('prepayBtnText');
-if (prepayBtnText) prepayBtnText.innerText = Math.round(total / 2);
+    if (prepayBtnText) prepayBtnText.innerText = Math.round(total / 2);
 
     if (balance <= 0) {
         balEl.innerText = "Оплачено (0 грн)";
@@ -3476,6 +3476,24 @@ if (prepayBtnText) prepayBtnText.innerText = Math.round(total / 2);
         balEl.style.color = "#DC2626"; 
         balEl.style.background = "#FEE2E2";
         balEl.style.borderColor = "#FECACA";
+    }
+
+    // 🟢 АВТОМАТИЧНА ЗМІНА СТАТУСУ (Нова бронь <-> Підтверджено)
+    let activeStatusBtn = document.querySelector('.status-btn.active');
+    let currentStatus = activeStatusBtn ? activeStatusBtn.getAttribute('data-status') : '';
+    
+    // Змінюємо статус ТІЛЬКИ якщо бронь не скасована (щоб випадково не оживити скасовану бронь)
+    if (currentStatus !== 'Скасовано') {
+        document.querySelectorAll('.status-btn').forEach(b => b.classList.remove('active'));
+        if (paid > 0) {
+            // Якщо є хоч якась оплата -> Підтверджено
+            let confBtn = document.querySelector('.status-btn[data-status="Підтверджено"]');
+            if (confBtn) confBtn.classList.add('active');
+        } else {
+            // Якщо оплати нуль -> Нова бронь
+            let newBtn = document.querySelector('.status-btn[data-status="Нова бронь"]');
+            if (newBtn) newBtn.classList.add('active');
+        }
     }
 }
 
