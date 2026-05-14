@@ -1201,9 +1201,8 @@ input[type="number"] {
             </div>
             <div class="drawer-body">
                 <div class="status-toggle">
-                    <div class="status-btn active" data-status="Нова бронь"><span class="status-dot"></span> Нова</div>
-                    <div class="status-btn" data-status="Підтверджено"><span class="status-dot"></span> Заїхав</div>
-                    <div class="status-btn" data-status="Виїхав"><span class="status-dot"></span> Виїхав</div>
+                    <div class="status-btn active" data-status="Нова бронь"><span class="status-dot"></span> Нова бронь</div>
+                    <div class="status-btn" data-status="Підтверджено"><span class="status-dot"></span> Підтверджено</div>
                     <div class="status-btn" data-status="Скасовано"><span class="status-dot"></span> Скасовано</div>
                 </div>
                 <form id="adminBookingForm">
@@ -2517,8 +2516,9 @@ function saveInlineTransaction(type, category, idx) {
                 // Чиста дата без іконок
                 const dateStr = `${inDate.toLocaleDateString('uk-UA', { day: 'numeric', month: 'long' })} - ${outDate.toLocaleDateString('uk-UA', { day: 'numeric', month: 'long' })}`;
                 
-                let badgeClass = 'new'; let s = String(b.status).toLowerCase();
-                if(s.includes('підтвердж') || s.includes('заїхав')) badgeClass = 'confirmed';
+                let badgeClass = 'new'; 
+                let s = String(b.status).toLowerCase();
+                if(s.includes('підтвердж')) badgeClass = 'confirmed';
                 if(s.includes('скас')) badgeClass = 'cancelled';
                 
                 const cleanPhone = formatPhone(b.phone);
@@ -2707,12 +2707,22 @@ function saveInlineTransaction(type, category, idx) {
                         const durationDays = Math.round((outDate - inDate) / (1000 * 60 * 60 * 24));
                         
                         if (offsetDays + durationDays > 0 && offsetDays < daysCount) {
-                            let statusClass = 'status-new'; 
-let s = String(b.status).toLowerCase();
-if (s.includes('підтвердж') || s.includes('заїхав')) statusClass = 'status-confirmed';
-if (s.includes('скас')) statusClass = 'status-cancelled';
+                            // Відразу рахуємо фінанси, щоб визначити колір
+                            let total = Number(b.totalPrice) || 0;
+                            let paid = Number(b.paidAmount) || 0;
+                            let balance = total - paid;
+                            let sClass = String(b.status).toLowerCase();
 
-// 🟢 ВІЗУАЛЬНИЙ ГНУЧКИЙ ГРАФІК: Читаємо, чи є ранній/пізній заїзд
+                            // За замовчуванням ставимо коричневий (для Нових і тих, хто вніс 50%)
+                            let statusClass = 'status-new'; 
+
+                            if (sClass.includes('скас')) {
+                                statusClass = 'status-cancelled'; // Скасовано - сірий
+                            } else if (total > 0 && balance <= 0) {
+                                statusClass = 'status-confirmed'; // Оплачено на 100% - зелений
+                            }
+
+                            // 🟢 ВІЗУАЛЬНИЙ ГНУЧКИЙ ГРАФІК: Читаємо, чи є ранній/пізній заїзд
                             let exComment = b.comment ? String(b.comment) : "";
                             let exHasEarly = exComment.includes('Ранній заїзд');
                             let exHasLate = exComment.includes('Пізній виїзд') || (durationDays === 2 && inDate.getDay() === 5 && outDate.getDay() === 0);
