@@ -3985,13 +3985,14 @@ let                 fOut = outD.toLocaleDateString('uk-UA', { day: 'numeric', mo
             });
         }
 
-       // ==========================================
-        // 🚀 ФІЗИЧНИЙ СВАЙП V6 (ІДЕАЛЬНИЙ КОНТРОЛЬ СКРОЛУ)
+      // ==========================================
+        // 🚀 ФІЗИЧНИЙ СВАЙП V7 (ІДЕАЛЬНИЙ СКРОЛ + СВАЙП)
         // ==========================================
         const mainArea = document.querySelector('.main-content');
         
         let tStartX = 0, tStartY = 0, tCurrX = 0;
         let isTDragging = false;
+        let swipeInitialized = false; // 🟢 Новий прапорець: чи підтверджено намір свайпу
         let tActiveNavs = null, tTabsContent = [];
         let tActiveIndex = 0;
         let tScreenWidth = window.innerWidth;
@@ -4000,10 +4001,18 @@ let                 fOut = outD.toLocaleDateString('uk-UA', { day: 'numeric', mo
         let isAnimating = false; 
 
         mainArea.addEventListener('touchstart', e => {
+            // Блокуємо, якщо відкриті шторки або йде анімація
             if (isAnimating || document.querySelector('.drawer-overlay.active') || document.querySelector('.modal-overlay.active')) return;
             
             let target = e.target;
-            if (target.closest('.timeline-wrapper') || target.closest('canvas') || target.closest('.time-chips') || target.closest('.mobile-settings-tabs') || target.closest('.reports-tabs') || target.closest('.chips-container')) return;
+            // Ігноруємо зони, де потрібен внутрішній скрол або свої свайпи
+            if (target.closest('.timeline-wrapper') || target.closest('canvas') || target.closest('.time-chips') || target.closest('.mobile-settings-tabs') || target.closest('.reports-tabs') || target.closest('.chips-container') || target.closest('.it-card')) return;
+
+            // 🟢 Фіксуємо старт, але НЕ ЧІПАЄМО DOM (щоб не зламати рідний скрол)
+            tStartX = e.touches[0].clientX; 
+            tStartY = e.touches[0].clientY; 
+            isTDragging = true;
+            swipeInitialized = false;
 
             let viewReports = document.getElementById('view-reports');
             let viewSettings = document.getElementById('view-settings');
@@ -4027,54 +4036,20 @@ let                 fOut = outD.toLocaleDateString('uk-UA', { day: 'numeric', mo
                 tParentNode = viewSettings;
             } else if (viewList && viewList.style.display === 'block') {
                 let guestFilter = document.getElementById('guestFilterTab');
-                if (guestFilter && guestFilter.style.display !== 'none') return;
-
+                if (guestFilter && guestFilter.style.display !== 'none') {
+                    isTDragging = false; return;
+                }
                 tActiveNavs = document.querySelectorAll('#bookingsTabs .m-tab');
                 tTabsContent = [document.getElementById('bookingsTableMobile')];
                 tParentNode = viewList;
                 isSingleContainer = true; 
             }
 
-            if (tActiveNavs && (tTabsContent.length > 1 || isSingleContainer)) {
-                tStartX = e.touches[0].clientX; 
-                tStartY = e.touches[0].clientY; 
-                isTDragging = true;
-                tScreenWidth = window.innerWidth;
+            if (!tActiveNavs || (tTabsContent.length <= 1 && !isSingleContainer)) {
+                isTDragging = false;
+            } else {
                 tActiveIndex = Array.from(tActiveNavs).findIndex(t => t.classList.contains('active'));
-
-                if (!isSingleContainer) {
-                    let activeEl = tTabsContent[tActiveIndex];
-                    let contentTop = activeEl ? activeEl.offsetTop : 0;
-                    let currentScroll = mainArea.scrollTop;
-                    let pHeight = tParentNode.offsetHeight;
-
-                    // 🟢 Жорстко фіксуємо висоту батька (щоб скрол не стрибнув при absolute)
-                    tParentNode.style.height = Math.max(pHeight, currentScroll + window.innerHeight) + 'px';
-                    tParentNode.style.position = 'relative';
-                    tParentNode.style.overflowX = 'hidden';
-
-                    tTabsContent.forEach((el, i) => {
-                        if (!el) return;
-                        el.style.transition = 'none';
-                        el.style.position = 'absolute';
-                        el.style.left = '0';
-                        el.style.width = '100%';
-                        el.style.display = 'block'; 
-                        
-                        // 🟢 МАГІЯ: Активна вкладка залишається на місці, а НОВА зміщується вниз на рівень скролу!
-                        if (i === tActiveIndex) {
-                            el.style.top = contentTop + 'px';
-                        } else {
-                            el.style.top = (contentTop + currentScroll) + 'px';
-                        }
-                        
-                        let offset = (i - tActiveIndex) * tScreenWidth;
-                        el.style.transform = `translate3d(${offset}px, 0, 0)`; 
-                    });
-                } else {
-                    tParentNode.style.minHeight = tTabsContent[0].offsetHeight + 'px';
-                    tTabsContent[0].style.transition = 'none';
-                }
+                tScreenWidth = window.innerWidth;
             }
         }, { passive: true });
 
@@ -4085,19 +4060,67 @@ let                 fOut = outD.toLocaleDateString('uk-UA', { day: 'numeric', mo
             let diffX = tCurrX - tStartX; 
             let diffY = e.touches[0].clientY - tStartY;
 
-            // Відміна свайпу, якщо юзер скролить вниз/вверх
-            if (Math.abs(diffY) > Math.abs(diffX) && Math.abs(diffX) < 20) {
-                cancelTSwipe();
-                return;
+            // 🟢 ЛІНИВА ІНІЦІАЛІЗАЦІЯ (Перевіряємо намір користувача)
+            if (!swipeInitialized) {
+                // Якщо палець пішов вверх/вниз більше ніж вбік — це СКРОЛ.
+                if (Math.abs(diffY) > Math.abs(diffX)) {
+                    isTDragging = false; // Вимикаємо свайп, даємо браузеру скролити
+                    return;
+                }
+                
+                // Якщо палець пішов вбік на 10+ пікселів — це СВАЙП.
+                if (Math.abs(diffX) > 10) {
+                    swipeInitialized = true;
+                    
+                    // ТІЛЬКИ ТЕПЕР налаштовуємо DOM для анімації (щоб не ламати висоту)
+                    if (!isSingleContainer) {
+                        // Вираховуємо точну висоту меню над контентом
+                        let menuEl = tParentNode.querySelector('.mobile-settings-tabs') || tParentNode.querySelector('.reports-tabs');
+                        let contentTop = menuEl ? (menuEl.offsetHeight + (parseFloat(window.getComputedStyle(menuEl).marginBottom) || 0)) : 0;
+
+                        let maxHeight = 0;
+                        tTabsContent.forEach((el) => {
+                            if (!el) return;
+                            let originalDisplay = el.style.display;
+                            el.style.display = 'block';
+                            let h = el.offsetHeight;
+                            if (h > maxHeight) maxHeight = h;
+                            el.style.display = originalDisplay;
+                        });
+
+                        tParentNode.style.minHeight = (contentTop + maxHeight) + 'px';
+                        tParentNode.style.position = 'relative';
+                        tParentNode.style.overflowX = 'hidden';
+
+                        tTabsContent.forEach((el, i) => {
+                            if (!el) return;
+                            el.style.transition = 'none';
+                            el.style.position = 'absolute';
+                            el.style.top = contentTop + 'px'; // Рівно під меню, незалежно від скролу!
+                            el.style.left = '0';
+                            el.style.width = '100%';
+                            el.style.display = 'block'; 
+                            let offset = (i - tActiveIndex) * tScreenWidth;
+                            el.style.transform = `translate3d(${offset}px, 0, 0)`; 
+                        });
+                    } else {
+                        tParentNode.style.minHeight = tTabsContent[0].offsetHeight + 'px';
+                        tTabsContent[0].style.transition = 'none';
+                    }
+                } else {
+                    return; // Чекаємо, поки палець пройде 10px
+                }
             }
 
-            if (e.cancelable && Math.abs(diffX) > 10) e.preventDefault();
+            // Якщо ми тут, значить це точно свайп. Блокуємо рідний скрол браузера.
+            if (e.cancelable) e.preventDefault();
 
             // "Гумка" на краях
             if ((tActiveIndex === 0 && diffX > 0) || (tActiveIndex === tActiveNavs.length - 1 && diffX < 0)) {
                 diffX = diffX * 0.25; 
             }
 
+            // Рухаємо сторінки за пальцем
             if (!isSingleContainer) {
                 tTabsContent.forEach((el, i) => {
                     if (!el) return;
@@ -4106,14 +4129,19 @@ let                 fOut = outD.toLocaleDateString('uk-UA', { day: 'numeric', mo
                 });
             } else {
                 tTabsContent[0].style.transform = `translate3d(${diffX}px, 0, 0)`;
-                tTabsContent[0].style.opacity = 1 - Math.abs(diffX) / tScreenWidth;
+                tTabsContent[0].style.opacity = 1 - (Math.abs(diffX) / tScreenWidth);
             }
         }, { passive: false });
 
         mainArea.addEventListener('touchend', e => {
-            if (!isTDragging || isAnimating) return;
-            isTDragging = false;
+            // Якщо свайп так і не розпочався (це був клік або вертикальний скрол) — ігноруємо
+            if (!isTDragging || !swipeInitialized || isAnimating) {
+                isTDragging = false;
+                swipeInitialized = false;
+                return;
+            }
             
+            isTDragging = false;
             let diffX = tCurrX - tStartX;
             let nextIdx = tActiveIndex;
 
@@ -4126,6 +4154,7 @@ let                 fOut = outD.toLocaleDateString('uk-UA', { day: 'numeric', mo
             isAnimating = true;
 
             if (!isSingleContainer) {
+                // Анімуємо доїзд до кінця екрану
                 tTabsContent.forEach((el, i) => {
                     if (!el) return;
                     el.style.transition = 'transform 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94)';
@@ -4134,9 +4163,9 @@ let                 fOut = outD.toLocaleDateString('uk-UA', { day: 'numeric', mo
                 });
 
                 setTimeout(() => {
-                    // Знімаємо фіксовану геометрію ДО кліку, щоб не було стрибків
+                    // Знімаємо позиціонування
                     if (tParentNode) {
-                        tParentNode.style.height = '';
+                        tParentNode.style.minHeight = '';
                         tParentNode.style.position = '';
                         tParentNode.style.overflowX = '';
                     }
@@ -4149,16 +4178,16 @@ let                 fOut = outD.toLocaleDateString('uk-UA', { day: 'numeric', mo
                         el.style.left = '';
                         el.style.width = '';
                         el.style.transition = '';
-                        if (nextIdx === tActiveIndex) {
-                            el.style.display = (i === nextIdx) ? 'block' : 'none';
-                        }
+                        el.style.display = (i === nextIdx) ? 'block' : 'none';
                     });
                     
                     if (nextIdx !== tActiveIndex) {
-                        mainArea.scrollTop = 0; // 🟢 МИТТЄВО скидаємо скрол в 0
-                        tActiveNavs[nextIdx].click(); // Відмальовуємо нову вкладку
+                        // Скидаємо скрол ДО кліку, щоб не було сіпань
+                        mainArea.scrollTop = 0; 
+                        tActiveNavs[nextIdx].click(); 
                     }
                     isAnimating = false;
+                    swipeInitialized = false;
                 }, 300);
             } else {
                 if (nextIdx !== tActiveIndex) {
@@ -4168,7 +4197,7 @@ let                 fOut = outD.toLocaleDateString('uk-UA', { day: 'numeric', mo
                     tTabsContent[0].style.opacity = '0';
                     
                     setTimeout(() => {
-                        mainArea.scrollTop = 0; // 🟢 Скидаємо скрол для Броней
+                        mainArea.scrollTop = 0;
                         tActiveNavs[nextIdx].click(); 
                         tTabsContent[0].style.transition = 'none';
                         tTabsContent[0].style.transform = `translate3d(${-flyOut}px, 0, 0)`;
@@ -4184,6 +4213,7 @@ let                 fOut = outD.toLocaleDateString('uk-UA', { day: 'numeric', mo
                                     tTabsContent[0].style.transform = '';
                                     if(tParentNode) tParentNode.style.minHeight = '';
                                     isAnimating = false;
+                                    swipeInitialized = false;
                                 }, 300);
                             });
                         });
@@ -4197,37 +4227,11 @@ let                 fOut = outD.toLocaleDateString('uk-UA', { day: 'numeric', mo
                         tTabsContent[0].style.transform = '';
                         if(tParentNode) tParentNode.style.minHeight = '';
                         isAnimating = false;
+                        swipeInitialized = false;
                     }, 300);
                 }
             }
         });
-
-        function cancelTSwipe() {
-            isTDragging = false;
-            if (tParentNode) {
-                tParentNode.style.height = '';
-                tParentNode.style.minHeight = '';
-                tParentNode.style.position = '';
-                tParentNode.style.overflowX = '';
-            }
-            if (!isSingleContainer) {
-                tTabsContent.forEach((el, i) => {
-                    if (!el) return;
-                    el.style.transform = '';
-                    el.style.position = '';
-                    el.style.top = '';
-                    el.style.left = '';
-                    el.style.width = '';
-                    el.style.transition = '';
-                    el.style.display = (i === tActiveIndex) ? 'block' : 'none';
-                });
-            } else if (tTabsContent.length > 0) {
-                tTabsContent[0].style.transform = '';
-                tTabsContent[0].style.transition = '';
-                tTabsContent[0].style.opacity = '1';
-            }
-            isAnimating = false;
-        }
     </script>
 </body>
 </html>
