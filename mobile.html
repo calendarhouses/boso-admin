@@ -3986,7 +3986,7 @@ let                 fOut = outD.toLocaleDateString('uk-UA', { day: 'numeric', mo
         }
 
       // ==========================================
-        // 🚀 ФІЗИЧНИЙ СВАЙП V9 (ІДЕАЛЬНА МАТЕМАТИКА СКРОЛУ)
+        // 🚀 ФІЗИЧНИЙ СВАЙП V10 (ІДЕАЛЬНИЙ СКРОЛ + ПРИКЛЕЄНЕ МЕНЮ)
         // ==========================================
         const mainArea = document.querySelector('.main-content');
         
@@ -3999,7 +3999,21 @@ let                 fOut = outD.toLocaleDateString('uk-UA', { day: 'numeric', mo
         let tParentNode = null;
         let isSingleContainer = false;
         let isAnimating = false;
-        let startScrollY = 0; // 🟢 Зберігаємо глибину скролу на початку свайпу
+        let startScrollY = 0; 
+        let activeSwipeMenus = []; // Масив для менюшок, які ми будемо тягнути
+
+        // Функція для очищення менюшок
+        function restoreMenus() {
+            activeSwipeMenus.forEach(m => {
+                if (!m) return;
+                m.style.transition = 'none';
+                m.style.transform = m._origTransform || '';
+                m.style.opacity = m._origOpacity || '';
+                m.style.zIndex = m._origZIndex || '';
+                m.style.backgroundColor = m._origBg || '';
+            });
+            activeSwipeMenus = [];
+        }
 
         mainArea.addEventListener('touchstart', e => {
             if (isAnimating || document.querySelector('.drawer-overlay.active') || document.querySelector('.modal-overlay.active')) return;
@@ -4011,6 +4025,7 @@ let                 fOut = outD.toLocaleDateString('uk-UA', { day: 'numeric', mo
             tStartY = e.touches[0].clientY; 
             isTDragging = true;
             swipeInitialized = false;
+            restoreMenus(); // Очищаємо попередні, якщо раптом залишились
 
             let viewReports = document.getElementById('view-reports');
             let viewSettings = document.getElementById('view-settings');
@@ -4066,11 +4081,49 @@ let                 fOut = outD.toLocaleDateString('uk-UA', { day: 'numeric', mo
                 
                 if (Math.abs(diffX) > 10) {
                     swipeInitialized = true;
-                    startScrollY = mainArea.scrollTop; // 🟢 ФІКСУЄМО СКРОЛ!
+                    startScrollY = mainArea.scrollTop; 
                     
+                    // 🟢 МАГІЯ МЕНЮ: Знаходимо меню і календар, щоб зсунути їх вниз
+                    if (tParentNode.id === 'view-reports') {
+                        let tabs = tParentNode.querySelector('.reports-tabs');
+                        if (tabs) {
+                            activeSwipeMenus.push(tabs);
+                            if (tabs.nextElementSibling) activeSwipeMenus.push(tabs.nextElementSibling); // Календар
+                        }
+                    } else if (tParentNode.id === 'view-settings') {
+                        let tabs = tParentNode.querySelector('.mobile-settings-tabs');
+                        if (tabs) activeSwipeMenus.push(tabs);
+                    } else if (tParentNode.id === 'view-list') {
+                        let tabs = tParentNode.querySelector('#bookingsTabs');
+                        if (tabs) activeSwipeMenus.push(tabs);
+                    }
+
+                    // 🟢 Зсуваємо меню до рівня пальця і плавно проявляємо
+                    if (startScrollY > 10) {
+                        activeSwipeMenus.forEach(m => {
+                            if (!m) return;
+                            m._origTransform = m.style.transform;
+                            m._origOpacity = m.style.opacity;
+                            m._origZIndex = m.style.zIndex;
+                            m._origBg = m.style.backgroundColor;
+                            
+                            m.style.transition = 'none';
+                            m.style.transform = `translate3d(0, ${startScrollY}px, 0)`;
+                            m.style.zIndex = '95';
+                            m.style.backgroundColor = 'var(--bg-color)'; 
+                            
+                            m.style.opacity = '0';
+                            requestAnimationFrame(() => {
+                                requestAnimationFrame(() => {
+                                    m.style.transition = 'opacity 0.2s ease';
+                                    m.style.opacity = '1';
+                                });
+                            });
+                        });
+                    }
+
                     if (!isSingleContainer) {
                         tParentNode.style.position = 'relative'; 
-                        
                         let activeEl = tTabsContent[tActiveIndex];
                         let contentTop = activeEl ? activeEl.offsetTop : 0;
                         
@@ -4092,13 +4145,9 @@ let                 fOut = outD.toLocaleDateString('uk-UA', { day: 'numeric', mo
                             el.style.transition = 'none';
                             el.style.position = 'absolute';
                             
-                            // 🟢 ІДЕАЛЬНА МАТЕМАТИКА СКРОЛУ:
-                            // Поточна вкладка стоїть на своєму місці
                             if (i === tActiveIndex) {
                                 el.style.top = contentTop + 'px'; 
                             } else {
-                                // А нова вкладка зсувається вниз рівно на стільки, скільки ми проскролили.
-                                // Тому вона з'являється ідеально зверху екрану!
                                 el.style.top = (contentTop + startScrollY) + 'px'; 
                             }
                             
@@ -4139,6 +4188,7 @@ let                 fOut = outD.toLocaleDateString('uk-UA', { day: 'numeric', mo
             if (!isTDragging || !swipeInitialized || isAnimating) {
                 isTDragging = false;
                 swipeInitialized = false;
+                restoreMenus();
                 return;
             }
             
@@ -4162,13 +4212,12 @@ let                 fOut = outD.toLocaleDateString('uk-UA', { day: 'numeric', mo
                     el.style.transform = `translate3d(${finalOffset}px, 0, 0)`;
                 });
 
-                // ВИДАЛЕНО: Плавний скрол вгору. Тепер все робиться миттєво і непомітно!
-
                 setTimeout(() => {
-                    // 🟢 Якщо вкладка змінилась — миттєво і непомітно перекидаємо скрол на 0
                     if (nextIdx !== tActiveIndex) {
                         mainArea.scrollTop = 0; 
                     }
+                    
+                    restoreMenus(); // 🟢 Повертаємо меню на законне місце миттєво
 
                     if (tParentNode) {
                         tParentNode.style.minHeight = '';
@@ -4201,8 +4250,9 @@ let                 fOut = outD.toLocaleDateString('uk-UA', { day: 'numeric', mo
                     tTabsContent[0].style.opacity = '0';
                     
                     setTimeout(() => {
-                        // 🟢 Миттєво скидаємо скрол, поки таблиця невидима (0 opacity)
                         mainArea.scrollTop = 0;
+                        restoreMenus(); 
+                        
                         tActiveNavs[nextIdx].click(); 
                         tTabsContent[0].style.transition = 'none';
                         tTabsContent[0].style.transform = `translate3d(${-flyOut}px, 0, 0)`;
@@ -4230,6 +4280,7 @@ let                 fOut = outD.toLocaleDateString('uk-UA', { day: 'numeric', mo
                     setTimeout(() => {
                         tTabsContent[0].style.transition = '';
                         tTabsContent[0].style.transform = '';
+                        restoreMenus();
                         if(tParentNode) tParentNode.style.minHeight = '';
                         isAnimating = false;
                         swipeInitialized = false;
