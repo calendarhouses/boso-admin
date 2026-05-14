@@ -3109,20 +3109,31 @@ let                 fOut = outD.toLocaleDateString('uk-UA', { day: 'numeric', mo
                     let extraPrice = room && room.extraGuestPrice !== undefined ? room.extraGuestPrice : 2500;
                     let cap = room ? room.capacity : 2;
                     
-                    // 1. Аналітика бере збережену суму для ДОД. ГОСТЕЙ (якщо є)
+                    // 1. Дод. гості (з ночівлею)
                     let feeGuests = (b.extraGuestFee !== undefined && b.extraGuestFee !== "" && b.extraGuestFee !== null) 
                         ? Number(b.extraGuestFee) 
                         : Math.max(0, (parseInt(b.guests) || 2) - cap) * extraPrice * nights;
                     
-                    // 2. Аналітика бере збережену суму для ТВАРИН (якщо є)
+                    // 2. Тварини
                     let feePets = (b.petFee !== undefined && b.petFee !== "" && b.petFee !== null) 
                         ? Number(b.petFee) 
                         : ((b.pets === "Так" || b.pets === true) ? (500 + 200 * nights) : 0);
 
+                    // 🟢 3. ДЕННІ ГОСТІ (Додаємо цей блок!)
+                    let feeDayGuests = (b.dayGuestFee !== undefined && b.dayGuestFee !== "" && b.dayGuestFee !== null)
+                        ? Number(b.dayGuestFee)
+                        : (parseInt(b.dayGuests) || 0) * 500;
+
                     if (feeGuests > 0) { currGuests += feeGuests; window.bosoDetails.guests.push({...baseObj, amount: feeGuests}); }
                     if (feePets > 0) { currPets += feePets; window.bosoDetails.pets.push({...baseObj, amount: feePets}); }
+                    
+                    // Додаємо денних гостей в "Інший дохід", як на ПК
+                    if (feeDayGuests > 0) { 
+                        currOther += feeDayGuests; 
+                        window.bosoDetails.other.push({...baseObj, amount: feeDayGuests, name: baseObj.name + " (Денні гості)"}); 
+                    }
 
-                    // 3. Аналітика бере збережену суму для ГНУЧКОГО ГРАФІКУ (якщо є)
+                    // 4. Гнучкий графік
                     let feeEarlyLate = 0;
                     if ((b.earlyFee !== undefined && b.earlyFee !== "" && b.earlyFee !== null) || 
                         (b.lateFee !== undefined && b.lateFee !== "" && b.lateFee !== null)) {
@@ -3137,12 +3148,14 @@ let                 fOut = outD.toLocaleDateString('uk-UA', { day: 'numeric', mo
 
                     if (feeEarlyLate > 0) { currEarlyLate += feeEarlyLate; window.bosoDetails.earlyLate.push({...baseObj, amount: feeEarlyLate}); }
                     
+                    // 5. Фінальний розподіл доходу (Breakdown)
                     if (paid > 0) {
                         let ratio = (price > 0) ? (paid / price) : 1;
                         incomeBreakdown.pets += (feePets * ratio);
                         incomeBreakdown.guests += (feeGuests * ratio);
                         incomeBreakdown.earlyLate += (feeEarlyLate * ratio);
-                        incomeBreakdown.base += (paid - (feePets * ratio) - (feeGuests * ratio) - (feeEarlyLate * ratio));
+                        // Віднімаємо також і денних гостей від бази, щоб все зійшлося
+                        incomeBreakdown.base += (paid - (feePets * ratio) - (feeGuests * ratio) - (feeEarlyLate * ratio) - (feeDayGuests * ratio));
                     }
                 }
             });
