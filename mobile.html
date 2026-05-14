@@ -1931,7 +1931,50 @@
             return parseInt(price) || 0;
         }
 
-        function updatePricePreview() {
+        function recalculateFromManual(isDiscountEdited = false) {
+    const getVal = (id) => {
+        const el = document.getElementById(id);
+        if (!el) return 0;
+        const val = el.tagName === 'INPUT' ? el.value : el.innerText;
+        return Number(String(val).replace(/\s/g, '')) || 0;
+    };
+
+    let base = getVal('manualBasePrice');
+    let extra = getVal('manualExtraGuest');
+    let pet = getVal('manualPet');
+    let dayG = getVal('manualDayGuest');
+    let early = getVal('manualEarly');
+    let late = getVal('manualLate');
+    
+    let pct = Number(document.getElementById('hiddenDiscountPercent')?.value) || 0;
+    let discEl = document.getElementById('manualDiscount');
+    let isEditedFlag = document.getElementById('manualDiscountEdited');
+    
+    if (isDiscountEdited && isEditedFlag) isEditedFlag.value = "true";
+    
+    let discount = 0;
+    if (discEl) {
+        if (isEditedFlag && isEditedFlag.value === "true") {
+            discount = getVal('manualDiscount'); 
+        } else {
+            discount = Math.round((base + extra) * pct);
+            if (discEl.tagName === 'INPUT') discEl.value = discount;
+            else discEl.innerText = discount;
+        }
+    }
+    
+    let total = base + extra + pet + dayG + early + late - discount;
+    if (total < 0) total = 0;
+    
+    let totalInp = document.getElementById('adminTotalPrice');
+    if (totalInp) {
+        totalInp.value = total;
+        if (typeof calculateBalanceLive === 'function') calculateBalanceLive();
+    }
+}
+        
+        function updatePricePreview(isInitialLoad = false) {
+    if (typeof isInitialLoad !== 'boolean') isInitialLoad = false;
             const checkInStr = document.getElementById('adminCheckIn') ? document.getElementById('adminCheckIn').value : document.getElementById('adminStart').value; 
             const checkOutStr = document.getElementById('adminCheckOut') ? document.getElementById('adminCheckOut').value : document.getElementById('adminEnd').value;
             const roomName = document.getElementById('adminCottage') ? document.getElementById('adminCottage').value : document.getElementById('adminRoom').value; 
@@ -2008,125 +2051,250 @@
                 if(submitBtn) { submitBtn.disabled = false; submitBtn.style.opacity = '1'; }
             }
 
-            let basePriceTotal = 0;
-            for (let i = 0; i < nights; i++) {
-                let curr = new Date(d1); curr.setDate(curr.getDate() + i);
-                basePriceTotal += getDayPrice(room, curr);
-            }
+            // === 1. СИСТЕМНІ БАЗОВІ РОЗРАХУНКИ ===
+    let basePriceTotal = 0;
+    for (let i = 0; i < nights; i++) {
+        let curr = new Date(d1); curr.setDate(curr.getDate() + i);
+        basePriceTotal += getDayPrice(room, curr);
+    }
 
-            let extraGuests = Math.max(0, guests - (room.capacity || 2));
-            let dynamicExtraPrice = room.extraGuestPrice !== undefined ? room.extraGuestPrice : 2500;
-            let extraGuestFee = extraGuests * dynamicExtraPrice * nights;
-            let petFee = (pets === "Так") ? (500 + 200 * nights) : 0;
-            let dayGuestsFee = dayGuests * 500; 
+    let extraGuests = Math.max(0, guests - (room.capacity || 2));
+    let dynamicExtraPrice = room.extraGuestPrice !== undefined ? room.extraGuestPrice : 2500;
+    let extraGuestFee = extraGuests * dynamicExtraPrice * nights;
+    let petFee = (pets === "Так") ? (500 + 200 * nights) : 0;
+    let dayGuestsFee = dayGuests * 500; 
 
-            // РОЗРАХУНОК РАННЬОГО ТА ПІЗНЬОГО ЗАЇЗДУ ВІД 50% ДОБИ
-            let earlyFee = 0;
-            let lateFee = 0;
-            // isPromoLateOut вже розраховано вище
+    let earlyFee = 0;
+    let lateFee = 0;
 
-            let earlyDayPrice = getDayPrice(room, d1);
-            let lateDayPrice = getDayPrice(room, d2);
+    let earlyDayPrice = getDayPrice(room, d1);
+    let lateDayPrice = getDayPrice(room, d2);
+    
+    let early50 = Math.round(earlyDayPrice * 0.5);
+    let late50 = Math.round(lateDayPrice * 0.5);
+
+    if (selectedEarlyTime) earlyFee = early50;
+    if (selectedLateTime && !isPromoLateOut) lateFee = late50;
+
+    // === 2. 🟢 МАГІЯ: ЗБЕРЕЖЕННЯ РУЧНИХ ПРАВОК АДМІНА ===
+    const getVal = (id) => {
+        const el = document.getElementById(id);
+        if (!el) return null;
+        const val = el.tagName === 'INPUT' ? el.value : el.innerText;
+        return Number(String(val).replace(/\s/g, ''));
+    };
+
+    let manBase = getVal('manualBasePrice');
+    let manExtra = getVal('manualExtraGuest');
+    let manPet = getVal('manualPet');
+    let manDay = getVal('manualDayGuest');
+    let manEarly = getVal('manualEarly');
+    let manLate = getVal('manualLate');
+    let manDisc = getVal('manualDiscount');
+    let isDiscEdited = document.getElementById('manualDiscountEdited')?.value === "true";
+
+    let currState = { checkIn: checkInStr, checkOut: checkOutStr, cottage: roomName, guests: guests, pets: pets, dayGuests: dayGuests, early: selectedEarlyTime, late: selectedLateTime };
+
+    if (!isInitialLoad) {
+        let isDatesChanged = (prevFormState.checkIn !== currState.checkIn || prevFormState.checkOut !== currState.checkOut || prevFormState.cottage !== currState.cottage);
+
+        if (!isDatesChanged) {
+            if (manBase !== null) basePriceTotal = manBase;
+            if (prevFormState.guests === currState.guests && manExtra !== null) extraGuestFee = manExtra;
+            if (prevFormState.pets === currState.pets && manPet !== null) petFee = manPet;
+            if (prevFormState.dayGuests === currState.dayGuests && manDay !== null) dayGuestsFee = manDay;
+            if (prevFormState.early === currState.early && manEarly !== null) earlyFee = manEarly;
+            if (prevFormState.late === currState.late && manLate !== null) lateFee = manLate;
+        } else {
+            isDiscEdited = false;
+        }
+    }
+    prevFormState = { ...currState };
+
+    // === 3. ПІДТЯГУЄМО ЗНАЧЕННЯ З БАЗИ ПРИ ВІДКРИТТІ СТАРОЇ БРОНІ ===
+    if (isInitialLoad && editingRowNumber) {
+        const b = allBookings.find(x => x.row == editingRowNumber);
+        if (b) {
+            if (b.basePrice !== undefined && b.basePrice !== "") basePriceTotal = Number(b.basePrice);
+            if (b.extraGuestFee !== undefined && b.extraGuestFee !== "") extraGuestFee = Number(b.extraGuestFee);
+            if (b.petFee !== undefined && b.petFee !== "") petFee = Number(b.petFee);
+            if (b.dayGuestFee !== undefined && b.dayGuestFee !== "") dayGuestsFee = Number(b.dayGuestFee);
+            if (b.earlyFee !== undefined && b.earlyFee !== "") earlyFee = Number(b.earlyFee);
+            if (b.lateFee !== undefined && b.lateFee !== "") lateFee = Number(b.lateFee);
+        }
+    }
+
+    const lblEarly = document.getElementById('adminLabelPriceEarly');
+    if (lblEarly) lblEarly.innerHTML = selectedEarlyTime ? `+${earlyFee} ₴ <span style="font-size:11px; color:#9CA3AF;">(${selectedEarlyTime})</span>` : 'Оберіть час';
+    const lblLate = document.getElementById('adminLabelPriceLate');
+    if (lblLate) {
+        if (selectedLateTime) {
+            lblLate.innerHTML = isPromoLateOut ? `<span style="color:#059669;">🎁 Акція (0 ₴)</span> <span style="font-size:11px; color:#9CA3AF;">(${selectedLateTime})</span>` : `+${lateFee} ₴ <span style="font-size:11px; color:#9CA3AF;">(${selectedLateTime})</span>`;
+        } else lblLate.innerHTML = 'Оберіть час';
+    }
+
+    // --- РОЗУМНИЙ ПІДБІР ЗНИЖКИ ---
+    let discountPercent = 0;
+    const currentRoomId = String(room.id);
+    
+    if (typeof discountsList !== 'undefined' && discountsList.length > 0) {
+        discountsList.forEach(d => {
+            let conditionStr = String(d.condition || "0");
+            const condNights = parseInt(conditionStr.replace(/\D/g, '')) || 0;
+            let discountStr = String(d.discount || "0");
+            const dPct = parseInt(discountStr.replace(/\D/g, '')) / 100;
             
-            let early50 = Math.round(earlyDayPrice * 0.5);
-            let late50 = Math.round(lateDayPrice * 0.5);
+            if (nights >= condNights) {
+                let appliesToRoom = false;
+                if (d.roomsIds && Array.isArray(d.roomsIds) && d.roomsIds.length > 0) {
+                    appliesToRoom = d.roomsIds.includes("all") || d.roomsIds.includes(currentRoomId);
+                } else if (d.rooms) {
+                    let rText = String(d.rooms).toLowerCase();
+                    appliesToRoom = (rText.includes("всі") || rText.includes(String(room.name).toLowerCase()) || rText.includes("не обрано"));
+                } else {
+                    appliesToRoom = true; 
+                }
 
-            if (selectedEarlyTime) earlyFee = early50;
-            if (selectedLateTime && !isPromoLateOut) lateFee = late50;
-
-            const lblEarly = document.getElementById('adminLabelPriceEarly');
-            if (lblEarly) lblEarly.innerHTML = selectedEarlyTime ? `+${earlyFee} ₴ <span style="font-size:11px; color:#9CA3AF;">(${selectedEarlyTime})</span>` : 'Оберіть час';
-            const lblLate = document.getElementById('adminLabelPriceLate');
-            if (lblLate) {
-                if (selectedLateTime) {
-                    lblLate.innerHTML = isPromoLateOut ? `<span style="color:#059669;">🎁 Акція (0 ₴)</span> <span style="font-size:11px; color:#9CA3AF;">(${selectedLateTime})</span>` : `+${lateFee} ₴ <span style="font-size:11px; color:#9CA3AF;">(${selectedLateTime})</span>`;
-                } else lblLate.innerHTML = 'Оберіть час';
+                if (appliesToRoom && dPct > discountPercent) discountPercent = dPct;
             }
+        });
+    }
+    
+    if (isUBD) discountPercent += 0.10;
 
-            // --- ЗНИЖКИ (АВТОМАТИЧНІ ЗА К-СТЬ ДІБ + УБД) ---
-            let discountPercent = 0;
-            const currentRoomId = String(room.id);
-            
-            if (typeof discountsList !== 'undefined' && discountsList.length > 0) {
-                discountsList.forEach(d => {
-                    // Витягуємо цифри: діб (напр. "Діб в бронюванні: 2" -> 2) та відсоток ("15%" -> 0.15)
-                    let conditionStr = String(d.condition || "0");
-                    const condNights = parseInt(conditionStr.replace(/\D/g, '')) || 0;
-                    
-                    let discountStr = String(d.discount || "0");
-                    const dPct = parseInt(discountStr.replace(/\D/g, '')) / 100;
-                    
-                    // Якщо кількість ночей в броні підходить під умову
-                    if (nights >= condNights) {
-                        let appliesToRoom = false;
-                        
-                        // 1. Шукаємо по ID (якщо знижка нова)
-                        if (d.roomsIds && Array.isArray(d.roomsIds) && d.roomsIds.length > 0) {
-                            appliesToRoom = d.roomsIds.includes("all") || d.roomsIds.includes(currentRoomId);
-                        } 
-                        // 2. Шукаємо по тексту (якщо знижка стара або створена інакше)
-                        else if (d.rooms) {
-                            let rText = String(d.rooms).toLowerCase();
-                            appliesToRoom = (rText.includes("всі") || rText.includes(String(room.name).toLowerCase()) || rText.includes("не обрано"));
-                        } 
-                        // 3. Якщо кімнати взагалі не вказані — застосовуємо до всіх
-                        else {
-                            appliesToRoom = true; 
-                        }
+    let amountToDiscount = basePriceTotal + extraGuestFee + earlyFee + lateFee; 
+    let discountAmount = 0;
 
-                        // Беремо найбільшу знижку, якщо підходить під кілька умов (напр. є і 10%, і 15%)
-                        if (appliesToRoom && dPct > discountPercent) { 
-                            discountPercent = dPct; 
-                        }
-                    }
-                });
-            }
-            
-            // Плюсуємо 10% знижки для УБД зверху
-            if (isUBD) discountPercent += 0.10;
+    // 🟢 МАГІЯ ЗНИЖКИ: Якщо адмін ввів її вручну
+    if (isDiscEdited && manDisc !== null) {
+        discountAmount = manDisc;
+    } else {
+        discountAmount = Math.round(amountToDiscount * discountPercent);
+    }
 
-            let amountToDiscount = basePriceTotal + extraGuestFee + earlyFee + lateFee; 
-            let discountAmount = Math.round(amountToDiscount * discountPercent);
-            let totalPrice = amountToDiscount - discountAmount + petFee + dayGuestsFee; 
+    let totalPrice = amountToDiscount - discountAmount + petFee + dayGuestsFee; 
 
-            cont.innerHTML = `
-                <div class="form-section" style="background:#FDFCFB; border-color: var(--accent); padding: 16px; margin-top: 20px;">
-                    <span class="form-section-title" style="color:var(--accent);">Розшифровка (${nights} ${getNightWord(nights)})</span>
-                    <div style="font-size: 13px; color: #4B5563; margin-bottom: 12px;">
-                        <div style="display:flex; justify-content:space-between; margin-bottom:4px;"><span>Проживання:</span><span style="font-weight:600;">${basePriceTotal} ₴</span></div>
-                        ${extraGuestFee > 0 ? `<div style="display:flex; justify-content:space-between; margin-bottom:4px;"><span>Дод. гості:</span><span style="font-weight:600;">+${extraGuestFee} ₴</span></div>` : ''}
-                        ${petFee > 0 ? `<div style="display:flex; justify-content:space-between; margin-bottom:4px;"><span>Тварини:</span><span style="font-weight:600;">+${petFee} ₴</span></div>` : ''}
-                        ${dayGuestsFee > 0 ? `<div style="display:flex; justify-content:space-between; margin-bottom:4px;"><span>Денні гості (${dayGuests}):</span><span style="font-weight:600;">+${dayGuestsFee} ₴</span></div>` : ''}
-                        ${hasVat ? `<div style="display:flex; justify-content:space-between; margin-bottom:4px;"><span>Чан:</span><span style="font-weight:600; color:#059669;">Замовлено</span></div>` : ''}
-                        ${selectedEarlyTime ? `<div style="display:flex; justify-content:space-between; margin-bottom:4px;"><span>Ранній заїзд:</span><span style="font-weight:600;">+${earlyFee} ₴</span></div>` : ''}
-                        ${selectedLateTime ? `<div style="display:flex; justify-content:space-between; margin-bottom:4px;"><span style="color:${isPromoLateOut?'#059669':'inherit'}">${isPromoLateOut ? 'Акційний виїзд:' : 'Пізній виїзд:'}</span><span style="font-weight:600;">${isPromoLateOut ? '0 ₴' : '+'+lateFee+' ₴'}</span></div>` : ''}
-                        ${discountAmount > 0 ? `<div style="display:flex; justify-content:space-between; margin-bottom:4px; color:#DC2626;"><span>Знижка (${Math.round(discountPercent*100)}%):</span><span style="font-weight:600;">-${discountAmount} ₴</span></div>` : ''}
-                    </div>
-                    <div style="border-top: 1px dashed #D1D5DB; padding-top: 12px;">
-                        <div class="form-group" style="margin-bottom: 12px;">
-                            <label style="color: var(--accent); font-weight: 700;">До сплати:</label>
-                            <input type="number" inputmode="numeric" pattern="[0-9]*" id="adminTotalPrice" value="${totalPrice}" style="font-weight:bold; font-size: 16px; border-color: var(--accent); background: #FFF; width:100%; padding: 10px; border-radius: 8px; border: 1px solid var(--accent);">
-                        </div>
-                        <div class="form-group" style="margin-bottom: 0;">
-                            <label style="color: #111827; font-weight: 700;">Внесено (Аванс):</label>
-                            <input type="number" inputmode="numeric" pattern="[0-9]*" id="adminPaidAmount" value="${savedPaidAmount}" placeholder="0" style="width: 100%; margin-bottom: 12px; font-weight: bold; font-size: 16px; padding: 10px; border-radius: 8px; border: 1px solid #D1D5DB;">
-                            
-                            <div style="display: flex; gap: 10px;">
-                                <button type="button" class="tap-btn" onclick="setHalfPrepayment()" style="flex: 1; padding: 14px; background: #F3F4F6; color: #4B5563; font-size: 14px; font-weight: 700; border-radius: 12px; border: none; outline: none;">50% Аванс</button>
-                                <button type="button" class="tap-btn" onclick="setFullPrepayment()" style="flex: 1; padding: 14px; background: #D1FAE5; color: #065F46; font-size: 14px; font-weight: 700; border-radius: 12px; border: none; outline: none;">100% Оплата</button>
-                            </div>
-                        </div>
-                        <div style="margin-top: 12px; padding: 10px; font-size: 14px; font-weight: bold; border-radius: 10px; text-align: center; background: #F3F4F6;" id="adminBalance">0 грн</div>
+    // 🟢 ВІДНОВЛЮЄМО ЗАГАЛЬНУ ЦІНУ
+    if (isInitialLoad && editingRowNumber) {
+        const b = allBookings.find(x => x.row == editingRowNumber);
+        if (b && b.totalPrice !== undefined && b.totalPrice !== "") {
+            totalPrice = Number(b.totalPrice);
+            discountAmount = (basePriceTotal + extraGuestFee + petFee + dayGuestsFee + earlyFee + lateFee) - totalPrice;
+            if (discountAmount < 0) discountAmount = 0; 
+        }
+    }
+
+    // 🟢 РЕНДЕР ПРЕМІУМ-ПОЛІВ ДЛЯ МОБІЛКИ
+    cont.innerHTML = `
+        <div class="form-section" style="background:#FDFCFB; border-color: var(--accent); padding: 16px; margin-top: 20px;">
+            <span class="form-section-title" style="color:var(--accent);">Розшифровка (${nights} ${getNightWord(nights)})</span>
+            <div style="font-size: 13px; color: #4B5563; margin-bottom: 16px;">
+                
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+                    <span>Базова вартість:</span>
+                    <div class="price-edit-wrapper" onclick="document.getElementById('manualBasePrice').focus()">
+                        <span contenteditable="true" class="editable-number" id="manualBasePrice" oninput="recalculateFromManual()" onkeypress="return event.charCode >= 48 && event.charCode <= 57">${basePriceTotal}</span>
+                        <span>грн</span>
                     </div>
                 </div>
-            `;
-            
-            const totalInp = document.getElementById('adminTotalPrice');
-            const paidInp = document.getElementById('adminPaidAmount');
-            if (totalInp && typeof calculateBalanceLive === 'function') totalInp.addEventListener('input', calculateBalanceLive);
-            if (paidInp && typeof calculateBalanceLive === 'function') paidInp.addEventListener('input', calculateBalanceLive);
-            if (typeof calculateBalanceLive === 'function') calculateBalanceLive();
-        }
+                
+                ${extraGuestFee > 0 ? `
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+                    <span>Дод. гості:</span>
+                    <div class="price-edit-wrapper" onclick="document.getElementById('manualExtraGuest').focus()">
+                        <span>+</span>
+                        <span contenteditable="true" class="editable-number" id="manualExtraGuest" oninput="recalculateFromManual()" onkeypress="return event.charCode >= 48 && event.charCode <= 57">${extraGuestFee}</span>
+                        <span>грн</span>
+                    </div>
+                </div>` : `<input type="hidden" id="manualExtraGuest" value="0">`}
+                
+                ${petFee > 0 ? `
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+                    <span>Тварини:</span>
+                    <div class="price-edit-wrapper" onclick="document.getElementById('manualPet').focus()">
+                        <span>+</span>
+                        <span contenteditable="true" class="editable-number" id="manualPet" oninput="recalculateFromManual()" onkeypress="return event.charCode >= 48 && event.charCode <= 57">${petFee}</span>
+                        <span>грн</span>
+                    </div>
+                </div>` : `<input type="hidden" id="manualPet" value="0">`}
+                
+                ${dayGuestsFee > 0 ? `
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+                    <span>Денні гості:</span>
+                    <div class="price-edit-wrapper" onclick="document.getElementById('manualDayGuest').focus()">
+                        <span>+</span>
+                        <span contenteditable="true" class="editable-number" id="manualDayGuest" oninput="recalculateFromManual()" onkeypress="return event.charCode >= 48 && event.charCode <= 57">${dayGuestsFee}</span>
+                        <span>грн</span>
+                    </div>
+                </div>` : `<input type="hidden" id="manualDayGuest" value="0">`}
+                
+                ${hasVat ? `<div style="display:flex; justify-content:space-between; margin-bottom:10px;"><span style="color:var(--accent);">Чан:</span><span style="font-weight:700; color:var(--accent);">Оплата на місці</span></div>` : ''}
+                
+                ${selectedEarlyTime ? `
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+                    <span>Ранній заїзд <span style="color:#9CA3AF; font-size: 11px;">(з ${selectedEarlyTime})</span>:</span>
+                    <div class="price-edit-wrapper" onclick="document.getElementById('manualEarly').focus()">
+                        <span>+</span>
+                        <span contenteditable="true" class="editable-number" id="manualEarly" oninput="recalculateFromManual()" onkeypress="return event.charCode >= 48 && event.charCode <= 57">${earlyFee}</span>
+                        <span>грн</span>
+                    </div>
+                </div>` : `<input type="hidden" id="manualEarly" value="0">`}
+                
+                ${selectedLateTime ? `
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+                    <span>Пізній виїзд <span style="color:#9CA3AF; font-size: 11px;">(до ${selectedLateTime})</span>:</span>
+                    ${isPromoLateOut ? `<span style="color:var(--success);font-weight:700;">Безкоштовно<input type="hidden" id="manualLate" value="0"></span>` : `
+                    <div class="price-edit-wrapper" onclick="document.getElementById('manualLate').focus()">
+                        <span>+</span>
+                        <span contenteditable="true" class="editable-number" id="manualLate" oninput="recalculateFromManual()" onkeypress="return event.charCode >= 48 && event.charCode <= 57">${lateFee}</span>
+                        <span>грн</span>
+                    </div>`}
+                </div>` : `<input type="hidden" id="manualLate" value="0">`}
+                
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-top:12px; padding-top:12px; border-top:1px dashed #E5E7EB; color:var(--danger);">
+                    <span style="font-weight:500;">Знижка (${Math.round(discountPercent*100)}%):</span>
+                    <div class="price-edit-wrapper danger" onclick="document.getElementById('manualDiscount').focus()">
+                        <span style="font-weight:800;">-</span>
+                        <span contenteditable="true" class="editable-number" id="manualDiscount" oninput="recalculateFromManual(true)" onkeypress="return event.charCode >= 48 && event.charCode <= 57">${discountAmount}</span>
+                        <span>грн</span>
+                    </div>
+                </div>
+                
+                <input type="hidden" id="hiddenBasePrice" value="${basePriceTotal}">
+                <input type="hidden" id="hiddenExtraGuestFee" value="${extraGuestFee}">
+                <input type="hidden" id="hiddenPetFee" value="${petFee}">
+                <input type="hidden" id="hiddenDayGuestFee" value="${dayGuestsFee}">
+                <input type="hidden" id="hiddenEarlyFee" value="${earlyFee}">
+                <input type="hidden" id="hiddenLateFee" value="${lateFee}">
+                <input type="hidden" id="hiddenDiscountPercent" value="${discountPercent}">
+                <input type="hidden" id="manualDiscountEdited" value="${isDiscEdited}">
+            </div>
+
+            <div style="border-top: 1px dashed #D1D5DB; padding-top: 12px;">
+                <div class="form-group" style="margin-bottom: 12px;">
+                    <label style="color: var(--accent); font-weight: 700;">До сплати:</label>
+                    <input type="number" inputmode="numeric" pattern="[0-9]*" id="adminTotalPrice" value="${totalPrice}" style="font-weight:bold; font-size: 16px; border-color: var(--accent); background: #FFF; width:100%; padding: 10px; border-radius: 8px; border: 1px solid var(--accent);">
+                </div>
+                <div class="form-group" style="margin-bottom: 0;">
+                    <label style="color: #111827; font-weight: 700;">Внесено (Аванс):</label>
+                    <input type="number" inputmode="numeric" pattern="[0-9]*" id="adminPaidAmount" value="${savedPaidAmount}" placeholder="0" style="width: 100%; margin-bottom: 12px; font-weight: bold; font-size: 16px; padding: 10px; border-radius: 8px; border: 1px solid #D1D5DB;">
+                    
+                    <div style="display: flex; gap: 10px;">
+                        <button type="button" class="tap-btn" onclick="setHalfPrepayment()" style="flex: 1; padding: 14px; background: #F3F4F6; color: #4B5563; font-size: 14px; font-weight: 700; border-radius: 12px; border: none; outline: none;">50% Аванс</button>
+                        <button type="button" class="tap-btn" onclick="setFullPrepayment()" style="flex: 1; padding: 14px; background: #D1FAE5; color: #065F46; font-size: 14px; font-weight: 700; border-radius: 12px; border: none; outline: none;">100% Оплата</button>
+                    </div>
+                </div>
+                <div style="margin-top: 12px; padding: 10px; font-size: 14px; font-weight: bold; border-radius: 10px; text-align: center; background: #F3F4F6;" id="adminBalance">0 грн</div>
+            </div>
+        </div>
+    `;
+    
+    const totalInp = document.getElementById('adminTotalPrice');
+    const paidInp = document.getElementById('adminPaidAmount');
+    if (totalInp && typeof calculateBalanceLive === 'function') totalInp.addEventListener('input', calculateBalanceLive);
+    if (paidInp && typeof calculateBalanceLive === 'function') paidInp.addEventListener('input', calculateBalanceLive);
+    if (typeof calculateBalanceLive === 'function') calculateBalanceLive();
+}
 
         function setHalfPrepayment() { let t = document.getElementById('adminTotalPrice'); let p = document.getElementById('adminPaidAmount'); if (t && p) { p.value = Math.round(Number(t.value) / 2); calculateBalanceLive(); } }
         function setFullPrepayment() { let t = document.getElementById('adminTotalPrice'); let p = document.getElementById('adminPaidAmount'); if (t && p) { p.value = Number(t.value) || 0; calculateBalanceLive(); } }
@@ -2210,7 +2378,9 @@
                 checkInPicker.clear(); 
                 checkOutPicker.clear(); 
             }
-            setTimeout(updatePricePreview, 100); document.getElementById('bookingDrawer').classList.add('active');
+            setTimeout(updatePricePreview, 100); 
+            document.querySelector('.drawer-body').scrollTop = 0;
+            document.getElementById('bookingDrawer').classList.add('active');
         }
 
         function openDetailsByRow(rowNumber) {
@@ -2323,6 +2493,7 @@
                     }
                 }, 50);
             }, 100);
+            document.querySelector('.drawer-body').scrollTop = 0;
             document.getElementById('bookingDrawer').classList.add('active');
         }
 
@@ -2335,6 +2506,14 @@
             btn.innerText = "Збереження..."; 
             btn.disabled = true;
             
+            // 🟢 1. ДОДАЄМО ФУНКЦІЮ ЧИТАННЯ ЦИФР (для нових полів-спанів)
+            const getVal = (id) => {
+                const el = document.getElementById(id);
+                if (!el) return 0;
+                const val = el.tagName === 'INPUT' ? el.value : el.innerText;
+                return Number(String(val).replace(/\s/g, '')) || 0; 
+            };
+
             // Формуємо системний коментар
             let rawComment = document.getElementById('adminComment').value.trim();
             let dayGuests = parseInt(document.getElementById('adminDayGuests').value) || 0;
@@ -2349,7 +2528,7 @@
                 rawComment = sysComment.join(' | ') + (rawComment ? '\n\nКоментар гостя: ' + rawComment : '');
             }
 
-            // Збираємо дані броні
+            // 🟢 2. ЗБИРАЄМО ДАНІ БРОНІ + РУЧНІ ЦІНИ
             const bookingData = { 
                 checkIn: document.getElementById('adminCheckIn').value, 
                 checkOut: document.getElementById('adminCheckOut').value, 
@@ -2359,9 +2538,20 @@
                 guests: document.getElementById('adminGuests').value,
                 pets: document.getElementById('adminPets').value, 
                 status: document.querySelector('.status-btn.active').getAttribute('data-status'),
-                totalPrice: document.getElementById('adminTotalPrice').value, 
-                paidAmount: document.getElementById('adminPaidAmount').value,
-                comment: rawComment
+                
+                // Збираємо суми через getVal
+                totalPrice: getVal('adminTotalPrice'), 
+                paidAmount: getVal('adminPaidAmount'),
+                comment: rawComment,
+                
+                // Збираємо ручні правки з розшифровки
+                basePrice: getVal('manualBasePrice'),
+                extraGuestFee: getVal('manualExtraGuest'),
+                petFee: getVal('manualPet'),
+                dayGuestFee: getVal('manualDayGuest'),
+                earlyFee: getVal('manualEarly'),
+                lateFee: getVal('manualLate'),
+                discountAmount: getVal('manualDiscount')
             };
             
             if (editingRowNumber !== null) bookingData.row = editingRowNumber;
@@ -2369,7 +2559,7 @@
             // 🟢 МАГІЯ ТУТ: Робимо ЧИСТУ копію для відправки в Google (без тимчасових ID)
             const payloadForServer = { ...bookingData };
 
-            // 🟢 ОПТИМІСТИЧНЕ ОНОВЛЕННЯ (МИТТЄВО В ПАМ'ЯТІ ТЕЛЕФОНУ)
+            // ОПТИМІСТИЧНЕ ОНОВЛЕННЯ (МИТТЄВО В ПАМ'ЯТІ ТЕЛЕФОНУ)
             if (editingRowNumber) {
                 let idx = allBookings.findIndex(b => b.row == editingRowNumber);
                 if (idx !== -1) allBookings[idx] = bookingData;
