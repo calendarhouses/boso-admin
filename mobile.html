@@ -3986,29 +3986,27 @@ let                 fOut = outD.toLocaleDateString('uk-UA', { day: 'numeric', mo
         }
 
       // ==========================================
-        // 🚀 ФІЗИЧНИЙ СВАЙП V7 (ІДЕАЛЬНИЙ СКРОЛ + СВАЙП)
+        // 🚀 ФІЗИЧНИЙ СВАЙП V9 (ІДЕАЛЬНА МАТЕМАТИКА СКРОЛУ)
         // ==========================================
         const mainArea = document.querySelector('.main-content');
         
         let tStartX = 0, tStartY = 0, tCurrX = 0;
         let isTDragging = false;
-        let swipeInitialized = false; // 🟢 Новий прапорець: чи підтверджено намір свайпу
+        let swipeInitialized = false; 
         let tActiveNavs = null, tTabsContent = [];
         let tActiveIndex = 0;
         let tScreenWidth = window.innerWidth;
         let tParentNode = null;
         let isSingleContainer = false;
-        let isAnimating = false; 
+        let isAnimating = false;
+        let startScrollY = 0; // 🟢 Зберігаємо глибину скролу на початку свайпу
 
         mainArea.addEventListener('touchstart', e => {
-            // Блокуємо, якщо відкриті шторки або йде анімація
             if (isAnimating || document.querySelector('.drawer-overlay.active') || document.querySelector('.modal-overlay.active')) return;
             
             let target = e.target;
-            // Ігноруємо зони, де потрібен внутрішній скрол або свої свайпи
             if (target.closest('.timeline-wrapper') || target.closest('canvas') || target.closest('.time-chips') || target.closest('.mobile-settings-tabs') || target.closest('.reports-tabs') || target.closest('.chips-container') || target.closest('.it-card')) return;
 
-            // 🟢 Фіксуємо старт, але НЕ ЧІПАЄМО DOM (щоб не зламати рідний скрол)
             tStartX = e.touches[0].clientX; 
             tStartY = e.touches[0].clientY; 
             isTDragging = true;
@@ -4060,24 +4058,22 @@ let                 fOut = outD.toLocaleDateString('uk-UA', { day: 'numeric', mo
             let diffX = tCurrX - tStartX; 
             let diffY = e.touches[0].clientY - tStartY;
 
-            // 🟢 ЛІНИВА ІНІЦІАЛІЗАЦІЯ (Перевіряємо намір користувача)
             if (!swipeInitialized) {
-                // Якщо палець пішов вверх/вниз більше ніж вбік — це СКРОЛ.
                 if (Math.abs(diffY) > Math.abs(diffX)) {
-                    isTDragging = false; // Вимикаємо свайп, даємо браузеру скролити
+                    isTDragging = false; 
                     return;
                 }
                 
-                // Якщо палець пішов вбік на 10+ пікселів — це СВАЙП.
                 if (Math.abs(diffX) > 10) {
                     swipeInitialized = true;
+                    startScrollY = mainArea.scrollTop; // 🟢 ФІКСУЄМО СКРОЛ!
                     
-                    // ТІЛЬКИ ТЕПЕР налаштовуємо DOM для анімації (щоб не ламати висоту)
                     if (!isSingleContainer) {
-                        // Вираховуємо точну висоту меню над контентом
-                        let menuEl = tParentNode.querySelector('.mobile-settings-tabs') || tParentNode.querySelector('.reports-tabs');
-                        let contentTop = menuEl ? (menuEl.offsetHeight + (parseFloat(window.getComputedStyle(menuEl).marginBottom) || 0)) : 0;
-
+                        tParentNode.style.position = 'relative'; 
+                        
+                        let activeEl = tTabsContent[tActiveIndex];
+                        let contentTop = activeEl ? activeEl.offsetTop : 0;
+                        
                         let maxHeight = 0;
                         tTabsContent.forEach((el) => {
                             if (!el) return;
@@ -4088,15 +4084,24 @@ let                 fOut = outD.toLocaleDateString('uk-UA', { day: 'numeric', mo
                             el.style.display = originalDisplay;
                         });
 
-                        tParentNode.style.minHeight = (contentTop + maxHeight) + 'px';
-                        tParentNode.style.position = 'relative';
+                        tParentNode.style.minHeight = (contentTop + Math.max(maxHeight, startScrollY + window.innerHeight)) + 'px';
                         tParentNode.style.overflowX = 'hidden';
 
                         tTabsContent.forEach((el, i) => {
                             if (!el) return;
                             el.style.transition = 'none';
                             el.style.position = 'absolute';
-                            el.style.top = contentTop + 'px'; // Рівно під меню, незалежно від скролу!
+                            
+                            // 🟢 ІДЕАЛЬНА МАТЕМАТИКА СКРОЛУ:
+                            // Поточна вкладка стоїть на своєму місці
+                            if (i === tActiveIndex) {
+                                el.style.top = contentTop + 'px'; 
+                            } else {
+                                // А нова вкладка зсувається вниз рівно на стільки, скільки ми проскролили.
+                                // Тому вона з'являється ідеально зверху екрану!
+                                el.style.top = (contentTop + startScrollY) + 'px'; 
+                            }
+                            
                             el.style.left = '0';
                             el.style.width = '100%';
                             el.style.display = 'block'; 
@@ -4108,19 +4113,16 @@ let                 fOut = outD.toLocaleDateString('uk-UA', { day: 'numeric', mo
                         tTabsContent[0].style.transition = 'none';
                     }
                 } else {
-                    return; // Чекаємо, поки палець пройде 10px
+                    return; 
                 }
             }
 
-            // Якщо ми тут, значить це точно свайп. Блокуємо рідний скрол браузера.
             if (e.cancelable) e.preventDefault();
 
-            // "Гумка" на краях
             if ((tActiveIndex === 0 && diffX > 0) || (tActiveIndex === tActiveNavs.length - 1 && diffX < 0)) {
                 diffX = diffX * 0.25; 
             }
 
-            // Рухаємо сторінки за пальцем
             if (!isSingleContainer) {
                 tTabsContent.forEach((el, i) => {
                     if (!el) return;
@@ -4134,7 +4136,6 @@ let                 fOut = outD.toLocaleDateString('uk-UA', { day: 'numeric', mo
         }, { passive: false });
 
         mainArea.addEventListener('touchend', e => {
-            // Якщо свайп так і не розпочався (це був клік або вертикальний скрол) — ігноруємо
             if (!isTDragging || !swipeInitialized || isAnimating) {
                 isTDragging = false;
                 swipeInitialized = false;
@@ -4154,7 +4155,6 @@ let                 fOut = outD.toLocaleDateString('uk-UA', { day: 'numeric', mo
             isAnimating = true;
 
             if (!isSingleContainer) {
-                // Анімуємо доїзд до кінця екрану
                 tTabsContent.forEach((el, i) => {
                     if (!el) return;
                     el.style.transition = 'transform 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94)';
@@ -4162,8 +4162,14 @@ let                 fOut = outD.toLocaleDateString('uk-UA', { day: 'numeric', mo
                     el.style.transform = `translate3d(${finalOffset}px, 0, 0)`;
                 });
 
+                // ВИДАЛЕНО: Плавний скрол вгору. Тепер все робиться миттєво і непомітно!
+
                 setTimeout(() => {
-                    // Знімаємо позиціонування
+                    // 🟢 Якщо вкладка змінилась — миттєво і непомітно перекидаємо скрол на 0
+                    if (nextIdx !== tActiveIndex) {
+                        mainArea.scrollTop = 0; 
+                    }
+
                     if (tParentNode) {
                         tParentNode.style.minHeight = '';
                         tParentNode.style.position = '';
@@ -4182,8 +4188,6 @@ let                 fOut = outD.toLocaleDateString('uk-UA', { day: 'numeric', mo
                     });
                     
                     if (nextIdx !== tActiveIndex) {
-                        // Скидаємо скрол ДО кліку, щоб не було сіпань
-                        mainArea.scrollTop = 0; 
                         tActiveNavs[nextIdx].click(); 
                     }
                     isAnimating = false;
@@ -4197,6 +4201,7 @@ let                 fOut = outD.toLocaleDateString('uk-UA', { day: 'numeric', mo
                     tTabsContent[0].style.opacity = '0';
                     
                     setTimeout(() => {
+                        // 🟢 Миттєво скидаємо скрол, поки таблиця невидима (0 opacity)
                         mainArea.scrollTop = 0;
                         tActiveNavs[nextIdx].click(); 
                         tTabsContent[0].style.transition = 'none';
