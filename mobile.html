@@ -998,6 +998,14 @@
         
         let allBookings = [];
         let editingRowNumber = null;
+        
+        // --- 🟢 ДОДАНІ ГЛОБАЛЬНІ ЗМІННІ ДЛЯ РОЗШИФРОВКИ ТА ШАХМАТКИ ---
+        let prevFormState = {}; 
+        let dragRoom = null;
+        let dragStartDate = null;
+        let dragEndDate = null;
+        let isGridDragging = false;
+        // -------------------------------------------------------------
 
         window.copyToClipboard = function(text, event) {
             if(event) event.stopPropagation();
