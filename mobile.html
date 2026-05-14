@@ -1248,8 +1248,8 @@
                 document.getElementById('view-settings').style.display = 'flex';
                 topTitle.innerText = 'Налаштування';
                 document.getElementById('mainActionButton').style.display = 'none'; 
-                // Відкриваємо першу вкладку налаштувань
-                const firstSubItem = document.querySelector('.m-tab');
+                // 🟢 ФІКС: Тепер шукаємо вкладку САМЕ в налаштуваннях
+                const firstSubItem = document.querySelector('#view-settings .m-tab');
                 switchSettingsTab('rooms', firstSubItem);
             } else if(viewName === 'reports') {
                 document.getElementById('view-reports').style.display = 'flex';
@@ -3986,7 +3986,7 @@ let                 fOut = outD.toLocaleDateString('uk-UA', { day: 'numeric', mo
         }
 
         // ==========================================
-        // 🚀 ФІЗИЧНИЙ СВАЙП V4 (ІДЕАЛЬНИЙ БЕЗ СТРИБКІВ)
+        // 🚀 ФІЗИЧНИЙ СВАЙП V5 (ІДЕАЛЬНА ГЕОМЕТРІЯ ТА АНІМАЦІЇ)
         // ==========================================
         const mainArea = document.querySelector('.main-content');
         
@@ -3997,14 +3997,13 @@ let                 fOut = outD.toLocaleDateString('uk-UA', { day: 'numeric', mo
         let tScreenWidth = window.innerWidth;
         let tParentNode = null;
         let isSingleContainer = false;
-        let isAnimating = false; // 🟢 Захист від багів при подвійних свайпах
+        let isAnimating = false; // 🟢 Захист від подвійних свайпів під час анімації
 
         mainArea.addEventListener('touchstart', e => {
             // Блокуємо свайп, якщо відкриті шторки, модалки або йде анімація
             if (isAnimating || document.querySelector('.drawer-overlay.active') || document.querySelector('.modal-overlay.active')) return;
             
             let target = e.target;
-            // Ігноруємо свайпи на специфічних елементах (шахматка, графіки, горизонтальні скроли)
             if (target.closest('.timeline-wrapper') || target.closest('canvas') || target.closest('.time-chips') || target.closest('.mobile-settings-tabs') || target.closest('.reports-tabs') || target.closest('.chips-container')) return;
 
             let viewReports = document.getElementById('view-reports');
@@ -4028,7 +4027,6 @@ let                 fOut = outD.toLocaleDateString('uk-UA', { day: 'numeric', mo
                 });
                 tParentNode = viewSettings;
             } else if (viewList && viewList.style.display === 'block') {
-                // Не свайпаємо, якщо включений фільтр по гостю
                 let guestFilter = document.getElementById('guestFilterTab');
                 if (guestFilter && guestFilter.style.display !== 'none') return;
 
@@ -4043,40 +4041,40 @@ let                 fOut = outD.toLocaleDateString('uk-UA', { day: 'numeric', mo
                 tStartY = e.touches[0].clientY; 
                 isTDragging = true;
                 tScreenWidth = window.innerWidth;
-                
                 tActiveIndex = Array.from(tActiveNavs).findIndex(t => t.classList.contains('active'));
 
                 if (!isSingleContainer) {
-                    // 🟢 МАГІЯ 1: Знаходимо максимальну висоту серед вкладок, щоб контейнер не "стрибав"
+                    // 🟢 МАГІЯ: Вираховуємо відступ зверху, щоб сторінки не налітали на вкладки!
+                    let contentTop = tTabsContent[tActiveIndex] ? tTabsContent[tActiveIndex].offsetTop : 0;
                     let maxHeight = 0;
-                    tTabsContent.forEach(el => {
-                        if (el) {
-                            let originalDisplay = el.style.display;
-                            el.style.display = 'block';
-                            let h = el.offsetHeight;
-                            if (h > maxHeight) maxHeight = h;
-                            el.style.display = originalDisplay;
-                        }
+
+                    // Міряємо найвищу вкладку
+                    tTabsContent.forEach((el) => {
+                        if (!el) return;
+                        let originalDisplay = el.style.display;
+                        el.style.display = 'block';
+                        let h = el.offsetHeight;
+                        if (h > maxHeight) maxHeight = h;
+                        el.style.display = originalDisplay;
                     });
 
-                    tParentNode.style.minHeight = maxHeight + 'px';
+                    // Жорстко фіксуємо батьківський контейнер, щоб не було "стрибків" висоти
+                    tParentNode.style.minHeight = (contentTop + maxHeight) + 'px';
                     tParentNode.style.position = 'relative';
                     tParentNode.style.overflowX = 'hidden';
 
                     tTabsContent.forEach((el, i) => {
                         if (!el) return;
                         el.style.transition = 'none';
-                        el.style.display = 'block'; 
                         el.style.position = 'absolute';
-                        el.style.top = '0';
+                        el.style.top = contentTop + 'px'; // Фіксуємо по вертикалі на їхньому законному місці
                         el.style.left = '0';
                         el.style.width = '100%';
+                        el.style.display = 'block'; 
                         let offset = (i - tActiveIndex) * tScreenWidth;
-                        // 🟢 МАГІЯ 2: translate3d для GPU-акселерації (нуль лагів)
-                        el.style.transform = `translate3d(${offset}px, 0, 0)`;
+                        el.style.transform = `translate3d(${offset}px, 0, 0)`; // GPU прискорення
                     });
                 } else {
-                    // Для одиночного контейнера (Броні) просто фіксуємо поточну висоту
                     tParentNode.style.minHeight = tTabsContent[0].offsetHeight + 'px';
                     tTabsContent[0].style.transition = 'none';
                 }
@@ -4090,7 +4088,7 @@ let                 fOut = outD.toLocaleDateString('uk-UA', { day: 'numeric', mo
             let diffX = tCurrX - tStartX; 
             let diffY = e.touches[0].clientY - tStartY;
 
-            // Якщо скролимо вертикально - скасовуємо свайп (даємо працювати нативному скролу)
+            // Відміна свайпу, якщо юзер скролить вниз/вверх
             if (Math.abs(diffY) > Math.abs(diffX) && Math.abs(diffX) < 20) {
                 cancelTSwipe();
                 return;
@@ -4098,7 +4096,7 @@ let                 fOut = outD.toLocaleDateString('uk-UA', { day: 'numeric', mo
 
             if (e.cancelable && Math.abs(diffX) > 10) e.preventDefault();
 
-            // Гумка на краях екрану
+            // "Гумка" на краях
             if ((tActiveIndex === 0 && diffX > 0) || (tActiveIndex === tActiveNavs.length - 1 && diffX < 0)) {
                 diffX = diffX * 0.25; 
             }
@@ -4111,7 +4109,7 @@ let                 fOut = outD.toLocaleDateString('uk-UA', { day: 'numeric', mo
                 });
             } else {
                 tTabsContent[0].style.transform = `translate3d(${diffX}px, 0, 0)`;
-                tTabsContent[0].style.opacity = 1 - Math.abs(diffX) / tScreenWidth; // Елегантне затухання
+                tTabsContent[0].style.opacity = 1 - Math.abs(diffX) / tScreenWidth;
             }
         }, { passive: false });
 
@@ -4122,7 +4120,6 @@ let                 fOut = outD.toLocaleDateString('uk-UA', { day: 'numeric', mo
             let diffX = tCurrX - tStartX;
             let nextIdx = tActiveIndex;
 
-            // Поріг спрацьовування свайпу (70px)
             if (diffX > 70 && tActiveIndex > 0) {
                 nextIdx = tActiveIndex - 1;
             } else if (diffX < -70 && tActiveIndex < tActiveNavs.length - 1) {
@@ -4132,7 +4129,6 @@ let                 fOut = outD.toLocaleDateString('uk-UA', { day: 'numeric', mo
             isAnimating = true;
 
             if (!isSingleContainer) {
-                // СТАНДАРТНЕ ПЕРЕМИКАННЯ (Налаштування, Звіти)
                 tTabsContent.forEach((el, i) => {
                     if (!el) return;
                     el.style.transition = 'transform 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94)';
@@ -4141,11 +4137,17 @@ let                 fOut = outD.toLocaleDateString('uk-UA', { day: 'numeric', mo
                 });
 
                 setTimeout(() => {
-                    // Глобальна чистка стилів після анімації
+                    // 1. Клікаємо ДО зняття стилів, щоб відпрацювала логіка і висоти таблиць
+                    if (nextIdx !== tActiveIndex) {
+                        tActiveNavs[nextIdx].click();
+                        mainArea.scrollTo({ top: 0, behavior: 'smooth' });
+                    }
+                    
+                    // 2. Безпечно знімаємо фіксовану розмітку
                     if (tParentNode) {
                         tParentNode.style.minHeight = '';
-                        tParentNode.style.overflowX = '';
                         tParentNode.style.position = '';
+                        tParentNode.style.overflowX = '';
                     }
                     
                     tTabsContent.forEach((el, i) => {
@@ -4156,17 +4158,16 @@ let                 fOut = outD.toLocaleDateString('uk-UA', { day: 'numeric', mo
                         el.style.left = '';
                         el.style.width = '';
                         el.style.transition = '';
-                        el.style.display = (i === nextIdx) ? 'block' : 'none';
+                        
+                        // Якщо вкладка не змінилась, відновлюємо дисплей вручну
+                        if (nextIdx === tActiveIndex) {
+                            el.style.display = (i === nextIdx) ? 'block' : 'none';
+                        }
                     });
                     
-                    if (nextIdx !== tActiveIndex) {
-                        tActiveNavs[nextIdx].click();
-                        mainArea.scrollTo({ top: 0, behavior: 'smooth' }); // Повертаємо нагору
-                    }
                     isAnimating = false;
                 }, 300);
             } else {
-                // ПЕРЕМИКАННЯ ДЛЯ БРОНЕЙ (Одна таблиця літає туди-сюди)
                 if (nextIdx !== tActiveIndex) {
                     let flyOut = diffX > 0 ? tScreenWidth : -tScreenWidth;
                     tTabsContent[0].style.transition = 'transform 0.2s ease, opacity 0.2s ease';
@@ -4174,13 +4175,11 @@ let                 fOut = outD.toLocaleDateString('uk-UA', { day: 'numeric', mo
                     tTabsContent[0].style.opacity = '0';
                     
                     setTimeout(() => {
-                        tActiveNavs[nextIdx].click(); // Оновлюємо дані таблиці
-                        
-                        // Відключаємо анімацію і перекидаємо таблицю на інший бік екрану
+                        tActiveNavs[nextIdx].click(); 
                         tTabsContent[0].style.transition = 'none';
                         tTabsContent[0].style.transform = `translate3d(${-flyOut}px, 0, 0)`;
                         
-                        // 🟢 МАГІЯ 3: Подвійний requestAnimationFrame (чекаємо поки браузер ТОЧНО відрендерить переміщення)
+                        // Очікуємо точний рендер від браузера
                         requestAnimationFrame(() => {
                             requestAnimationFrame(() => {
                                 tTabsContent[0].style.transition = 'transform 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94), opacity 0.3s ease';
@@ -4198,7 +4197,6 @@ let                 fOut = outD.toLocaleDateString('uk-UA', { day: 'numeric', mo
                         });
                     }, 200);
                 } else {
-                    // Якщо свайпнули недостатньо сильно — повертаємо на місце
                     tTabsContent[0].style.transition = 'transform 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94), opacity 0.3s ease';
                     tTabsContent[0].style.transform = 'translate3d(0px, 0, 0)';
                     tTabsContent[0].style.opacity = '1';
@@ -4216,8 +4214,8 @@ let                 fOut = outD.toLocaleDateString('uk-UA', { day: 'numeric', mo
             isTDragging = false;
             if (tParentNode) {
                 tParentNode.style.minHeight = '';
-                tParentNode.style.overflowX = '';
                 tParentNode.style.position = '';
+                tParentNode.style.overflowX = '';
             }
             if (!isSingleContainer) {
                 tTabsContent.forEach((el, i) => {
