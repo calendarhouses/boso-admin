@@ -2267,13 +2267,21 @@
         }
     }
 
+            // Преміальні іконки для розшифровки
+        const iconCottage = `<svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="color: #9CA3AF;"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path></svg>`;
+        const iconUsers = `<svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="color: #9CA3AF;"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>`;
+        const iconPaw = `<svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="color: #9CA3AF;"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"></path></svg>`;
+        const iconClock = `<svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="color: #9CA3AF;"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>`;
+        const iconVat = `<svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="color: #9CA3AF;"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 18.657A8 8 0 016.343 7.343S7 9 9 10c0-2 .5-5 2.986-7C14 5 16.09 5.777 17.656 7.343A7.975 7.975 0 0120 13a7.975 7.975 0 01-2.343 5.657z"></path></svg>`;
+        const iconShield = `<svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="color: #9CA3AF;"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path></svg>`;
+            
             cont.innerHTML = `
         <div class="form-section" style="background:#FDFCFB; border-color: var(--accent); padding: 16px; margin-top: 20px;">
             <span class="form-section-title" style="color:var(--accent);">Розшифровка (${nights} ${getNightWord(nights)})</span>
             <div style="font-size: 13px; color: #4B5563; margin-bottom: 16px;">
                 
                 <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
-                    <span>Базова вартість:</span>
+                    <span style="display:flex; align-items:center; gap:8px;">${iconCottage} Проживання:</span>
                     <div class="price-edit-wrapper" style="padding:4px 8px; border-radius:8px; margin-right:-8px; background:rgba(0,0,0,0.03);" onclick="openQuickEdit('manualBasePrice', 'Базова вартість', ${basePriceTotal})">
                         <span class="editable-number" id="manualBasePrice" style="font-weight:700;">${basePriceTotal}</span>
                         <span>грн</span>
@@ -2282,7 +2290,7 @@
                 
                 ${extraGuestFee > 0 ? `
                 <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
-                    <span>Дод. гості:</span>
+                    <span style="display:flex; align-items:center; gap:8px;">${iconUsers} Дод. гості:</span>
                     <div class="price-edit-wrapper" style="padding:4px 8px; border-radius:8px; margin-right:-8px; background:rgba(0,0,0,0.03);" onclick="openQuickEdit('manualExtraGuest', 'Дод. гості', ${extraGuestFee})">
                         <span>+</span>
                         <span class="editable-number" id="manualExtraGuest" style="font-weight:700;">${extraGuestFee}</span>
@@ -2292,7 +2300,7 @@
                 
                 ${petFee > 0 ? `
                 <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
-                    <span>Тварини:</span>
+                    <span style="display:flex; align-items:center; gap:8px;">${iconPaw} Тварини:</span>
                     <div class="price-edit-wrapper" style="padding:4px 8px; border-radius:8px; margin-right:-8px; background:rgba(0,0,0,0.03);" onclick="openQuickEdit('manualPet', 'Тварини', ${petFee})">
                         <span>+</span>
                         <span class="editable-number" id="manualPet" style="font-weight:700;">${petFee}</span>
@@ -2302,7 +2310,7 @@
                 
                 ${dayGuestsFee > 0 ? `
                 <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
-                    <span>Денні гості:</span>
+                    <span style="display:flex; align-items:center; gap:8px;">${iconUsers} Денні гості:</span>
                     <div class="price-edit-wrapper" style="padding:4px 8px; border-radius:8px; margin-right:-8px; background:rgba(0,0,0,0.03);" onclick="openQuickEdit('manualDayGuest', 'Денні гості', ${dayGuestsFee})">
                         <span>+</span>
                         <span class="editable-number" id="manualDayGuest" style="font-weight:700;">${dayGuestsFee}</span>
@@ -2312,7 +2320,7 @@
                 
                 ${selectedEarlyTime ? `
                 <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
-                    <span>Ранній заїзд <span style="color:#9CA3AF; font-size: 11px;">(з ${selectedEarlyTime})</span>:</span>
+                    <span style="display:flex; align-items:center; gap:8px;">${iconClock} Ранній заїзд:</span>
                     <div class="price-edit-wrapper" style="padding:4px 8px; border-radius:8px; margin-right:-8px; background:rgba(0,0,0,0.03);" onclick="openQuickEdit('manualEarly', 'Ранній заїзд', ${earlyFee})">
                         <span>+</span>
                         <span class="editable-number" id="manualEarly" style="font-weight:700;">${earlyFee}</span>
@@ -2322,7 +2330,7 @@
                 
                 ${selectedLateTime ? `
                 <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
-                    <span>Пізній виїзд <span style="color:#9CA3AF; font-size: 11px;">(до ${selectedLateTime})</span>:</span>
+                    <span style="display:flex; align-items:center; gap:8px;">${iconClock} Пізній виїзд:</span>
                     ${isPromoLateOut ? `<span style="color:var(--success);font-weight:700;">Безкоштовно<span id="manualLate" style="display:none;">0</span></span>` : `
                     <div class="price-edit-wrapper" style="padding:4px 8px; border-radius:8px; margin-right:-8px; background:rgba(0,0,0,0.03);" onclick="openQuickEdit('manualLate', 'Пізній виїзд', ${lateFee})">
                         <span>+</span>
@@ -2331,10 +2339,14 @@
                     </div>`}
                 </div>` : `<span id="manualLate" style="display:none;">0</span>`}
 
-                ${hasVat ? `<div style="display:flex; justify-content:space-between; margin-bottom:10px; padding-top:4px; border-top:1px dotted #E5E7EB;"><span style="color:var(--accent); font-weight:600;">♨️ Послуга Чан:</span><span style="font-weight:700; color:var(--accent);">Оплата на місці</span></div>` : ''}
+                ${hasVat ? `
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; padding-top:8px; border-top:1px solid #F3F4F6;">
+                    <span style="display:flex; align-items:center; gap:8px; color:var(--text-main); font-weight:500;">${iconVat} Чан:</span>
+                    <span style="font-weight:700; color:var(--text-main);">Оплата на місці</span>
+                </div>` : ''}
                 
                 <div style="display:flex; justify-content:space-between; align-items:center; margin-top:12px; padding-top:12px; border-top:1px dashed #E5E7EB; color:var(--danger);">
-                    <span style="font-weight:500;">Знижка (${Math.round(discountPercent*100)}%):</span>
+                    <span style="display:flex; align-items:center; gap:8px; font-weight:500;">${iconShield} Знижка (${Math.round(discountPercent*100)}%):</span>
                     <div class="price-edit-wrapper danger" style="padding:4px 8px; border-radius:8px; margin-right:-8px; background:rgba(220,38,38,0.05);" onclick="openQuickEdit('manualDiscount', 'Знижка', Math.round((basePriceTotal + extraGuestFee) * discountPercent))">
                         <span style="font-weight:800;">-</span>
                         <span class="editable-number" id="manualDiscount" style="font-weight:700;">${discountAmount}</span>
@@ -2351,6 +2363,7 @@
                 <input type="hidden" id="hiddenDiscountPercent" value="${discountPercent}">
                 <input type="hidden" id="manualDiscountEdited" value="${isDiscEdited}">
             </div>
+        `;
 
             <div style="border-top: 1px dashed #D1D5DB; padding-top: 12px;">
                 <div class="form-group" style="margin-bottom: 12px;">
