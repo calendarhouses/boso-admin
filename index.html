@@ -1430,6 +1430,7 @@ function getVisitWord(count) {
         let allBookings = [];
    let editingRowNumber = null;
    let globalDebtorsHtml = ''; // 🟢 ВСТАВ ТУТ: Глобальна пам'ять для боржників
+        let prevFormState = { checkIn: "", checkOut: "", cottage: "", guests: 0, pets: "", dayGuests: 0, early: null, late: null };
 
         // --- БАЗОВІ ДАНІ НАЛАШТУВАНЬ ---
         let roomsList = [
@@ -3080,6 +3081,7 @@ if (guests > maxCap) {
     }
     // --- КІНЕЦЬ ПЕРЕВІРКИ ---
 
+    // === 1. СИСТЕМНІ БАЗОВІ РОЗРАХУНКИ ===
     let basePriceTotal = 0;
     for (let i = 0; i < nights; i++) {
         let curr = new Date(d1); curr.setDate(curr.getDate() + i);
@@ -3091,21 +3093,17 @@ if (guests > maxCap) {
     }
 
     let extraGuests = Math.max(0, guests - room.capacity);
-    // Беремо ціну за гостя з налаштувань котеджу (або 2500, якщо це старий запис без налаштування)
     let dynamicExtraPrice = room.extraGuestPrice !== undefined ? room.extraGuestPrice : 2500;
     let extraGuestFee = extraGuests * dynamicExtraPrice * nights;
     let petFee = (pets === "Так") ? (500 + 200 * nights) : 0;
     const adminDayGuests = parseInt(document.getElementById('adminDayGuests').value) || 0;
     let dayGuestFee = adminDayGuests * 500;
-            // --- 🟢 РОЗРАХУНОК РАННЬОГО ТА ПІЗНЬОГО ВІД 50% ДОБИ ТА АКЦІЯ ---
+    
     let earlyFee = 0;
     let lateFee = 0;
     let isPromoLateOut = false;
 
-    // Перевірка на АКЦІЮ: 2 ночі, заїзд у П'ятницю (5), виїзд у Неділю (0)
-    if (nights === 2 && d1.getDay() === 5 && d2.getDay() === 0) {
-        isPromoLateOut = true;
-    }
+    if (nights === 2 && d1.getDay() === 5 && d2.getDay() === 0) isPromoLateOut = true;
 
     let earlyDayPrice = getDayPrice(room, d1);
     let lateDayPrice = getDayPrice(room, d2);
@@ -3115,7 +3113,48 @@ if (guests > maxCap) {
     if (selectedEarlyTime) earlyFee = early50;
     if (selectedLateTime && !isPromoLateOut) lateFee = late50;
 
-    // 🟢 МАГІЯ ТУТ: ПІДТЯГУЄМО РУЧНІ ЗНАЧЕННЯ З БАЗИ ПРИ ВІДКРИТТІ БРОНІ
+    // === 2. 🟢 МАГІЯ: ЗБЕРЕЖЕННЯ РУЧНИХ ПРАВОК АДМІНА ===
+    const getVal = (id) => {
+        const el = document.getElementById(id);
+        if (!el) return null;
+        const val = el.tagName === 'INPUT' ? el.value : el.innerText;
+        return Number(String(val).replace(/\s/g, ''));
+    };
+
+    let manBase = getVal('manualBasePrice');
+    let manExtra = getVal('manualExtraGuest');
+    let manPet = getVal('manualPet');
+    let manDay = getVal('manualDayGuest');
+    let manEarly = getVal('manualEarly');
+    let manLate = getVal('manualLate');
+    let manDisc = getVal('manualDiscount');
+    let isDiscEdited = document.getElementById('manualDiscountEdited')?.value === "true";
+
+    let currState = { checkIn: checkInStr, checkOut: checkOutStr, cottage: roomName, guests: guests, pets: pets, dayGuests: adminDayGuests, early: selectedEarlyTime, late: selectedLateTime };
+
+    if (!isInitialLoad) {
+        // Перевіряємо, чи змінились фундаментальні речі (дати або номер)
+        let isDatesChanged = (prevFormState.checkIn !== currState.checkIn || prevFormState.checkOut !== currState.checkOut || prevFormState.cottage !== currState.cottage);
+
+        if (!isDatesChanged) {
+            // Якщо дати ті ж самі - базову ціну не чіпаємо (беремо ручну)
+            if (manBase !== null) basePriceTotal = manBase;
+
+            // Інші поля перераховуємо ТІЛЬКИ якщо адмін клікнув саме на них. Інакше - тримаємо ручні цифри.
+            if (prevFormState.guests === currState.guests && manExtra !== null) extraGuestFee = manExtra;
+            if (prevFormState.pets === currState.pets && manPet !== null) petFee = manPet;
+            if (prevFormState.dayGuests === currState.dayGuests && manDay !== null) dayGuestFee = manDay;
+            if (prevFormState.early === currState.early && manEarly !== null) earlyFee = manEarly;
+            if (prevFormState.late === currState.late && manLate !== null) lateFee = manLate;
+        } else {
+            // Якщо змінили дати - скидаємо прапорець ручної знижки, бо ціна змінилась кардинально
+            isDiscEdited = false;
+        }
+    }
+    prevFormState = { ...currState }; // Запам'ятовуємо стан для наступного кліку
+
+
+    // === 3. ПІДТЯГУЄМО ЗНАЧЕННЯ З БАЗИ ПРИ ВІДКРИТТІ СТАРОЇ БРОНІ ===
     if (isInitialLoad && editingRowNumber) {
         const b = allBookings.find(x => x.row == editingRowNumber);
         if (b) {
@@ -3128,28 +3167,19 @@ if (guests > maxCap) {
         }
     }
 
-    // Оновлюємо UI на самих картках
+    // Оновлюємо UI на картках раннього/пізнього виїзду
     const labelEarly = document.getElementById('adminLabelPriceEarly');
     const labelLate = document.getElementById('adminLabelPriceLate');
 
     if (labelEarly) {
-        if (selectedEarlyTime) {
-            // 🚀 Прибрали earlyFee = early50; Тепер воно зберігає підтягнуте або ручне значення
-            labelEarly.innerHTML = `<span style="color:#111827; font-weight:500; font-size:12px; margin-right:6px;">з ${selectedEarlyTime}</span> +${earlyFee} грн`;
-        } else {
-            labelEarly.innerHTML = `+${early50} грн (50% доби)`;
-        }
+        if (selectedEarlyTime) labelEarly.innerHTML = `<span style="color:#111827; font-weight:500; font-size:12px; margin-right:6px;">з ${selectedEarlyTime}</span> +${earlyFee} грн`;
+        else labelEarly.innerHTML = `+${early50} грн (50% доби)`;
     }
 
     if (labelLate) {
         if (selectedLateTime) {
-            if (isPromoLateOut) {
-                lateFee = 0;
-                labelLate.innerHTML = `<span style="color:#111827; font-weight:500; font-size:12px; margin-right:6px;">до ${selectedLateTime}</span> <span style="color:var(--success)">Безкоштовно (Акція)</span>`;
-            } else {
-                // 🚀 Прибрали lateFee = late50;
-                labelLate.innerHTML = `<span style="color:#111827; font-weight:500; font-size:12px; margin-right:6px;">до ${selectedLateTime}</span> +${lateFee} грн`;
-            }
+            if (isPromoLateOut) labelLate.innerHTML = `<span style="color:#111827; font-weight:500; font-size:12px; margin-right:6px;">до ${selectedLateTime}</span> <span style="color:var(--success)">Безкоштовно (Акція)</span>`;
+            else labelLate.innerHTML = `<span style="color:#111827; font-weight:500; font-size:12px; margin-right:6px;">до ${selectedLateTime}</span> +${lateFee} грн`;
         } else {
             labelLate.innerHTML = isPromoLateOut ? `<span style="color:var(--success)">Акція: Безкоштовно</span>` : `+${late50} грн (50% доби)`;
         }
@@ -3294,7 +3324,7 @@ const appliesToRoom =
                 <input type="hidden" id="hiddenEarlyFee" value="${earlyFee}">
                 <input type="hidden" id="hiddenLateFee" value="${lateFee}">
                 <input type="hidden" id="hiddenDiscountPercent" value="${discountPercent}">
-                <input type="hidden" id="manualDiscountEdited" value="false">
+                <input type="hidden" id="manualDiscountEdited" value="${isDiscEdited}">
             </div>
 
             <div style="border-top: 2px solid var(--accent); padding-top: 15px;">
