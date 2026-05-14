@@ -3986,106 +3986,155 @@ let                 fOut = outD.toLocaleDateString('uk-UA', { day: 'numeric', mo
         }
 
         // ==========================================
-        // 🚀 ФІЗИЧНИЙ СВАЙП ЗА ПАЛЬЦЕМ (TELEGRAM STYLE)
+        // 🚀 ФІЗИЧНИЙ СВАЙП "ЯК У ТЕЛЕГРАМІ" (ПРЕМІУМ)
         // ==========================================
         let tStartX = 0, tStartY = 0, tCurrX = 0;
-        let isTDragging = false, tDragTarget = null, tActiveNavs = null;
+        let isTDragging = false;
+        let tActiveNavs = null, tTabsContent = [];
+        let tActiveIndex = 0;
+        let tScreenWidth = window.innerWidth;
 
         document.addEventListener('touchstart', e => {
-            // Захист: не працює, якщо відкрита модалка або шторка
+            // Захист від випадкових свайпів при відкритих шторках
             if (document.querySelector('.drawer-overlay.active') || document.querySelector('.modal-overlay.active')) return;
             
-            // Захист: не працює, якщо тягнемо саму шахматку, графіки чи повзунки
             let target = e.target;
+            // Не тягнемо екрани, якщо користувач крутить шахматку, графіки чи повзунки
             if (target.closest('.timeline-wrapper') || target.closest('canvas') || target.closest('.time-chips') || target.closest('.mobile-settings-tabs') || target.closest('.reports-tabs')) return;
 
-            // Визначаємо, який контейнер зараз на екрані і що будемо тягнути
-            if (document.getElementById('view-list').style.display === 'block') {
-                tDragTarget = document.getElementById('bookingsTableMobile');
-                tActiveNavs = document.querySelectorAll('#bookingsTabs .m-tab');
-            } else if (document.getElementById('view-reports').style.display === 'flex') {
-                tDragTarget = document.getElementById('rep-finance').style.display === 'block' ? document.getElementById('rep-finance') : document.getElementById('rep-analytics');
+            let viewReports = document.getElementById('view-reports');
+            let viewSettings = document.getElementById('view-settings');
+
+            tTabsContent = [];
+            
+            // 🟢 ТУТ ФІКС 4-х СВАЙПІВ: жорстко вказуємо, які кнопки шукати
+            if (viewReports && viewReports.style.display === 'flex') {
                 tActiveNavs = document.querySelectorAll('.reports-tabs .r-tab');
-            } else if (document.getElementById('view-settings').style.display === 'flex') {
-                tDragTarget = Array.from(document.querySelectorAll('.settings-tab-content')).find(el => el.style.display === 'block');
-                tActiveNavs = document.querySelectorAll('.mobile-settings-tabs .m-tab');
-            } else { 
-                tDragTarget = null; 
+                tTabsContent = [document.getElementById('rep-finance'), document.getElementById('rep-analytics')];
+            } else if (viewSettings && viewSettings.style.display === 'flex') {
+                tActiveNavs = document.querySelectorAll('#view-settings .mobile-settings-tabs .m-tab');
+                tTabsContent = [document.getElementById('set-rooms'), document.getElementById('set-prices'), document.getElementById('set-discounts')];
+            } else {
+                return; 
             }
 
-            // Якщо є що тягнути і вкладок більше однієї
-            if (tDragTarget && tActiveNavs && tActiveNavs.length > 1) {
+            if (tActiveNavs && tTabsContent.length > 1) {
                 tStartX = e.touches[0].clientX; 
                 tStartY = e.touches[0].clientY; 
-                tCurrX = tStartX;
                 isTDragging = true;
+                tScreenWidth = window.innerWidth;
                 
-                // 🟢 Відключаємо CSS анімацію, щоб екран прилип до пальця миттєво
-                tDragTarget.style.transition = 'none'; 
+                tActiveIndex = Array.from(tActiveNavs).findIndex(t => t.classList.contains('active'));
+
+                // 🟢 МАГІЯ: Виставляємо всі екрани в один довгий ряд за кадром
+                let containerTop = tTabsContent[tActiveIndex].offsetTop;
+
+                tTabsContent.forEach((el, i) => {
+                    if (!el) return;
+                    el.style.transition = 'none';
+                    el.style.display = 'block'; // Відкриваємо всі екрани
+                    
+                    if (i === tActiveIndex) {
+                        el.style.position = 'relative';
+                        el.style.transform = `translateX(0px)`;
+                    } else {
+                        // Інші екрани ставимо "в засідку" зліва або справа
+                        el.style.position = 'absolute';
+                        el.style.top = containerTop + 'px';
+                        el.style.left = '16px'; // Відступ padding
+                        el.style.width = 'calc(100% - 32px)';
+                        
+                        let offset = (i - tActiveIndex) * tScreenWidth;
+                        el.style.transform = `translateX(${offset}px)`;
+                    }
+                });
             }
         }, { passive: true });
 
         document.addEventListener('touchmove', e => {
-            if (!isTDragging || !tDragTarget) return;
+            if (!isTDragging) return;
             
             tCurrX = e.touches[0].clientX; 
-            let currentY = e.touches[0].clientY;
             let diffX = tCurrX - tStartX; 
-            let diffY = currentY - tStartY;
+            let diffY = e.touches[0].clientY - tStartY;
 
-            // Відміна свайпу, якщо палець потягнули вертикально (скрол сторінки)
+            // Якщо користувач скролить сторінку вниз/вверх - відміняємо свайп
             if (Math.abs(diffY) > Math.abs(diffX) && Math.abs(diffX) < 30) {
-                isTDragging = false; 
-                tDragTarget.style.transform = ''; 
+                cancelTSwipe();
                 return;
             }
 
-            // Блокуємо вертикальний скрол під час горизонтального тягнення (для плавності)
+            // Блокуємо скрол сторінки, якщо впевнено тягнемо вбік
             if (e.cancelable && Math.abs(diffX) > 10) e.preventDefault();
 
-            let activeIdx = Array.from(tActiveNavs).findIndex(t => t.classList.contains('active'));
-            let isFirst = activeIdx === 0; 
-            let isLast = activeIdx === tActiveNavs.length - 1;
-
-            // 🟢 Ефект "гумки": якщо тягнемо туди, де вкладок більше немає, екран тягнеться туго
-            if ((isFirst && diffX > 0) || (isLast && diffX < 0)) {
+            // Ефект "гумки" (туго йде), якщо тягнемо туди, де більше немає вкладок
+            if ((tActiveIndex === 0 && diffX > 0) || (tActiveIndex === tTabsContent.length - 1 && diffX < 0)) {
                 diffX = diffX * 0.25; 
             }
 
-            // Зсуваємо контейнер за пальцем
-            tDragTarget.style.transform = `translateX(${diffX}px)`;
+            // 🟢 Тягнемо всю стрічку з екранами синхронно!
+            tTabsContent.forEach((el, i) => {
+                if (!el) return;
+                let baseOffset = (i - tActiveIndex) * tScreenWidth;
+                el.style.transform = `translateX(${baseOffset + diffX}px)`;
+            });
+
         }, { passive: false });
 
         document.addEventListener('touchend', e => {
-            if (!isTDragging || !tDragTarget) return;
+            if (!isTDragging) return;
             isTDragging = false;
             
             let diffX = tCurrX - tStartX;
-            let activeIdx = Array.from(tActiveNavs).findIndex(t => t.classList.contains('active'));
-            let nextIdx = diffX > 0 ? activeIdx - 1 : activeIdx + 1;
+            let nextIdx = tActiveIndex;
 
-            // Вмикаємо плавну анімацію відпускання пальця
-            tDragTarget.style.transition = 'transform 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94), opacity 0.2s ease';
-
-            // Якщо потягнули достатньо сильно (більше 90 пікселів)
-            if (Math.abs(diffX) > 90 && nextIdx >= 0 && nextIdx < tActiveNavs.length) {
-                
-                // Виштовхуємо екран за межі видимості в сторону свайпу
-                tDragTarget.style.transform = `translateX(${diffX > 0 ? window.innerWidth : -window.innerWidth}px)`;
-                tDragTarget.style.opacity = '0';
-                
-                // Через долю секунди перемикаємо вкладку і повертаємо екран на місце
-                setTimeout(() => {
-                    tDragTarget.style.transform = ''; 
-                    tDragTarget.style.opacity = '';
-                    tActiveNavs[nextIdx].click(); // Клікаємо по верхній кнопці
-                }, 250);
-                
-            } else {
-                // Якщо потягнули слабо — пружина повертає екран назад
-                tDragTarget.style.transform = 'translateX(0)';
+            // Визначаємо, чи достатньо сильно махнули пальцем (більше 90 пікселів)
+            if (diffX > 90 && tActiveIndex > 0) {
+                nextIdx = tActiveIndex - 1; // Їдемо вліво
+            } else if (diffX < -90 && tActiveIndex < tTabsContent.length - 1) {
+                nextIdx = tActiveIndex + 1; // Їдемо вправо
             }
+
+            // 🟢 Плавне доведення екранів до фінальної точки
+            tTabsContent.forEach((el, i) => {
+                if (!el) return;
+                el.style.transition = 'transform 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94)';
+                let finalOffset = (i - nextIdx) * tScreenWidth;
+                el.style.transform = `translateX(${finalOffset}px)`;
+            });
+
+            // Чекаємо завершення анімації і наводимо порядок у HTML
+            setTimeout(() => {
+                tTabsContent.forEach((el, i) => {
+                    if (!el) return;
+                    el.style.transform = '';
+                    el.style.position = '';
+                    el.style.top = '';
+                    el.style.left = '';
+                    el.style.width = '';
+                    el.style.display = (i === nextIdx) ? 'block' : 'none'; // Залишаємо тільки потрібний
+                });
+                
+                // Перемикаємо верхню кнопку (вона активує всі інші потрібні функції)
+                if (nextIdx !== tActiveIndex) {
+                    tActiveNavs[nextIdx].click();
+                }
+            }, 300);
         });
+
+        // Скасування свайпу (якщо просто торкнулися і повели вниз)
+        function cancelTSwipe() {
+            isTDragging = false;
+            tTabsContent.forEach((el, i) => {
+                if (!el) return;
+                el.style.transform = '';
+                el.style.position = '';
+                el.style.top = '';
+                el.style.left = '';
+                el.style.width = '';
+                el.style.display = (i === tActiveIndex) ? 'block' : 'none';
+            });
+        }
     </script>
 </body>
 </html>
