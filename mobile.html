@@ -1444,6 +1444,16 @@
         }
         function closeCustomConfirm() { document.getElementById('customConfirmModal').classList.remove('active'); }
 
+        // 🟢 ФУНКЦІЯ, ЯКОЇ НЕ ВИСТАЧАЛО ДЛЯ КНОПКИ "ВИДАЛИТИ"
+        function deleteCurrentBooking() {
+            if (!editingRowNumber) return;
+            openCustomConfirm(
+                "Видалити бронь?", 
+                "Ви впевнені, що хочете видалити це бронювання? Цю дію неможливо скасувати.", 
+                confirmDeleteBooking
+            );
+        }
+        
         async function confirmDeleteBooking() {
             closeCustomConfirm(); 
             const btn = document.getElementById('adminDeleteBtn'); 
@@ -3048,27 +3058,23 @@
             const box = overlay.querySelector(boxSelector);
             if (!box) return;
 
-            let startX = 0;
-            let startY = 0;
-            let currentY = 0;
-            let isDraggingBox = false;
-            let isHorizontalSwipe = false;
+            let startX = 0, startY = 0, currentY = 0;
+            let isDraggingBox = false, isHorizontalSwipe = false;
             let activeScrollable = null;
 
             box.addEventListener('touchstart', (e) => {
                 startX = e.touches[0].clientX;
                 startY = e.touches[0].clientY;
-                // Перевіряємо, чи юзер торкнувся скрол-зони (тіла модалки)
                 activeScrollable = e.target.closest('.drawer-body, .modal-body');
                 isDraggingBox = false;
                 isHorizontalSwipe = false;
+                box.style.transition = 'none'; 
             }, { passive: true });
 
             box.addEventListener('touchmove', (e) => {
                 currentY = e.touches[0].clientY;
                 let currentX = e.touches[0].clientX;
                 
-                // Перевіряємо: ми на самому верху контенту? (або це хедер, де скролу взагалі нема)
                 let isAtTop = !activeScrollable || activeScrollable.scrollTop <= 0;
 
                 if (isAtTop) {
@@ -3076,35 +3082,27 @@
                         let diffX = Math.abs(currentX - startX);
                         let diffY = currentY - startY;
 
-                        // Якщо юзер свайпає вбік (наприклад, чіпси з часом), не чіпаємо шторку!
                         if (diffX > 5 && diffX > Math.abs(diffY)) {
                             isHorizontalSwipe = true;
                             return;
                         }
                         
-                        // Якщо впевнено потягнув пальцем вниз
                         if (diffY > 5) {
                             isDraggingBox = true;
-                            startY = currentY; // Оновлюємо стартову точку для ідеальної плавності
+                            startY = currentY; 
                         }
                     }
 
-                    // Якщо режим перетягування активовано
                     if (isDraggingBox) {
                         let deltaY = currentY - startY;
                         if (deltaY > 0) {
-                            // БЛОКУЄМО системний скрол сторінки та гумовий ефект iOS
                             if (e.cancelable) e.preventDefault(); 
-                            
-                            box.style.transition = 'none';
-                            box.style.transform = `translateY(${deltaY}px)`;
+                            box.style.transform = `translate3d(0, ${deltaY}px, 0)`;
                         } else {
-                            // Якщо передумав і повів палець назад вгору - відпускаємо
                             box.style.transform = '';
                         }
                     }
                 } else {
-                    // Якщо юзер зараз десь посередині списку - ми не втручаємось, працює рідний скрол
                     isDraggingBox = false;
                     box.style.transform = '';
                 }
@@ -3114,19 +3112,32 @@
                 if (!isDraggingBox) return;
                 
                 let deltaY = currentY - startY;
-                // Плавне відпружинення, якщо юзер відпустив палець
-                box.style.transition = 'transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1)'; 
-
-                // Якщо потягнув вниз більше ніж на 100px — закриваємо вікно
-                if (deltaY > 100) {
-                    closeFunc();
-                    setTimeout(() => { box.style.transform = ''; }, 300);
-                } else {
-                    box.style.transform = '';
-                }
-                
                 isDraggingBox = false;
                 activeScrollable = null;
+
+                // 🟢 МАГІЯ ТУТ: Поріг збільшено до 130px. Спочатку їде вниз, ПОТІМ закривається
+                if (deltaY > 130) {
+                    // Плавно кидаємо шторку вниз за межі екрану
+                    box.style.transition = 'transform 0.25s ease-in';
+                    box.style.transform = `translate3d(0, 100%, 0)`; 
+                    
+                    // Чекаємо поки вона впаде, і тільки тоді знімаємо затемнення фону
+                    setTimeout(() => {
+                        closeFunc(); 
+                        setTimeout(() => { 
+                            box.style.transform = '';
+                            box.style.transition = ''; 
+                        }, 50); 
+                    }, 250); 
+                } else {
+                    // Якщо передумали і відпустили зарано - м'яко пружинить назад
+                    box.style.transition = 'transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1)';
+                    box.style.transform = 'translate3d(0, 0, 0)';
+                    setTimeout(() => { 
+                        box.style.transform = '';
+                        box.style.transition = ''; 
+                    }, 300);
+                }
             });
         }
 
