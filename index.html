@@ -3704,6 +3704,8 @@ document.getElementById('adminGuests').addEventListener('change', updatePricePre
             // Змушуємо калькулятор відразу порахувати ціну для підставлених дат!
             setTimeout(updatePricePreview, 100);
 
+            // 🟢 МАГІЯ ТУТ: Обнуляємо скрол перед виїздом шторки
+            document.querySelector('.drawer-body').scrollTop = 0; 
             document.getElementById('bookingDrawer').classList.add('active');
         }
 
@@ -3854,6 +3856,7 @@ document.getElementById('adminGuests').addEventListener('change', updatePricePre
                 }, 50);
             }, 100);
 
+            document.querySelector('.drawer-body').scrollTop = 0;
             document.getElementById('bookingDrawer').classList.add('active');
         }
 
