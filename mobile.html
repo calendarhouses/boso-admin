@@ -3986,7 +3986,7 @@ let                 fOut = outD.toLocaleDateString('uk-UA', { day: 'numeric', mo
         }
 
         // ==========================================
-        // 🚀 ФІЗИЧНИЙ СВАЙП V3 (ДОДАНО БРОНІ + ФІКСИ)
+        // 🚀 ФІЗИЧНИЙ СВАЙП V4 (ІДЕАЛЬНИЙ БЕЗ СТРИБКІВ)
         // ==========================================
         const mainArea = document.querySelector('.main-content');
         
@@ -3996,12 +3996,15 @@ let                 fOut = outD.toLocaleDateString('uk-UA', { day: 'numeric', mo
         let tActiveIndex = 0;
         let tScreenWidth = window.innerWidth;
         let tParentNode = null;
-        let isSingleContainer = false; // 🟢 Флаг для розділу "Броні"
+        let isSingleContainer = false;
+        let isAnimating = false; // 🟢 Захист від багів при подвійних свайпах
 
         mainArea.addEventListener('touchstart', e => {
-            if (document.querySelector('.drawer-overlay.active') || document.querySelector('.modal-overlay.active')) return;
+            // Блокуємо свайп, якщо відкриті шторки, модалки або йде анімація
+            if (isAnimating || document.querySelector('.drawer-overlay.active') || document.querySelector('.modal-overlay.active')) return;
             
             let target = e.target;
+            // Ігноруємо свайпи на специфічних елементах (шахматка, графіки, горизонтальні скроли)
             if (target.closest('.timeline-wrapper') || target.closest('canvas') || target.closest('.time-chips') || target.closest('.mobile-settings-tabs') || target.closest('.reports-tabs') || target.closest('.chips-container')) return;
 
             let viewReports = document.getElementById('view-reports');
@@ -4025,13 +4028,12 @@ let                 fOut = outD.toLocaleDateString('uk-UA', { day: 'numeric', mo
                 });
                 tParentNode = viewSettings;
             } else if (viewList && viewList.style.display === 'block') {
-                // 🟢 ДОДАЄМО РОЗДІЛ "БРОНІ"
                 // Не свайпаємо, якщо включений фільтр по гостю
                 let guestFilter = document.getElementById('guestFilterTab');
                 if (guestFilter && guestFilter.style.display !== 'none') return;
 
                 tActiveNavs = document.querySelectorAll('#bookingsTabs .m-tab');
-                tTabsContent = [document.getElementById('bookingsTableMobile')]; // Тягнемо саму таблицю
+                tTabsContent = [document.getElementById('bookingsTableMobile')];
                 tParentNode = viewList;
                 isSingleContainer = true; 
             }
@@ -4045,7 +4047,19 @@ let                 fOut = outD.toLocaleDateString('uk-UA', { day: 'numeric', mo
                 tActiveIndex = Array.from(tActiveNavs).findIndex(t => t.classList.contains('active'));
 
                 if (!isSingleContainer) {
-                    tParentNode.style.minHeight = tParentNode.scrollHeight + 'px';
+                    // 🟢 МАГІЯ 1: Знаходимо максимальну висоту серед вкладок, щоб контейнер не "стрибав"
+                    let maxHeight = 0;
+                    tTabsContent.forEach(el => {
+                        if (el) {
+                            let originalDisplay = el.style.display;
+                            el.style.display = 'block';
+                            let h = el.offsetHeight;
+                            if (h > maxHeight) maxHeight = h;
+                            el.style.display = originalDisplay;
+                        }
+                    });
+
+                    tParentNode.style.minHeight = maxHeight + 'px';
                     tParentNode.style.position = 'relative';
                     tParentNode.style.overflowX = 'hidden';
 
@@ -4053,33 +4067,30 @@ let                 fOut = outD.toLocaleDateString('uk-UA', { day: 'numeric', mo
                         if (!el) return;
                         el.style.transition = 'none';
                         el.style.display = 'block'; 
-                        
-                        if (i === tActiveIndex) {
-                            el.style.position = 'relative';
-                            el.style.transform = `translateX(0px)`;
-                        } else {
-                            el.style.position = 'absolute';
-                            el.style.top = '0';
-                            el.style.left = '0';
-                            el.style.width = '100%';
-                            let offset = (i - tActiveIndex) * tScreenWidth;
-                            el.style.transform = `translateX(${offset}px)`;
-                        }
+                        el.style.position = 'absolute';
+                        el.style.top = '0';
+                        el.style.left = '0';
+                        el.style.width = '100%';
+                        let offset = (i - tActiveIndex) * tScreenWidth;
+                        // 🟢 МАГІЯ 2: translate3d для GPU-акселерації (нуль лагів)
+                        el.style.transform = `translate3d(${offset}px, 0, 0)`;
                     });
                 } else {
-                    // Логіка для Броней: просто знімаємо транзішени з таблиці
+                    // Для одиночного контейнера (Броні) просто фіксуємо поточну висоту
+                    tParentNode.style.minHeight = tTabsContent[0].offsetHeight + 'px';
                     tTabsContent[0].style.transition = 'none';
                 }
             }
         }, { passive: true });
 
         mainArea.addEventListener('touchmove', e => {
-            if (!isTDragging) return;
+            if (!isTDragging || isAnimating) return;
             
             tCurrX = e.touches[0].clientX; 
             let diffX = tCurrX - tStartX; 
             let diffY = e.touches[0].clientY - tStartY;
 
+            // Якщо скролимо вертикально - скасовуємо свайп (даємо працювати нативному скролу)
             if (Math.abs(diffY) > Math.abs(diffX) && Math.abs(diffX) < 20) {
                 cancelTSwipe();
                 return;
@@ -4087,7 +4098,7 @@ let                 fOut = outD.toLocaleDateString('uk-UA', { day: 'numeric', mo
 
             if (e.cancelable && Math.abs(diffX) > 10) e.preventDefault();
 
-            // Гумка на краях
+            // Гумка на краях екрану
             if ((tActiveIndex === 0 && diffX > 0) || (tActiveIndex === tActiveNavs.length - 1 && diffX < 0)) {
                 diffX = diffX * 0.25; 
             }
@@ -4096,40 +4107,45 @@ let                 fOut = outD.toLocaleDateString('uk-UA', { day: 'numeric', mo
                 tTabsContent.forEach((el, i) => {
                     if (!el) return;
                     let baseOffset = (i - tActiveIndex) * tScreenWidth;
-                    el.style.transform = `translateX(${baseOffset + diffX}px)`;
+                    el.style.transform = `translate3d(${baseOffset + diffX}px, 0, 0)`;
                 });
             } else {
-                // Для броней просто тягнемо одну таблицю
-                tTabsContent[0].style.transform = `translateX(${diffX}px)`;
+                tTabsContent[0].style.transform = `translate3d(${diffX}px, 0, 0)`;
+                tTabsContent[0].style.opacity = 1 - Math.abs(diffX) / tScreenWidth; // Елегантне затухання
             }
         }, { passive: false });
 
         mainArea.addEventListener('touchend', e => {
-            if (!isTDragging) return;
+            if (!isTDragging || isAnimating) return;
             isTDragging = false;
             
             let diffX = tCurrX - tStartX;
             let nextIdx = tActiveIndex;
 
+            // Поріг спрацьовування свайпу (70px)
             if (diffX > 70 && tActiveIndex > 0) {
                 nextIdx = tActiveIndex - 1;
             } else if (diffX < -70 && tActiveIndex < tActiveNavs.length - 1) {
                 nextIdx = tActiveIndex + 1;
             }
 
+            isAnimating = true;
+
             if (!isSingleContainer) {
                 // СТАНДАРТНЕ ПЕРЕМИКАННЯ (Налаштування, Звіти)
                 tTabsContent.forEach((el, i) => {
                     if (!el) return;
-                    el.style.transition = 'transform 0.25s cubic-bezier(0.25, 0.46, 0.45, 0.94)';
+                    el.style.transition = 'transform 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94)';
                     let finalOffset = (i - nextIdx) * tScreenWidth;
-                    el.style.transform = `translateX(${finalOffset}px)`;
+                    el.style.transform = `translate3d(${finalOffset}px, 0, 0)`;
                 });
 
                 setTimeout(() => {
+                    // Глобальна чистка стилів після анімації
                     if (tParentNode) {
                         tParentNode.style.minHeight = '';
                         tParentNode.style.overflowX = '';
+                        tParentNode.style.position = '';
                     }
                     
                     tTabsContent.forEach((el, i) => {
@@ -4145,36 +4161,53 @@ let                 fOut = outD.toLocaleDateString('uk-UA', { day: 'numeric', mo
                     
                     if (nextIdx !== tActiveIndex) {
                         tActiveNavs[nextIdx].click();
-                        mainArea.scrollTop = 0; 
+                        mainArea.scrollTo({ top: 0, behavior: 'smooth' }); // Повертаємо нагору
                     }
-                }, 260);
+                    isAnimating = false;
+                }, 300);
             } else {
-                // 🟢 ПЕРЕМИКАННЯ ДЛЯ БРОНЕЙ (Одна таблиця вилітає і залітає)
+                // ПЕРЕМИКАННЯ ДЛЯ БРОНЕЙ (Одна таблиця літає туди-сюди)
                 if (nextIdx !== tActiveIndex) {
                     let flyOut = diffX > 0 ? tScreenWidth : -tScreenWidth;
                     tTabsContent[0].style.transition = 'transform 0.2s ease, opacity 0.2s ease';
-                    tTabsContent[0].style.transform = `translateX(${flyOut}px)`;
+                    tTabsContent[0].style.transform = `translate3d(${flyOut}px, 0, 0)`;
                     tTabsContent[0].style.opacity = '0';
                     
                     setTimeout(() => {
                         tActiveNavs[nextIdx].click(); // Оновлюємо дані таблиці
                         
-                        // Переносимо невидиму таблицю на протилежний бік
+                        // Відключаємо анімацію і перекидаємо таблицю на інший бік екрану
                         tTabsContent[0].style.transition = 'none';
-                        tTabsContent[0].style.transform = `translateX(${-flyOut}px)`;
+                        tTabsContent[0].style.transform = `translate3d(${-flyOut}px, 0, 0)`;
                         
-                        // Даємо кадру відмалюватись і виїжджаємо на місце
-                        setTimeout(() => {
-                            tTabsContent[0].style.transition = 'transform 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94), opacity 0.3s ease';
-                            tTabsContent[0].style.transform = 'translateX(0px)';
-                            tTabsContent[0].style.opacity = '1';
-                            mainArea.scrollTop = 0;
-                        }, 20);
+                        // 🟢 МАГІЯ 3: Подвійний requestAnimationFrame (чекаємо поки браузер ТОЧНО відрендерить переміщення)
+                        requestAnimationFrame(() => {
+                            requestAnimationFrame(() => {
+                                tTabsContent[0].style.transition = 'transform 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94), opacity 0.3s ease';
+                                tTabsContent[0].style.transform = 'translate3d(0px, 0, 0)';
+                                tTabsContent[0].style.opacity = '1';
+                                
+                                setTimeout(() => {
+                                    tTabsContent[0].style.transition = '';
+                                    tTabsContent[0].style.transform = '';
+                                    tParentNode.style.minHeight = '';
+                                    mainArea.scrollTo({ top: 0, behavior: 'smooth' });
+                                    isAnimating = false;
+                                }, 300);
+                            });
+                        });
                     }, 200);
                 } else {
-                    // Якщо слабко махнули — повертаємо на місце
-                    tTabsContent[0].style.transition = 'transform 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94)';
-                    tTabsContent[0].style.transform = 'translateX(0px)';
+                    // Якщо свайпнули недостатньо сильно — повертаємо на місце
+                    tTabsContent[0].style.transition = 'transform 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94), opacity 0.3s ease';
+                    tTabsContent[0].style.transform = 'translate3d(0px, 0, 0)';
+                    tTabsContent[0].style.opacity = '1';
+                    setTimeout(() => {
+                        tTabsContent[0].style.transition = '';
+                        tTabsContent[0].style.transform = '';
+                        tParentNode.style.minHeight = '';
+                        isAnimating = false;
+                    }, 300);
                 }
             }
         });
@@ -4184,6 +4217,7 @@ let                 fOut = outD.toLocaleDateString('uk-UA', { day: 'numeric', mo
             if (tParentNode) {
                 tParentNode.style.minHeight = '';
                 tParentNode.style.overflowX = '';
+                tParentNode.style.position = '';
             }
             if (!isSingleContainer) {
                 tTabsContent.forEach((el, i) => {
@@ -4199,7 +4233,9 @@ let                 fOut = outD.toLocaleDateString('uk-UA', { day: 'numeric', mo
             } else if (tTabsContent.length > 0) {
                 tTabsContent[0].style.transform = '';
                 tTabsContent[0].style.transition = '';
+                tTabsContent[0].style.opacity = '1';
             }
+            isAnimating = false;
         }
     </script>
 </body>
