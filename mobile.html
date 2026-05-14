@@ -979,6 +979,31 @@
         </div>
     </div>
 
+    <div id="quickEditDrawer" class="drawer-overlay" style="z-index: 2500;">
+        <div class="drawer" style="max-height: 60vh;">
+            <div class="drawer-header" style="flex-direction: column; align-items: stretch; padding: 12px 20px 16px;">
+                <div class="drag-handle"></div>
+                <div style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
+                    <h2 id="qeTitle" style="font-size: 16px; font-weight: 800; color: var(--text-main);">Редагування</h2>
+                    <button class="close-btn" onclick="closeQuickEdit()">✕</button>
+                </div>
+            </div>
+            <div class="drawer-body" style="padding: 20px; text-align: center;">
+                <input type="hidden" id="qeFieldId">
+                <input type="hidden" id="qeDefaultVal">
+                
+                <label style="font-size: 11px; font-weight: 800; color: #9CA3AF; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 12px; display: block;">Сума (грн)</label>
+                <div style="position: relative; display: inline-block; width: 100%;">
+                    <input type="number" inputmode="numeric" pattern="[0-9]*" id="qeInput" style="font-size: 32px; font-weight: 800; padding: 16px 20px; border-radius: 16px; border: 2px solid var(--accent); color: var(--accent); width: 100%; text-align: center; background: #F8FAF7; outline: none; transition: 0.2s; box-shadow: inset 0 2px 4px rgba(0,0,0,0.02);">
+                </div>
+            </div>
+            <div class="drawer-footer" style="flex-direction: row; gap: 12px; padding: 16px 20px calc(16px + var(--safe-bottom));">
+                <button class="btn-secondary" style="flex: 1; border-radius: 14px; font-weight: 700; background: #F3F4F6; border: none; color: #4B5563;" onclick="resetQuickEdit()">Скинути</button>
+                <button class="btn-primary" style="flex: 2; border-radius: 14px; font-weight: 700; font-size: 15px; box-shadow: 0 4px 12px rgba(85, 107, 47, 0.25);" onclick="saveQuickEdit()">Зберегти</button>
+            </div>
+        </div>
+    </div>
+    
     <div id="premiumTooltip" class="premium-tooltip"></div>
     <div id="toast-container"></div>
 
@@ -1984,6 +2009,51 @@
         if (typeof calculateBalanceLive === 'function') calculateBalanceLive();
     }
 }
+
+        // --- ЛОГІКА МІНІ-ШТОРКИ РЕДАГУВАННЯ ЦІНИ ---
+        function openQuickEdit(fieldId, title, defaultCalculatedVal) {
+            document.getElementById('qeFieldId').value = fieldId;
+            document.getElementById('qeTitle').innerText = 'Редагувати: ' + title;
+            document.getElementById('qeDefaultVal').value = defaultCalculatedVal;
+            
+            let currentEl = document.getElementById(fieldId);
+            let currentVal = currentEl ? currentEl.innerText : defaultCalculatedVal;
+            
+            let input = document.getElementById('qeInput');
+            input.value = currentVal;
+            
+            document.getElementById('quickEditDrawer').classList.add('active');
+            
+            // Фокусуємо клавіатуру з невеличкою затримкою для iOS
+            setTimeout(() => {
+                input.focus();
+                input.select();
+            }, 300);
+        }
+
+        function closeQuickEdit() {
+            document.getElementById('quickEditDrawer').classList.remove('active');
+            document.getElementById('qeInput').blur();
+        }
+
+        function saveQuickEdit() {
+            let fieldId = document.getElementById('qeFieldId').value;
+            let val = document.getElementById('qeInput').value;
+            let el = document.getElementById(fieldId);
+            
+            if (el) {
+                el.innerText = val;
+                // Якщо це поле знижки, передаємо true
+                let isDiscount = (fieldId === 'manualDiscount');
+                recalculateFromManual(isDiscount);
+            }
+            closeQuickEdit();
+        }
+
+        function resetQuickEdit() {
+            let defaultVal = document.getElementById('qeDefaultVal').value;
+            document.getElementById('qeInput').value = defaultVal;
+        }
         
         function updatePricePreview(isInitialLoad = false) {
     if (typeof isInitialLoad !== 'boolean') isInitialLoad = false;
@@ -2197,17 +2267,15 @@
             if (discountAmount < 0) discountAmount = 0; 
         }
     }
-
-    // 🟢 РЕНДЕР ПРЕМІУМ-ПОЛІВ ДЛЯ МОБІЛКИ
-    cont.innerHTML = `
+cont.innerHTML = `
         <div class="form-section" style="background:#FDFCFB; border-color: var(--accent); padding: 16px; margin-top: 20px;">
             <span class="form-section-title" style="color:var(--accent);">Розшифровка (${nights} ${getNightWord(nights)})</span>
             <div style="font-size: 13px; color: #4B5563; margin-bottom: 16px;">
                 
                 <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
                     <span>Базова вартість:</span>
-                    <div class="price-edit-wrapper" onclick="document.getElementById('manualBasePrice').focus()">
-                        <span contenteditable="true" class="editable-number" id="manualBasePrice" oninput="recalculateFromManual()" onkeypress="return event.charCode >= 48 && event.charCode <= 57">${basePriceTotal}</span>
+                    <div class="price-edit-wrapper" style="padding:4px 8px; border-radius:8px; margin-right:-8px; background:rgba(0,0,0,0.03);" onclick="openQuickEdit('manualBasePrice', 'Базова вартість', ${basePriceTotal})">
+                        <span class="editable-number" id="manualBasePrice" style="font-weight:700;">${basePriceTotal}</span>
                         <span>грн</span>
                     </div>
                 </div>
@@ -2215,9 +2283,9 @@
                 ${extraGuestFee > 0 ? `
                 <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
                     <span>Дод. гості:</span>
-                    <div class="price-edit-wrapper" onclick="document.getElementById('manualExtraGuest').focus()">
+                    <div class="price-edit-wrapper" style="padding:4px 8px; border-radius:8px; margin-right:-8px; background:rgba(0,0,0,0.03);" onclick="openQuickEdit('manualExtraGuest', 'Дод. гості', ${extraGuestFee})">
                         <span>+</span>
-                        <span contenteditable="true" class="editable-number" id="manualExtraGuest" oninput="recalculateFromManual()" onkeypress="return event.charCode >= 48 && event.charCode <= 57">${extraGuestFee}</span>
+                        <span class="editable-number" id="manualExtraGuest" style="font-weight:700;">${extraGuestFee}</span>
                         <span>грн</span>
                     </div>
                 </div>` : `<input type="hidden" id="manualExtraGuest" value="0">`}
@@ -2225,9 +2293,9 @@
                 ${petFee > 0 ? `
                 <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
                     <span>Тварини:</span>
-                    <div class="price-edit-wrapper" onclick="document.getElementById('manualPet').focus()">
+                    <div class="price-edit-wrapper" style="padding:4px 8px; border-radius:8px; margin-right:-8px; background:rgba(0,0,0,0.03);" onclick="openQuickEdit('manualPet', 'Тварини', ${petFee})">
                         <span>+</span>
-                        <span contenteditable="true" class="editable-number" id="manualPet" oninput="recalculateFromManual()" onkeypress="return event.charCode >= 48 && event.charCode <= 57">${petFee}</span>
+                        <span class="editable-number" id="manualPet" style="font-weight:700;">${petFee}</span>
                         <span>грн</span>
                     </div>
                 </div>` : `<input type="hidden" id="manualPet" value="0">`}
@@ -2235,9 +2303,9 @@
                 ${dayGuestsFee > 0 ? `
                 <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
                     <span>Денні гості:</span>
-                    <div class="price-edit-wrapper" onclick="document.getElementById('manualDayGuest').focus()">
+                    <div class="price-edit-wrapper" style="padding:4px 8px; border-radius:8px; margin-right:-8px; background:rgba(0,0,0,0.03);" onclick="openQuickEdit('manualDayGuest', 'Денні гості', ${dayGuestsFee})">
                         <span>+</span>
-                        <span contenteditable="true" class="editable-number" id="manualDayGuest" oninput="recalculateFromManual()" onkeypress="return event.charCode >= 48 && event.charCode <= 57">${dayGuestsFee}</span>
+                        <span class="editable-number" id="manualDayGuest" style="font-weight:700;">${dayGuestsFee}</span>
                         <span>грн</span>
                     </div>
                 </div>` : `<input type="hidden" id="manualDayGuest" value="0">`}
@@ -2247,9 +2315,9 @@
                 ${selectedEarlyTime ? `
                 <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
                     <span>Ранній заїзд <span style="color:#9CA3AF; font-size: 11px;">(з ${selectedEarlyTime})</span>:</span>
-                    <div class="price-edit-wrapper" onclick="document.getElementById('manualEarly').focus()">
+                    <div class="price-edit-wrapper" style="padding:4px 8px; border-radius:8px; margin-right:-8px; background:rgba(0,0,0,0.03);" onclick="openQuickEdit('manualEarly', 'Ранній заїзд', ${earlyFee})">
                         <span>+</span>
-                        <span contenteditable="true" class="editable-number" id="manualEarly" oninput="recalculateFromManual()" onkeypress="return event.charCode >= 48 && event.charCode <= 57">${earlyFee}</span>
+                        <span class="editable-number" id="manualEarly" style="font-weight:700;">${earlyFee}</span>
                         <span>грн</span>
                     </div>
                 </div>` : `<input type="hidden" id="manualEarly" value="0">`}
@@ -2258,18 +2326,18 @@
                 <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
                     <span>Пізній виїзд <span style="color:#9CA3AF; font-size: 11px;">(до ${selectedLateTime})</span>:</span>
                     ${isPromoLateOut ? `<span style="color:var(--success);font-weight:700;">Безкоштовно<input type="hidden" id="manualLate" value="0"></span>` : `
-                    <div class="price-edit-wrapper" onclick="document.getElementById('manualLate').focus()">
+                    <div class="price-edit-wrapper" style="padding:4px 8px; border-radius:8px; margin-right:-8px; background:rgba(0,0,0,0.03);" onclick="openQuickEdit('manualLate', 'Пізній виїзд', ${lateFee})">
                         <span>+</span>
-                        <span contenteditable="true" class="editable-number" id="manualLate" oninput="recalculateFromManual()" onkeypress="return event.charCode >= 48 && event.charCode <= 57">${lateFee}</span>
+                        <span class="editable-number" id="manualLate" style="font-weight:700;">${lateFee}</span>
                         <span>грн</span>
                     </div>`}
                 </div>` : `<input type="hidden" id="manualLate" value="0">`}
                 
                 <div style="display:flex; justify-content:space-between; align-items:center; margin-top:12px; padding-top:12px; border-top:1px dashed #E5E7EB; color:var(--danger);">
                     <span style="font-weight:500;">Знижка (${Math.round(discountPercent*100)}%):</span>
-                    <div class="price-edit-wrapper danger" onclick="document.getElementById('manualDiscount').focus()">
+                    <div class="price-edit-wrapper danger" style="padding:4px 8px; border-radius:8px; margin-right:-8px; background:rgba(220,38,38,0.05);" onclick="openQuickEdit('manualDiscount', 'Знижка', Math.round(basePriceTotal * discountPercent))">
                         <span style="font-weight:800;">-</span>
-                        <span contenteditable="true" class="editable-number" id="manualDiscount" oninput="recalculateFromManual(true)" onkeypress="return event.charCode >= 48 && event.charCode <= 57">${discountAmount}</span>
+                        <span class="editable-number" id="manualDiscount" style="font-weight:700;">${discountAmount}</span>
                         <span>грн</span>
                     </div>
                 </div>
@@ -3681,11 +3749,12 @@ let                 fOut = outD.toLocaleDateString('uk-UA', { day: 'numeric', mo
        window.onload = () => { 
             switchView('grid'); 
             initApp(); 
-            // Вмикаємо свайпи для всіх вікон
             setupSwipeToClose('bookingDrawer', '.drawer', '.drawer-header', closeDrawer);
             setupSwipeToClose('genericModal', '.modal-box', '.modal-header', closeGenericModal);
             setupSwipeToClose('customConfirmModal', '.modal-box', '.confirm-header', closeCustomConfirm);
             setupSwipeToClose('uniDetailsModal', '.modal-box', '.modal-header', () => document.getElementById('uniDetailsModal').classList.remove('active'));
+            // 🟢 ДОДАЄМО СВАЙП ДЛЯ НОВОЇ ШТОРКИ
+            setupSwipeToClose('quickEditDrawer', '.drawer', '.drawer-header', closeQuickEdit);
         };
 
         // --- МАГІЯ СВАЙПУ ПО ДАТАХ З АВТОСКРОЛОМ ---
