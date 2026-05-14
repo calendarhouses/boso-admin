@@ -3986,93 +3986,106 @@ let                 fOut = outD.toLocaleDateString('uk-UA', { day: 'numeric', mo
         }
 
         // ==========================================
-        // 🚀 РОЗУМНІ СВАЙПИ МІЖ ВНУТРІШНІМИ ВКЛАДКАМИ
+        // 🚀 ФІЗИЧНИЙ СВАЙП ЗА ПАЛЬЦЕМ (TELEGRAM STYLE)
         // ==========================================
-        
-        let subSwipeStartX = 0;
-        let subSwipeStartY = 0;
-        const SWIPE_THRESHOLD = 70; // Наскільки сильно треба свайпнути
-        const SWIPE_RESTRICT_Y = 50; // Заборона, якщо палець поїхав сильно вверх/вниз
+        let tStartX = 0, tStartY = 0, tCurrX = 0;
+        let isTDragging = false, tDragTarget = null, tActiveNavs = null;
 
         document.addEventListener('touchstart', e => {
-            subSwipeStartX = e.changedTouches[0].screenX;
-            subSwipeStartY = e.changedTouches[0].screenY;
+            // Захист: не працює, якщо відкрита модалка або шторка
+            if (document.querySelector('.drawer-overlay.active') || document.querySelector('.modal-overlay.active')) return;
+            
+            // Захист: не працює, якщо тягнемо саму шахматку, графіки чи повзунки
+            let target = e.target;
+            if (target.closest('.timeline-wrapper') || target.closest('canvas') || target.closest('.time-chips') || target.closest('.mobile-settings-tabs') || target.closest('.reports-tabs')) return;
+
+            // Визначаємо, який контейнер зараз на екрані і що будемо тягнути
+            if (document.getElementById('view-list').style.display === 'block') {
+                tDragTarget = document.getElementById('bookingsTableMobile');
+                tActiveNavs = document.querySelectorAll('#bookingsTabs .m-tab');
+            } else if (document.getElementById('view-reports').style.display === 'flex') {
+                tDragTarget = document.getElementById('rep-finance').style.display === 'block' ? document.getElementById('rep-finance') : document.getElementById('rep-analytics');
+                tActiveNavs = document.querySelectorAll('.reports-tabs .r-tab');
+            } else if (document.getElementById('view-settings').style.display === 'flex') {
+                tDragTarget = Array.from(document.querySelectorAll('.settings-tab-content')).find(el => el.style.display === 'block');
+                tActiveNavs = document.querySelectorAll('.mobile-settings-tabs .m-tab');
+            } else { 
+                tDragTarget = null; 
+            }
+
+            // Якщо є що тягнути і вкладок більше однієї
+            if (tDragTarget && tActiveNavs && tActiveNavs.length > 1) {
+                tStartX = e.touches[0].clientX; 
+                tStartY = e.touches[0].clientY; 
+                tCurrX = tStartX;
+                isTDragging = true;
+                
+                // 🟢 Відключаємо CSS анімацію, щоб екран прилип до пальця миттєво
+                tDragTarget.style.transition = 'none'; 
+            }
         }, { passive: true });
+
+        document.addEventListener('touchmove', e => {
+            if (!isTDragging || !tDragTarget) return;
+            
+            tCurrX = e.touches[0].clientX; 
+            let currentY = e.touches[0].clientY;
+            let diffX = tCurrX - tStartX; 
+            let diffY = currentY - tStartY;
+
+            // Відміна свайпу, якщо палець потягнули вертикально (скрол сторінки)
+            if (Math.abs(diffY) > Math.abs(diffX) && Math.abs(diffX) < 30) {
+                isTDragging = false; 
+                tDragTarget.style.transform = ''; 
+                return;
+            }
+
+            // Блокуємо вертикальний скрол під час горизонтального тягнення (для плавності)
+            if (e.cancelable && Math.abs(diffX) > 10) e.preventDefault();
+
+            let activeIdx = Array.from(tActiveNavs).findIndex(t => t.classList.contains('active'));
+            let isFirst = activeIdx === 0; 
+            let isLast = activeIdx === tActiveNavs.length - 1;
+
+            // 🟢 Ефект "гумки": якщо тягнемо туди, де вкладок більше немає, екран тягнеться туго
+            if ((isFirst && diffX > 0) || (isLast && diffX < 0)) {
+                diffX = diffX * 0.25; 
+            }
+
+            // Зсуваємо контейнер за пальцем
+            tDragTarget.style.transform = `translateX(${diffX}px)`;
+        }, { passive: false });
 
         document.addEventListener('touchend', e => {
-            let subSwipeEndX = e.changedTouches[0].screenX;
-            let subSwipeEndY = e.changedTouches[0].screenY;
+            if (!isTDragging || !tDragTarget) return;
+            isTDragging = false;
             
-            let xDiff = subSwipeStartX - subSwipeEndX;
-            let yDiff = subSwipeStartY - subSwipeEndY;
+            let diffX = tCurrX - tStartX;
+            let activeIdx = Array.from(tActiveNavs).findIndex(t => t.classList.contains('active'));
+            let nextIdx = diffX > 0 ? activeIdx - 1 : activeIdx + 1;
 
-            // Якщо свайп був горизонтальний і не по діагоналі
-            if (Math.abs(xDiff) > SWIPE_THRESHOLD && Math.abs(yDiff) < SWIPE_RESTRICT_Y) {
+            // Вмикаємо плавну анімацію відпускання пальця
+            tDragTarget.style.transition = 'transform 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94), opacity 0.2s ease';
+
+            // Якщо потягнули достатньо сильно (більше 90 пікселів)
+            if (Math.abs(diffX) > 90 && nextIdx >= 0 && nextIdx < tActiveNavs.length) {
                 
-                // 1. ЗАХИСТ: Не перемикаємо, якщо відкрита модалка чи шторка броні
-                if (document.querySelector('.drawer-overlay.active') || document.querySelector('.modal-overlay.active')) return;
+                // Виштовхуємо екран за межі видимості в сторону свайпу
+                tDragTarget.style.transform = `translateX(${diffX > 0 ? window.innerWidth : -window.innerWidth}px)`;
+                tDragTarget.style.opacity = '0';
                 
-                // 2. ЗАХИСТ: Ігноруємо свайпи всередині шахматки, графіків чи скрол-меню
-                let target = e.target;
-                if (target.closest('.timeline-wrapper') || 
-                    target.closest('.time-chips') || 
-                    target.closest('.mobile-settings-tabs') || 
-                    target.closest('.reports-tabs') || 
-                    target.closest('canvas')) {
-                    return;
-                }
-
-                // Визначаємо напрямок: 'next' (вліво) або 'prev' (вправо)
-                let direction = xDiff > 0 ? 'next' : 'prev';
-
-                // Викликаємо функцію перемикання для активного екрану
-                if (document.getElementById('view-list').style.display === 'block') {
-                    handleTabSwipe('#bookingsTabs .m-tab', direction, '#bookingsTableMobile');
-                } 
-                else if (document.getElementById('view-reports').style.display === 'flex') {
-                    handleTabSwipe('.reports-tabs .r-tab', direction, getActiveReportContainer);
-                } 
-                else if (document.getElementById('view-settings').style.display === 'flex') {
-                    handleTabSwipe('.mobile-settings-tabs .m-tab', direction, getActiveSettingsContainer);
-                }
-            }
-        }, { passive: true });
-
-        // Універсальна функція для перемикання і анімації
-        function handleTabSwipe(tabsSelector, direction, containerResolver) {
-            let tabs = Array.from(document.querySelectorAll(tabsSelector));
-            let activeIdx = tabs.findIndex(t => t.classList.contains('active'));
-            if (activeIdx === -1) return;
-
-            let newIdx = direction === 'next' ? activeIdx + 1 : activeIdx - 1;
-            
-            // Якщо є куди перемикати
-            if (newIdx >= 0 && newIdx < tabs.length) {
-                tabs[newIdx].click(); // Імітуємо клік по вкладці
-                
+                // Через долю секунди перемикаємо вкладку і повертаємо екран на місце
                 setTimeout(() => {
-                    let container = typeof containerResolver === 'function' ? containerResolver() : document.querySelector(containerResolver);
-                    if (container) {
-                        // Скидаємо класи для перезапуску анімації
-                        container.classList.remove('tab-slide-left', 'tab-slide-right');
-                        void container.offsetWidth; // Хак браузера для рестарту CSS
-                        container.classList.add(direction === 'next' ? 'tab-slide-left' : 'tab-slide-right');
-                    }
-                }, 10);
+                    tDragTarget.style.transform = ''; 
+                    tDragTarget.style.opacity = '';
+                    tActiveNavs[nextIdx].click(); // Клікаємо по верхній кнопці
+                }, 250);
+                
+            } else {
+                // Якщо потягнули слабо — пружина повертає екран назад
+                tDragTarget.style.transform = 'translateX(0)';
             }
-        }
-
-        // Знайти активний контейнер звітів
-        function getActiveReportContainer() {
-            return document.getElementById('rep-finance').style.display === 'block' 
-                ? document.getElementById('rep-finance') 
-                : document.getElementById('rep-analytics');
-        }
-
-        // Знайти активний контейнер налаштувань
-        function getActiveSettingsContainer() {
-            return Array.from(document.querySelectorAll('.settings-tab-content')).find(el => el.style.display === 'block');
-        }
+        });
     </script>
 </body>
 </html>
