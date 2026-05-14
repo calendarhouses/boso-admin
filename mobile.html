@@ -820,9 +820,8 @@
             </div>
             <div class="drawer-body">
                 <div class="status-toggle">
-                    <div class="status-btn active" data-status="Нова бронь"><span class="status-dot"></span> Нова</div>
-                    <div class="status-btn" data-status="Підтверджено"><span class="status-dot"></span> Заїхав</div>
-                    <div class="status-btn" data-status="Виїхав"><span class="status-dot"></span> Виїхав</div>
+                    <div class="status-btn active" data-status="Нова бронь"><span class="status-dot"></span> Нова бронь</div>
+                    <div class="status-btn" data-status="Підтверджено"><span class="status-dot"></span> Підтверджено</div>
                     <div class="status-btn" data-status="Скасовано"><span class="status-dot"></span> Скасовано</div>
                 </div>
                 <form id="adminBookingForm">
@@ -1609,7 +1608,7 @@
                 const dateStr = `${inDate.toLocaleDateString('uk-UA', { day: 'numeric', month: 'long' })} - ${outDate.toLocaleDateString('uk-UA', { day: 'numeric', month: 'long' })}`;
 
                 let badgeClass = 'new'; let s = String(b.status).toLowerCase();
-                if(s.includes('підтвердж') || s.includes('заїхав')) badgeClass = 'confirmed';
+                if(s.includes('підтвердж')) badgeClass = 'confirmed';
                 if(s.includes('скас')) badgeClass = 'cancelled';
 
                 let cleanName = String(b.name).replace(' (Ручна бронь)', '');
@@ -1763,8 +1762,20 @@
                         const durationDays = Math.round((outDate - inDate) / (1000 * 60 * 60 * 24));
                         
                         if (offsetDays + durationDays > 0 && offsetDays < daysCount) {
-                            let statusClass = 'status-new'; let s = String(b.status).toLowerCase();
-                            if (s.includes('підтвердж') || s.includes('заїхав')) statusClass = 'status-confirmed';
+                            // Відразу рахуємо фінанси, щоб визначити колір
+                            let total = Number(b.totalPrice) || 0;
+                            let paid = Number(b.paidAmount) || 0;
+                            let balance = total - paid;
+                            let sClass = String(b.status).toLowerCase();
+
+                            // За замовчуванням ставимо коричневий (для Нових і тих, хто вніс 50%)
+                            let statusClass = 'status-new'; 
+
+                            if (sClass.includes('скас')) {
+                                statusClass = 'status-cancelled'; // Скасовано - сірий
+                            } else if (total > 0 && balance <= 0) {
+                                statusClass = 'status-confirmed'; // Оплачено на 100% - зелений
+                            }
                             
                             // 🟢 Читаємо, чи є ранній/пізній заїзд або акція Пт-Нд
                             let exComment = b.comment ? String(b.comment) : "";
@@ -1810,7 +1821,6 @@
                             if (offsetDays < 0) { blockWidth = (durationDays + offsetDays) * cellWidth; blockLeft = 0; padLeft = 8; extensionsHtml = extensionsHtml.replace(/early/g, 'early" style="display:none;"'); }
                             if (offsetDays + durationDays > daysCount) { blockWidth = (daysCount - offsetDays) * cellWidth; padRight = 8; extensionsHtml = extensionsHtml.replace(/late/g, 'late" style="display:none;"'); }
 
-                            let total = Number(b.totalPrice) || 0; let paid = Number(b.paidAmount) || 0; let balance = total - paid;
                             let finText = ""; let badgeBg = ""; let badgeColor = "#FFFFFF";
                             if (total === 0) { finText = "Без ціни"; badgeBg = "rgba(255,255,255,0.3)"; badgeColor = "#1A1A1A"; } 
                             else if (paid === 0) { finText = "Очікує опл."; badgeBg = "#F59E0B"; } 
@@ -2412,10 +2422,37 @@
         }
         
         function calculateBalanceLive() {
-            let total = Number(document.getElementById('adminTotalPrice').value) || 0; let paid = Number(document.getElementById('adminPaidAmount').value) || 0;
-            let balance = total - paid; let balEl = document.getElementById('adminBalance');
-            if (balance <= 0) { balEl.innerText = "Оплачено (0 грн)"; balEl.style.color = "#059669"; balEl.style.background = "#D1FAE5"; balEl.style.border = "1px solid #A7F3D0"; } 
-            else { balEl.innerText = `Борг: ${balance} грн`; balEl.style.color = "#DC2626"; balEl.style.background = "#FEE2E2"; balEl.style.border = "1px solid #FECACA"; }
+            let total = Number(document.getElementById('adminTotalPrice').value) || 0; 
+            let paid = Number(document.getElementById('adminPaidAmount').value) || 0;
+            let balance = total - paid; 
+            let balEl = document.getElementById('adminBalance');
+            
+            if (balance <= 0) { 
+                balEl.innerText = "Оплачено (0 грн)"; 
+                balEl.style.color = "#059669"; 
+                balEl.style.background = "#D1FAE5"; 
+                balEl.style.border = "1px solid #A7F3D0"; 
+            } else { 
+                balEl.innerText = `Борг: ${balance} грн`; 
+                balEl.style.color = "#DC2626"; 
+                balEl.style.background = "#FEE2E2"; 
+                balEl.style.border = "1px solid #FECACA"; 
+            }
+
+            // 🟢 АВТОМАТИЧНА ЗМІНА СТАТУСУ (Нова бронь <-> Підтверджено)
+            let activeStatusBtn = document.querySelector('.status-btn.active');
+            let currentStatus = activeStatusBtn ? activeStatusBtn.getAttribute('data-status') : '';
+            
+            if (currentStatus !== 'Скасовано') {
+                document.querySelectorAll('.status-btn').forEach(b => b.classList.remove('active'));
+                if (paid > 0) {
+                    let confBtn = document.querySelector('.status-btn[data-status="Підтверджено"]');
+                    if (confBtn) confBtn.classList.add('active');
+                } else {
+                    let newBtn = document.querySelector('.status-btn[data-status="Нова бронь"]');
+                    if (newBtn) newBtn.classList.add('active');
+                }
+            }
         }
         
         const checkOutPicker = flatpickr("#adminCheckOut", { locale: "uk", dateFormat: "Y-m-d", altInput: true, altFormat: "d.m.Y", disableMobile: "true", onChange: updatePricePreview });
