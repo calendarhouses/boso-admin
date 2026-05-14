@@ -2010,10 +2010,9 @@
     }
 }
 
-        // --- ЛОГІКА МІНІ-ШТОРКИ РЕДАГУВАННЯ ЦІНИ ---
         function openQuickEdit(fieldId, title, defaultCalculatedVal) {
             document.getElementById('qeFieldId').value = fieldId;
-            document.getElementById('qeTitle').innerText = 'Редагувати: ' + title;
+            document.getElementById('qeTitle').innerText = 'Редагування: ' + title;
             document.getElementById('qeDefaultVal').value = defaultCalculatedVal;
             
             let currentEl = document.getElementById(fieldId);
@@ -2024,10 +2023,10 @@
             
             document.getElementById('quickEditDrawer').classList.add('active');
             
-            // Фокусуємо клавіатуру з невеличкою затримкою для iOS
+            // Фокусуємо клавіатуру, але НЕ виділяємо текст
             setTimeout(() => {
                 input.focus();
-                input.select();
+                // input.select(); // <--- ВИДАЛЕНО, щоб не виділяло синім
             }, 300);
         }
 
@@ -2267,7 +2266,8 @@
             if (discountAmount < 0) discountAmount = 0; 
         }
     }
-cont.innerHTML = `
+
+            cont.innerHTML = `
         <div class="form-section" style="background:#FDFCFB; border-color: var(--accent); padding: 16px; margin-top: 20px;">
             <span class="form-section-title" style="color:var(--accent);">Розшифровка (${nights} ${getNightWord(nights)})</span>
             <div style="font-size: 13px; color: #4B5563; margin-bottom: 16px;">
@@ -2288,7 +2288,7 @@ cont.innerHTML = `
                         <span class="editable-number" id="manualExtraGuest" style="font-weight:700;">${extraGuestFee}</span>
                         <span>грн</span>
                     </div>
-                </div>` : `<input type="hidden" id="manualExtraGuest" value="0">`}
+                </div>` : `<span id="manualExtraGuest" style="display:none;">0</span>`}
                 
                 ${petFee > 0 ? `
                 <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
@@ -2298,7 +2298,7 @@ cont.innerHTML = `
                         <span class="editable-number" id="manualPet" style="font-weight:700;">${petFee}</span>
                         <span>грн</span>
                     </div>
-                </div>` : `<input type="hidden" id="manualPet" value="0">`}
+                </div>` : `<span id="manualPet" style="display:none;">0</span>`}
                 
                 ${dayGuestsFee > 0 ? `
                 <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
@@ -2308,9 +2308,7 @@ cont.innerHTML = `
                         <span class="editable-number" id="manualDayGuest" style="font-weight:700;">${dayGuestsFee}</span>
                         <span>грн</span>
                     </div>
-                </div>` : `<input type="hidden" id="manualDayGuest" value="0">`}
-                
-                ${hasVat ? `<div style="display:flex; justify-content:space-between; margin-bottom:10px;"><span style="color:var(--accent);">Чан:</span><span style="font-weight:700; color:var(--accent);">Оплата на місці</span></div>` : ''}
+                </div>` : `<span id="manualDayGuest" style="display:none;">0</span>`}
                 
                 ${selectedEarlyTime ? `
                 <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
@@ -2320,22 +2318,24 @@ cont.innerHTML = `
                         <span class="editable-number" id="manualEarly" style="font-weight:700;">${earlyFee}</span>
                         <span>грн</span>
                     </div>
-                </div>` : `<input type="hidden" id="manualEarly" value="0">`}
+                </div>` : `<span id="manualEarly" style="display:none;">0</span>`}
                 
                 ${selectedLateTime ? `
                 <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
                     <span>Пізній виїзд <span style="color:#9CA3AF; font-size: 11px;">(до ${selectedLateTime})</span>:</span>
-                    ${isPromoLateOut ? `<span style="color:var(--success);font-weight:700;">Безкоштовно<input type="hidden" id="manualLate" value="0"></span>` : `
+                    ${isPromoLateOut ? `<span style="color:var(--success);font-weight:700;">Безкоштовно<span id="manualLate" style="display:none;">0</span></span>` : `
                     <div class="price-edit-wrapper" style="padding:4px 8px; border-radius:8px; margin-right:-8px; background:rgba(0,0,0,0.03);" onclick="openQuickEdit('manualLate', 'Пізній виїзд', ${lateFee})">
                         <span>+</span>
                         <span class="editable-number" id="manualLate" style="font-weight:700;">${lateFee}</span>
                         <span>грн</span>
                     </div>`}
-                </div>` : `<input type="hidden" id="manualLate" value="0">`}
+                </div>` : `<span id="manualLate" style="display:none;">0</span>`}
+
+                ${hasVat ? `<div style="display:flex; justify-content:space-between; margin-bottom:10px; padding-top:4px; border-top:1px dotted #E5E7EB;"><span style="color:var(--accent); font-weight:600;">♨️ Послуга Чан:</span><span style="font-weight:700; color:var(--accent);">Оплата на місці</span></div>` : ''}
                 
                 <div style="display:flex; justify-content:space-between; align-items:center; margin-top:12px; padding-top:12px; border-top:1px dashed #E5E7EB; color:var(--danger);">
                     <span style="font-weight:500;">Знижка (${Math.round(discountPercent*100)}%):</span>
-                    <div class="price-edit-wrapper danger" style="padding:4px 8px; border-radius:8px; margin-right:-8px; background:rgba(220,38,38,0.05);" onclick="openQuickEdit('manualDiscount', 'Знижка', Math.round(basePriceTotal * discountPercent))">
+                    <div class="price-edit-wrapper danger" style="padding:4px 8px; border-radius:8px; margin-right:-8px; background:rgba(220,38,38,0.05);" onclick="openQuickEdit('manualDiscount', 'Знижка', Math.round((basePriceTotal + extraGuestFee) * discountPercent))">
                         <span style="font-weight:800;">-</span>
                         <span class="editable-number" id="manualDiscount" style="font-weight:700;">${discountAmount}</span>
                         <span>грн</span>
