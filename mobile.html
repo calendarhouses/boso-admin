@@ -1277,16 +1277,20 @@
         }
 
         function renderSettingsServices() {
-            const sysBody = document.getElementById('settingsSysServicesTableBody'); sysBody.innerHTML = '';
+            const sysBody = document.getElementById('settingsSysServicesTableBody'); 
+            if (!sysBody) return; // <-- Захист від падіння на мобілці!
+            
+            sysBody.innerHTML = '';
             sysServicesList.forEach(s => {
                 let badge = s.active ? `<span class="badge confirmed" style="font-size:10px;">Активна</span>` : `<span class="badge cancelled" style="font-size:10px;">Не активна</span>`;
                 sysBody.innerHTML += `<tr><td><strong>${s.name}</strong></td><td style="flex-direction:row; font-size:12px;">${s.price} грн ${badge}</td>
                 <td style="justify-content: flex-end;"><button class="btn-action" style="padding:6px 12px;" onclick="openGenericModal('sysService', ${s.id})">Редаг.</button></td></tr>`;
             });
-            const custBody = document.getElementById('settingsServicesTableBody'); custBody.innerHTML = '';
+            const custBody = document.getElementById('settingsServicesTableBody'); 
+            if (custBody) custBody.innerHTML = '';
             customServicesList.forEach(s => {
                 let badge = s.active ? `<span class="badge confirmed" style="font-size:10px;">Активна</span>` : `<span class="badge cancelled" style="font-size:10px;">Не активна</span>`;
-                custBody.innerHTML += `<tr><td><strong>${s.name}</strong></td><td style="flex-direction:row; font-size:12px;">${s.price} грн ${badge}</td>
+                if(custBody) custBody.innerHTML += `<tr><td><strong>${s.name}</strong></td><td style="flex-direction:row; font-size:12px;">${s.price} грн ${badge}</td>
                 <td style="justify-content: flex-end;"><button class="btn-action" style="padding:6px 12px;" onclick="openGenericModal('customService', ${s.id})">Редаг.</button></td></tr>`;
             });
         }
@@ -2492,7 +2496,7 @@
             if(matched) matched.classList.add('active'); else document.querySelector('.status-btn[data-status="Нова бронь"]').classList.add('active');
 
             setTimeout(() => {
-                updatePricePreview();
+                updatePricePreview(true); // <-- ДОДАЛИ true
                 setTimeout(() => {
                     if(document.getElementById('adminTotalPrice')) {
                         document.getElementById('adminTotalPrice').value = booking.totalPrice || 0;
