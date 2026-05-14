@@ -2174,17 +2174,19 @@
     
     if (isUBD) discountPercent += 0.10;
 
-    let amountToDiscount = basePriceTotal + extraGuestFee + earlyFee + lateFee; 
+    // 🟢 МАГІЯ ЗНИЖКИ: Знижка рахується від (Бази + Дод. гостей з ночівлею)
+    let amountForDiscount = basePriceTotal + extraGuestFee;
     let discountAmount = 0;
 
-    // 🟢 МАГІЯ ЗНИЖКИ: Якщо адмін ввів її вручну
     if (isDiscEdited && manDisc !== null) {
         discountAmount = manDisc;
     } else {
-        discountAmount = Math.round(amountToDiscount * discountPercent);
+        discountAmount = Math.round(amountForDiscount * discountPercent);
     }
 
-    let totalPrice = amountToDiscount - discountAmount + petFee + dayGuestsFee; 
+    // 🟢 ПРАВИЛЬНА ПІДСУМКОВА СУМА (згідно з вашою формулою)
+    // (База + Дод.гості — Знижка) + Чан/Тварини/Ранній/Пізній/Денні
+    let totalPrice = (basePriceTotal + extraGuestFee - discountAmount) + petFee + dayGuestsFee + earlyFee + lateFee;
 
     // 🟢 ВІДНОВЛЮЄМО ЗАГАЛЬНУ ЦІНУ
     if (isInitialLoad && editingRowNumber) {
@@ -3106,19 +3108,33 @@ let                 fOut = outD.toLocaleDateString('uk-UA', { day: 'numeric', mo
                     let room = roomsList.find(r => b.cottage && b.cottage.includes(r.short));
                     let extraPrice = room && room.extraGuestPrice !== undefined ? room.extraGuestPrice : 2500;
                     let cap = room ? room.capacity : 2;
-                    let feeGuests = Math.max(0, (parseInt(b.guests) || 2) - cap) * extraPrice * nights;
-                    let feePets = (b.pets === "Так" || b.pets === true) ? (500 + 200 * nights) : 0;
+                    
+                    // 1. Аналітика бере збережену суму для ДОД. ГОСТЕЙ (якщо є)
+                    let feeGuests = (b.extraGuestFee !== undefined && b.extraGuestFee !== "" && b.extraGuestFee !== null) 
+                        ? Number(b.extraGuestFee) 
+                        : Math.max(0, (parseInt(b.guests) || 2) - cap) * extraPrice * nights;
+                    
+                    // 2. Аналітика бере збережену суму для ТВАРИН (якщо є)
+                    let feePets = (b.petFee !== undefined && b.petFee !== "" && b.petFee !== null) 
+                        ? Number(b.petFee) 
+                        : ((b.pets === "Так" || b.pets === true) ? (500 + 200 * nights) : 0);
 
                     if (feeGuests > 0) { currGuests += feeGuests; window.bosoDetails.guests.push({...baseObj, amount: feeGuests}); }
                     if (feePets > 0) { currPets += feePets; window.bosoDetails.pets.push({...baseObj, amount: feePets}); }
 
-                    let rawComment = b.comment ? String(b.comment) : "";
+                    // 3. Аналітика бере збережену суму для ГНУЧКОГО ГРАФІКУ (якщо є)
                     let feeEarlyLate = 0;
-                    
-                    if (rawComment.includes('🕒 Ранній заїзд:')) feeEarlyLate += Math.round(getDayPrice(room, inD) * 0.5);
-                    if (rawComment.includes('🕒 Пізній виїзд:')) {
-                        if (!(nights === 2 && inD.getDay() === 5 && outD.getDay() === 0)) feeEarlyLate += Math.round(getDayPrice(room, outD) * 0.5);
+                    if ((b.earlyFee !== undefined && b.earlyFee !== "" && b.earlyFee !== null) || 
+                        (b.lateFee !== undefined && b.lateFee !== "" && b.lateFee !== null)) {
+                        feeEarlyLate = Number(b.earlyFee || 0) + Number(b.lateFee || 0);
+                    } else {
+                        let rawComment = b.comment ? String(b.comment) : "";
+                        if (rawComment.includes('🕒 Ранній заїзд:')) feeEarlyLate += Math.round(getDayPrice(room, inD) * 0.5);
+                        if (rawComment.includes('🕒 Пізній виїзд:')) {
+                            if (!(nights === 2 && inD.getDay() === 5 && outD.getDay() === 0)) feeEarlyLate += Math.round(getDayPrice(room, outD) * 0.5);
+                        }
                     }
+
                     if (feeEarlyLate > 0) { currEarlyLate += feeEarlyLate; window.bosoDetails.earlyLate.push({...baseObj, amount: feeEarlyLate}); }
                     
                     if (paid > 0) {
