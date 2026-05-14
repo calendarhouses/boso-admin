@@ -3986,7 +3986,7 @@ let                 fOut = outD.toLocaleDateString('uk-UA', { day: 'numeric', mo
         }
 
         // ==========================================
-        // 🚀 ФІЗИЧНИЙ СВАЙП V2 (ФІКС МЕНЮ, СКРОЛУ ТА АНІМАЦІЙ)
+        // 🚀 ФІЗИЧНИЙ СВАЙП V3 (ДОДАНО БРОНІ + ФІКСИ)
         // ==========================================
         const mainArea = document.querySelector('.main-content');
         
@@ -3996,8 +3996,8 @@ let                 fOut = outD.toLocaleDateString('uk-UA', { day: 'numeric', mo
         let tActiveIndex = 0;
         let tScreenWidth = window.innerWidth;
         let tParentNode = null;
+        let isSingleContainer = false; // 🟢 Флаг для розділу "Броні"
 
-        // 🟢 ФІКС 1: Слухаємо свайпи ТІЛЬКИ на контенті, меню знизу тепер в безпеці!
         mainArea.addEventListener('touchstart', e => {
             if (document.querySelector('.drawer-overlay.active') || document.querySelector('.modal-overlay.active')) return;
             
@@ -4006,12 +4006,13 @@ let                 fOut = outD.toLocaleDateString('uk-UA', { day: 'numeric', mo
 
             let viewReports = document.getElementById('view-reports');
             let viewSettings = document.getElementById('view-settings');
+            let viewList = document.getElementById('view-list');
 
             tTabsContent = [];
             tActiveNavs = null;
             tParentNode = null;
+            isSingleContainer = false;
 
-            // 🟢 ФІКС 3: Динамічно беремо рівно ту кількість екранів, скільки є кнопок
             if (viewReports && viewReports.style.display === 'flex') {
                 tActiveNavs = document.querySelectorAll('.reports-tabs .r-tab');
                 tTabsContent = [document.getElementById('rep-finance'), document.getElementById('rep-analytics')];
@@ -4019,14 +4020,23 @@ let                 fOut = outD.toLocaleDateString('uk-UA', { day: 'numeric', mo
             } else if (viewSettings && viewSettings.style.display === 'flex') {
                 tActiveNavs = document.querySelectorAll('#view-settings .mobile-settings-tabs .m-tab');
                 const allSettingsContents = document.querySelectorAll('#view-settings .settings-tab-content');
-                // Беремо контенти рівно по індексах кнопок
                 tActiveNavs.forEach((nav, idx) => {
                     if (allSettingsContents[idx]) tTabsContent.push(allSettingsContents[idx]);
                 });
                 tParentNode = viewSettings;
+            } else if (viewList && viewList.style.display === 'block') {
+                // 🟢 ДОДАЄМО РОЗДІЛ "БРОНІ"
+                // Не свайпаємо, якщо включений фільтр по гостю
+                let guestFilter = document.getElementById('guestFilterTab');
+                if (guestFilter && guestFilter.style.display !== 'none') return;
+
+                tActiveNavs = document.querySelectorAll('#bookingsTabs .m-tab');
+                tTabsContent = [document.getElementById('bookingsTableMobile')]; // Тягнемо саму таблицю
+                tParentNode = viewList;
+                isSingleContainer = true; 
             }
 
-            if (tActiveNavs && tTabsContent.length > 1) {
+            if (tActiveNavs && (tTabsContent.length > 1 || isSingleContainer)) {
                 tStartX = e.touches[0].clientX; 
                 tStartY = e.touches[0].clientY; 
                 isTDragging = true;
@@ -4034,28 +4044,32 @@ let                 fOut = outD.toLocaleDateString('uk-UA', { day: 'numeric', mo
                 
                 tActiveIndex = Array.from(tActiveNavs).findIndex(t => t.classList.contains('active'));
 
-                // 🟢 ФІКС 2: Фіксуємо висоту батька перед відривом дітей, щоб не стрибав скрол!
-                tParentNode.style.minHeight = tParentNode.scrollHeight + 'px';
-                tParentNode.style.position = 'relative';
-                tParentNode.style.overflowX = 'hidden';
+                if (!isSingleContainer) {
+                    tParentNode.style.minHeight = tParentNode.scrollHeight + 'px';
+                    tParentNode.style.position = 'relative';
+                    tParentNode.style.overflowX = 'hidden';
 
-                tTabsContent.forEach((el, i) => {
-                    if (!el) return;
-                    el.style.transition = 'none';
-                    el.style.display = 'block'; 
-                    
-                    if (i === tActiveIndex) {
-                        el.style.position = 'relative';
-                        el.style.transform = `translateX(0px)`;
-                    } else {
-                        el.style.position = 'absolute';
-                        el.style.top = '0';
-                        el.style.left = '0';
-                        el.style.width = '100%';
-                        let offset = (i - tActiveIndex) * tScreenWidth;
-                        el.style.transform = `translateX(${offset}px)`;
-                    }
-                });
+                    tTabsContent.forEach((el, i) => {
+                        if (!el) return;
+                        el.style.transition = 'none';
+                        el.style.display = 'block'; 
+                        
+                        if (i === tActiveIndex) {
+                            el.style.position = 'relative';
+                            el.style.transform = `translateX(0px)`;
+                        } else {
+                            el.style.position = 'absolute';
+                            el.style.top = '0';
+                            el.style.left = '0';
+                            el.style.width = '100%';
+                            let offset = (i - tActiveIndex) * tScreenWidth;
+                            el.style.transform = `translateX(${offset}px)`;
+                        }
+                    });
+                } else {
+                    // Логіка для Броней: просто знімаємо транзішени з таблиці
+                    tTabsContent[0].style.transition = 'none';
+                }
             }
         }, { passive: true });
 
@@ -4066,25 +4080,28 @@ let                 fOut = outD.toLocaleDateString('uk-UA', { day: 'numeric', mo
             let diffX = tCurrX - tStartX; 
             let diffY = e.touches[0].clientY - tStartY;
 
-            // Відміняємо свайп, якщо користувач просто скролить вниз/вверх
             if (Math.abs(diffY) > Math.abs(diffX) && Math.abs(diffX) < 20) {
                 cancelTSwipe();
                 return;
             }
 
-            // Блокуємо системний жест "назад", якщо тягнемо контент
             if (e.cancelable && Math.abs(diffX) > 10) e.preventDefault();
 
             // Гумка на краях
-            if ((tActiveIndex === 0 && diffX > 0) || (tActiveIndex === tTabsContent.length - 1 && diffX < 0)) {
+            if ((tActiveIndex === 0 && diffX > 0) || (tActiveIndex === tActiveNavs.length - 1 && diffX < 0)) {
                 diffX = diffX * 0.25; 
             }
 
-            tTabsContent.forEach((el, i) => {
-                if (!el) return;
-                let baseOffset = (i - tActiveIndex) * tScreenWidth;
-                el.style.transform = `translateX(${baseOffset + diffX}px)`;
-            });
+            if (!isSingleContainer) {
+                tTabsContent.forEach((el, i) => {
+                    if (!el) return;
+                    let baseOffset = (i - tActiveIndex) * tScreenWidth;
+                    el.style.transform = `translateX(${baseOffset + diffX}px)`;
+                });
+            } else {
+                // Для броней просто тягнемо одну таблицю
+                tTabsContent[0].style.transform = `translateX(${diffX}px)`;
+            }
         }, { passive: false });
 
         mainArea.addEventListener('touchend', e => {
@@ -4096,40 +4113,70 @@ let                 fOut = outD.toLocaleDateString('uk-UA', { day: 'numeric', mo
 
             if (diffX > 70 && tActiveIndex > 0) {
                 nextIdx = tActiveIndex - 1;
-            } else if (diffX < -70 && tActiveIndex < tTabsContent.length - 1) {
+            } else if (diffX < -70 && tActiveIndex < tActiveNavs.length - 1) {
                 nextIdx = tActiveIndex + 1;
             }
 
-            tTabsContent.forEach((el, i) => {
-                if (!el) return;
-                el.style.transition = 'transform 0.25s cubic-bezier(0.25, 0.46, 0.45, 0.94)';
-                let finalOffset = (i - nextIdx) * tScreenWidth;
-                el.style.transform = `translateX(${finalOffset}px)`;
-            });
-
-            setTimeout(() => {
-                // Знімаємо блок висоти
-                if (tParentNode) {
-                    tParentNode.style.minHeight = '';
-                    tParentNode.style.overflowX = '';
-                }
-                
+            if (!isSingleContainer) {
+                // СТАНДАРТНЕ ПЕРЕМИКАННЯ (Налаштування, Звіти)
                 tTabsContent.forEach((el, i) => {
                     if (!el) return;
-                    el.style.transform = '';
-                    el.style.position = '';
-                    el.style.top = '';
-                    el.style.left = '';
-                    el.style.width = '';
-                    el.style.transition = '';
-                    el.style.display = (i === nextIdx) ? 'block' : 'none';
+                    el.style.transition = 'transform 0.25s cubic-bezier(0.25, 0.46, 0.45, 0.94)';
+                    let finalOffset = (i - nextIdx) * tScreenWidth;
+                    el.style.transform = `translateX(${finalOffset}px)`;
                 });
-                
+
+                setTimeout(() => {
+                    if (tParentNode) {
+                        tParentNode.style.minHeight = '';
+                        tParentNode.style.overflowX = '';
+                    }
+                    
+                    tTabsContent.forEach((el, i) => {
+                        if (!el) return;
+                        el.style.transform = '';
+                        el.style.position = '';
+                        el.style.top = '';
+                        el.style.left = '';
+                        el.style.width = '';
+                        el.style.transition = '';
+                        el.style.display = (i === nextIdx) ? 'block' : 'none';
+                    });
+                    
+                    if (nextIdx !== tActiveIndex) {
+                        tActiveNavs[nextIdx].click();
+                        mainArea.scrollTop = 0; 
+                    }
+                }, 260);
+            } else {
+                // 🟢 ПЕРЕМИКАННЯ ДЛЯ БРОНЕЙ (Одна таблиця вилітає і залітає)
                 if (nextIdx !== tActiveIndex) {
-                    tActiveNavs[nextIdx].click();
-                    mainArea.scrollTop = 0; // Скидаємо скрол до верху на новій сторінці
+                    let flyOut = diffX > 0 ? tScreenWidth : -tScreenWidth;
+                    tTabsContent[0].style.transition = 'transform 0.2s ease, opacity 0.2s ease';
+                    tTabsContent[0].style.transform = `translateX(${flyOut}px)`;
+                    tTabsContent[0].style.opacity = '0';
+                    
+                    setTimeout(() => {
+                        tActiveNavs[nextIdx].click(); // Оновлюємо дані таблиці
+                        
+                        // Переносимо невидиму таблицю на протилежний бік
+                        tTabsContent[0].style.transition = 'none';
+                        tTabsContent[0].style.transform = `translateX(${-flyOut}px)`;
+                        
+                        // Даємо кадру відмалюватись і виїжджаємо на місце
+                        setTimeout(() => {
+                            tTabsContent[0].style.transition = 'transform 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94), opacity 0.3s ease';
+                            tTabsContent[0].style.transform = 'translateX(0px)';
+                            tTabsContent[0].style.opacity = '1';
+                            mainArea.scrollTop = 0;
+                        }, 20);
+                    }, 200);
+                } else {
+                    // Якщо слабко махнули — повертаємо на місце
+                    tTabsContent[0].style.transition = 'transform 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94)';
+                    tTabsContent[0].style.transform = 'translateX(0px)';
                 }
-            }, 260);
+            }
         });
 
         function cancelTSwipe() {
@@ -4138,16 +4185,21 @@ let                 fOut = outD.toLocaleDateString('uk-UA', { day: 'numeric', mo
                 tParentNode.style.minHeight = '';
                 tParentNode.style.overflowX = '';
             }
-            tTabsContent.forEach((el, i) => {
-                if (!el) return;
-                el.style.transform = '';
-                el.style.position = '';
-                el.style.top = '';
-                el.style.left = '';
-                el.style.width = '';
-                el.style.transition = '';
-                el.style.display = (i === tActiveIndex) ? 'block' : 'none';
-            });
+            if (!isSingleContainer) {
+                tTabsContent.forEach((el, i) => {
+                    if (!el) return;
+                    el.style.transform = '';
+                    el.style.position = '';
+                    el.style.top = '';
+                    el.style.left = '';
+                    el.style.width = '';
+                    el.style.transition = '';
+                    el.style.display = (i === tActiveIndex) ? 'block' : 'none';
+                });
+            } else if (tTabsContent.length > 0) {
+                tTabsContent[0].style.transform = '';
+                tTabsContent[0].style.transition = '';
+            }
         }
     </script>
 </body>
