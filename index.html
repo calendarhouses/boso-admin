@@ -3465,16 +3465,17 @@ if (prepayBtnText) prepayBtnText.innerText = Math.round(total / 2);
     }
 }
 
+// --- ФУНКЦІЯ ПЕРЕРАХУНКУ ПРИ РУЧНІЙ ЗМІНІ ЦІН В РОЗШИФРОВЦІ ---
 function recalculateFromManual(isDiscountEdited = false) {
-    // Розумна міні-функція: читає і приховані інпути (value), і нові span (innerText)
+    // 🟢 РОЗУМНА ФУНКЦІЯ: Читає цифри і з інпутів (value), і зі спанів (innerText)
     const getVal = (id) => {
         const el = document.getElementById(id);
         if (!el) return 0;
-        if (el.tagName === 'INPUT') return Number(el.value) || 0;
-        // Беремо текст і на всякий випадок чистимо від можливих пробілів
-        return Number(el.innerText.replace(/\s/g, '')) || 0; 
+        const val = el.tagName === 'INPUT' ? el.value : el.innerText;
+        return Number(String(val).replace(/\s/g, '')) || 0;
     };
-    
+
+    // Тепер змінні завжди отримують реальну цифру, яку ти вписав на екрані
     let base = getVal('manualBasePrice');
     let extra = getVal('manualExtraGuest');
     let pet = getVal('manualPet');
@@ -3486,27 +3487,32 @@ function recalculateFromManual(isDiscountEdited = false) {
     let discEl = document.getElementById('manualDiscount');
     let isEditedFlag = document.getElementById('manualDiscountEdited');
     
+    // Якщо користувач сам змінив цифру знижки - фіксуємо це
     if (isDiscountEdited && isEditedFlag) isEditedFlag.value = "true";
     
     let discount = 0;
     if (discEl) {
         if (isEditedFlag && isEditedFlag.value === "true") {
+            // Якщо ти вписав знижку руками - беремо твою суму
             discount = getVal('manualDiscount'); 
         } else {
+            // 🟢 АВТО-ПЕРЕРАХУНОК: Беремо твою нову базову суму + дод. гостей і множимо на %
             discount = Math.round((base + extra) * pct);
-            // Записуємо нове значення у відповідний атрибут залежно від типу тегу
+            
+            // Виводимо нову знижку на екран
             if (discEl.tagName === 'INPUT') discEl.value = discount;
             else discEl.innerText = discount;
         }
     }
     
+    // Нова загальна сума (віднімаємо вже правильну знижку)
     let total = base + extra + pet + dayG + early + late - discount;
     if (total < 0) total = 0;
     
     let totalInp = document.getElementById('adminTotalPrice');
     if (totalInp) {
         totalInp.value = total;
-        calculateBalanceLive();
+        calculateBalanceLive(); // Відразу оновлюємо борги/аванси!
     }
 }
         
