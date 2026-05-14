@@ -3985,8 +3985,8 @@ let                 fOut = outD.toLocaleDateString('uk-UA', { day: 'numeric', mo
             });
         }
 
-        // ==========================================
-        // 🚀 ФІЗИЧНИЙ СВАЙП V5 (ІДЕАЛЬНА ГЕОМЕТРІЯ ТА АНІМАЦІЇ)
+       // ==========================================
+        // 🚀 ФІЗИЧНИЙ СВАЙП V6 (ІДЕАЛЬНИЙ КОНТРОЛЬ СКРОЛУ)
         // ==========================================
         const mainArea = document.querySelector('.main-content');
         
@@ -3997,10 +3997,9 @@ let                 fOut = outD.toLocaleDateString('uk-UA', { day: 'numeric', mo
         let tScreenWidth = window.innerWidth;
         let tParentNode = null;
         let isSingleContainer = false;
-        let isAnimating = false; // 🟢 Захист від подвійних свайпів під час анімації
+        let isAnimating = false; 
 
         mainArea.addEventListener('touchstart', e => {
-            // Блокуємо свайп, якщо відкриті шторки, модалки або йде анімація
             if (isAnimating || document.querySelector('.drawer-overlay.active') || document.querySelector('.modal-overlay.active')) return;
             
             let target = e.target;
@@ -4044,22 +4043,13 @@ let                 fOut = outD.toLocaleDateString('uk-UA', { day: 'numeric', mo
                 tActiveIndex = Array.from(tActiveNavs).findIndex(t => t.classList.contains('active'));
 
                 if (!isSingleContainer) {
-                    // 🟢 МАГІЯ: Вираховуємо відступ зверху, щоб сторінки не налітали на вкладки!
-                    let contentTop = tTabsContent[tActiveIndex] ? tTabsContent[tActiveIndex].offsetTop : 0;
-                    let maxHeight = 0;
+                    let activeEl = tTabsContent[tActiveIndex];
+                    let contentTop = activeEl ? activeEl.offsetTop : 0;
+                    let currentScroll = mainArea.scrollTop;
+                    let pHeight = tParentNode.offsetHeight;
 
-                    // Міряємо найвищу вкладку
-                    tTabsContent.forEach((el) => {
-                        if (!el) return;
-                        let originalDisplay = el.style.display;
-                        el.style.display = 'block';
-                        let h = el.offsetHeight;
-                        if (h > maxHeight) maxHeight = h;
-                        el.style.display = originalDisplay;
-                    });
-
-                    // Жорстко фіксуємо батьківський контейнер, щоб не було "стрибків" висоти
-                    tParentNode.style.minHeight = (contentTop + maxHeight) + 'px';
+                    // 🟢 Жорстко фіксуємо висоту батька (щоб скрол не стрибнув при absolute)
+                    tParentNode.style.height = Math.max(pHeight, currentScroll + window.innerHeight) + 'px';
                     tParentNode.style.position = 'relative';
                     tParentNode.style.overflowX = 'hidden';
 
@@ -4067,12 +4057,19 @@ let                 fOut = outD.toLocaleDateString('uk-UA', { day: 'numeric', mo
                         if (!el) return;
                         el.style.transition = 'none';
                         el.style.position = 'absolute';
-                        el.style.top = contentTop + 'px'; // Фіксуємо по вертикалі на їхньому законному місці
                         el.style.left = '0';
                         el.style.width = '100%';
                         el.style.display = 'block'; 
+                        
+                        // 🟢 МАГІЯ: Активна вкладка залишається на місці, а НОВА зміщується вниз на рівень скролу!
+                        if (i === tActiveIndex) {
+                            el.style.top = contentTop + 'px';
+                        } else {
+                            el.style.top = (contentTop + currentScroll) + 'px';
+                        }
+                        
                         let offset = (i - tActiveIndex) * tScreenWidth;
-                        el.style.transform = `translate3d(${offset}px, 0, 0)`; // GPU прискорення
+                        el.style.transform = `translate3d(${offset}px, 0, 0)`; 
                     });
                 } else {
                     tParentNode.style.minHeight = tTabsContent[0].offsetHeight + 'px';
@@ -4137,15 +4134,9 @@ let                 fOut = outD.toLocaleDateString('uk-UA', { day: 'numeric', mo
                 });
 
                 setTimeout(() => {
-                    // 1. Клікаємо ДО зняття стилів, щоб відпрацювала логіка і висоти таблиць
-                    if (nextIdx !== tActiveIndex) {
-                        tActiveNavs[nextIdx].click();
-                        mainArea.scrollTo({ top: 0, behavior: 'smooth' });
-                    }
-                    
-                    // 2. Безпечно знімаємо фіксовану розмітку
+                    // Знімаємо фіксовану геометрію ДО кліку, щоб не було стрибків
                     if (tParentNode) {
-                        tParentNode.style.minHeight = '';
+                        tParentNode.style.height = '';
                         tParentNode.style.position = '';
                         tParentNode.style.overflowX = '';
                     }
@@ -4158,13 +4149,15 @@ let                 fOut = outD.toLocaleDateString('uk-UA', { day: 'numeric', mo
                         el.style.left = '';
                         el.style.width = '';
                         el.style.transition = '';
-                        
-                        // Якщо вкладка не змінилась, відновлюємо дисплей вручну
                         if (nextIdx === tActiveIndex) {
                             el.style.display = (i === nextIdx) ? 'block' : 'none';
                         }
                     });
                     
+                    if (nextIdx !== tActiveIndex) {
+                        mainArea.scrollTop = 0; // 🟢 МИТТЄВО скидаємо скрол в 0
+                        tActiveNavs[nextIdx].click(); // Відмальовуємо нову вкладку
+                    }
                     isAnimating = false;
                 }, 300);
             } else {
@@ -4175,11 +4168,11 @@ let                 fOut = outD.toLocaleDateString('uk-UA', { day: 'numeric', mo
                     tTabsContent[0].style.opacity = '0';
                     
                     setTimeout(() => {
+                        mainArea.scrollTop = 0; // 🟢 Скидаємо скрол для Броней
                         tActiveNavs[nextIdx].click(); 
                         tTabsContent[0].style.transition = 'none';
                         tTabsContent[0].style.transform = `translate3d(${-flyOut}px, 0, 0)`;
                         
-                        // Очікуємо точний рендер від браузера
                         requestAnimationFrame(() => {
                             requestAnimationFrame(() => {
                                 tTabsContent[0].style.transition = 'transform 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94), opacity 0.3s ease';
@@ -4189,8 +4182,7 @@ let                 fOut = outD.toLocaleDateString('uk-UA', { day: 'numeric', mo
                                 setTimeout(() => {
                                     tTabsContent[0].style.transition = '';
                                     tTabsContent[0].style.transform = '';
-                                    tParentNode.style.minHeight = '';
-                                    mainArea.scrollTo({ top: 0, behavior: 'smooth' });
+                                    if(tParentNode) tParentNode.style.minHeight = '';
                                     isAnimating = false;
                                 }, 300);
                             });
@@ -4203,7 +4195,7 @@ let                 fOut = outD.toLocaleDateString('uk-UA', { day: 'numeric', mo
                     setTimeout(() => {
                         tTabsContent[0].style.transition = '';
                         tTabsContent[0].style.transform = '';
-                        tParentNode.style.minHeight = '';
+                        if(tParentNode) tParentNode.style.minHeight = '';
                         isAnimating = false;
                     }, 300);
                 }
@@ -4213,6 +4205,7 @@ let                 fOut = outD.toLocaleDateString('uk-UA', { day: 'numeric', mo
         function cancelTSwipe() {
             isTDragging = false;
             if (tParentNode) {
+                tParentNode.style.height = '';
                 tParentNode.style.minHeight = '';
                 tParentNode.style.position = '';
                 tParentNode.style.overflowX = '';
