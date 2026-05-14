@@ -3224,9 +3224,17 @@ const appliesToRoom =
         discountPercent += 0.10;
     }
 
-    // 🔴 І ДАЛІ ЙДЕ ТВІЙ СТАРИЙ КОД РОЗРАХУНКУ:
     let amountToDiscount = basePriceTotal + extraGuestFee;
-    let discountAmount = Math.round(amountToDiscount * discountPercent);
+    let discountAmount = 0;
+
+    // 🟢 МАГІЯ ЗНИЖКИ: Якщо адмін ввів її вручну (і дати не мінялись), залишаємо ручну суму!
+    if (isDiscEdited && manDisc !== null) {
+        discountAmount = manDisc;
+    } else {
+        // Інакше рахуємо стандартно по відсоткам
+        discountAmount = Math.round(amountToDiscount * discountPercent);
+    }
+
     let totalPrice = amountToDiscount - discountAmount + petFee + dayGuestFee + earlyFee + lateFee;
 
     // 🟢 ВІДНОВЛЮЄМО РУЧНУ ЗНИЖКУ/ЗАГАЛЬНУ ЦІНУ
