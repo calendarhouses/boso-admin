@@ -3968,6 +3968,77 @@ let                 fOut = outD.toLocaleDateString('uk-UA', { day: 'numeric', mo
                 if (index === cellsToHighlight.length - 1) c.classList.add('cell-selected-end');
             });
         }
+
+        // ==========================================
+        // 🚀 РОЗУМНІ СВАЙПИ МІЖ ГОЛОВНИМИ ЕКРАНАМИ
+        // ==========================================
+        
+        // Порядок наших вкладок (зліва направо)
+        const viewsOrder = ['grid', 'list', 'guests', 'reports', 'settings'];
+        
+        let swipeStartX = 0;
+        let swipeStartY = 0;
+        let swipeEndX = 0;
+        let swipeEndY = 0;
+        
+        const SWIPE_THRESHOLD = 80; // Мінімальна довжина свайпу для спрацювання
+        const SWIPE_RESTRICT_Y = 60; // Заборона спрацювання, якщо палець сильно поїхав вверх/вниз
+
+        const mainContentArea = document.querySelector('.main-content');
+
+        mainContentArea.addEventListener('touchstart', e => {
+            swipeStartX = e.changedTouches[0].screenX;
+            swipeStartY = e.changedTouches[0].screenY;
+        }, { passive: true });
+
+        mainContentArea.addEventListener('touchend', e => {
+            swipeEndX = e.changedTouches[0].screenX;
+            swipeEndY = e.changedTouches[0].screenY;
+            handleGlobalSwipe(e.target);
+        }, { passive: true });
+
+        function handleGlobalSwipe(target) {
+            // 1. ЗАХИСТ: Не свайпаємо екрани, якщо відкрита якась шторка чи модалка!
+            if (document.querySelector('.drawer-overlay.active') || document.querySelector('.modal-overlay.active')) {
+                return;
+            }
+
+            // 2. ЗАХИСТ: Не свайпаємо, якщо користувач крутить горизонтальні елементи
+            if (target.closest('.timeline-wrapper') || 
+                target.closest('.time-chips') || 
+                target.closest('.mobile-settings-tabs') || 
+                target.closest('.reports-tabs') ||
+                target.closest('.chips-container')) {
+                return;
+            }
+
+            let xDiff = swipeStartX - swipeEndX;
+            let yDiff = swipeStartY - swipeEndY;
+
+            // Перевіряємо, чи це був горизонтальний свайп (і чи він достатньо довгий)
+            if (Math.abs(xDiff) > SWIPE_THRESHOLD && Math.abs(yDiff) < SWIPE_RESTRICT_Y) {
+                
+                // Знаходимо, на якій ми зараз вкладці
+                let activeNav = document.querySelector('.nav-item.active');
+                if (!activeNav) return;
+                
+                let currentViewId = activeNav.id.replace('nav-', '');
+                let currentIndex = viewsOrder.indexOf(currentViewId);
+                if (currentIndex === -1) return;
+
+                if (xDiff > 0) {
+                    // Палець поїхав ВЛІВО <- (хочемо наступну вкладку)
+                    if (currentIndex < viewsOrder.length - 1) {
+                        switchView(viewsOrder[currentIndex + 1]);
+                    }
+                } else {
+                    // Палець поїхав ВПРАВО -> (хочемо попередню вкладку)
+                    if (currentIndex > 0) {
+                        switchView(viewsOrder[currentIndex - 1]);
+                    }
+                }
+            }
+        }
     </script>
 </body>
 </html>
