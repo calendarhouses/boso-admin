@@ -3910,10 +3910,13 @@ let                 fOut = outD.toLocaleDateString('uk-UA', { day: 'numeric', mo
         document.addEventListener('touchend', function (event) {
             let now = (new Date()).getTime();
             if (now - lastTouchEnd <= 300) {
-                event.preventDefault(); // Блокує зум при подвійному тапі
+                // 🟢 МАГІЯ ТУТ: Якщо тицяємо по кнопках, інпутах або перемикачах — НЕ блокуємо клік!
+                if (!event.target.closest('button, input, .mode-btn, .pet-btn, .vat-btn, .ubd-btn, .status-btn, .t-chip, .custom-option')) {
+                    if (event.cancelable) event.preventDefault(); 
+                }
             }
             lastTouchEnd = now;
-        }, false);
+        }, { passive: false });
         
       window.onload = () => { 
             switchView('grid'); 
