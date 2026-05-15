@@ -5078,7 +5078,7 @@ function jumpToFinanceAndEdit(id) {
         window.addEventListener('DOMContentLoaded', autoScaleDashboard);
         window.addEventListener('resize', autoScaleDashboard);
 
-     // 🚀 ПРЕМІУМ-КАРТКА (Ідеальний дизайн + Розумні дані + Іконки скрізь)
+     // 🚀 ПРЕМІУМ-КАРТКА (Ідеальний телефон + Кольорові іконки + Без водяного знаку)
 async function capturePremiumCard(b) {
     // 1. Зовнішній контейнер (Широкий фон)
     const container = document.createElement('div');
@@ -5092,19 +5092,6 @@ async function capturePremiumCard(b) {
     container.style.fontFamily = "'Inter', sans-serif";
     container.style.display = 'flex'; 
     container.style.justifyContent = 'center';
-
-    // 🟢 Логотип BOSO на зеленому фоні (Водяний знак)
-    const bosoLogo = document.createElement('div');
-    bosoLogo.innerText = 'BOSO';
-    bosoLogo.style.position = 'absolute';
-    bosoLogo.style.top = '25px';
-    bosoLogo.style.right = '120px'; // Вирівнюємо по правому краю білої картки
-    bosoLogo.style.color = '#FFFFFF';
-    bosoLogo.style.opacity = '0.4';
-    bosoLogo.style.fontSize = '20px';
-    bosoLogo.style.fontWeight = '900';
-    bosoLogo.style.letterSpacing = '2px';
-    container.appendChild(bosoLogo);
 
     // 2. Внутрішня картка (Білий чек)
     const card = document.createElement('div');
@@ -5125,21 +5112,23 @@ async function capturePremiumCard(b) {
     topAccent.style.background = 'linear-gradient(90deg, #556B2F 0%, #8FBC8F 100%)';
     card.appendChild(topAccent);
 
-    // Іконки
-    const iconCottage = `<svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="color: #9CA3AF; flex-shrink: 0;"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path></svg>`;
-    const iconCalendar = `<svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="color: #9CA3AF; flex-shrink: 0;"><rect x="3" y="4" width="18" height="18" rx="2" ry="2" stroke-width="2"></rect><line x1="16" y1="2" x2="16" y2="6" stroke-width="2"></line><line x1="8" y1="2" x2="8" y2="6" stroke-width="2"></line><line x1="3" y1="10" x2="21" y2="10" stroke-width="2"></line></svg>`;
-    const iconUsers = `<svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="color: #9CA3AF;"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>`;
-    const iconPaw = `<svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="color: #9CA3AF;"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"></path></svg>`;
-    const iconClock = `<svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="color: #9CA3AF;"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>`;
-    const iconVat = `<svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="color: #9CA3AF;"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 18.657A8 8 0 016.343 7.343S7 9 9 10c0-2 .5-5 2.986-7C14 5 16.09 5.777 17.656 7.343A7.975 7.975 0 0120 13a7.975 7.975 0 01-2.343 5.657z"></path></svg>`;
-    const iconShield = `<svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="color: #9CA3AF;"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path></svg>`;
+    // 🟢 КОЛЬОРОВІ ІКОНКИ (Кожна має свій сенсовий колір)
+    const iconCottage = `<svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="color: #D97706; flex-shrink: 0;"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path></svg>`;
+    const iconCalendar = `<svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="color: #3B82F6; flex-shrink: 0;"><rect x="3" y="4" width="18" height="18" rx="2" ry="2" stroke-width="2"></rect><line x1="16" y1="2" x2="16" y2="6" stroke-width="2"></line><line x1="8" y1="2" x2="8" y2="6" stroke-width="2"></line><line x1="3" y1="10" x2="21" y2="10" stroke-width="2"></line></svg>`;
+    const iconUsers = `<svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="color: #0EA5E9;"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>`;
+    const iconPaw = `<svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="color: #F97316;"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"></path></svg>`;
+    const iconClock = `<svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="color: #8B5CF6;"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>`;
+    const iconVat = `<svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="color: #E11D48;"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 18.657A8 8 0 016.343 7.343S7 9 9 10c0-2 .5-5 2.986-7C14 5 16.09 5.777 17.656 7.343A7.975 7.975 0 0120 13a7.975 7.975 0 01-2.343 5.657z"></path></svg>`;
+    const iconShield = `<svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="color: #10B981;"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path></svg>`;
     const iconDiscount = `<svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="color: #DC2626;"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"></path></svg>`;
-    const iconSum = `<svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="margin-right: 8px; color: #9CA3AF; flex-shrink: 0;"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"></path></svg>`;
+    const iconSum = `<svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="margin-right: 8px; color: #4B5563; flex-shrink: 0;"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"></path></svg>`;
     const iconPaid = `<svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="margin-right: 8px; color: #059669; flex-shrink: 0;"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>`;
 
-    // 🟢 Форматування номера телефону (+380...)
-    let displayPhone = String(b.phone || "").replace(/[^\d+]/g, '');
-    if (displayPhone && !displayPhone.startsWith('+')) displayPhone = '+' + displayPhone;
+    // 🟢 Форматування номера телефону (чітко під +380)
+    let displayPhone = String(b.phone || "").replace(/\D/g, '');
+    if (displayPhone.length === 9) displayPhone = '380' + displayPhone;
+    if (displayPhone.length === 10 && displayPhone.startsWith('0')) displayPhone = '38' + displayPhone;
+    if (displayPhone) displayPhone = '+' + displayPhone;
 
     // 🟢 Граматика для гостей
     let guestWord = "гостей";
@@ -5160,7 +5149,7 @@ async function capturePremiumCard(b) {
     let hasVat = rawComment.includes('♨️ Чан: Так');
     let hasUBD = rawComment.includes('🇺🇦 УБД: Так');
 
-    // 🟢 Витягуємо точні дані для дужок (кількість і час)
+    // Витягуємо точні дані для дужок
     let matchDay = rawComment.match(/👥 Денні гості[^:]*:\s*(\d+)/);
     let dayGuestsCount = matchDay ? matchDay[1] : 0;
 
@@ -5170,7 +5159,6 @@ async function capturePremiumCard(b) {
     let matchLate = rawComment.match(/🕒 Пізній виїзд: до (\d{2}:\d{2})/);
     let lateTime = matchLate ? matchLate[1] : null;
 
-    // Рахуємо додаткових гостей (знаходимо місткість номера)
     let extraGuestsCount = 0;
     if (typeof roomsList !== 'undefined') {
         let roomObj = roomsList.find(r => b.cottage.includes(r.name) || b.cottage.includes(r.short));
@@ -5245,15 +5233,15 @@ async function capturePremiumCard(b) {
     else if (balance <= 0) { finText = `ОПЛАЧЕНО ПОВНІСТЮ`; finBg = "#D1FAE5"; finColor = "#059669"; finBorder = "#A7F3D0"; } 
     else { finText = `ЗАЛИШОК ДО СПЛАТИ: ${balance} ₴`; finBg = "#FEE2E2"; finColor = "#DC2626"; finBorder = "#FECACA"; }
 
-    // 🟢 Збираємо все у картку
     card.innerHTML = `
         <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #E5E7EB; padding-bottom: 20px; margin-bottom: 20px;">
             <div style="display: flex; flex-direction: column; gap: 6px;">
                 <span style="font-weight: 900; font-size: 24px; color: #111827; letter-spacing: -0.5px; line-height: 1.1;">${b.name || "Гість"}</span>
                 <span style="font-size: 16px; color: #6B7280; font-weight: 600;">${displayPhone}</span>
             </div>
-            <div style="text-align: right; display: flex; flex-direction: column; justify-content: center;">
-                <span style="font-size: 14px; color: #556B2F; font-weight: 800; background: #F0FDF4; border: 1px solid #DCF1D3; padding: 8px 16px; border-radius: 8px; white-space: nowrap;">${b.guests} ${guestWord}</span>
+            <div style="text-align: right; display: flex; flex-direction: column; justify-content: center; gap: 8px;">
+                <div style="font-size: 22px; font-weight: 900; color: #556B2F; letter-spacing: 1px; line-height: 1;">BOSO</div>
+                <span style="font-size: 14px; color: #556B2F; font-weight: 800; background: #F0FDF4; border: 1px solid #DCF1D3; padding: 6px 16px; border-radius: 8px; white-space: nowrap;">${b.guests} ${guestWord}</span>
             </div>
         </div>
         
