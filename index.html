@@ -3,6 +3,7 @@
 <head>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <script>if(window.innerWidth<768)window.location.href='mobile.html';</script>
@@ -4170,6 +4171,9 @@ document.addEventListener('click', function(e) {
         window.onload = () => {
             switchView('grid'); // Одразу відкриваємо Шахматку
             initApp();          // Підтягуємо дані з бази
+            if (window.Telegram && window.Telegram.WebApp) {
+                window.Telegram.WebApp.expand();
+            }
         };
 
         // 🚀 РОБОЧИЙ РЕНДЕР КАРТКИ (ТВІЙ КОД + ПРЕМІУМ КОМЕНТАР + РОЗУМНІ ХВОСТИКИ)
