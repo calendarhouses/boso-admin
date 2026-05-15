@@ -2761,7 +2761,7 @@ function saveInlineTransaction(type, category, idx) {
                             const iconGift = `<svg width="12" height="12" fill="none" stroke="currentColor" viewBox="0 0 24 24"><rect x="3" y="8" width="18" height="4" rx="1" stroke-width="2.5"></rect><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 8v13M19 12v7a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2v-7M7.5 8a2.5 2.5 0 0 1 0-5A4.8 8 0 0 1 12 8a4.8 8 0 0 1 4.5-5 2.5 2.5 0 0 1 0 5"></path></svg>`;
 
                             // 🟢 ХВОСТИКИ БІЛЬШЕ НЕ ЧІПАЄМО: 24px для коротких, 51px для довгих
-                            let tailWidth = (durationDays <= 2) ? 24 : (cellWidth * 0.85); 
+                            let tailWidth = 24;
 
                             // 🟢 ПІЗНІЙ ВИЇЗД: забирає всю клітинку (зберігаючи наші 2px зазору)
                             if (exHasLate) {
