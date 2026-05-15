@@ -218,7 +218,6 @@
         .timeline-cell { width: 60px; flex-shrink: 0; border-right: 1px solid #F3F4F6; }
         .timeline-cell.weekend { background: #F9FAFB; }
 
-        /* ЗБІЛЬШЕНО: Висота блоку броні 46px */
         /* Збільшено висоту блоку броні 46px */
         .booking-block { 
             position: absolute; height: 46px; top: 7px; border-radius: 8px; padding: 6px 8px; 
@@ -229,15 +228,46 @@
             -webkit-user-select: none; 
             user-select: none;
             -webkit-touch-callout: none;
-            transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.2s;
+            
+            /* 🟢 ДОДАЛИ min-width ДЛЯ ПЛАВНОГО РОЗШИРЕННЯ */
+            transition: min-width 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275), transform 0.2s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.2s;
         }
 
-        /* ЕФЕКТ КОЛИ ПАЛЕЦЬ ЗАТИСНУВ КАРТКУ */
+        /* Збільшено висоту блоку броні 46px */
+        .booking-block { 
+            position: absolute; height: 46px; top: 7px; border-radius: 8px; padding: 6px 8px; 
+            font-size: 12px; font-weight: 600; display: flex; flex-direction: column; justify-content: center; 
+            overflow: hidden; white-space: nowrap; box-shadow: 0 2px 4px rgba(0,0,0,0.1); z-index: 100;
+            
+            /* ЗАХИСТ ВІД СИСТЕМНОГО МЕНЮ iOS ПРИ ДОВГОМУ НАТИСКАННІ */
+            -webkit-user-select: none; 
+            user-select: none;
+            -webkit-touch-callout: none;
+            
+            /* 🟢 ДОДАЛИ min-width ДЛЯ ПЛАВНОГО РОЗШИРЕННЯ */
+            transition: min-width 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275), transform 0.2s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.2s;
+        }
+
+        /* 🟢 ЕФЕКТ КОЛИ ПАЛЕЦЬ ТОРКАЄТЬСЯ КАРТКИ */
         .booking-block.pressing {
-            transform: scale(1.06) translateY(-2px) !important;
+            transform: scale(1.04) translateY(-2px) !important;
             box-shadow: 0 10px 20px rgba(0,0,0,0.25) !important;
             z-index: 120 !important; /* Підіймаємо над усіма */
-            opacity: 0.95;
+            opacity: 1;
+        }
+
+        /* 🟢 МІКРО-КАРТКИ (1-2 НОЧІ) РОЗТЯГУЮТЬСЯ ПРИ ТАПІ */
+        .micro-booking.pressing {
+            min-width: 170px !important;
+        }
+
+        /* 🟢 ПРИХОВУЄМО ТЕКСТ В НАЙТІСНІШИХ КАРТКАХ (Показуємо тільки коли торкаєшся) */
+        .hide-text .booking-inner-content {
+            opacity: 0;
+            transition: opacity 0.2s ease;
+        }
+        .booking-block.pressing.hide-text .booking-inner-content {
+            opacity: 1;
         }
         .booking-block.status-new { background: linear-gradient(135deg, #DEB887 0%, #CDA062 100%); color: #1A1A1A; }
         .booking-block.status-confirmed { background: linear-gradient(135deg, #6B8E23 0%, #4B5D28 100%); color: #FFFFFF; }
@@ -1808,44 +1838,65 @@
                             let exHasEarly = exComment.includes('🕒 Ранній заїзд');
                             let exHasLate = exComment.includes('🕒 Пізній виїзд') || (durationDays === 2 && inDate.getDay() === 5 && outDate.getDay() === 0);
 
-                            let blockLeft = offsetDays * cellWidth; 
-                            let blockWidth = durationDays * cellWidth; 
-
-                            // 🟢 ЗМІННІ ДЛЯ ПРЕМІУМ-ВІЗУАЛУ
+                            // 🟢 ІДЕАЛЬНА МАТЕМАТИКА ВІДСТУПІВ: +2px зліва, -4px ширина
+                            let blockLeft = (offsetDays * cellWidth) + 2; 
+                            let blockWidth = (durationDays * cellWidth) - 4; 
+                            
                             let extensionsHtml = "";
                             let padLeft = 8;
                             let padRight = 8;
 
-                            // Преміум SVG іконки (Годинник та Подарунок)
                             const iconClock = `<svg width="12" height="12" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>`;
                             const iconGift = `<svg width="12" height="12" fill="none" stroke="currentColor" viewBox="0 0 24 24"><rect x="3" y="8" width="18" height="4" rx="1" stroke-width="2.5"></rect><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 8v13M19 12v7a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2v-7M7.5 8a2.5 2.5 0 0 1 0-5A4.8 8 0 0 1 12 8a4.8 8 0 0 1 4.5-5 2.5 2.5 0 0 1 0 5"></path></svg>`;
 
+                            // 🟢 МАЛЕНЬКІ ХВОСТИКИ ДЛЯ ВСІХ
+                            let tailWidth = 24; 
+
+                            // ПІЗНІЙ ВИЇЗД: розтягує картку на 1 повний день
                             if (exHasLate) {
-                                blockWidth += (cellWidth * 0.85);
+                                blockWidth += cellWidth; 
                                 let isPromo = (durationDays === 2 && inDate.getDay() === 5 && outDate.getDay() === 0);
                                 let currentIcon = isPromo ? iconGift : iconClock;
                                 
-                                // Додаємо зупинку поширення події (stopPropagation), щоб клік на хвіст не викликав клік на всю бронь, і передаємо тип 'late'
-                                extensionsHtml += `<div class="time-extension late" style="width: ${cellWidth * 0.85}px;" 
+                                extensionsHtml += `<div class="time-extension late" style="width: ${tailWidth}px;" 
                                     ontouchstart="event.stopPropagation(); handleTouchStart(event, this.parentElement, '${b.row}', 'late')" 
                                     ontouchend="event.stopPropagation(); handleTouchEnd(event, this.parentElement, '${b.row}', 'late')" 
                                     ontouchmove="event.stopPropagation(); handleTouchMove(event, this.parentElement)">${currentIcon}</div>`;
-                                padRight = (cellWidth * 0.85) + 8; 
+                                padRight = tailWidth + 4; 
                             }
+
+                            // РАННІЙ ЗАЇЗД: сидить на початку дня (без зсуву вліво)
                             if (exHasEarly) {
-                                blockLeft -= (cellWidth * 0.85);
-                                blockWidth += (cellWidth * 0.85);
-                                
-                                extensionsHtml += `<div class="time-extension early" style="width: ${cellWidth * 0.85}px;" 
+                                extensionsHtml += `<div class="time-extension early" style="width: ${tailWidth}px;" 
                                     ontouchstart="event.stopPropagation(); handleTouchStart(event, this.parentElement, '${b.row}', 'early')" 
                                     ontouchend="event.stopPropagation(); handleTouchEnd(event, this.parentElement, '${b.row}', 'early')" 
                                     ontouchmove="event.stopPropagation(); handleTouchMove(event, this.parentElement)">${iconClock}</div>`;
-                                padLeft = (cellWidth * 0.85) + 8; 
+                                padLeft = tailWidth + 4; 
+                            }
+
+                            // 🟢 ЛОГІКА "ПРУЖИНКИ"
+                            let isMicro = (durationDays <= 2); 
+                            let hideText = (durationDays === 1 && exHasEarly && !exHasLate); 
+
+                            // Захист від вильоту за межі екрану
+                            if (blockLeft < 0) { 
+                                let overflow = Math.abs(blockLeft);
+                                blockLeft = 0; 
+                                blockWidth -= overflow;
+                                if (offsetDays <= 0) {
+                                    padLeft = 8; 
+                                    extensionsHtml = extensionsHtml.replace(/time-extension early/g, 'time-extension early" style="display:none;" data-hidden="true'); 
+                                }
                             }
                             
-                            // Захист від вильоту за межі екрану
-                            if (offsetDays < 0) { blockWidth = (durationDays + offsetDays) * cellWidth; blockLeft = 0; padLeft = 8; extensionsHtml = extensionsHtml.replace(/early/g, 'early" style="display:none;"'); }
-                            if (offsetDays + durationDays > daysCount) { blockWidth = (daysCount - offsetDays) * cellWidth; padRight = 8; extensionsHtml = extensionsHtml.replace(/late/g, 'late" style="display:none;"'); }
+                            if (blockLeft + blockWidth > daysCount * cellWidth) { 
+                                let overflow = (blockLeft + blockWidth) - (daysCount * cellWidth);
+                                blockWidth -= overflow;
+                                if (offsetDays + durationDays >= daysCount) {
+                                    padRight = 8; 
+                                    extensionsHtml = extensionsHtml.replace(/time-extension late/g, 'time-extension late" style="display:none;" data-hidden="true'); 
+                                }
+                            }
 
                             let finText = ""; let badgeBg = ""; let badgeColor = "#FFFFFF";
                             if (total === 0) { finText = "Без ціни"; badgeBg = "rgba(255,255,255,0.3)"; badgeColor = "#1A1A1A"; } 
@@ -1855,16 +1906,19 @@
 
                             let guestName = String(b.name).replace(' (Ручна бронь)', '');
 
+                            // 🚀 ЧИСТА ПЛАШКА З ОБГОРТКОЮ .booking-inner-content
                             currentRow.innerHTML += `
-                                <div class="booking-block ${statusClass}" style="left: ${blockLeft}px; width: ${blockWidth}px; padding-left: ${padLeft}px; padding-right: ${padRight}px;" 
+                                <div class="booking-block ${statusClass} ${isMicro ? 'micro-booking' : ''} ${hideText ? 'hide-text' : ''}" style="left: ${blockLeft}px; width: ${blockWidth}px; padding-left: ${padLeft}px; padding-right: ${padRight}px;" 
                                      ontouchstart="handleTouchStart(event, this, '${b.row}')"
                                      ontouchend="handleTouchEnd(event, this, '${b.row}')"
                                      ontouchmove="handleTouchMove(event, this)"
                                      oncontextmenu="event.preventDefault();">
                                      ${extensionsHtml}
-                                    <div style="position: relative; z-index: 2; font-size: 11px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; line-height: 1;">${guestName}</div>
-                                    <div style="position: relative; z-index: 2; margin-top: 3px; display: flex; overflow: hidden;">
-                                        <span style="background: ${badgeBg}; color: ${badgeColor}; font-size: 8px; padding: 2px 4px; border-radius: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${finText}</span>
+                                    <div class="booking-inner-content" style="position: relative; z-index: 2; display: flex; flex-direction: column; width: 100%;">
+                                        <div style="font-size: 11px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; line-height: 1;">${guestName}</div>
+                                        <div style="margin-top: 3px; display: flex; overflow: hidden;">
+                                            <span style="background: ${badgeBg}; color: ${badgeColor}; font-size: 8px; padding: 2px 4px; border-radius: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${finText}</span>
+                                        </div>
                                     </div>
                                 </div>`;
                         }
