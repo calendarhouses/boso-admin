@@ -5078,9 +5078,9 @@ function jumpToFinanceAndEdit(id) {
         window.addEventListener('DOMContentLoaded', autoScaleDashboard);
         window.addEventListener('resize', autoScaleDashboard);
 
-     // 🚀 ПРЕМІУМ-КАРТКА (Широкий фон + Дизайн Тултипу + Чистий коментар)
+     // 🚀 ПРЕМІУМ-КАРТКА (Ідеальний дизайн + Розумні дані + Іконки скрізь)
 async function capturePremiumCard(b) {
-    // 1. Зовнішній контейнер (Широкий, для Телеграму)
+    // 1. Зовнішній контейнер (Широкий фон)
     const container = document.createElement('div');
     container.style.position = 'fixed';
     container.style.top = '0'; 
@@ -5093,6 +5093,19 @@ async function capturePremiumCard(b) {
     container.style.display = 'flex'; 
     container.style.justifyContent = 'center';
 
+    // 🟢 Логотип BOSO на зеленому фоні (Водяний знак)
+    const bosoLogo = document.createElement('div');
+    bosoLogo.innerText = 'BOSO';
+    bosoLogo.style.position = 'absolute';
+    bosoLogo.style.top = '25px';
+    bosoLogo.style.right = '120px'; // Вирівнюємо по правому краю білої картки
+    bosoLogo.style.color = '#FFFFFF';
+    bosoLogo.style.opacity = '0.4';
+    bosoLogo.style.fontSize = '20px';
+    bosoLogo.style.fontWeight = '900';
+    bosoLogo.style.letterSpacing = '2px';
+    container.appendChild(bosoLogo);
+
     // 2. Внутрішня картка (Білий чек)
     const card = document.createElement('div');
     card.style.width = '100%'; 
@@ -5103,7 +5116,6 @@ async function capturePremiumCard(b) {
     card.style.position = 'relative';
     card.style.overflow = 'hidden';
 
-    // Верхня зелена лінія на картці
     const topAccent = document.createElement('div');
     topAccent.style.position = 'absolute';
     topAccent.style.top = '0';
@@ -5113,7 +5125,7 @@ async function capturePremiumCard(b) {
     topAccent.style.background = 'linear-gradient(90deg, #556B2F 0%, #8FBC8F 100%)';
     card.appendChild(topAccent);
 
-    // Всі необхідні іконки
+    // Іконки
     const iconCottage = `<svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="color: #9CA3AF; flex-shrink: 0;"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path></svg>`;
     const iconCalendar = `<svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="color: #9CA3AF; flex-shrink: 0;"><rect x="3" y="4" width="18" height="18" rx="2" ry="2" stroke-width="2"></rect><line x1="16" y1="2" x2="16" y2="6" stroke-width="2"></line><line x1="8" y1="2" x2="8" y2="6" stroke-width="2"></line><line x1="3" y1="10" x2="21" y2="10" stroke-width="2"></line></svg>`;
     const iconUsers = `<svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="color: #9CA3AF;"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>`;
@@ -5122,6 +5134,16 @@ async function capturePremiumCard(b) {
     const iconVat = `<svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="color: #9CA3AF;"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 18.657A8 8 0 016.343 7.343S7 9 9 10c0-2 .5-5 2.986-7C14 5 16.09 5.777 17.656 7.343A7.975 7.975 0 0120 13a7.975 7.975 0 01-2.343 5.657z"></path></svg>`;
     const iconShield = `<svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="color: #9CA3AF;"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path></svg>`;
     const iconDiscount = `<svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="color: #DC2626;"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"></path></svg>`;
+    const iconSum = `<svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="margin-right: 8px; color: #9CA3AF; flex-shrink: 0;"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"></path></svg>`;
+    const iconPaid = `<svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="margin-right: 8px; color: #059669; flex-shrink: 0;"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>`;
+
+    // 🟢 Форматування номера телефону (+380...)
+    let displayPhone = String(b.phone || "").replace(/[^\d+]/g, '');
+    if (displayPhone && !displayPhone.startsWith('+')) displayPhone = '+' + displayPhone;
+
+    // 🟢 Граматика для гостей
+    let guestWord = "гостей";
+    if (typeof getGuestWord === 'function') guestWord = getGuestWord(b.guests).toUpperCase();
 
     // Дати
     let inDate = "—"; let outDate = "—";
@@ -5134,12 +5156,29 @@ async function capturePremiumCard(b) {
     let paid = Number(b.paidAmount) || 0;
     let balance = total - paid;
 
-    // 🟢 ВИТЯГУЄМО ТА ОЧИЩАЄМО КОМЕНТАР
     let rawComment = b.comment ? String(b.comment) : "";
     let hasVat = rawComment.includes('♨️ Чан: Так');
     let hasUBD = rawComment.includes('🇺🇦 УБД: Так');
 
-    // Видаляємо всі системні позначки, залишаємо тільки текст
+    // 🟢 Витягуємо точні дані для дужок (кількість і час)
+    let matchDay = rawComment.match(/👥 Денні гості[^:]*:\s*(\d+)/);
+    let dayGuestsCount = matchDay ? matchDay[1] : 0;
+
+    let matchEarly = rawComment.match(/🕒 Ранній заїзд: з (\d{2}:\d{2})/);
+    let earlyTime = matchEarly ? matchEarly[1] : null;
+
+    let matchLate = rawComment.match(/🕒 Пізній виїзд: до (\d{2}:\d{2})/);
+    let lateTime = matchLate ? matchLate[1] : null;
+
+    // Рахуємо додаткових гостей (знаходимо місткість номера)
+    let extraGuestsCount = 0;
+    if (typeof roomsList !== 'undefined') {
+        let roomObj = roomsList.find(r => b.cottage.includes(r.name) || b.cottage.includes(r.short));
+        let cap = roomObj ? (roomObj.capacity || 2) : 2;
+        extraGuestsCount = Math.max(0, parseInt(b.guests) - cap);
+    }
+
+    // Очищаємо коментар
     let cleanComment = rawComment.replace(/👥 Денні гості[^|]+(\|\s*)?/g, '')
                                  .replace(/♨️ Чан: Так\s*(\|\s*)?/g, '')
                                  .replace(/🇺🇦 УБД: Так\s*(\|\s*)?/g, '')
@@ -5150,22 +5189,42 @@ async function capturePremiumCard(b) {
                                  .replace(/\|\s*$/, '')
                                  .trim();
 
-    // 🟢 БУДУЄМО РОЗДІЛ ПОСЛУГ (Дизайн як у тултипі)
+    // 🟢 Будуємо розділ послуг
     let extraHtml = '';
     const rowStyle = `display:flex; justify-content:space-between; align-items:center; margin-bottom: 12px; font-size: 15px; color: #4B5563;`;
     const labelStyle = `display:flex; align-items:center; gap: 8px; font-weight: 600;`;
     const valStyle = `font-weight: 800; color: #111827;`;
 
-    if (b.extraGuestFee > 0) extraHtml += `<div style="${rowStyle}"><span style="${labelStyle}">${iconUsers} Дод. гості:</span> <span style="${valStyle}">+${b.extraGuestFee} ₴</span></div>`;
-    if (b.petFee > 0) extraHtml += `<div style="${rowStyle}"><span style="${labelStyle}">${iconPaw} Тварини:</span> <span style="${valStyle}">+${b.petFee} ₴</span></div>`;
-    if (b.dayGuestFee > 0) extraHtml += `<div style="${rowStyle}"><span style="${labelStyle}">${iconUsers} Денні гості:</span> <span style="${valStyle}">+${b.dayGuestFee} ₴</span></div>`;
-    if (b.earlyFee > 0) extraHtml += `<div style="${rowStyle}"><span style="${labelStyle}">${iconClock} Ранній заїзд:</span> <span style="${valStyle}">+${b.earlyFee} ₴</span></div>`;
-    if (b.lateFee > 0) extraHtml += `<div style="${rowStyle}"><span style="${labelStyle}">${iconClock} Пізній виїзд:</span> <span style="${valStyle}">+${b.lateFee} ₴</span></div>`;
-    if (hasVat) extraHtml += `<div style="${rowStyle}"><span style="${labelStyle}">${iconVat} Чан:</span> <span style="${valStyle}; color: #556B2F;">Так</span></div>`;
-    if (hasUBD) extraHtml += `<div style="${rowStyle}"><span style="${labelStyle}">${iconShield} УБД:</span> <span style="${valStyle}; color: #556B2F;">Так</span></div>`;
-    if (b.discountAmount > 0) extraHtml += `<div style="${rowStyle}; margin-top: 16px; padding-top: 12px; border-top: 1px dashed #E5E7EB; color: #DC2626;"><span style="${labelStyle}; color:#DC2626;">${iconDiscount} Знижка:</span> <span style="font-weight: 900;">-${b.discountAmount} ₴</span></div>`;
+    if (b.extraGuestFee > 0) {
+        let label = extraGuestsCount > 0 ? `Дод. гості (${extraGuestsCount}):` : `Дод. гості:`;
+        extraHtml += `<div style="${rowStyle}"><span style="${labelStyle}">${iconUsers} ${label}</span> <span style="${valStyle}">+${b.extraGuestFee} ₴</span></div>`;
+    }
+    if (b.petFee > 0) {
+        extraHtml += `<div style="${rowStyle}"><span style="${labelStyle}">${iconPaw} Тварини:</span> <span style="${valStyle}">+${b.petFee} ₴</span></div>`;
+    }
+    if (b.dayGuestFee > 0) {
+        let label = dayGuestsCount > 0 ? `Денні гості (${dayGuestsCount}):` : `Денні гості:`;
+        extraHtml += `<div style="${rowStyle}"><span style="${labelStyle}">${iconUsers} ${label}</span> <span style="${valStyle}">+${b.dayGuestFee} ₴</span></div>`;
+    }
+    if (b.earlyFee > 0) {
+        let label = earlyTime ? `Ранній заїзд (з ${earlyTime}):` : `Ранній заїзд:`;
+        extraHtml += `<div style="${rowStyle}"><span style="${labelStyle}">${iconClock} ${label}</span> <span style="${valStyle}">+${b.earlyFee} ₴</span></div>`;
+    }
+    if (b.lateFee > 0) {
+        let label = lateTime ? `Пізній виїзд (до ${lateTime}):` : `Пізній виїзд:`;
+        extraHtml += `<div style="${rowStyle}"><span style="${labelStyle}">${iconClock} ${label}</span> <span style="${valStyle}">+${b.lateFee} ₴</span></div>`;
+    }
+    if (hasVat) {
+        extraHtml += `<div style="${rowStyle}"><span style="${labelStyle}">${iconVat} Чан:</span> <span style="${valStyle}; color: #556B2F;">Так</span></div>`;
+    }
+    if (hasUBD) {
+        extraHtml += `<div style="${rowStyle}"><span style="${labelStyle}">${iconShield} УБД:</span> <span style="${valStyle}; color: #556B2F;">Так</span></div>`;
+    }
+    if (b.discountAmount > 0) {
+        extraHtml += `<div style="${rowStyle}; margin-top: 16px; padding-top: 12px; border-top: 1px dashed #E5E7EB; color: #DC2626;"><span style="${labelStyle}; color:#DC2626;">${iconDiscount} Знижка:</span> <span style="font-weight: 900;">-${b.discountAmount} ₴</span></div>`;
+    }
 
-    // 🟢 БЛОК КОМЕНТАРЯ (Тепер тут тільки справжній текст)
+    // Блок коментаря
     let commentHtml = '';
     if (cleanComment !== '') {
         commentHtml = `
@@ -5176,7 +5235,7 @@ async function capturePremiumCard(b) {
         `;
     }
 
-    // Статуси (Фінальна плашка)
+    // Статуси
     let finText = ""; let finColor = ""; let finBg = ""; let finBorder = "";
     let statusClass = String(b.status).toLowerCase();
 
@@ -5186,16 +5245,15 @@ async function capturePremiumCard(b) {
     else if (balance <= 0) { finText = `ОПЛАЧЕНО ПОВНІСТЮ`; finBg = "#D1FAE5"; finColor = "#059669"; finBorder = "#A7F3D0"; } 
     else { finText = `ЗАЛИШОК ДО СПЛАТИ: ${balance} ₴`; finBg = "#FEE2E2"; finColor = "#DC2626"; finBorder = "#FECACA"; }
 
-    // Збираємо все до купи
+    // 🟢 Збираємо все у картку
     card.innerHTML = `
-        <div style="display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 1px solid #E5E7EB; padding-bottom: 20px; margin-bottom: 20px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #E5E7EB; padding-bottom: 20px; margin-bottom: 20px;">
             <div style="display: flex; flex-direction: column; gap: 6px;">
                 <span style="font-weight: 900; font-size: 24px; color: #111827; letter-spacing: -0.5px; line-height: 1.1;">${b.name || "Гість"}</span>
-                <span style="font-size: 16px; color: #6B7280; font-weight: 600;">${b.phone || ""}</span>
+                <span style="font-size: 16px; color: #6B7280; font-weight: 600;">${displayPhone}</span>
             </div>
-            <div style="text-align: right; display: flex; flex-direction: column; align-items: flex-end; gap: 10px;">
-                <div style="font-size: 22px; font-weight: 900; color: #556B2F; letter-spacing: 1px; line-height: 1;">BOSO</div>
-                <span style="font-size: 13px; color: #556B2F; font-weight: 800; background: #F0FDF4; border: 1px solid #DCF1D3; padding: 6px 12px; border-radius: 8px; white-space: nowrap;">${b.guests} ГOСТЕЙ</span>
+            <div style="text-align: right; display: flex; flex-direction: column; justify-content: center;">
+                <span style="font-size: 14px; color: #556B2F; font-weight: 800; background: #F0FDF4; border: 1px solid #DCF1D3; padding: 8px 16px; border-radius: 8px; white-space: nowrap;">${b.guests} ${guestWord}</span>
             </div>
         </div>
         
@@ -5217,11 +5275,15 @@ async function capturePremiumCard(b) {
 
             <div style="margin-top: 5px; padding-top: 16px; border-top: 1px dashed #E5E7EB;">
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
-                    <span style="color: #6B7280; font-weight: 700; font-size: 16px;">Сума:</span> 
+                    <span style="color: #6B7280; font-weight: 700; font-size: 16px; display:flex; align-items:center;">
+                        ${iconSum} Сума:
+                    </span> 
                     <span style="font-weight: 800; color: #111827; font-size: 18px;">${total} ₴</span>
                 </div>
                 <div style="display: flex; justify-content: space-between; align-items: center;">
-                    <span style="color: #6B7280; font-weight: 700; font-size: 16px;">Внесено:</span> 
+                    <span style="color: #6B7280; font-weight: 700; font-size: 16px; display:flex; align-items:center;">
+                        ${iconPaid} Внесено:
+                    </span> 
                     <span style="font-weight: 900; color: #059669; font-size: 18px;">${paid} ₴</span>
                 </div>
             </div>
