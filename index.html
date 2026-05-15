@@ -1806,16 +1806,30 @@ function saveInlineTransaction(type, category, idx) {
             return clean; 
         }
         
-        function parseSafeDate(dateStr) {
-            if (!dateStr) return new Date();
-            let str = String(dateStr).trim();
-            if (str.includes('.')) {
-                let parts = str.split('.');
-                return new Date(`${parts[2]}-${parts[1]}-${parts[0]}T00:00:00`);
-            }
-            if (str.includes('T')) str = str.split('T')[0];
-            return new Date(str + "T00:00:00");
-        }
+        // --- ФУНКЦІЯ ДЛЯ ПРАВИЛЬНОГО ПАРСИНГУ ДАТ З УРАХУВАННЯМ ЧАСОВОГО ПОЯСУ ---
+function parseSafeDate(dateStr) {
+    if (!dateStr) return new Date();
+    let str = String(dateStr).trim();
+    
+    if (str.includes('.')) {
+        let parts = str.split('.');
+        return new Date(parts[2], parts[1] - 1, parts[0]);
+    }
+    
+    if (str.includes('T')) {
+        // Читаємо повний об'єкт Date, щоб застосувався український часовий пояс
+        let d = new Date(str);
+        // Повертаємо чисту дату без годин (локальна північ)
+        return new Date(d.getFullYear(), d.getMonth(), d.getDate());
+    }
+    
+    let parts = str.split('-');
+    if (parts.length === 3) {
+        return new Date(parts[0], parts[1] - 1, parts[2]);
+    }
+    
+    return new Date(str);
+}
 
         function showToast(message) {
             const container = document.getElementById('toast-container');
@@ -2981,21 +2995,24 @@ function getDayPrice(room, dateObj) {
     let safeIn = checkInStr.includes('.') ? checkInStr.split('.').reverse().join('-') : checkInStr;
     let safeOut = checkOutStr.includes('.') ? checkOutStr.split('.').reverse().join('-') : checkOutStr;
 
-    const d1 = new Date(safeIn);
-    const d2 = new Date(safeOut);
+    // Використовуємо безпечний парсинг для поточних інпутів
+    const d1 = parseSafeDate(checkInStr);
+    const d2 = parseSafeDate(checkOutStr);
     let nights = Math.round((d2 - d1) / (1000 * 60 * 60 * 24));
     if (nights < 1 || isNaN(nights)) nights = 1;
 
     const room = roomsList.find(r => r.name === roomName);
     if (!room) { cont.innerHTML = ''; return; }
-            // 🟢 АВТО-КОРЕКЦІЯ ГОСТЕЙ: не даємо перевищити ліміт при зміні номера
-let maxCap = room.maxCapacity || room.capacity || 10;
-if (guests > maxCap) {
-    guests = maxCap; // Оновлюємо змінну для математики
-    document.getElementById('adminGuests').value = maxCap; // Змінюємо цифру в інтерфейсі
-    showToast(`Кількість гостей зменшено до максимуму (${maxCap})`);
-}
-    // --- 1. ПЕРЕВІРКА НА ОВЕРБУКІНГ (БЕЗ ПРОБІЛІВ) ---
+
+    // 🟢 АВТО-КОРЕКЦІЯ ГОСТЕЙ: не даємо перевищити ліміт при зміні номера
+    let maxCap = room.maxCapacity || room.capacity || 10;
+    if (guests > maxCap) {
+        guests = maxCap;
+        document.getElementById('adminGuests').value = maxCap;
+        showToast(`Кількість гостей зменшено до максимуму (${maxCap})`);
+    }
+
+    // --- 1. ПЕРЕВІРКА НА ОВЕРБУКІНГ ---
     let isOverlap = false;
     let overlapReason = "";
 
@@ -3005,7 +3022,6 @@ if (guests > maxCap) {
         if (editingRowNumber && b.row == editingRowNumber) continue; 
         if (String(b.status).toLowerCase().includes('скас')) continue; 
 
-        // 🟢 Видаляємо всі пробіли і зводимо до нижнього регістру (Femily№2 === femily№2)
         let exCottage = String(b.cottage || '').toLowerCase().replace(/\s+/g, '');
         let currName = currRoomObj ? String(currRoomObj.name).toLowerCase().replace(/\s+/g, '') : String(roomName).toLowerCase().replace(/\s+/g, '');
         let currShort = (currRoomObj && currRoomObj.short) ? String(currRoomObj.short).toLowerCase().replace(/\s+/g, '') : '';
@@ -3024,17 +3040,17 @@ if (guests > maxCap) {
         }
 
         if (isSameRoom) {
-            let exIn = new Date(b.checkIn); exIn.setHours(0,0,0,0);
-            let exOut = new Date(b.checkOut); exOut.setHours(0,0,0,0);
+            // Тепер усі дати гарантовано мають локальну північ
+            let exIn = parseSafeDate(b.checkIn); exIn.setHours(0,0,0,0);
+            let exOut = parseSafeDate(b.checkOut); exOut.setHours(0,0,0,0);
             let currentIn = new Date(d1); currentIn.setHours(0,0,0,0);
             let currentOut = new Date(d2); currentOut.setHours(0,0,0,0);
 
-            // --- Зчитуємо графік існуючої броні ---
+            // --- Зчитуємо графік існуючої броні (додано жорстку перевірку по Fees) ---
             let exComment = b.comment ? String(b.comment) : "";
-            let exHasEarly = exComment.includes('Ранній заїзд');
-            let exHasLate = exComment.includes('Пізній виїзд');
+            let exHasEarly = exComment.includes('Ранній заїзд') || Number(b.earlyFee) > 0;
+            let exHasLate = exComment.includes('Пізній виїзд') || Number(b.lateFee) > 0;
             
-            // Автоматична перевірка на акцію вихідного дня для існуючої броні (Пт-Нд)
             let exNights = Math.round((exOut - exIn) / (1000 * 60 * 60 * 24));
             if (exNights === 2 && exIn.getDay() === 5 && exOut.getDay() === 0) {
                 exHasLate = true;
@@ -3045,17 +3061,17 @@ if (guests > maxCap) {
             let currentHasLate = !!selectedLateTime;
             
             if (nights === 2 && currentIn.getDay() === 5 && currentOut.getDay() === 0) {
-                currentHasLate = true; // Нова бронь теж підпадає під акцію
+                currentHasLate = true; 
             }
 
-            // 1. Стандартний жорсткий перетин дат
+            // Стандартне перекриття
             if (currentIn < exOut && currentOut > exIn) {
                 isOverlap = true;
                 overlapReason = "Ці дати вже повністю зайняті іншим гостем.";
                 break;
             }
             
-            // 2. Стик в стик: Заїзд нової броні в день виїзду старої
+            // Стик в стик (Нова бронь заїжджає, стара виїжджає)
             if (currentIn.getTime() === exOut.getTime()) {
                 if (exHasLate) {
                     isOverlap = true;
@@ -3069,7 +3085,7 @@ if (guests > maxCap) {
                 }
             }
             
-            // 3. Стик в стик: Виїзд нової броні в день заїзду старої
+            // Стик в стик (Стара бронь заїжджає, нова виїжджає)
             if (currentOut.getTime() === exIn.getTime()) {
                 if (currentHasLate) {
                     isOverlap = true;
@@ -3106,7 +3122,6 @@ if (guests > maxCap) {
         submitBtn.style.opacity = '1';
         submitBtn.style.cursor = 'pointer';
     }
-    // --- КІНЕЦЬ ПЕРЕВІРКИ ---
 
     // === 1. СИСТЕМНІ БАЗОВІ РОЗРАХУНКИ ===
     let basePriceTotal = 0;
