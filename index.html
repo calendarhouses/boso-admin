@@ -1806,30 +1806,16 @@ function saveInlineTransaction(type, category, idx) {
             return clean; 
         }
         
-        // --- ФУНКЦІЯ ДЛЯ ПРАВИЛЬНОГО ПАРСИНГУ ДАТ З УРАХУВАННЯМ ЧАСОВОГО ПОЯСУ ---
-function parseSafeDate(dateStr) {
-    if (!dateStr) return new Date();
-    let str = String(dateStr).trim();
-    
-    if (str.includes('.')) {
-        let parts = str.split('.');
-        return new Date(parts[2], parts[1] - 1, parts[0]);
-    }
-    
-    if (str.includes('T')) {
-        // Читаємо повний об'єкт Date, щоб застосувався український часовий пояс
-        let d = new Date(str);
-        // Повертаємо чисту дату без годин (локальна північ)
-        return new Date(d.getFullYear(), d.getMonth(), d.getDate());
-    }
-    
-    let parts = str.split('-');
-    if (parts.length === 3) {
-        return new Date(parts[0], parts[1] - 1, parts[2]);
-    }
-    
-    return new Date(str);
-}
+        function parseSafeDate(dateStr) {
+            if (!dateStr) return new Date();
+            let str = String(dateStr).trim();
+            if (str.includes('.')) {
+                let parts = str.split('.');
+                return new Date(`${parts[2]}-${parts[1]}-${parts[0]}T00:00:00`);
+            }
+            if (str.includes('T')) str = str.split('T')[0];
+            return new Date(str + "T00:00:00");
+        }
 
         function showToast(message) {
             const container = document.getElementById('toast-container');
@@ -2764,13 +2750,14 @@ function parseSafeDate(dateStr) {
                                 padRight = (cellWidth * 0.85) + 8;
                             }
                             if (exHasEarly) {
-    // Прибираємо зсув blockLeft та blockWidth, щоб не перекривати попередній день (15 число).
-    // Індикатор малюємо просто всередині поточного блоку на лівому краї.
-    extensionsHtml += `<div class="time-extension early" style="width: 25px;" 
-        onmouseenter="event.stopPropagation(); bosoHover(this, '${b.row}', 'early')" 
-        onmouseleave="event.stopPropagation(); if(event.relatedTarget && this.parentElement.contains(event.relatedTarget)) bosoHover(this.parentElement, '${b.row}', 'main'); else bosoLeave();">${iconClock}</div>`;
-    padLeft = 33; // Робимо відступ для тексту: 25px іконка + 8px відступ
-}
+                                blockLeft -= (cellWidth * 0.85);
+                                blockWidth += (cellWidth * 0.85);
+                                
+                                extensionsHtml += `<div class="time-extension early" style="width: ${cellWidth * 0.85}px;" 
+                                    onmouseenter="event.stopPropagation(); bosoHover(this, '${b.row}', 'early')" 
+                                    onmouseleave="event.stopPropagation(); if(event.relatedTarget && this.parentElement.contains(event.relatedTarget)) bosoHover(this.parentElement, '${b.row}', 'main'); else bosoLeave();">${iconClock}</div>`;
+                                padLeft = (cellWidth * 0.85) + 8;
+                            }
 
                             // Захист від вильоту за межі екрану
                             if (offsetDays < 0) { blockWidth = (durationDays + offsetDays) * cellWidth; blockLeft = 0; padLeft = 8; extensionsHtml = extensionsHtml.replace(/early/g, 'early" style="display:none;"'); }
@@ -2994,82 +2981,61 @@ function getDayPrice(room, dateObj) {
     let safeIn = checkInStr.includes('.') ? checkInStr.split('.').reverse().join('-') : checkInStr;
     let safeOut = checkOutStr.includes('.') ? checkOutStr.split('.').reverse().join('-') : checkOutStr;
 
-    // Використовуємо безпечний парсинг для поточних інпутів
-    const d1 = parseSafeDate(checkInStr);
-    const d2 = parseSafeDate(checkOutStr);
+    const d1 = new Date(safeIn);
+    const d2 = new Date(safeOut);
     let nights = Math.round((d2 - d1) / (1000 * 60 * 60 * 24));
     if (nights < 1 || isNaN(nights)) nights = 1;
 
     const room = roomsList.find(r => r.name === roomName);
     if (!room) { cont.innerHTML = ''; return; }
-
-    // 🟢 АВТО-КОРЕКЦІЯ ГОСТЕЙ: не даємо перевищити ліміт при зміні номера
-    let maxCap = room.maxCapacity || room.capacity || 10;
-    if (guests > maxCap) {
-        guests = maxCap;
-        document.getElementById('adminGuests').value = maxCap;
-        showToast(`Кількість гостей зменшено до максимуму (${maxCap})`);
-    }
-
-    // --- 1. ПЕРЕВІРКА НА ОВЕРБУКІНГ ---
+            // 🟢 АВТО-КОРЕКЦІЯ ГОСТЕЙ: не даємо перевищити ліміт при зміні номера
+let maxCap = room.maxCapacity || room.capacity || 10;
+if (guests > maxCap) {
+    guests = maxCap; // Оновлюємо змінну для математики
+    document.getElementById('adminGuests').value = maxCap; // Змінюємо цифру в інтерфейсі
+    showToast(`Кількість гостей зменшено до максимуму (${maxCap})`);
+}
+    // --- 1. ПЕРЕВІРКА НА ОВЕРБУКІНГ (РОЗУМНА З ГНУЧКИМ ГРАФІКОМ) ---
     let isOverlap = false;
     let overlapReason = "";
 
-    let currRoomObj = roomsList.find(r => r.name === roomName);
-
-    // Змінні для гнучкого графіка виносимо СЮДИ (до циклу)
-    let earlyCard = document.getElementById('adminCardEarly');
-    let lateCard = document.getElementById('adminCardLate');
-    let currentHasEarly = !!selectedEarlyTime || (earlyCard && earlyCard.classList.contains('active'));
-    let currentHasLate = !!selectedLateTime || (lateCard && lateCard.classList.contains('active'));
-
     for (let b of allBookings) {
-        if (editingRowNumber && b.row == editingRowNumber) continue; 
-        if (String(b.status).toLowerCase().includes('скас')) continue; 
+        if (editingRowNumber && b.row == editingRowNumber) continue; // Не порівнюємо з собою ж
+        if (String(b.status).toLowerCase().includes('скас')) continue; // Скасовані ігноруємо
 
-        let exCottage = String(b.cottage || '').toLowerCase().replace(/\s+/g, '');
-        let currName = currRoomObj ? String(currRoomObj.name).toLowerCase().replace(/\s+/g, '') : String(roomName).toLowerCase().replace(/\s+/g, '');
-        let currShort = (currRoomObj && currRoomObj.short) ? String(currRoomObj.short).toLowerCase().replace(/\s+/g, '') : '';
-        
-        let isSameRoom = false;
-        
-        if (currRoomObj) {
-            if (exCottage.includes(currName) || currName.includes(exCottage) || (currShort && (exCottage.includes(currShort) || currShort.includes(exCottage)))) {
-                isSameRoom = true;
-            }
-            if (currRoomObj.id === 3 && exCottage.includes("люкс")) isSameRoom = true;
-            if (currRoomObj.id === 2 && (exCottage.includes("сімейний") || exCottage.includes("femily") || exCottage.includes("family"))) isSameRoom = true;
-            if (currRoomObj.id === 1 && (exCottage.includes("двомісний") || exCottage.includes("номер1"))) isSameRoom = true;
-        } else {
-            if (exCottage === currName) isSameRoom = true;
-        }
-
-        if (isSameRoom) {
-            let exIn = parseSafeDate(b.checkIn); exIn.setHours(0,0,0,0);
-            let exOut = parseSafeDate(b.checkOut); exOut.setHours(0,0,0,0);
+        if (b.cottage === roomName) {
+            let exIn = new Date(b.checkIn); exIn.setHours(0,0,0,0);
+            let exOut = new Date(b.checkOut); exOut.setHours(0,0,0,0);
             let currentIn = new Date(d1); currentIn.setHours(0,0,0,0);
             let currentOut = new Date(d2); currentOut.setHours(0,0,0,0);
 
+            // --- Зчитуємо графік існуючої броні ---
             let exComment = b.comment ? String(b.comment) : "";
-            let exHasEarly = exComment.includes('Ранній заїзд') || Number(b.earlyFee) > 0;
-            let exHasLate = exComment.includes('Пізній виїзд') || Number(b.lateFee) > 0;
+            let exHasEarly = exComment.includes('Ранній заїзд');
+            let exHasLate = exComment.includes('Пізній виїзд');
             
+            // Автоматична перевірка на акцію вихідного дня для існуючої броні (Пт-Нд)
             let exNights = Math.round((exOut - exIn) / (1000 * 60 * 60 * 24));
             if (exNights === 2 && exIn.getDay() === 5 && exOut.getDay() === 0) {
                 exHasLate = true;
             }
+
+            // --- Зчитуємо графік поточної (нової) броні ---
+            let currentHasEarly = !!selectedEarlyTime;
+            let currentHasLate = !!selectedLateTime;
+            
             if (nights === 2 && currentIn.getDay() === 5 && currentOut.getDay() === 0) {
-                currentHasLate = true; 
+                currentHasLate = true; // Нова бронь теж підпадає під акцію
             }
 
-            // Стандартне перекриття
+            // 1. Стандартний жорсткий перетин дат
             if (currentIn < exOut && currentOut > exIn) {
                 isOverlap = true;
                 overlapReason = "Ці дати вже повністю зайняті іншим гостем.";
                 break;
             }
             
-            // Стик в стик (Нова бронь заїжджає, стара виїжджає)
+            // 2. Стик в стик: Заїзд нової броні в день виїзду старої
             if (currentIn.getTime() === exOut.getTime()) {
                 if (exHasLate) {
                     isOverlap = true;
@@ -3083,7 +3049,7 @@ function getDayPrice(room, dateObj) {
                 }
             }
             
-            // Стик в стик (Стара бронь заїжджає, нова виїжджає)
+            // 3. Стик в стик: Виїзд нової броні в день заїзду старої
             if (currentOut.getTime() === exIn.getTime()) {
                 if (currentHasLate) {
                     isOverlap = true;
@@ -3120,6 +3086,7 @@ function getDayPrice(room, dateObj) {
         submitBtn.style.opacity = '1';
         submitBtn.style.cursor = 'pointer';
     }
+    // --- КІНЕЦЬ ПЕРЕВІРКИ ---
 
     // === 1. СИСТЕМНІ БАЗОВІ РОЗРАХУНКИ ===
     let basePriceTotal = 0;
@@ -3150,9 +3117,8 @@ function getDayPrice(room, dateObj) {
     let early50 = Math.round(earlyDayPrice * 0.5);
     let late50 = Math.round(lateDayPrice * 0.5);
 
-    // ПРАВИЛЬНЕ МІСЦЕ ДЛЯ РОЗРАХУНКУ FEE (тут воно має бути!)
-    if (currentHasEarly) earlyFee = early50;
-    if (currentHasLate && !isPromoLateOut) lateFee = late50;
+    if (selectedEarlyTime) earlyFee = early50;
+    if (selectedLateTime && !isPromoLateOut) lateFee = late50;
 
     // === 2. 🟢 МАГІЯ: ЗБЕРЕЖЕННЯ РУЧНИХ ПРАВОК АДМІНА ===
     const getVal = (id) => {
@@ -3841,33 +3807,30 @@ document.getElementById('adminGuests').addEventListener('change', updatePricePre
                 toggleUBD('Ні');
             }
 
-                // Шукаємо Ранній заїзд (з урахуванням, що час може бути не вказаний)
-let earlyRegex = /🕒 Ранній заїзд(?:(.*?)(\d{2}:\d{2}))?(\s*\|\s*)?/;
-let matchEarly = textComment.match(earlyRegex);
-if (matchEarly) {
-    selectedEarlyTime = matchEarly[2] || null;
-    document.getElementById('adminCardEarly').classList.add('active');
-    if (selectedEarlyTime) {
-        document.querySelectorAll('#adminCardEarly .t-chip').forEach(c => {
-            if (c.innerText === selectedEarlyTime) c.classList.add('selected');
-        });
-    }
-    textComment = textComment.replace(earlyRegex, '').trim();
-}
-
-// Шукаємо Пізній виїзд
-let lateRegex = /🕒 Пізній виїзд(?:(.*?)(\d{2}:\d{2}))?(\s*\|\s*)?/;
-let matchLate = textComment.match(lateRegex);
-if (matchLate) {
-    selectedLateTime = matchLate[2] || null;
-    document.getElementById('adminCardLate').classList.add('active');
-    if (selectedLateTime) {
-        document.querySelectorAll('#adminCardLate .t-chip').forEach(c => {
-            if (c.innerText === selectedLateTime) c.classList.add('selected');
-        });
-    }
-    textComment = textComment.replace(lateRegex, '').trim();
-}
+                // Шукаємо Ранній заїзд
+            let earlyRegex = /🕒 Ранній заїзд: з (\d{2}:\d{2})(\s*\|\s*)?/;
+            let matchEarly = textComment.match(earlyRegex);
+            if (matchEarly) {
+                selectedEarlyTime = matchEarly[1];
+                document.getElementById('adminCardEarly').classList.add('active');
+                // Фарбуємо потрібний чіп
+                document.querySelectorAll('#adminCardEarly .t-chip').forEach(c => {
+                    if (c.innerText === selectedEarlyTime) c.classList.add('selected');
+                });
+                textComment = textComment.replace(earlyRegex, '').trim();
+            }
+            
+            // Шукаємо Пізній виїзд
+            let lateRegex = /🕒 Пізній виїзд: до (\d{2}:\d{2})(\s*\|\s*)?/;
+            let matchLate = textComment.match(lateRegex);
+            if (matchLate) {
+                selectedLateTime = matchLate[1];
+                document.getElementById('adminCardLate').classList.add('active');
+                document.querySelectorAll('#adminCardLate .t-chip').forEach(c => {
+                    if (c.innerText === selectedLateTime) c.classList.add('selected');
+                });
+                textComment = textComment.replace(lateRegex, '').trim();
+            }
 
             // 4. Фінальна чистка (прибираємо зайві "Коментар гостя:" та палички "|")
             textComment = textComment.replace(/^Коментар гостя:\s*/, '')
@@ -3935,18 +3898,11 @@ if (matchLate) {
         }
 
        document.getElementById('adminBookingForm').addEventListener('submit', async function(e) {
-    e.preventDefault(); 
-    const btn = document.getElementById('adminSubmitBtn'); 
-    
-    // 🟢 АБСОЛЮТНИЙ ЗАХИСТ ВІД ВІДПРАВКИ (Блокує навіть натискання Enter)
-    if (btn.disabled) {
-        showToast("❌ Виправте помилки перед збереженням (Овербукінг)!");
-        return;
-    }
-
-    const originalText = btn.innerText; 
-    btn.innerText = "Збереження..."; 
-    btn.disabled = true;
+            e.preventDefault(); 
+            const btn = document.getElementById('adminSubmitBtn'); 
+            const originalText = btn.innerText; 
+            btn.innerText = "Збереження..."; 
+            btn.disabled = true;
             
             // 🟢 ФУНКЦІЯ ДЛЯ ПРАВИЛЬНОГО ЧИТАННЯ ЦИФР З СПАНІВ ТА ІНПУТІВ
             const getVal = (id) => {
@@ -3964,14 +3920,8 @@ if (matchLate) {
             if (dayGuests > 0) sysComment.push(`👥 Денні гості: ${dayGuests}`);
             if (document.getElementById('adminVat').value === 'Так') sysComment.push(`♨️ Чан: Так`);
             if (document.getElementById('adminUBD').value === 'Так') sysComment.push(`🇺🇦 УБД: Так`);
-            
-            // --- ОСЬ НОВИЙ КОД ДЛЯ ГНУЧКОГО ГРАФІКУ ---
-            let earlyCardActive = document.getElementById('adminCardEarly') && document.getElementById('adminCardEarly').classList.contains('active');
-            let lateCardActive = document.getElementById('adminCardLate') && document.getElementById('adminCardLate').classList.contains('active');
-
-            if (earlyCardActive) sysComment.push(selectedEarlyTime ? `🕒 Ранній заїзд: з ${selectedEarlyTime}` : `🕒 Ранній заїзд`);
-            if (lateCardActive) sysComment.push(selectedLateTime ? `🕒 Пізній виїзд: до ${selectedLateTime}` : `🕒 Пізній виїзд`);
-            // ------------------------------------------
+            if (typeof selectedEarlyTime !== 'undefined' && selectedEarlyTime) sysComment.push(`🕒 Ранній заїзд: з ${selectedEarlyTime}`);
+            if (typeof selectedLateTime !== 'undefined' && selectedLateTime) sysComment.push(`🕒 Пізній виїзд: до ${selectedLateTime}`);
 
             if (sysComment.length > 0) { 
                 rawComment = sysComment.join(' | ') + (rawComment ? '\n\nКоментар гостя: ' + rawComment : '');
