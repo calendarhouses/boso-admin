@@ -3017,6 +3017,12 @@ function getDayPrice(room, dateObj) {
 
     let currRoomObj = roomsList.find(r => r.name === roomName);
 
+    // Змінні для гнучкого графіка виносимо СЮДИ (до циклу)
+    let earlyCard = document.getElementById('adminCardEarly');
+    let lateCard = document.getElementById('adminCardLate');
+    let currentHasEarly = !!selectedEarlyTime || (earlyCard && earlyCard.classList.contains('active'));
+    let currentHasLate = !!selectedLateTime || (lateCard && lateCard.classList.contains('active'));
+
     for (let b of allBookings) {
         if (editingRowNumber && b.row == editingRowNumber) continue; 
         if (String(b.status).toLowerCase().includes('скас')) continue; 
@@ -3039,13 +3045,11 @@ function getDayPrice(room, dateObj) {
         }
 
         if (isSameRoom) {
-            // Тепер усі дати гарантовано мають локальну північ
             let exIn = parseSafeDate(b.checkIn); exIn.setHours(0,0,0,0);
             let exOut = parseSafeDate(b.checkOut); exOut.setHours(0,0,0,0);
             let currentIn = new Date(d1); currentIn.setHours(0,0,0,0);
             let currentOut = new Date(d2); currentOut.setHours(0,0,0,0);
 
-            // --- Зчитуємо графік існуючої броні (додано жорстку перевірку по Fees) ---
             let exComment = b.comment ? String(b.comment) : "";
             let exHasEarly = exComment.includes('Ранній заїзд') || Number(b.earlyFee) > 0;
             let exHasLate = exComment.includes('Пізній виїзд') || Number(b.lateFee) > 0;
@@ -3054,14 +3058,6 @@ function getDayPrice(room, dateObj) {
             if (exNights === 2 && exIn.getDay() === 5 && exOut.getDay() === 0) {
                 exHasLate = true;
             }
-
-            let earlyCard = document.getElementById('adminCardEarly');
-let lateCard = document.getElementById('adminCardLate');
-
-// Перевіряємо не тільки чи обрано час, а й чи просто увімкнена сама картка послуги
-let currentHasEarly = !!selectedEarlyTime || (earlyCard && earlyCard.classList.contains('active'));
-let currentHasLate = !!selectedLateTime || (lateCard && lateCard.classList.contains('active'));
-            
             if (nights === 2 && currentIn.getDay() === 5 && currentOut.getDay() === 0) {
                 currentHasLate = true; 
             }
@@ -3080,8 +3076,7 @@ let currentHasLate = !!selectedLateTime || (lateCard && lateCard.classList.conta
                     overlapReason = "Попередній гість має <b>Пізній виїзд (чи акцію)</b>. Заселення в цей день неможливе.";
                     break;
                 }
-               if (currentHasEarly) earlyFee = early50;
-               if (currentHasLate && !isPromoLateOut) lateFee = late50;
+                if (currentHasEarly) {
                     isOverlap = true;
                     overlapReason = "Попередній гість ще не виїхав. Ваш <b>Ранній заїзд</b> неможливий.";
                     break;
@@ -3155,8 +3150,9 @@ let currentHasLate = !!selectedLateTime || (lateCard && lateCard.classList.conta
     let early50 = Math.round(earlyDayPrice * 0.5);
     let late50 = Math.round(lateDayPrice * 0.5);
 
-    if (selectedEarlyTime) earlyFee = early50;
-    if (selectedLateTime && !isPromoLateOut) lateFee = late50;
+    // ПРАВИЛЬНЕ МІСЦЕ ДЛЯ РОЗРАХУНКУ FEE (тут воно має бути!)
+    if (currentHasEarly) earlyFee = early50;
+    if (currentHasLate && !isPromoLateOut) lateFee = late50;
 
     // === 2. 🟢 МАГІЯ: ЗБЕРЕЖЕННЯ РУЧНИХ ПРАВОК АДМІНА ===
     const getVal = (id) => {
