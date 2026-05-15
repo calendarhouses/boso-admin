@@ -2749,8 +2749,9 @@ function saveInlineTransaction(type, category, idx) {
                             let exHasLate = exComment.includes('Пізній виїзд') || (durationDays === 2 && inDate.getDay() === 5 && outDate.getDay() === 0);
 
                             // ЗМІННІ ДЛЯ ПРЕМІУМ-ВІЗУАЛУ
-                            let blockLeft = offsetDays * cellWidth; 
-                            let blockWidth = durationDays * cellWidth; 
+                            // 🟢 ПРОСТО ВІДСТУПИ З ДВОХ СТОРІН: +2px зліва, і -4px загальної ширини (дає 2px справа)
+                            let blockLeft = (offsetDays * cellWidth) + 2; 
+                            let blockWidth = (durationDays * cellWidth) - 4; 
                             
                             let extensionsHtml = "";
                             let padLeft = 8;
@@ -2759,12 +2760,12 @@ function saveInlineTransaction(type, category, idx) {
                             const iconClock = `<svg width="12" height="12" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>`;
                             const iconGift = `<svg width="12" height="12" fill="none" stroke="currentColor" viewBox="0 0 24 24"><rect x="3" y="8" width="18" height="4" rx="1" stroke-width="2.5"></rect><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 8v13M19 12v7a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2v-7M7.5 8a2.5 2.5 0 0 1 0-5A4.8 8 0 0 1 12 8a4.8 8 0 0 1 4.5-5 2.5 2.5 0 0 1 0 5"></path></svg>`;
 
-                            // 🟢 ЗАВЖДИ МАЛЕНЬКІ ХВОСТИКИ (24px)
-                            let tailWidth = 24; 
+                            // 🟢 ХВОСТИКИ БІЛЬШЕ НЕ ЧІПАЄМО: 24px для коротких, 51px для довгих
+                            let tailWidth = (durationDays <= 2) ? 24 : (cellWidth * 0.85); 
 
-                            // 🟢 ПІЗНІЙ ВИЇЗД: забирає під себе весь день виїзду!
+                            // 🟢 ПІЗНІЙ ВИЇЗД: забирає всю клітинку (зберігаючи наші 2px зазору)
                             if (exHasLate) {
-                                blockWidth += cellWidth; // Додаємо рівно 60px (повну клітинку)
+                                blockWidth += cellWidth; 
                                 
                                 let isPromo = (durationDays === 2 && inDate.getDay() === 5 && outDate.getDay() === 0);
                                 let currentIcon = isPromo ? iconGift : iconClock;
@@ -2774,7 +2775,7 @@ function saveInlineTransaction(type, category, idx) {
                                 padRight = tailWidth + 6;
                             }
 
-                            // 🟢 РАННІЙ ЗАЇЗД: просто сидить на початку дня (без зсуву вліво)
+                            // 🟢 РАННІЙ ЗАЇЗД
                             if (exHasEarly) {
                                 extensionsHtml += `<div class="time-extension early" style="width: ${tailWidth}px;" 
                                     onmouseenter="event.stopPropagation(); bosoHover(this, '${b.row}', 'early')" 
@@ -2783,16 +2784,8 @@ function saveInlineTransaction(type, category, idx) {
                             }
 
                             // 🟢 ЛОГІКА "ПРУЖИНКИ" ТА ПРИХОВУВАННЯ ТЕКСТУ
-                            let isMicro = false;
-                            let hideText = false;
-
-                            // Якщо ширина картки всього 1 клітинка (1 ніч без пізнього виїзду)
-                            if (blockWidth === cellWidth) {
-                                isMicro = true; // Вмикаємо розширення при наведенні
-                                if (exHasEarly) {
-                                    hideText = true; // Місця для тексту тупо немає, ховаємо
-                                }
-                            }
+                            let isMicro = (durationDays <= 2); 
+                            let hideText = (durationDays === 1 && exHasEarly && !exHasLate); 
 
                             // Захист від вильоту за межі екрану
                             if (blockLeft < 0) { 
