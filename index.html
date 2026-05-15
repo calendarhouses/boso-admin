@@ -5078,114 +5078,140 @@ function jumpToFinanceAndEdit(id) {
         window.addEventListener('DOMContentLoaded', autoScaleDashboard);
         window.addEventListener('resize', autoScaleDashboard);
 
-       // 🚀 ГЕНЕРАТОР ПРЕМІУМ-КАРТОК (EDGE-TO-EDGE БЕЗ СІРИХ ПОЛОС)
-        async function capturePremiumCard(b) {
-            const tempDiv = document.createElement('div');
-            // 🟢 Відриваємо блок від екрану телефону, щоб фон не змішувався
-            tempDiv.style.position = 'absolute';
-            tempDiv.style.top = '0'; 
-            tempDiv.style.left = '-9999px'; 
-            tempDiv.style.width = '600px'; // Жорстка ширина чека
-            tempDiv.style.background = '#FFFFFF'; // Тільки чистий білий
-            tempDiv.style.padding = '40px'; // Відступи тільки всередині
-            tempDiv.style.margin = '0'; // Ніяких зовнішніх полів
-            tempDiv.style.fontFamily = "'Inter', sans-serif";
-            tempDiv.style.boxSizing = 'border-box';
+       // 🚀 ОНОВЛЕНИЙ ГЕНЕРАТОР ПРЕМІУМ-КАРТОК (Ідеально для Telegram)
+async function capturePremiumCard(b) {
+    const container = document.createElement('div');
+    // Фіксуємо блок для html2canvas, ховаємо його за екраном
+    container.style.position = 'fixed';
+    container.style.top = '0'; 
+    container.style.left = '-9999px'; 
+    container.style.width = '720px'; // Робимо ширшим для преміального вигляду
+    // 🟢 Преміум фон підкладки (Градієнт BOSO: від темно-оливкового до вугільного)
+    container.style.background = 'linear-gradient(135deg, #2C351B 0%, #1A1F10 100%)'; 
+    container.style.padding = '60px'; // Великі відступи навколо картки, щоб було видно градієнт
+    container.style.boxSizing = 'border-box';
+    container.style.fontFamily = "'Inter', sans-serif";
 
-            // Збільшені іконки для широкого формату
-            const iconCottage = `<svg width="22" height="22" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="margin-right: 12px; color: #9CA3AF;"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path></svg>`;
-            const iconCalendar = `<svg width="22" height="22" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="margin-right: 12px; color: #9CA3AF;"><rect x="3" y="4" width="18" height="18" rx="2" ry="2" stroke-width="2"></rect><line x1="16" y1="2" x2="16" y2="6" stroke-width="2"></line><line x1="8" y1="2" x2="8" y2="6" stroke-width="2"></line><line x1="3" y1="10" x2="21" y2="10" stroke-width="2"></line></svg>`;
-            const iconTotal = `<svg width="22" height="22" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="margin-right: 12px; color: #9CA3AF;"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>`;
+    // 🟢 Сама картка бронювання (чек)
+    const card = document.createElement('div');
+    card.style.background = '#FFFFFF';
+    card.style.borderRadius = '24px'; // Сучасне заокруглення
+    card.style.padding = '45px';
+    card.style.boxShadow = '0 25px 50px -12px rgba(0,0,0,0.5)'; // Глибока 3D-тінь
+    card.style.position = 'relative';
+    card.style.overflow = 'hidden';
 
-            const inDate = new Date(b.checkIn).toLocaleDateString('uk-UA', { day: 'numeric', month: 'short' });
-            const outDate = new Date(b.checkOut).toLocaleDateString('uk-UA', { day: 'numeric', month: 'short' });
+    // Верхня акцентна лінія
+    const topAccent = document.createElement('div');
+    topAccent.style.position = 'absolute';
+    topAccent.style.top = '0';
+    topAccent.style.left = '0';
+    topAccent.style.width = '100%';
+    topAccent.style.height = '8px';
+    topAccent.style.background = 'linear-gradient(90deg, #556B2F 0%, #8FBC8F 100%)';
+    card.appendChild(topAccent);
+
+    // Іконки
+    const iconCottage = `<svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="margin-right: 12px; color: #9CA3AF;"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path></svg>`;
+    const iconCalendar = `<svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="margin-right: 12px; color: #9CA3AF;"><rect x="3" y="4" width="18" height="18" rx="2" ry="2" stroke-width="2"></rect><line x1="16" y1="2" x2="16" y2="6" stroke-width="2"></line><line x1="8" y1="2" x2="8" y2="6" stroke-width="2"></line><line x1="3" y1="10" x2="21" y2="10" stroke-width="2"></line></svg>`;
+    const iconTotal = `<svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="margin-right: 12px; color: #9CA3AF;"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>`;
+
+    // Дати
+    const inDate = new Date(b.checkIn).toLocaleDateString('uk-UA', { day: 'numeric', month: 'long' });
+    const outDate = new Date(b.checkOut).toLocaleDateString('uk-UA', { day: 'numeric', month: 'long' });
+    
+    let total = Number(b.totalPrice) || 0;
+    let paid = Number(b.paidAmount) || 0;
+    let balance = total - paid;
+    
+    // Статуси
+    let finText = ""; let finColor = ""; let finBg = "";
+    let statusClass = String(b.status).toLowerCase();
+
+    if (statusClass.includes('скас')) { finText = "СКАСОВАНО"; finBg = "#F3F4F6"; finColor = "#9CA3AF"; } 
+    else if (total === 0) { finText = "БЕЗ ЦІНИ"; finBg = "#F3F4F6"; finColor = "#4B5563"; } 
+    else if (paid === 0) { finText = `ОЧІКУЄ АВАНС: ${Math.round(total / 2)} ₴`; finBg = "#FEF3C7"; finColor = "#B45309"; } 
+    else if (balance <= 0) { finText = `ОПЛАЧЕНО: ${total} ₴`; finBg = "#D1FAE5"; finColor = "#059669"; } 
+    else { finText = `ЗАЛИШОК: ${balance} ₴`; finBg = "#FEE2E2"; finColor = "#DC2626"; }
+
+    // Деталізація послуг
+    let extraHtml = '';
+    if (b.extraGuestFee > 0) extraHtml += `<div style="display:flex; justify-content:space-between; margin-bottom: 12px;"><span>Дод. гості:</span> <strong>+${b.extraGuestFee} ₴</strong></div>`;
+    if (b.petFee > 0) extraHtml += `<div style="display:flex; justify-content:space-between; margin-bottom: 12px;"><span>Тварини:</span> <strong>+${b.petFee} ₴</strong></div>`;
+    if (b.dayGuestFee > 0) extraHtml += `<div style="display:flex; justify-content:space-between; margin-bottom: 12px;"><span>Денні гості:</span> <strong>+${b.dayGuestFee} ₴</strong></div>`;
+    if (b.earlyFee > 0) extraHtml += `<div style="display:flex; justify-content:space-between; margin-bottom: 12px;"><span>Ранній заїзд:</span> <strong>+${b.earlyFee} ₴</strong></div>`;
+    if (b.lateFee > 0) extraHtml += `<div style="display:flex; justify-content:space-between; margin-bottom: 12px;"><span>Пізній виїзд:</span> <strong>+${b.lateFee} ₴</strong></div>`;
+    if (b.discountAmount > 0) extraHtml += `<div style="display:flex; justify-content:space-between; margin-bottom: 12px; color: #DC2626;"><span>Знижка:</span> <strong>-${b.discountAmount} ₴</strong></div>`;
+
+    // Коментар гостя
+    let commentHtml = '';
+    if (b.comment && b.comment.trim() !== '') {
+        commentHtml = `
+            <div style="margin-top: 25px; padding: 20px; background: #F9FAFB; border-left: 6px solid #556B2F; border-radius: 8px; font-size: 16px; color: #4B5563;">
+                <div style="font-size: 12px; font-weight: 800; text-transform: uppercase; color: #9CA3AF; margin-bottom: 10px; letter-spacing: 1px;">Деталі бронювання</div>
+                <div style="line-height: 1.5; font-weight: 500;">${b.comment.replace(/\n/g, '<br>')}</div>
+            </div>
+        `;
+    }
+
+    const contentDiv = document.createElement('div');
+    contentDiv.innerHTML = `
+        <div style="display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 2px dashed #E5E7EB; padding-bottom: 25px; margin-bottom: 25px;">
+            <div style="display: flex; flex-direction: column; gap: 8px;">
+                <span style="font-weight: 900; font-size: 30px; color: #111827; letter-spacing: -0.5px;">${b.name || "Гість"}</span>
+                <span style="font-size: 20px; color: #6B7280; font-weight: 600;">${b.phone || ""}</span>
+            </div>
+            <div style="text-align: right; display: flex; flex-direction: column; align-items: flex-end; gap: 14px;">
+                <div style="font-size: 26px; font-weight: 900; color: #556B2F; letter-spacing: 2px; line-height: 1;">BOSO</div>
+                <span style="font-size: 16px; color: #556B2F; font-weight: 800; background: #F0FDF4; border: 1.5px solid #DCF1D3; padding: 8px 16px; border-radius: 12px;">${b.guests} ГOСТЕЙ</span>
+            </div>
+        </div>
+        
+        <div style="font-size: 18px; color: #4B5563; display: flex; flex-direction: column; gap: 20px;">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+                <span style="color: #6B7280; font-weight: 600; display:flex; align-items:center;">${iconCottage} Котедж:</span> 
+                <span style="font-weight: 800; color: #111827; font-size: 22px;">${b.cottage}</span>
+            </div>
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+                <span style="color: #6B7280; font-weight: 600; display:flex; align-items:center;">${iconCalendar} Дати:</span> 
+                <span style="font-weight: 800; color: #556B2F; font-size: 20px;">${inDate} — ${outDate}</span>
+            </div>
             
-            let total = Number(b.totalPrice) || 0;
-            let paid = Number(b.paidAmount) || 0;
-            let balance = total - paid;
-            
-            let finText = ""; let finColor = ""; let finBg = "";
-            let statusClass = String(b.status).toLowerCase();
+            ${extraHtml ? `<div style="margin-top: 15px; padding: 25px; background: #FAFAFA; border-radius: 16px; border: 1px solid #F3F4F6; font-size: 16px;">${extraHtml}</div>` : ''}
 
-            if (statusClass.includes('скас')) { finText = "СКАСОВАНО"; finBg = "#F3F4F6"; finColor = "#9CA3AF"; } 
-            else if (total === 0) { finText = "БЕЗ ЦІНИ"; finBg = "#F3F4F6"; finColor = "#4B5563"; } 
-            else if (paid === 0) { finText = `ОЧІКУЄ АВАНС (${Math.round(total / 2)} ₴)`; finBg = "#FEF3C7"; finColor = "#B45309"; } 
-            else if (balance <= 0) { finText = `ОПЛАЧЕНО (${total} ₴)`; finBg = "#D1FAE5"; finColor = "#059669"; } 
-            else { finText = `ЗАЛИШОК: ${balance} ₴`; finBg = "#FEE2E2"; finColor = "#DC2626"; }
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 15px; padding-top: 25px; border-top: 2px dashed #E5E7EB;">
+                <span style="color: #111827; font-weight: 800; font-size: 24px; display:flex; align-items:center;">${iconTotal} Підсумок:</span> 
+                <span style="font-weight: 900; font-size: 34px; color: #111827;">${total} ₴</span>
+            </div>
+        </div>
 
-            let extraHtml = '';
-            if (b.extraGuestFee > 0) extraHtml += `<div style="display:flex; justify-content:space-between; margin-bottom: 12px;"><span>Дод. гості:</span> <strong>+${b.extraGuestFee} ₴</strong></div>`;
-            if (b.petFee > 0) extraHtml += `<div style="display:flex; justify-content:space-between; margin-bottom: 12px;"><span>Тварини:</span> <strong>+${b.petFee} ₴</strong></div>`;
-            if (b.dayGuestFee > 0) extraHtml += `<div style="display:flex; justify-content:space-between; margin-bottom: 12px;"><span>Денні гості:</span> <strong>+${b.dayGuestFee} ₴</strong></div>`;
-            if (b.earlyFee > 0) extraHtml += `<div style="display:flex; justify-content:space-between; margin-bottom: 12px;"><span>Ранній заїзд:</span> <strong>+${b.earlyFee} ₴</strong></div>`;
-            if (b.lateFee > 0) extraHtml += `<div style="display:flex; justify-content:space-between; margin-bottom: 12px;"><span>Пізній виїзд:</span> <strong>+${b.lateFee} ₴</strong></div>`;
-            if (b.discountAmount > 0) extraHtml += `<div style="display:flex; justify-content:space-between; margin-bottom: 12px; color: #DC2626;"><span>Знижка:</span> <strong>-${b.discountAmount} ₴</strong></div>`;
+        ${commentHtml}
 
-            let commentHtml = '';
-            if (b.comment && b.comment.trim() !== '') {
-                commentHtml = `
-                    <div style="margin-top: 25px; padding: 20px; background: #F9FAFB; border-left: 6px solid #556B2F; border-radius: 8px; font-size: 16px; color: #4B5563;">
-                        <div style="font-size: 12px; font-weight: 800; text-transform: uppercase; color: #9CA3AF; margin-bottom: 10px; letter-spacing: 1px;">Деталі бронювання</div>
-                        <div style="line-height: 1.5; font-weight: 500;">${b.comment.replace(/\n/g, '<br>')}</div>
-                    </div>
-                `;
-            }
-
-            tempDiv.innerHTML = `
-                <div style="display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 2px solid #F3F4F6; padding-bottom: 25px; margin-bottom: 25px;">
-                    <div style="display: flex; flex-direction: column; gap: 8px;">
-                        <span style="font-weight: 900; font-size: 26px; color: #111827; letter-spacing: -0.5px;">${b.name || "Гість"}</span>
-                        <span style="font-size: 18px; color: #6B7280; font-weight: 600;">${b.phone || ""}</span>
-                    </div>
-                    <span style="font-size: 16px; color: #556B2F; font-weight: 800; background: #F0FDF4; border: 1.5px solid #DCF1D3; padding: 10px 20px; border-radius: 12px;">${b.guests} ГOСТЕЙ</span>
-                </div>
-                
-                <div style="font-size: 18px; color: #4B5563; display: flex; flex-direction: column; gap: 18px;">
-                    <div style="display: flex; justify-content: space-between; align-items: center;">
-                        <span style="color: #6B7280; font-weight: 600; display:flex; align-items:center;">${iconCottage} Котедж:</span> 
-                        <span style="font-weight: 800; color: #111827; font-size: 20px;">${b.cottage}</span>
-                    </div>
-                    <div style="display: flex; justify-content: space-between; align-items: center;">
-                        <span style="color: #6B7280; font-weight: 600; display:flex; align-items:center;">${iconCalendar} Дати проживання:</span> 
-                        <span style="font-weight: 800; color: #556B2F; font-size: 20px;">${inDate} — ${outDate}</span>
-                    </div>
-                    
-                    ${extraHtml ? `<div style="margin-top: 10px; padding: 20px; background: #FAFAFA; border-radius: 12px; border: 1px dashed #E5E7EB; font-size: 16px;">${extraHtml}</div>` : ''}
-
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 10px; padding: 15px 0;">
-                        <span style="color: #111827; font-weight: 800; font-size: 22px; display:flex; align-items:center;">${iconTotal} Підсумок:</span> 
-                        <span style="font-weight: 900; font-size: 30px; color: #111827;">${total} ₴</span>
-                    </div>
-                </div>
-
-                ${commentHtml}
-
-                <div style="margin-top: 30px; display: flex; align-items: center; justify-content: center; padding: 20px; border-radius: 16px; font-size: 16px; font-weight: 900; text-transform: uppercase; letter-spacing: 1.5px; background: ${finBg}; color: ${finColor}; border: 2px solid rgba(0,0,0,0.05);">
-                    ${finText}
-                </div>
-            `;
-            document.body.appendChild(tempDiv);
-            
-            try {
-                // 🟢 ЖОРСТКІ ПАРАМЕТРИ: Змушуємо ігнорувати екран телефону!
-                const canvas = await html2canvas(tempDiv, { 
-                    width: 600, // Фіксована ширина макету
-                    height: tempDiv.offsetHeight, // Повна висота макету
-                    windowWidth: 600, // Обманюємо систему, ніби екран великий
-                    scale: 2, // Подвійна якість для Телеграму (вийде 1200px)
-                    backgroundColor: '#ffffff',
-                    useCORS: true,
-                    x: 0,
-                    y: 0
-                });
-                document.body.removeChild(tempDiv);
-                return canvas.toDataURL("image/jpeg", 0.85); // JPEG 85% - ідеальний баланс
-            } catch (err) {
-                console.error("Помилка скріншоту:", err);
-                if (document.body.contains(tempDiv)) document.body.removeChild(tempDiv);
-                return null;
-            }
-        }
+        <div style="margin-top: 35px; display: flex; align-items: center; justify-content: center; padding: 24px; border-radius: 16px; font-size: 18px; font-weight: 900; text-transform: uppercase; letter-spacing: 1.5px; background: ${finBg}; color: ${finColor}; border: 2px solid rgba(0,0,0,0.05);">
+            ${finText}
+        </div>
+    `;
+    
+    card.appendChild(contentDiv);
+    container.appendChild(card);
+    document.body.appendChild(container);
+    
+    try {
+        const canvas = await html2canvas(container, { 
+            width: 720, 
+            height: container.offsetHeight, 
+            scale: 2, // 1440px ширина картинки для супер чіткості в TG
+            backgroundColor: null, 
+            useCORS: true 
+        });
+        document.body.removeChild(container);
+        return canvas.toDataURL("image/jpeg", 0.9);
+    } catch (err) {
+        console.error("Помилка скріншоту:", err);
+        if (document.body.contains(container)) document.body.removeChild(container);
+        return null;
+    }
+}
     </script>
 </body>
 </html>
