@@ -5078,16 +5078,16 @@ function jumpToFinanceAndEdit(id) {
         window.addEventListener('DOMContentLoaded', autoScaleDashboard);
         window.addEventListener('resize', autoScaleDashboard);
 
-        // 🚀 ГЕНЕРАТОР ПРЕМІУМ-КАРТОК (МАКСИМАЛЬНА ЯКІСТЬ + ВСІ ДЕТАЛІ)
+        // 🚀 ГЕНЕРАТОР ПРЕМІУМ-КАРТОК (НОВИЙ ДИЗАЙН + JPEG)
         async function capturePremiumCard(b) {
             const tempDiv = document.createElement('div');
             tempDiv.style.position = 'fixed';
             tempDiv.style.top = '-9999px'; 
             tempDiv.style.left = '0';
-            tempDiv.style.width = '320px'; // 🟢 Зробили картку ширшою для солідності
+            tempDiv.style.width = '320px'; // 🟢 Широка преміум картка
             tempDiv.style.background = '#FFFFFF';
             tempDiv.style.borderRadius = '16px';
-            tempDiv.style.padding = '24px'; // 🟢 Більше повітря навколо тексту
+            tempDiv.style.padding = '24px';
             tempDiv.style.fontFamily = "'Inter', sans-serif";
             tempDiv.style.boxSizing = 'border-box';
 
@@ -5107,7 +5107,6 @@ function jumpToFinanceAndEdit(id) {
             let finText = ""; let finColor = ""; let finBg = "";
             let statusClass = String(b.status).toLowerCase();
 
-            // Визначаємо статус
             if (statusClass.includes('скас')) { finText = "СКАСОВАНО"; finBg = "#F3F4F6"; finColor = "#9CA3AF"; } 
             else if (total === 0) { finText = "БЕЗ ЦІНИ"; finBg = "#F3F4F6"; finColor = "#4B5563"; } 
             else if (paid === 0) { finText = `ОЧІКУЄ АВАНС (${Math.round(total / 2)} ₴)`; finBg = "#FEF3C7"; finColor = "#B45309"; } 
@@ -5123,7 +5122,7 @@ function jumpToFinanceAndEdit(id) {
             if (b.lateFee > 0) extraHtml += `<div style="display:flex; justify-content:space-between; margin-bottom: 6px;"><span>Пізній виїзд:</span> <strong>+${b.lateFee} ₴</strong></div>`;
             if (b.discountAmount > 0) extraHtml += `<div style="display:flex; justify-content:space-between; margin-bottom: 6px; color: #DC2626;"><span>Знижка:</span> <strong>-${b.discountAmount} ₴</strong></div>`;
 
-            // 🟢 БЛОК КОМЕНТАРЯ
+            // 🟢 БЛОК КОМЕНТАРЯ (Якщо він є)
             let commentHtml = '';
             if (b.comment && b.comment.trim() !== '') {
                 commentHtml = `
@@ -5134,7 +5133,6 @@ function jumpToFinanceAndEdit(id) {
                 `;
             }
 
-            // Верстаємо саму картку
             tempDiv.innerHTML = `
                 <div style="display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 1px solid #F3F4F6; padding-bottom: 16px; margin-bottom: 16px;">
                     <div style="display: flex; flex-direction: column; gap: 4px;">
@@ -5171,17 +5169,18 @@ function jumpToFinanceAndEdit(id) {
             document.body.appendChild(tempDiv);
             
             try {
-                // 🟢 МАГІЯ ЯКОСТІ ТУТ:
-                // scale: 4 робить скріншот у 4 рази більшої роздільної здатності (ідеально для Retina)
-                // useCORS гарантує, що шрифти промалюються правильно
+                // 🟢 scale: 3 дає шикарну різкість, але важить адекватно
                 const canvas = await html2canvas(tempDiv, { 
-                    scale: 4, 
+                    scale: 3, 
                     backgroundColor: '#ffffff',
                     useCORS: true
                 });
                 document.body.removeChild(tempDiv);
-                return canvas.toDataURL("image/png", 1.0); // 1.0 - максимальна якість без стиснення
+                
+                // 🟢 Формат JPEG + 80% стиснення (легкий файл)
+                return canvas.toDataURL("image/jpeg", 0.8); 
             } catch (err) {
+                console.error("Помилка скріншоту:", err);
                 document.body.removeChild(tempDiv);
                 return null;
             }
