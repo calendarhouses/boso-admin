@@ -2995,33 +2995,31 @@ if (guests > maxCap) {
     document.getElementById('adminGuests').value = maxCap; // Змінюємо цифру в інтерфейсі
     showToast(`Кількість гостей зменшено до максимуму (${maxCap})`);
 }
-    // --- 1. ПЕРЕВІРКА НА ОВЕРБУКІНГ (РОЗУМНА З ГНУЧКИМ ГРАФІКОМ І РЕГІСТРОМ) ---
+    // --- 1. ПЕРЕВІРКА НА ОВЕРБУКІНГ (БЕЗ ПРОБІЛІВ) ---
     let isOverlap = false;
     let overlapReason = "";
 
-    // 🟢 Отримуємо об'єкт поточного обраного номеру для розумного порівняння
     let currRoomObj = roomsList.find(r => r.name === roomName);
 
     for (let b of allBookings) {
-        if (editingRowNumber && b.row == editingRowNumber) continue; // Не порівнюємо з собою ж
-        if (String(b.status).toLowerCase().includes('скас')) continue; // Скасовані ігноруємо
+        if (editingRowNumber && b.row == editingRowNumber) continue; 
+        if (String(b.status).toLowerCase().includes('скас')) continue; 
 
-        // 🟢 РОЗУМНА ПЕРЕВІРКА КОТЕДЖУ (незалежна від регістру та додаткових слів)
-        let exCottage = String(b.cottage || '').toLowerCase();
-        let currName = currRoomObj ? String(currRoomObj.name).toLowerCase() : String(roomName).toLowerCase();
-        let currShort = (currRoomObj && currRoomObj.short) ? String(currRoomObj.short).toLowerCase() : '';
+        // 🟢 Видаляємо всі пробіли і зводимо до нижнього регістру (Femily№2 === femily№2)
+        let exCottage = String(b.cottage || '').toLowerCase().replace(/\s+/g, '');
+        let currName = currRoomObj ? String(currRoomObj.name).toLowerCase().replace(/\s+/g, '') : String(roomName).toLowerCase().replace(/\s+/g, '');
+        let currShort = (currRoomObj && currRoomObj.short) ? String(currRoomObj.short).toLowerCase().replace(/\s+/g, '') : '';
         
         let isSameRoom = false;
         
         if (currRoomObj) {
-            if (exCottage.includes(currName) || (currShort && exCottage.includes(currShort))) {
+            if (exCottage.includes(currName) || currName.includes(exCottage) || (currShort && (exCottage.includes(currShort) || currShort.includes(exCottage)))) {
                 isSameRoom = true;
             }
-            // Зворотна сумісність для старих записів (у нижньому регістрі!)
             if (currRoomObj.id === 3 && exCottage.includes("люкс")) isSameRoom = true;
-            if (currRoomObj.id === 2 && (exCottage.includes("сімейний") || exCottage.includes("femily"))) isSameRoom = true;
+            if (currRoomObj.id === 2 && (exCottage.includes("сімейний") || exCottage.includes("femily") || exCottage.includes("family"))) isSameRoom = true;
+            if (currRoomObj.id === 1 && (exCottage.includes("двомісний") || exCottage.includes("номер1"))) isSameRoom = true;
         } else {
-            // Запасний варіант
             if (exCottage === currName) isSameRoom = true;
         }
 
@@ -3920,11 +3918,18 @@ document.getElementById('adminGuests').addEventListener('change', updatePricePre
         }
 
        document.getElementById('adminBookingForm').addEventListener('submit', async function(e) {
-            e.preventDefault(); 
-            const btn = document.getElementById('adminSubmitBtn'); 
-            const originalText = btn.innerText; 
-            btn.innerText = "Збереження..."; 
-            btn.disabled = true;
+    e.preventDefault(); 
+    const btn = document.getElementById('adminSubmitBtn'); 
+    
+    // 🟢 АБСОЛЮТНИЙ ЗАХИСТ ВІД ВІДПРАВКИ (Блокує навіть натискання Enter)
+    if (btn.disabled) {
+        showToast("❌ Виправте помилки перед збереженням (Овербукінг)!");
+        return;
+    }
+
+    const originalText = btn.innerText; 
+    btn.innerText = "Збереження..."; 
+    btn.disabled = true;
             
             // 🟢 ФУНКЦІЯ ДЛЯ ПРАВИЛЬНОГО ЧИТАННЯ ЦИФР З СПАНІВ ТА ІНПУТІВ
             const getVal = (id) => {
