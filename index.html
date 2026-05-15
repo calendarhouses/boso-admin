@@ -5127,9 +5127,8 @@ function jumpToFinanceAndEdit(id) {
         window.addEventListener('DOMContentLoaded', autoScaleDashboard);
         window.addEventListener('resize', autoScaleDashboard);
 
-     // 🚀 ПРЕМІУМ-КАРТКА (Ідеальний телефон + Кольорові іконки + Без BOSO + Оновлений коментар)
+    // 🚀 ПРЕМІУМ-КАРТКА (Додано Базову Вартість)
 async function capturePremiumCard(b) {
-    // 1. Зовнішній контейнер (Широкий фон)
     const container = document.createElement('div');
     container.style.position = 'fixed';
     container.style.top = '0'; 
@@ -5142,7 +5141,6 @@ async function capturePremiumCard(b) {
     container.style.display = 'flex'; 
     container.style.justifyContent = 'center';
 
-    // 2. Внутрішня картка (Білий чек)
     const card = document.createElement('div');
     card.style.width = '100%'; 
     card.style.background = '#FFFFFF';
@@ -5173,13 +5171,13 @@ async function capturePremiumCard(b) {
     const iconSum = `<svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="margin-right: 8px; color: #4B5563; flex-shrink: 0;"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"></path></svg>`;
     const iconPaid = `<svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="margin-right: 8px; color: #059669; flex-shrink: 0;"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>`;
 
-    // Форматування номера телефону (+380...)
+    // Форматування номера
     let displayPhone = String(b.phone || "").replace(/\D/g, '');
     if (displayPhone.length === 9) displayPhone = '380' + displayPhone;
     if (displayPhone.length === 10 && displayPhone.startsWith('0')) displayPhone = '38' + displayPhone;
     if (displayPhone) displayPhone = '+' + displayPhone;
 
-    // Граматика для гостей
+    // Граматика гостей
     let guestWord = "гостей";
     if (typeof getGuestWord === 'function') guestWord = getGuestWord(b.guests).toUpperCase();
 
@@ -5198,7 +5196,6 @@ async function capturePremiumCard(b) {
     let hasVat = rawComment.includes('♨️ Чан: Так');
     let hasUBD = rawComment.includes('🇺🇦 УБД: Так');
 
-    // Витягуємо точні дані для дужок
     let matchDay = rawComment.match(/👥 Денні гості[^:]*:\s*(\d+)/);
     let dayGuestsCount = matchDay ? matchDay[1] : 0;
 
@@ -5215,6 +5212,13 @@ async function capturePremiumCard(b) {
         extraGuestsCount = Math.max(0, parseInt(b.guests) - cap);
     }
 
+    // 🟢 Вираховуємо базову вартість, якщо вона раптом не передалася
+    let discAmt = Number(b.discountAmount) || 0;
+    let basePrice = Number(b.basePrice);
+    if (!basePrice && basePrice !== 0) {
+        basePrice = total + discAmt - ((Number(b.extraGuestFee)||0) + (Number(b.petFee)||0) + (Number(b.dayGuestFee)||0) + (Number(b.earlyFee)||0) + (Number(b.lateFee)||0));
+    }
+
     // Очищаємо коментар
     let cleanComment = rawComment.replace(/👥 Денні гості[^|]+(\|\s*)?/g, '')
                                  .replace(/♨️ Чан: Так\s*(\|\s*)?/g, '')
@@ -5226,11 +5230,14 @@ async function capturePremiumCard(b) {
                                  .replace(/\|\s*$/, '')
                                  .trim();
 
-    // Розділ послуг
+    // 🟢 Будуємо розділ послуг
     let extraHtml = '';
     const rowStyle = `display:flex; justify-content:space-between; align-items:center; margin-bottom: 12px; font-size: 15px; color: #4B5563;`;
     const labelStyle = `display:flex; align-items:center; gap: 8px; font-weight: 600;`;
     const valStyle = `font-weight: 800; color: #111827;`;
+
+    // ЗАВЖДИ виводимо базову вартість першою
+    extraHtml += `<div style="${rowStyle}"><span style="${labelStyle}">${iconCottage} Базова вартість:</span> <span style="${valStyle}">${basePrice} ₴</span></div>`;
 
     if (b.extraGuestFee > 0) {
         let label = extraGuestsCount > 0 ? `Дод. гості (${extraGuestsCount}):` : `Дод. гості:`;
@@ -5261,12 +5268,12 @@ async function capturePremiumCard(b) {
         extraHtml += `<div style="${rowStyle}; margin-top: 16px; padding-top: 12px; border-top: 1px dashed #E5E7EB; color: #DC2626;"><span style="${labelStyle}; color:#DC2626;">${iconDiscount} Знижка:</span> <span style="font-weight: 900;">-${b.discountAmount} ₴</span></div>`;
     }
 
-    // 🟢 Блок коментаря (Змінено заголовок на "Коментар")
+    // Блок коментаря
     let commentHtml = '';
     if (cleanComment !== '') {
         commentHtml = `
             <div style="margin-top: 20px; padding: 16px; background: #F9FAFB; border-left: 4px solid #556B2F; border-radius: 6px; font-size: 15px; color: #374151;">
-                <div style="font-size: 11px; font-weight: 800; text-transform: uppercase; color: #9CA3AF; margin-bottom: 8px; letter-spacing: 0.5px;">Коментар</div>
+                <div style="font-size: 11px; font-weight: 800; text-transform: uppercase; color: #9CA3AF; margin-bottom: 8px; letter-spacing: 0.5px;">Коментар гостя</div>
                 <div style="line-height: 1.4; font-weight: 500; font-style: italic;">"${cleanComment.replace(/\n/g, '<br>')}"</div>
             </div>
         `;
@@ -5282,7 +5289,6 @@ async function capturePremiumCard(b) {
     else if (balance <= 0) { finText = `ОПЛАЧЕНО ПОВНІСТЮ`; finBg = "#D1FAE5"; finColor = "#059669"; finBorder = "#A7F3D0"; } 
     else { finText = `ЗАЛИШОК ДО СПЛАТИ: ${balance} ₴`; finBg = "#FEE2E2"; finColor = "#DC2626"; finBorder = "#FECACA"; }
 
-    // 🟢 Збираємо картку (Видалили BOSO)
     card.innerHTML = `
         <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #E5E7EB; padding-bottom: 20px; margin-bottom: 20px;">
             <div style="display: flex; flex-direction: column; gap: 6px;">
@@ -5290,7 +5296,7 @@ async function capturePremiumCard(b) {
                 <span style="font-size: 16px; color: #6B7280; font-weight: 600;">${displayPhone}</span>
             </div>
             <div style="text-align: right; display: flex; flex-direction: column; justify-content: center; gap: 8px;">
-                <span style="font-size: 14px; color: #556B2F; font-weight: 800; background: #F0FDF4; border: 1px solid #DCF1D3; padding: 6px 16px; border-radius: 8px; white-space: nowrap;">${b.guests} ${guestWord}</span>
+                <span style="font-size: 14px; color: #556B2F; font-weight: 800; background: #F0FDF4; border: 1px solid #DCF1D3; padding: 8px 16px; border-radius: 8px; white-space: nowrap;">${b.guests} ${guestWord}</span>
             </div>
         </div>
         
