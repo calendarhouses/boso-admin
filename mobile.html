@@ -3,6 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     
     <meta name="apple-mobile-web-app-capable" content="yes">
@@ -3906,6 +3907,9 @@ let                 fOut = outD.toLocaleDateString('uk-UA', { day: 'numeric', mo
             setupSwipeToClose('customConfirmModal', '.modal-box', closeCustomConfirm);
             setupSwipeToClose('uniDetailsModal', '.modal-box', () => document.getElementById('uniDetailsModal').classList.remove('active'));
             setupSwipeToClose('quickEditDrawer', '.drawer', closeQuickEdit);
+          if (window.Telegram && window.Telegram.WebApp) {
+           window.Telegram.WebApp.expand(); // Розгортає вікно на весь екран
+}
         };
 
         // --- МАГІЯ СВАЙПУ ПО ДАТАХ З АВТОСКРОЛОМ ---
