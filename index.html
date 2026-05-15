@@ -5123,7 +5123,7 @@ function jumpToFinanceAndEdit(id) {
         window.addEventListener('DOMContentLoaded', autoScaleDashboard);
         window.addEventListener('resize', autoScaleDashboard);
 
-     // 🚀 ПРЕМІУМ-КАРТКА (Ідеальний телефон + Кольорові іконки + Без водяного знаку)
+     // 🚀 ПРЕМІУМ-КАРТКА (Ідеальний телефон + Кольорові іконки + Без BOSO + Оновлений коментар)
 async function capturePremiumCard(b) {
     // 1. Зовнішній контейнер (Широкий фон)
     const container = document.createElement('div');
@@ -5157,7 +5157,7 @@ async function capturePremiumCard(b) {
     topAccent.style.background = 'linear-gradient(90deg, #556B2F 0%, #8FBC8F 100%)';
     card.appendChild(topAccent);
 
-    // 🟢 КОЛЬОРОВІ ІКОНКИ (Кожна має свій сенсовий колір)
+    // 🟢 КОЛЬОРОВІ ІКОНКИ
     const iconCottage = `<svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="color: #D97706; flex-shrink: 0;"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path></svg>`;
     const iconCalendar = `<svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="color: #3B82F6; flex-shrink: 0;"><rect x="3" y="4" width="18" height="18" rx="2" ry="2" stroke-width="2"></rect><line x1="16" y1="2" x2="16" y2="6" stroke-width="2"></line><line x1="8" y1="2" x2="8" y2="6" stroke-width="2"></line><line x1="3" y1="10" x2="21" y2="10" stroke-width="2"></line></svg>`;
     const iconUsers = `<svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="color: #0EA5E9;"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>`;
@@ -5169,13 +5169,13 @@ async function capturePremiumCard(b) {
     const iconSum = `<svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="margin-right: 8px; color: #4B5563; flex-shrink: 0;"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"></path></svg>`;
     const iconPaid = `<svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="margin-right: 8px; color: #059669; flex-shrink: 0;"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>`;
 
-    // 🟢 Форматування номера телефону (чітко під +380)
+    // Форматування номера телефону (+380...)
     let displayPhone = String(b.phone || "").replace(/\D/g, '');
     if (displayPhone.length === 9) displayPhone = '380' + displayPhone;
     if (displayPhone.length === 10 && displayPhone.startsWith('0')) displayPhone = '38' + displayPhone;
     if (displayPhone) displayPhone = '+' + displayPhone;
 
-    // 🟢 Граматика для гостей
+    // Граматика для гостей
     let guestWord = "гостей";
     if (typeof getGuestWord === 'function') guestWord = getGuestWord(b.guests).toUpperCase();
 
@@ -5222,7 +5222,7 @@ async function capturePremiumCard(b) {
                                  .replace(/\|\s*$/, '')
                                  .trim();
 
-    // 🟢 Будуємо розділ послуг
+    // Розділ послуг
     let extraHtml = '';
     const rowStyle = `display:flex; justify-content:space-between; align-items:center; margin-bottom: 12px; font-size: 15px; color: #4B5563;`;
     const labelStyle = `display:flex; align-items:center; gap: 8px; font-weight: 600;`;
@@ -5257,12 +5257,12 @@ async function capturePremiumCard(b) {
         extraHtml += `<div style="${rowStyle}; margin-top: 16px; padding-top: 12px; border-top: 1px dashed #E5E7EB; color: #DC2626;"><span style="${labelStyle}; color:#DC2626;">${iconDiscount} Знижка:</span> <span style="font-weight: 900;">-${b.discountAmount} ₴</span></div>`;
     }
 
-    // Блок коментаря
+    // 🟢 Блок коментаря (Змінено заголовок на "Коментар")
     let commentHtml = '';
     if (cleanComment !== '') {
         commentHtml = `
             <div style="margin-top: 20px; padding: 16px; background: #F9FAFB; border-left: 4px solid #556B2F; border-radius: 6px; font-size: 15px; color: #374151;">
-                <div style="font-size: 11px; font-weight: 800; text-transform: uppercase; color: #9CA3AF; margin-bottom: 8px; letter-spacing: 0.5px;">Коментар гостя</div>
+                <div style="font-size: 11px; font-weight: 800; text-transform: uppercase; color: #9CA3AF; margin-bottom: 8px; letter-spacing: 0.5px;">Коментар</div>
                 <div style="line-height: 1.4; font-weight: 500; font-style: italic;">"${cleanComment.replace(/\n/g, '<br>')}"</div>
             </div>
         `;
@@ -5278,6 +5278,7 @@ async function capturePremiumCard(b) {
     else if (balance <= 0) { finText = `ОПЛАЧЕНО ПОВНІСТЮ`; finBg = "#D1FAE5"; finColor = "#059669"; finBorder = "#A7F3D0"; } 
     else { finText = `ЗАЛИШОК ДО СПЛАТИ: ${balance} ₴`; finBg = "#FEE2E2"; finColor = "#DC2626"; finBorder = "#FECACA"; }
 
+    // 🟢 Збираємо картку (Видалили BOSO)
     card.innerHTML = `
         <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #E5E7EB; padding-bottom: 20px; margin-bottom: 20px;">
             <div style="display: flex; flex-direction: column; gap: 6px;">
@@ -5285,7 +5286,6 @@ async function capturePremiumCard(b) {
                 <span style="font-size: 16px; color: #6B7280; font-weight: 600;">${displayPhone}</span>
             </div>
             <div style="text-align: right; display: flex; flex-direction: column; justify-content: center; gap: 8px;">
-                <div style="font-size: 22px; font-weight: 900; color: #556B2F; letter-spacing: 1px; line-height: 1;">BOSO</div>
                 <span style="font-size: 14px; color: #556B2F; font-weight: 800; background: #F0FDF4; border: 1px solid #DCF1D3; padding: 6px 16px; border-radius: 8px; white-space: nowrap;">${b.guests} ${guestWord}</span>
             </div>
         </div>
