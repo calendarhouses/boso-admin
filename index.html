@@ -5078,21 +5078,24 @@ function jumpToFinanceAndEdit(id) {
         window.addEventListener('DOMContentLoaded', autoScaleDashboard);
         window.addEventListener('resize', autoScaleDashboard);
 
-      // 🚀 ПРЕМІУМ-КАРТКА З ОЛИВКОВИМ ФОНОМ (Ідеальна ширина для Telegram)
+     // 🚀 ПРЕМІУМ-КАРТКА З ШИРОКИМ ФОНОМ (Ідеально для Десктопу та Мобайлу)
 async function capturePremiumCard(b) {
-    // 1. Зовнішній контейнер (Оливковий градієнт)
+    // 1. Зовнішній контейнер (Робимо широким, ближче до квадрата)
     const container = document.createElement('div');
     container.style.position = 'fixed';
     container.style.top = '0'; 
     container.style.left = '-9999px'; 
-    container.style.width = '600px'; // Розширюємо, щоб текст в ТГ не був затиснутий
+    container.style.width = '800px'; // Збільшили загальну ширину!
     container.style.background = 'linear-gradient(135deg, #2C351B 0%, #1A1F10 100%)'; 
-    container.style.padding = '45px'; // Відступи, щоб було видно фон
+    container.style.padding = '60px 120px'; // Великі відступи по боках (по 120px зеленого фону)
     container.style.boxSizing = 'border-box';
     container.style.fontFamily = "'Inter', sans-serif";
+    container.style.display = 'flex'; // Щоб відцентрувати картку
+    container.style.justifyContent = 'center';
 
     // 2. Внутрішня картка (Білий чек)
     const card = document.createElement('div');
+    card.style.width = '100%'; // Картка займе ідеальні 560px всередині (800 - 120 - 120)
     card.style.background = '#FFFFFF';
     card.style.borderRadius = '20px';
     card.style.padding = '35px';
@@ -5193,17 +5196,17 @@ async function capturePremiumCard(b) {
             ${finText}
         </div>
     `;
-    
+
     // Вставляємо картку в оливковий контейнер
     container.appendChild(card);
     document.body.appendChild(container);
     
     try {
         const canvas = await html2canvas(container, { 
-            width: 600, 
+            width: 800, 
             height: container.offsetHeight, 
-            windowWidth: 600, 
-            scale: 2, // Подвійна роздільна здатність для чіткості
+            windowWidth: 800, 
+            scale: 2, 
             backgroundColor: null, 
             useCORS: true 
         });
