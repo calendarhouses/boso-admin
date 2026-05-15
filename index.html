@@ -2764,14 +2764,13 @@ function parseSafeDate(dateStr) {
                                 padRight = (cellWidth * 0.85) + 8;
                             }
                             if (exHasEarly) {
-                                blockLeft -= (cellWidth * 0.85);
-                                blockWidth += (cellWidth * 0.85);
-                                
-                                extensionsHtml += `<div class="time-extension early" style="width: ${cellWidth * 0.85}px;" 
-                                    onmouseenter="event.stopPropagation(); bosoHover(this, '${b.row}', 'early')" 
-                                    onmouseleave="event.stopPropagation(); if(event.relatedTarget && this.parentElement.contains(event.relatedTarget)) bosoHover(this.parentElement, '${b.row}', 'main'); else bosoLeave();">${iconClock}</div>`;
-                                padLeft = (cellWidth * 0.85) + 8;
-                            }
+    // Прибираємо зсув blockLeft та blockWidth, щоб не перекривати попередній день (15 число).
+    // Індикатор малюємо просто всередині поточного блоку на лівому краї.
+    extensionsHtml += `<div class="time-extension early" style="width: 25px;" 
+        onmouseenter="event.stopPropagation(); bosoHover(this, '${b.row}', 'early')" 
+        onmouseleave="event.stopPropagation(); if(event.relatedTarget && this.parentElement.contains(event.relatedTarget)) bosoHover(this.parentElement, '${b.row}', 'main'); else bosoLeave();">${iconClock}</div>`;
+    padLeft = 33; // Робимо відступ для тексту: 25px іконка + 8px відступ
+}
 
                             // Захист від вильоту за межі екрану
                             if (offsetDays < 0) { blockWidth = (durationDays + offsetDays) * cellWidth; blockLeft = 0; padLeft = 8; extensionsHtml = extensionsHtml.replace(/early/g, 'early" style="display:none;"'); }
@@ -3056,9 +3055,12 @@ function getDayPrice(room, dateObj) {
                 exHasLate = true;
             }
 
-            // --- Зчитуємо графік поточної (нової) броні ---
-            let currentHasEarly = !!selectedEarlyTime;
-            let currentHasLate = !!selectedLateTime;
+            let earlyCard = document.getElementById('adminCardEarly');
+let lateCard = document.getElementById('adminCardLate');
+
+// Перевіряємо не тільки чи обрано час, а й чи просто увімкнена сама картка послуги
+let currentHasEarly = !!selectedEarlyTime || (earlyCard && earlyCard.classList.contains('active'));
+let currentHasLate = !!selectedLateTime || (lateCard && lateCard.classList.contains('active'));
             
             if (nights === 2 && currentIn.getDay() === 5 && currentOut.getDay() === 0) {
                 currentHasLate = true; 
@@ -3078,7 +3080,8 @@ function getDayPrice(room, dateObj) {
                     overlapReason = "Попередній гість має <b>Пізній виїзд (чи акцію)</b>. Заселення в цей день неможливе.";
                     break;
                 }
-                if (currentHasEarly) {
+               if (currentHasEarly) earlyFee = early50;
+               if (currentHasLate && !isPromoLateOut) lateFee = late50;
                     isOverlap = true;
                     overlapReason = "Попередній гість ще не виїхав. Ваш <b>Ранній заїзд</b> неможливий.";
                     break;
@@ -3842,30 +3845,33 @@ document.getElementById('adminGuests').addEventListener('change', updatePricePre
                 toggleUBD('Ні');
             }
 
-                // Шукаємо Ранній заїзд
-            let earlyRegex = /🕒 Ранній заїзд: з (\d{2}:\d{2})(\s*\|\s*)?/;
-            let matchEarly = textComment.match(earlyRegex);
-            if (matchEarly) {
-                selectedEarlyTime = matchEarly[1];
-                document.getElementById('adminCardEarly').classList.add('active');
-                // Фарбуємо потрібний чіп
-                document.querySelectorAll('#adminCardEarly .t-chip').forEach(c => {
-                    if (c.innerText === selectedEarlyTime) c.classList.add('selected');
-                });
-                textComment = textComment.replace(earlyRegex, '').trim();
-            }
-            
-            // Шукаємо Пізній виїзд
-            let lateRegex = /🕒 Пізній виїзд: до (\d{2}:\d{2})(\s*\|\s*)?/;
-            let matchLate = textComment.match(lateRegex);
-            if (matchLate) {
-                selectedLateTime = matchLate[1];
-                document.getElementById('adminCardLate').classList.add('active');
-                document.querySelectorAll('#adminCardLate .t-chip').forEach(c => {
-                    if (c.innerText === selectedLateTime) c.classList.add('selected');
-                });
-                textComment = textComment.replace(lateRegex, '').trim();
-            }
+                // Шукаємо Ранній заїзд (з урахуванням, що час може бути не вказаний)
+let earlyRegex = /🕒 Ранній заїзд(?:(.*?)(\d{2}:\d{2}))?(\s*\|\s*)?/;
+let matchEarly = textComment.match(earlyRegex);
+if (matchEarly) {
+    selectedEarlyTime = matchEarly[2] || null;
+    document.getElementById('adminCardEarly').classList.add('active');
+    if (selectedEarlyTime) {
+        document.querySelectorAll('#adminCardEarly .t-chip').forEach(c => {
+            if (c.innerText === selectedEarlyTime) c.classList.add('selected');
+        });
+    }
+    textComment = textComment.replace(earlyRegex, '').trim();
+}
+
+// Шукаємо Пізній виїзд
+let lateRegex = /🕒 Пізній виїзд(?:(.*?)(\d{2}:\d{2}))?(\s*\|\s*)?/;
+let matchLate = textComment.match(lateRegex);
+if (matchLate) {
+    selectedLateTime = matchLate[2] || null;
+    document.getElementById('adminCardLate').classList.add('active');
+    if (selectedLateTime) {
+        document.querySelectorAll('#adminCardLate .t-chip').forEach(c => {
+            if (c.innerText === selectedLateTime) c.classList.add('selected');
+        });
+    }
+    textComment = textComment.replace(lateRegex, '').trim();
+}
 
             // 4. Фінальна чистка (прибираємо зайві "Коментар гостя:" та палички "|")
             textComment = textComment.replace(/^Коментар гостя:\s*/, '')
@@ -3962,8 +3968,14 @@ document.getElementById('adminGuests').addEventListener('change', updatePricePre
             if (dayGuests > 0) sysComment.push(`👥 Денні гості: ${dayGuests}`);
             if (document.getElementById('adminVat').value === 'Так') sysComment.push(`♨️ Чан: Так`);
             if (document.getElementById('adminUBD').value === 'Так') sysComment.push(`🇺🇦 УБД: Так`);
-            if (typeof selectedEarlyTime !== 'undefined' && selectedEarlyTime) sysComment.push(`🕒 Ранній заїзд: з ${selectedEarlyTime}`);
-            if (typeof selectedLateTime !== 'undefined' && selectedLateTime) sysComment.push(`🕒 Пізній виїзд: до ${selectedLateTime}`);
+            
+            // --- ОСЬ НОВИЙ КОД ДЛЯ ГНУЧКОГО ГРАФІКУ ---
+            let earlyCardActive = document.getElementById('adminCardEarly') && document.getElementById('adminCardEarly').classList.contains('active');
+            let lateCardActive = document.getElementById('adminCardLate') && document.getElementById('adminCardLate').classList.contains('active');
+
+            if (earlyCardActive) sysComment.push(selectedEarlyTime ? `🕒 Ранній заїзд: з ${selectedEarlyTime}` : `🕒 Ранній заїзд`);
+            if (lateCardActive) sysComment.push(selectedLateTime ? `🕒 Пізній виїзд: до ${selectedLateTime}` : `🕒 Пізній виїзд`);
+            // ------------------------------------------
 
             if (sysComment.length > 0) { 
                 rawComment = sysComment.join(' | ') + (rawComment ? '\n\nКоментар гостя: ' + rawComment : '');
