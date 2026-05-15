@@ -2995,15 +2995,37 @@ if (guests > maxCap) {
     document.getElementById('adminGuests').value = maxCap; // Змінюємо цифру в інтерфейсі
     showToast(`Кількість гостей зменшено до максимуму (${maxCap})`);
 }
-    // --- 1. ПЕРЕВІРКА НА ОВЕРБУКІНГ (РОЗУМНА З ГНУЧКИМ ГРАФІКОМ) ---
+    // --- 1. ПЕРЕВІРКА НА ОВЕРБУКІНГ (РОЗУМНА З ГНУЧКИМ ГРАФІКОМ І РЕГІСТРОМ) ---
     let isOverlap = false;
     let overlapReason = "";
+
+    // 🟢 Отримуємо об'єкт поточного обраного номеру для розумного порівняння
+    let currRoomObj = roomsList.find(r => r.name === roomName);
 
     for (let b of allBookings) {
         if (editingRowNumber && b.row == editingRowNumber) continue; // Не порівнюємо з собою ж
         if (String(b.status).toLowerCase().includes('скас')) continue; // Скасовані ігноруємо
 
-        if (b.cottage === roomName) {
+        // 🟢 РОЗУМНА ПЕРЕВІРКА КОТЕДЖУ (незалежна від регістру та додаткових слів)
+        let exCottage = String(b.cottage || '').toLowerCase();
+        let currName = currRoomObj ? String(currRoomObj.name).toLowerCase() : String(roomName).toLowerCase();
+        let currShort = (currRoomObj && currRoomObj.short) ? String(currRoomObj.short).toLowerCase() : '';
+        
+        let isSameRoom = false;
+        
+        if (currRoomObj) {
+            if (exCottage.includes(currName) || (currShort && exCottage.includes(currShort))) {
+                isSameRoom = true;
+            }
+            // Зворотна сумісність для старих записів (у нижньому регістрі!)
+            if (currRoomObj.id === 3 && exCottage.includes("люкс")) isSameRoom = true;
+            if (currRoomObj.id === 2 && (exCottage.includes("сімейний") || exCottage.includes("femily"))) isSameRoom = true;
+        } else {
+            // Запасний варіант
+            if (exCottage === currName) isSameRoom = true;
+        }
+
+        if (isSameRoom) {
             let exIn = new Date(b.checkIn); exIn.setHours(0,0,0,0);
             let exOut = new Date(b.checkOut); exOut.setHours(0,0,0,0);
             let currentIn = new Date(d1); currentIn.setHours(0,0,0,0);
