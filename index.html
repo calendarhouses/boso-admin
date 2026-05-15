@@ -2750,8 +2750,6 @@ function saveInlineTransaction(type, category, idx) {
                                 padRight = (cellWidth * 0.85) + 8;
                             }
                             if (exHasEarly) {
-                                blockLeft -= (cellWidth * 0.85);
-                                blockWidth += (cellWidth * 0.85);
                                 
                                 extensionsHtml += `<div class="time-extension early" style="width: ${cellWidth * 0.85}px;" 
                                     onmouseenter="event.stopPropagation(); bosoHover(this, '${b.row}', 'early')" 
