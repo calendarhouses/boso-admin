@@ -5078,25 +5078,25 @@ function jumpToFinanceAndEdit(id) {
         window.addEventListener('DOMContentLoaded', autoScaleDashboard);
         window.addEventListener('resize', autoScaleDashboard);
 
-        // 🚀 ГЕНЕРАТОР ПРЕМІУМ-КАРТОК ДЛЯ ТЕЛЕГРАМУ
+        // 🚀 ГЕНЕРАТОР ПРЕМІУМ-КАРТОК (МАКСИМАЛЬНА ЯКІСТЬ + ВСІ ДЕТАЛІ)
         async function capturePremiumCard(b) {
-            // Створюємо невидимий блок, який виглядає точнісінько як твій тултип
             const tempDiv = document.createElement('div');
             tempDiv.style.position = 'fixed';
-            tempDiv.style.top = '-9999px'; // Ховаємо за екраном
+            tempDiv.style.top = '-9999px'; 
             tempDiv.style.left = '0';
-            tempDiv.style.width = '260px';
+            tempDiv.style.width = '320px'; // 🟢 Зробили картку ширшою для солідності
             tempDiv.style.background = '#FFFFFF';
             tempDiv.style.borderRadius = '16px';
-            tempDiv.style.padding = '16px';
+            tempDiv.style.padding = '24px'; // 🟢 Більше повітря навколо тексту
             tempDiv.style.fontFamily = "'Inter', sans-serif";
+            tempDiv.style.boxSizing = 'border-box';
 
             // Іконки
-            const iconCottage = `<svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="margin-right: 6px; color: #9CA3AF;"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path></svg>`;
-            const iconCalendar = `<svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="margin-right: 6px; color: #9CA3AF;"><rect x="3" y="4" width="18" height="18" rx="2" ry="2" stroke-width="2"></rect><line x1="16" y1="2" x2="16" y2="6" stroke-width="2"></line><line x1="8" y1="2" x2="8" y2="6" stroke-width="2"></line><line x1="3" y1="10" x2="21" y2="10" stroke-width="2"></line></svg>`;
-            const iconTotal = `<svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="margin-right: 6px; color: #9CA3AF;"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>`;
+            const iconCottage = `<svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="margin-right: 8px; color: #9CA3AF;"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path></svg>`;
+            const iconCalendar = `<svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="margin-right: 8px; color: #9CA3AF;"><rect x="3" y="4" width="18" height="18" rx="2" ry="2" stroke-width="2"></rect><line x1="16" y1="2" x2="16" y2="6" stroke-width="2"></line><line x1="8" y1="2" x2="8" y2="6" stroke-width="2"></line><line x1="3" y1="10" x2="21" y2="10" stroke-width="2"></line></svg>`;
+            const iconTotal = `<svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="margin-right: 8px; color: #9CA3AF;"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>`;
 
-            // Форматуємо дати
+            // Дати
             const inDate = new Date(b.checkIn).toLocaleDateString('uk-UA', { day: 'numeric', month: 'short' });
             const outDate = new Date(b.checkOut).toLocaleDateString('uk-UA', { day: 'numeric', month: 'short' });
             
@@ -5107,32 +5107,80 @@ function jumpToFinanceAndEdit(id) {
             let finText = ""; let finColor = ""; let finBg = "";
             let statusClass = String(b.status).toLowerCase();
 
-            if (statusClass.includes('скас')) { finText = "Скасовано"; finBg = "#F3F4F6"; finColor = "#9CA3AF"; } 
-            else if (total === 0) { finText = "Без ціни"; finBg = "#F3F4F6"; finColor = "#4B5563"; } 
-            else if (paid === 0) { finText = `Очікує аванс (${Math.round(total / 2)} ₴)`; finBg = "#FEF3C7"; finColor = "#B45309"; } 
-            else if (balance <= 0) { finText = `Оплачено (${total} ₴)`; finBg = "#D1FAE5"; finColor = "#059669"; } 
-            else { finText = `Залишок: ${balance} ₴`; finBg = "#FEE2E2"; finColor = "#DC2626"; }
+            // Визначаємо статус
+            if (statusClass.includes('скас')) { finText = "СКАСОВАНО"; finBg = "#F3F4F6"; finColor = "#9CA3AF"; } 
+            else if (total === 0) { finText = "БЕЗ ЦІНИ"; finBg = "#F3F4F6"; finColor = "#4B5563"; } 
+            else if (paid === 0) { finText = `ОЧІКУЄ АВАНС (${Math.round(total / 2)} ₴)`; finBg = "#FEF3C7"; finColor = "#B45309"; } 
+            else if (balance <= 0) { finText = `ОПЛАЧЕНО (${total} ₴)`; finBg = "#D1FAE5"; finColor = "#059669"; } 
+            else { finText = `ЗАЛИШОК: ${balance} ₴`; finBg = "#FEE2E2"; finColor = "#DC2626"; }
+
+            // 🟢 ГЕНЕРУЄМО РОЗШИФРОВКУ ДОПЛАТ
+            let extraHtml = '';
+            if (b.extraGuestFee > 0) extraHtml += `<div style="display:flex; justify-content:space-between; margin-bottom: 6px;"><span>Дод. гості:</span> <strong>+${b.extraGuestFee} ₴</strong></div>`;
+            if (b.petFee > 0) extraHtml += `<div style="display:flex; justify-content:space-between; margin-bottom: 6px;"><span>Тварини:</span> <strong>+${b.petFee} ₴</strong></div>`;
+            if (b.dayGuestFee > 0) extraHtml += `<div style="display:flex; justify-content:space-between; margin-bottom: 6px;"><span>Денні гості:</span> <strong>+${b.dayGuestFee} ₴</strong></div>`;
+            if (b.earlyFee > 0) extraHtml += `<div style="display:flex; justify-content:space-between; margin-bottom: 6px;"><span>Ранній заїзд:</span> <strong>+${b.earlyFee} ₴</strong></div>`;
+            if (b.lateFee > 0) extraHtml += `<div style="display:flex; justify-content:space-between; margin-bottom: 6px;"><span>Пізній виїзд:</span> <strong>+${b.lateFee} ₴</strong></div>`;
+            if (b.discountAmount > 0) extraHtml += `<div style="display:flex; justify-content:space-between; margin-bottom: 6px; color: #DC2626;"><span>Знижка:</span> <strong>-${b.discountAmount} ₴</strong></div>`;
+
+            // 🟢 БЛОК КОМЕНТАРЯ
+            let commentHtml = '';
+            if (b.comment && b.comment.trim() !== '') {
+                commentHtml = `
+                    <div style="margin-top: 16px; padding: 12px 16px; background: #F9FAFB; border-left: 4px solid var(--accent, #556B2F); border-radius: 4px 12px 12px 4px; font-size: 13px; color: #4B5563;">
+                        <div style="font-size: 10px; font-weight: 800; text-transform: uppercase; color: #9CA3AF; margin-bottom: 6px; letter-spacing: 0.5px;">Коментар</div>
+                        <div style="line-height: 1.4;">${b.comment.replace(/\n/g, '<br>')}</div>
+                    </div>
+                `;
+            }
 
             // Верстаємо саму картку
             tempDiv.innerHTML = `
-                <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #F3F4F6; padding-bottom: 10px; margin-bottom: 12px;">
-                    <span style="font-weight: 800; font-size: 15px; color: #111827;">${b.name || "Гість"}</span>
-                    <span style="font-size: 11px; color: #6B7280; font-weight: 700; background: #F3F4F6; padding: 4px 8px; border-radius: 8px;">${b.guests} гостей</span>
+                <div style="display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 1px solid #F3F4F6; padding-bottom: 16px; margin-bottom: 16px;">
+                    <div style="display: flex; flex-direction: column; gap: 4px;">
+                        <span style="font-weight: 800; font-size: 18px; color: #111827;">${b.name || "Гість"}</span>
+                        <span style="font-size: 13px; color: #6B7280; font-weight: 600;">${b.phone || ""}</span>
+                    </div>
+                    <span style="font-size: 12px; color: var(--accent, #556B2F); font-weight: 700; background: #F0FDF4; border: 1px solid #DCF1D3; padding: 6px 12px; border-radius: 8px;">${b.guests} гостей</span>
                 </div>
-                <div style="font-size: 13px; color: #4B5563; display: flex; flex-direction: column; gap: 8px;">
-                    <div style="display: flex; justify-content: space-between; align-items: center;"><span style="color: #6B7280; font-weight: 500; display:flex; align-items:center;">${iconCottage} Котедж:</span> <span style="font-weight: 700; color: #111827;">${b.cottage}</span></div>
-                    <div style="display: flex; justify-content: space-between; align-items: center;"><span style="color: #6B7280; font-weight: 500; display:flex; align-items:center;">${iconCalendar} Дати:</span> <span style="font-weight: 700; color: #556B2F;">${inDate} — ${outDate}</span></div>
-                    <div style="display: flex; justify-content: space-between; align-items: center;"><span style="color: #6B7280; font-weight: 500; display:flex; align-items:center;">${iconTotal} Сума:</span> <span style="font-weight: 700; color: #111827;">${total} ₴</span></div>
-                    <div style="margin-top: 10px; display: flex; align-items: center; justify-content: center; padding: 8px; border-radius: 10px; font-size: 12px; font-weight: 800; background: ${finBg}; color: ${finColor}; border: 1px solid rgba(0,0,0,0.05);">${finText}</div>
+                
+                <div style="font-size: 14px; color: #4B5563; display: flex; flex-direction: column; gap: 12px;">
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <span style="color: #6B7280; font-weight: 500; display:flex; align-items:center;">${iconCottage} Котедж:</span> 
+                        <span style="font-weight: 800; color: #111827;">${b.cottage}</span>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <span style="color: #6B7280; font-weight: 500; display:flex; align-items:center;">${iconCalendar} Дати:</span> 
+                        <span style="font-weight: 800; color: var(--accent, #556B2F);">${inDate} — ${outDate}</span>
+                    </div>
+                    
+                    ${extraHtml ? `<div style="margin-top: 4px; padding-top: 14px; border-top: 1px dashed #E5E7EB; font-size: 13px;">${extraHtml}</div>` : ''}
+
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 4px; padding-top: 14px; border-top: 1px dashed #E5E7EB;">
+                        <span style="color: #6B7280; font-weight: 500; display:flex; align-items:center;">${iconTotal} Сума:</span> 
+                        <span style="font-weight: 800; font-size: 18px; color: #111827;">${total} ₴</span>
+                    </div>
+                </div>
+
+                ${commentHtml}
+
+                <div style="margin-top: 20px; display: flex; align-items: center; justify-content: center; padding: 12px; border-radius: 12px; font-size: 13px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px; background: ${finBg}; color: ${finColor}; border: 1px solid rgba(0,0,0,0.05);">
+                    ${finText}
                 </div>
             `;
             document.body.appendChild(tempDiv);
             
             try {
-                // Фотографуємо (x2 якість)
-                const canvas = await html2canvas(tempDiv, { scale: 2, backgroundColor: '#ffffff' });
+                // 🟢 МАГІЯ ЯКОСТІ ТУТ:
+                // scale: 4 робить скріншот у 4 рази більшої роздільної здатності (ідеально для Retina)
+                // useCORS гарантує, що шрифти промалюються правильно
+                const canvas = await html2canvas(tempDiv, { 
+                    scale: 4, 
+                    backgroundColor: '#ffffff',
+                    useCORS: true
+                });
                 document.body.removeChild(tempDiv);
-                return canvas.toDataURL("image/png");
+                return canvas.toDataURL("image/png", 1.0); // 1.0 - максимальна якість без стиснення
             } catch (err) {
                 document.body.removeChild(tempDiv);
                 return null;
