@@ -4003,15 +4003,22 @@ document.getElementById('adminGuests').addEventListener('change', updatePricePre
             const payloadForServer = { ...bookingData };
 
             // ==========================================
-            // 🚀 МАГІЯ СКРІНШОТА ПОЧИНАЄТЬСЯ ТУТ
+            // 🚀 МАГІЯ СКРІНШОТІВ (АДМІН + КЛІНІНГ)
             // ==========================================
-            btn.innerText = "Формуємо картку..."; // Показуємо, що йде процес
+            btn.innerText = "Формуємо картки..."; 
             
-            // Викликаємо ту саму функцію, яку ми додали раніше
-            if (typeof capturePremiumCard === 'function') {
-                const base64Image = await capturePremiumCard(bookingData);
-                if (base64Image) {
-                    payloadForServer.screenshot = base64Image; // Кладемо фотку в посилку
+            if (typeof capturePremiumCard === 'function' && typeof captureCleaningCard === 'function') {
+                try {
+                    // Генеруємо дві картинки одночасно
+                    const [base64Admin, base64Cleaning] = await Promise.all([
+                        capturePremiumCard(bookingData),
+                        captureCleaningCard(bookingData)
+                    ]);
+                    
+                    if (base64Admin) payloadForServer.screenshot = base64Admin;
+                    if (base64Cleaning) payloadForServer.screenshotCleaning = base64Cleaning;
+                } catch (e) {
+                    console.error("Помилка генерації карток:", e);
                 }
             }
             // ==========================================
@@ -5355,6 +5362,151 @@ async function capturePremiumCard(b) {
         return canvas.toDataURL("image/jpeg", 0.9);
     } catch (err) {
         console.error("Помилка скріншоту:", err);
+        if (document.body.contains(container)) document.body.removeChild(container);
+        return null;
+    }
+}
+
+        // 🚀 ГЕНЕРАТОР КАРТКИ ДЛЯ КЛІНІНГУ (БЕЗ ЦІН І ТЕЛЕФОНУ)
+async function captureCleaningCard(b) {
+    const container = document.createElement('div');
+    container.style.position = 'fixed';
+    container.style.top = '0'; 
+    container.style.left = '-9999px'; 
+    container.style.width = '800px'; 
+    container.style.background = 'linear-gradient(135deg, #2C351B 0%, #1A1F10 100%)'; 
+    container.style.padding = '60px 120px'; 
+    container.style.boxSizing = 'border-box';
+    container.style.fontFamily = "'Inter', sans-serif";
+    container.style.display = 'flex'; 
+    container.style.justifyContent = 'center';
+
+    const card = document.createElement('div');
+    card.style.width = '100%'; 
+    card.style.background = '#FFFFFF';
+    card.style.borderRadius = '20px';
+    card.style.padding = '35px';
+    card.style.boxShadow = '0 20px 40px rgba(0,0,0,0.4)';
+    card.style.position = 'relative';
+    card.style.overflow = 'hidden';
+
+    const topAccent = document.createElement('div');
+    topAccent.style.position = 'absolute';
+    topAccent.style.top = '0'; topAccent.style.left = '0';
+    topAccent.style.width = '100%'; topAccent.style.height = '6px';
+    topAccent.style.background = 'linear-gradient(90deg, #556B2F 0%, #8FBC8F 100%)';
+    card.appendChild(topAccent);
+
+    // Іконки
+    const iconCottage = `<svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="color: #D97706; flex-shrink: 0;"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path></svg>`;
+    const iconCalendar = `<svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="color: #3B82F6; flex-shrink: 0;"><rect x="3" y="4" width="18" height="18" rx="2" ry="2" stroke-width="2"></rect><line x1="16" y1="2" x2="16" y2="6" stroke-width="2"></line><line x1="8" y1="2" x2="8" y2="6" stroke-width="2"></line><line x1="3" y1="10" x2="21" y2="10" stroke-width="2"></line></svg>`;
+    const iconUsers = `<svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="color: #0EA5E9;"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>`;
+    const iconPaw = `<svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="color: #F97316;"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"></path></svg>`;
+    const iconClock = `<svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="color: #8B5CF6;"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>`;
+    const iconVat = `<svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="color: #E11D48;"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 18.657A8 8 0 016.343 7.343S7 9 9 10c0-2 .5-5 2.986-7C14 5 16.09 5.777 17.656 7.343A7.975 7.975 0 0120 13a7.975 7.975 0 01-2.343 5.657z"></path></svg>`;
+    
+    let inDate = "—"; let outDate = "—";
+    try {
+        if (b.checkIn) inDate = new Date(b.checkIn).toLocaleDateString('uk-UA', { day: 'numeric', month: 'long' });
+        if (b.checkOut) outDate = new Date(b.checkOut).toLocaleDateString('uk-UA', { day: 'numeric', month: 'long' });
+    } catch(err) {}
+
+    let rawComment = b.comment ? String(b.comment) : "";
+    let hasVat = rawComment.includes('♨️ Чан: Так');
+    let matchDay = rawComment.match(/👥 Денні гості[^:]*:\s*(\d+)/);
+    let dayGuestsCount = matchDay ? matchDay[1] : 0;
+    let matchEarly = rawComment.match(/🕒 Ранній заїзд: з (\d{2}:\d{2})/);
+    let earlyTime = matchEarly ? matchEarly[1] : null;
+    let matchLate = rawComment.match(/🕒 Пізній виїзд: до (\d{2}:\d{2})/);
+    let lateTime = matchLate ? matchLate[1] : null;
+
+    let cleanComment = rawComment.replace(/👥 Денні гості[^|]+(\|\s*)?/g, '')
+                                 .replace(/♨️ Чан: Так\s*(\|\s*)?/g, '')
+                                 .replace(/🇺🇦 УБД: Так\s*(\|\s*)?/g, '')
+                                 .replace(/🕒 Ранній заїзд: з \d{2}:\d{2}(\s*\|\s*)?/g, '')
+                                 .replace(/🕒 Пізній виїзд: до \d{2}:\d{2}(\s*\|\s*)?/g, '')
+                                 .replace(/Коментар гостя:/gi, '')
+                                 .replace(/^[|\s]+|[|\s]+$/g, '')
+                                 .trim();
+
+    let extraHtml = '';
+    const rowStyle = `display:flex; justify-content:space-between; align-items:center; margin-bottom: 12px; font-size: 15px; color: #4B5563;`;
+    const labelStyle = `display:flex; align-items:center; gap: 8px; font-weight: 600;`;
+    const valStyle = `font-weight: 800; color: #556B2F;`; // Оливковий колір для "Так"
+
+    if (b.pets === 'Так' || b.pets === true) {
+        extraHtml += `<div style="${rowStyle}"><span style="${labelStyle}">${iconPaw} Тварини:</span> <span style="${valStyle}">Так</span></div>`;
+    }
+    if (dayGuestsCount > 0) {
+        extraHtml += `<div style="${rowStyle}"><span style="${labelStyle}">${iconUsers} Денні гості:</span> <span style="${valStyle}">${dayGuestsCount} осіб</span></div>`;
+    }
+    if (earlyTime) {
+        extraHtml += `<div style="${rowStyle}"><span style="${labelStyle}">${iconClock} Ранній заїзд:</span> <span style="${valStyle}">з ${earlyTime}</span></div>`;
+    }
+    if (lateTime) {
+        extraHtml += `<div style="${rowStyle}"><span style="${labelStyle}">${iconClock} Пізній виїзд:</span> <span style="${valStyle}">до ${lateTime}</span></div>`;
+    }
+    if (hasVat) {
+        extraHtml += `<div style="${rowStyle}"><span style="${labelStyle}">${iconVat} Чан:</span> <span style="${valStyle}">Так</span></div>`;
+    }
+
+    let commentHtml = '';
+    if (cleanComment !== '') {
+        commentHtml = `
+            <div style="margin-top: 20px; padding: 16px; background: #F9FAFB; border-left: 4px solid #556B2F; border-radius: 6px; font-size: 15px; color: #374151;">
+                <div style="font-size: 11px; font-weight: 800; text-transform: uppercase; color: #9CA3AF; margin-bottom: 8px; letter-spacing: 0.5px;">Коментар гостя</div>
+                <div style="line-height: 1.4; font-weight: 500; font-style: italic;">"${cleanComment.replace(/\n/g, '<br>')}"</div>
+            </div>
+        `;
+    }
+    
+    // Граматика гостей
+    let guestWordTxt = "гостей";
+    let guestsNum = Number(b.guests) || 2;
+    let n = Math.abs(guestsNum) % 100; let n1 = n % 10;
+    if (n > 10 && n < 20) guestWordTxt = 'гостей';
+    else if (n1 > 1 && n1 < 5) guestWordTxt = 'гості';
+    else if (n1 === 1) guestWordTxt = 'гість';
+
+    card.innerHTML = `
+        <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #E5E7EB; padding-bottom: 20px; margin-bottom: 20px;">
+            <div style="display: flex; flex-direction: column; gap: 6px;">
+                <span style="font-weight: 900; font-size: 24px; color: #111827; letter-spacing: -0.5px; line-height: 1.1;">Нова Бронь</span>
+                <span style="font-size: 14px; color: #6B7280; font-weight: 600;">Наряд на підготовку</span>
+            </div>
+            <div style="text-align: right; display: flex; flex-direction: column; justify-content: center; gap: 8px;">
+                <span style="font-size: 14px; color: #556B2F; font-weight: 800; background: #F0FDF4; border: 1px solid #DCF1D3; padding: 8px 16px; border-radius: 8px; white-space: nowrap;">${guestsNum} ${guestWordTxt.toUpperCase()}</span>
+            </div>
+        </div>
+        
+        <div style="font-size: 16px; color: #4B5563; display: flex; flex-direction: column; gap: 14px;">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+                <span style="color: #6B7280; font-weight: 600; display:flex; align-items:center;">
+                    <span style="margin-right:8px; display:flex;">${iconCottage}</span> Котедж:
+                </span> 
+                <span style="font-weight: 800; color: #111827; font-size: 18px; text-align: right;">${b.cottage}</span>
+            </div>
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+                <span style="color: #6B7280; font-weight: 600; display:flex; align-items:center;">
+                    <span style="margin-right:8px; display:flex;">${iconCalendar}</span> Дати:
+                </span> 
+                <span style="font-weight: 800; color: #556B2F; font-size: 17px; text-align: right;">${inDate} — ${outDate}</span>
+            </div>
+            
+            ${extraHtml ? `<div style="margin-top: 5px; padding: 18px 20px; background: #FAFAFA; border-radius: 12px; border: 1px dashed #D1D5DB;">${extraHtml}</div>` : ''}
+        </div>
+
+        ${commentHtml}
+    `;
+    
+    container.appendChild(card);
+    document.body.appendChild(container);
+    
+    try {
+        const canvas = await html2canvas(container, { width: 800, height: container.offsetHeight, windowWidth: 800, scale: 2, backgroundColor: null, useCORS: true });
+        document.body.removeChild(container);
+        return canvas.toDataURL("image/jpeg", 0.9);
+    } catch (err) {
         if (document.body.contains(container)) document.body.removeChild(container);
         return null;
     }
