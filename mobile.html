@@ -3950,15 +3950,28 @@ let                 fOut = outD.toLocaleDateString('uk-UA', { day: 'numeric', mo
       window.onload = () => { 
             switchView('grid'); 
             initApp(); 
-            // Ініціалізація свайпів за новими правилами (всюди працюватиме pull-to-dismiss)
+            // Ініціалізація свайпів за новими правилами
             setupSwipeToClose('bookingDrawer', '.drawer', closeDrawer);
             setupSwipeToClose('genericModal', '.modal-box', closeGenericModal);
             setupSwipeToClose('customConfirmModal', '.modal-box', closeCustomConfirm);
             setupSwipeToClose('uniDetailsModal', '.modal-box', () => document.getElementById('uniDetailsModal').classList.remove('active'));
             setupSwipeToClose('quickEditDrawer', '.drawer', closeQuickEdit);
-          if (window.Telegram && window.Telegram.WebApp) {
-           window.Telegram.WebApp.expand(); // Розгортає вікно на весь екран
-}
+            
+            if (window.Telegram && window.Telegram.WebApp) {
+               window.Telegram.WebApp.expand(); 
+            }
+
+            // 🟢 АВТООНОВЛЕННЯ КОЖНУ ХВИЛИНУ
+            setInterval(() => {
+                const isDrawerOpen = document.getElementById('bookingDrawer').classList.contains('active');
+                const isModalOpen = document.getElementById('genericModal').classList.contains('active');
+                const isQuickEditOpen = document.getElementById('quickEditDrawer').classList.contains('active');
+                
+                // Якщо всі шторки закриті і палець не тягне сітку — тихо оновлюємо
+                if (!isDrawerOpen && !isModalOpen && !isQuickEditOpen && !isGridDragging && !isTouchSelecting) {
+                    silentSync();
+                }
+            }, 60000); // 60000 мс = 1 хвилина
         };
 
         // --- МАГІЯ СВАЙПУ ПО ДАТАХ З АВТОСКРОЛОМ ---
