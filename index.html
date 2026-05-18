@@ -2750,15 +2750,18 @@ if (cottageStr === rShort || cottageStr.includes(rShort) || (room.id === 3 && co
                             let sClass = String(b.status).toLowerCase();
 
                             // За замовчуванням ставимо коричневий (для Нових і тих, хто вніс 50%)
-                            let statusClass = 'status-new'; 
+let statusClass = 'status-new'; 
 
-                            if (sClass.includes('скас')) {
-                                statusClass = 'status-cancelled'; // Скасовано - сірий
-                            } else if (total > 0 && balance <= 0) {
-                                statusClass = 'status-confirmed'; // Оплачено на 100% - зелений
-                            } else if (String(b.name).toLowerCase().includes('hutshub') || sClass.includes('підтвердж')) {
-                                statusClass = 'status-confirmed'; // Завжди зелений для сторонніх систем
-                            }
+// 🟢 НОВА РОЗУМНА ЛОГІКА СТАТУСІВ
+if (sClass.includes('скас')) {
+    statusClass = 'status-cancelled'; // Скасовано - сірий
+} else if (String(b.source).toLowerCase().includes('hutshub') || String(b.name).toLowerCase().includes('hutshub')) {
+    statusClass = 'status-hutshub'; // 🔒 ЖОРСТКИЙ ПРІОРИТЕТ ДЛЯ HUTSHUB (завжди фірмовий колір)
+} else if (total > 0 && balance <= 0) {
+    statusClass = 'status-confirmed'; // Оплачено на 100% - зелений
+} else if (sClass.includes('підтвердж')) {
+    statusClass = 'status-confirmed'; // Інші підтверджені
+}
 
                             // 🟢 ВІЗУАЛЬНИЙ ГНУЧКИЙ ГРАФІК: Читаємо, чи є ранній/пізній заїзд
                             let exComment = b.comment ? String(b.comment) : "";
@@ -2827,7 +2830,8 @@ if (cottageStr === rShort || cottageStr.includes(rShort) || (room.id === 3 && co
                             let finText = ""; let badgeBg = ""; let badgeColor = "#FFFFFF";
 
                             if (statusClass === 'status-cancelled') { finText = "Скасовано"; badgeBg = "rgba(0,0,0,0.05)"; badgeColor = "#9CA3AF"; } 
-                            else if (total === 0) { finText = "Немає ціни"; badgeBg = "rgba(255,255,255,0.3)"; badgeColor = "#1A1A1A"; } 
+else if (statusClass === 'status-hutshub') { finText = "Hutshub"; badgeBg = "rgba(255,255,255,0.3)"; badgeColor = "#1A332A"; } // 🟢 Гарна плашка для Hutshub
+else if (total === 0) { finText = "Немає ціни"; badgeBg = "rgba(255,255,255,0.3)"; badgeColor = "#1A1A1A"; }
                             else if (paid === 0) { finText = "Очікує оплату"; badgeBg = "#F59E0B"; } 
                             else if (balance <= 0) { finText = "Оплачено"; badgeBg = "#10B981"; } 
                             else { finText = `Борг: ${balance} грн`; badgeBg = "#EF4444"; }
