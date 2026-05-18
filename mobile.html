@@ -261,6 +261,9 @@
         .booking-block.status-confirmed { background: linear-gradient(135deg, #6B8E23 0%, #4B5D28 100%); color: #FFFFFF; }
         .booking-block.status-cancelled { background: #F9FAFB; color: #9CA3AF; border: 1px dashed #D1D5DB; }
 
+        .booking-block.status-hutshub { background: linear-gradient(135deg, #C9D6D2 0%, #B2C4BE 100%); color: #1A332A; border-color: rgba(26, 51, 42, 0.15); }
+        .badge.hutshub { background-color: #C9D6D2; color: #1A332A; }
+        
         /* --- ПРЕМІУМ-ІНДИКАТОРИ РАННЬОГО/ПІЗНЬОГО ЗАЇЗДУ --- */
         .time-extension {
             position: absolute;
@@ -1652,8 +1655,10 @@
                 const dateStr = `${inDate.toLocaleDateString('uk-UA', { day: 'numeric', month: 'long' })} - ${outDate.toLocaleDateString('uk-UA', { day: 'numeric', month: 'long' })}`;
 
                 let badgeClass = 'new'; let s = String(b.status).toLowerCase();
-                if(s.includes('підтвердж')) badgeClass = 'confirmed';
+                let src = String(b.source).toLowerCase();
                 if(s.includes('скас')) badgeClass = 'cancelled';
+                else if(src.includes('hutshub')) badgeClass = 'hutshub';
+                else if(s.includes('підтвердж')) badgeClass = 'confirmed';
 
                 let cleanName = String(b.name).replace(' (Ручна бронь)', '');
                 let initial = cleanName.charAt(0).toUpperCase() || '👤';
@@ -1797,8 +1802,22 @@
                 
                 allBookings.forEach((b) => {
                     if (String(b.status).toLowerCase().includes('скас')) return;
-                    let cottageStr = String(b.cottage || '');
-                    if (cottageStr.includes(room.short) || (room.id === 3 && cottageStr.includes("Люкс")) || (room.id === 2 && cottageStr.includes("Сімейний"))) {
+                    
+                    // 🟢 БРОНЕБІЙНА ПЕРЕВІРКА НАЗВ
+                    let cottageStr = String(b.cottage || '').trim().toUpperCase();
+                    let rShort = String(room.short || '').trim().toUpperCase();
+
+                    let isMatch = cottageStr === rShort || cottageStr.includes(rShort) || (room.id === 3 && cottageStr.includes("ЛЮКС")) || (room.id === 2 && cottageStr.includes("СІМЕЙНИЙ"));
+
+                    if (!isMatch) {
+                        let lowerCottage = cottageStr.toLowerCase();
+                        if (room.id === 1 && (lowerCottage.includes("junior 1") || lowerCottage.includes("junior") || lowerCottage.includes("номер 1"))) isMatch = true;
+                        if (room.id === 2 && (lowerCottage.includes("family №2") || lowerCottage.includes("family 2") || lowerCottage.includes("номер 2"))) isMatch = true;
+                        if (room.id === 3 && (lowerCottage.includes("family №3") || lowerCottage.includes("family 3") || lowerCottage.includes("номер 3"))) isMatch = true;
+                        if (room.id === 4 && (lowerCottage.includes("family №4") || lowerCottage.includes("family 4") || lowerCottage.includes("номер 4"))) isMatch = true;
+                    }
+
+                    if (isMatch) {
                         const inDate = new Date(b.checkIn); const outDate = new Date(b.checkOut);
                         inDate.setHours(0,0,0,0); outDate.setHours(0,0,0,0);
                         const timelineStart = new Date(startDate); timelineStart.setHours(0,0,0,0);
@@ -1806,27 +1825,27 @@
                         const durationDays = Math.round((outDate - inDate) / (1000 * 60 * 60 * 24));
                         
                         if (offsetDays + durationDays > 0 && offsetDays < daysCount) {
-                            // Відразу рахуємо фінанси, щоб визначити колір
                             let total = Number(b.totalPrice) || 0;
                             let paid = Number(b.paidAmount) || 0;
                             let balance = total - paid;
                             let sClass = String(b.status).toLowerCase();
 
-                            // За замовчуванням ставимо коричневий (для Нових і тих, хто вніс 50%)
+                            // 🟢 НОВА РОЗУМНА ЛОГІКА СТАТУСІВ ДЛЯ МОБІЛКИ
                             let statusClass = 'status-new'; 
-
                             if (sClass.includes('скас')) {
-                                statusClass = 'status-cancelled'; // Скасовано - сірий
+                                statusClass = 'status-cancelled';
+                            } else if (String(b.source).toLowerCase().includes('hutshub') || String(b.name).toLowerCase().includes('hutshub')) {
+                                statusClass = 'status-hutshub'; // 🔒 ЖОРСТКИЙ ПРІОРИТЕТ ДЛЯ HUTSHUB
                             } else if (total > 0 && balance <= 0) {
-                                statusClass = 'status-confirmed'; // Оплачено на 100% - зелений
+                                statusClass = 'status-confirmed';
+                            } else if (sClass.includes('підтвердж')) {
+                                statusClass = 'status-confirmed';
                             }
                             
-                            // 🟢 Читаємо, чи є ранній/пізній заїзд або акція Пт-Нд
                             let exComment = b.comment ? String(b.comment) : "";
                             let exHasEarly = exComment.includes('🕒 Ранній заїзд');
                             let exHasLate = exComment.includes('🕒 Пізній виїзд') || (durationDays === 2 && inDate.getDay() === 5 && outDate.getDay() === 0);
 
-                            // 🟢 ІДЕАЛЬНА МАТЕМАТИКА ВІДСТУПІВ: +2px зліва, -4px ширина
                             let blockLeft = (offsetDays * cellWidth) + 2; 
                             let blockWidth = (durationDays * cellWidth) - 4; 
                             
@@ -1837,10 +1856,8 @@
                             const iconClock = `<svg width="12" height="12" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>`;
                             const iconGift = `<svg width="12" height="12" fill="none" stroke="currentColor" viewBox="0 0 24 24"><rect x="3" y="8" width="18" height="4" rx="1" stroke-width="2.5"></rect><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 8v13M19 12v7a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2v-7M7.5 8a2.5 2.5 0 0 1 0-5A4.8 8 0 0 1 12 8a4.8 8 0 0 1 4.5-5 2.5 2.5 0 0 1 0 5"></path></svg>`;
 
-                            // 🟢 ЗАВЖДИ МАЛЕНЬКІ ХВОСТИКИ НА МОБІЛЦІ (24px)
                             let tailWidth = 24; 
 
-                            // ПІЗНІЙ ВИЇЗД: розтягує картку на 1 повний день
                             if (exHasLate) {
                                 blockWidth += cellWidth; 
                                 let isPromo = (durationDays === 2 && inDate.getDay() === 5 && outDate.getDay() === 0);
@@ -1853,7 +1870,6 @@
                                 padRight = tailWidth + 4; 
                             }
 
-                            // РАННІЙ ЗАЇЗД: сидить на початку дня (без зсуву вліво)
                             if (exHasEarly) {
                                 extensionsHtml += `<div class="time-extension early" style="width: ${tailWidth}px;" 
                                     ontouchstart="event.stopPropagation(); handleTouchStart(event, this.parentElement, '${b.row}', 'early')" 
@@ -1862,7 +1878,6 @@
                                 padLeft = tailWidth + 4; 
                             }
 
-                            // Захист від вильоту за межі екрану
                             if (blockLeft < 0) { 
                                 let overflow = Math.abs(blockLeft);
                                 blockLeft = 0; 
@@ -1883,7 +1898,10 @@
                             }
 
                             let finText = ""; let badgeBg = ""; let badgeColor = "#FFFFFF";
-                            if (total === 0) { finText = "Без ціни"; badgeBg = "rgba(255,255,255,0.3)"; badgeColor = "#1A1A1A"; } 
+                            // 🟢 ТУТ ГАРНА ПЛАШКА HUTSHUB ДЛЯ МОБІЛКИ
+                            if (statusClass === 'status-cancelled') { finText = "Скасовано"; badgeBg = "rgba(0,0,0,0.05)"; badgeColor = "#9CA3AF"; } 
+                            else if (statusClass === 'status-hutshub') { finText = "Hutshub"; badgeBg = "rgba(255,255,255,0.3)"; badgeColor = "#1A332A"; }
+                            else if (total === 0) { finText = "Без ціни"; badgeBg = "rgba(255,255,255,0.3)"; badgeColor = "#1A1A1A"; } 
                             else if (paid === 0) { finText = "Очікує опл."; badgeBg = "#F59E0B"; } 
                             else if (balance <= 0) { finText = "Оплачено"; badgeBg = "#10B981"; } 
                             else { finText = `Борг:${balance}`; badgeBg = "#EF4444"; }
@@ -2885,9 +2903,12 @@
             
             let finText = ""; let finColor = ""; let finBg = "";
             let statusClass = String(b.status).toLowerCase();
+            let isHutshub = String(b.source).toLowerCase().includes('hutshub') || String(b.name).toLowerCase().includes('hutshub');
 
             if (statusClass.includes('скас')) {
                 finText = "Бронь скасована"; finBg = "#F3F4F6"; finColor = "#9CA3AF";
+            } else if (isHutshub) {
+                finText = "ПІДТВЕРДЖЕНО (HUTSHUB)"; finBg = "#C9D6D2"; finColor = "#1A332A";
             } else if (total === 0) {
                 finText = "Очікує прорахунку ціни"; finBg = "#F3F4F6"; finColor = "#4B5563";
             } else if (paid === 0) {
