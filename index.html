@@ -276,6 +276,14 @@
             text-decoration: line-through; 
             box-shadow: none; 
         }
+
+        /* 4. HUTSHUB: Спеціальний сіро-зелений колір під їхній логотип */
+        .booking-block.status-hutshub { 
+            background: linear-gradient(135deg, #C9D6D2 0%, #B2C4BE 100%);
+            color: #1A332A;
+            border-color: rgba(26, 51, 42, 0.15);
+        }
+        .badge.hutshub { background-color: #C9D6D2; color: #1A332A; }
         
         .booking-block span { 
             font-size: 11px; 
@@ -1247,6 +1255,7 @@ input[type="number"] {
                                         <div class="custom-option" onclick="selectOption('sourceWrapper', 'adminSource', 'Telegram Бот', this)">Telegram Бот</div>
                                         <div class="custom-option" onclick="selectOption('sourceWrapper', 'adminSource', 'Сайт', this)">Сайт</div>
                                         <div class="custom-option" onclick="selectOption('sourceWrapper', 'adminSource', 'Телефон', this)">Телефон</div>
+                                        <div class="custom-option" onclick="selectOption('sourceWrapper', 'adminSource', 'Hutshub', this)">Hutshub</div>
                                     </div>
                                 </div>
                                 <input type="hidden" id="adminSource" value="Instagram">
@@ -2540,8 +2549,11 @@ function saveInlineTransaction(type, category, idx) {
                 
                 let badgeClass = 'new'; 
                 let s = String(b.status).toLowerCase();
-                if(s.includes('підтвердж')) badgeClass = 'confirmed';
+                let src = String(b.source).toLowerCase();
+                
                 if(s.includes('скас')) badgeClass = 'cancelled';
+                else if(src.includes('hutshub')) badgeClass = 'hutshub'; // Бейдж Hutshub
+                else if(s.includes('підтвердж')) badgeClass = 'confirmed';
                 
                 const cleanPhone = formatPhone(b.phone);
                 const clientName = String(b.name).replace(' (Ручна бронь)', '');
@@ -2742,6 +2754,8 @@ function saveInlineTransaction(type, category, idx) {
                                 statusClass = 'status-cancelled'; // Скасовано - сірий
                             } else if (total > 0 && balance <= 0) {
                                 statusClass = 'status-confirmed'; // Оплачено на 100% - зелений
+                            } else if (String(b.name).toLowerCase().includes('hutshub') || sClass.includes('підтвердж')) {
+                                statusClass = 'status-confirmed'; // Завжди зелений для сторонніх систем
                             }
 
                             // 🟢 ВІЗУАЛЬНИЙ ГНУЧКИЙ ГРАФІК: Читаємо, чи є ранній/пізній заїзд
