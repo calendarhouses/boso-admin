@@ -3441,17 +3441,18 @@ const appliesToRoom =
                 
                 <div class="form-grid">
                     
-                    <div class="payment-block">
-    <div class="form-grid" style="gap: 20px; margin-bottom: 0;">
-        <!-- АВАНС -->
+                    <div class="payment-block" style="background: #FAFAFA; border: 1px solid #E5E7EB; border-radius: 12px; padding: 20px; margin-bottom: 24px;">
+
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-bottom: 16px;">
+        
         <div class="form-group" style="margin-bottom: 0;">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
-                <label style="margin: 0;">Аванс (Внесено):</label>
-                <div style="display: flex; gap: 4px;">
-                    <div onclick="setHalfPrepayment()" class="pay-chip" style="padding: 2px 6px; flex: none;" title="50%"><span id="prepayBtnText">50%</span></div>
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                <label style="margin: 0; color: #4B5563; font-weight: 600;">Аванс (Внесено):</label>
+                <div onclick="setHalfPrepayment()" class="pay-chip" style="padding: 2px 8px; flex: none; font-size: 11px;" title="Внести 50%">
+                    <span id="prepayBtnText">50%</span>
                 </div>
             </div>
-            <input type="number" id="adminPrepayAmount" value="0" style="font-weight: 700; font-size: 16px; color: #111827;">
+            <input type="number" id="adminPrepayAmount" value="0" style="font-weight: 700; font-size: 16px; color: #111827; margin-bottom: 10px; width: 100%;">
             <div class="pay-methods" id="prepayMethods">
                 <div class="pay-chip active" data-method="ФОП" onclick="selectPayMethod('prepay', 'ФОП')">ФОП</div>
                 <div class="pay-chip" data-method="Картка" onclick="selectPayMethod('prepay', 'Картка')">Картка</div>
@@ -3460,13 +3461,14 @@ const appliesToRoom =
             <input type="hidden" id="adminPrepayMethod" value="ФОП">
         </div>
 
-        <!-- ДОПЛАТА -->
         <div class="form-group" style="margin-bottom: 0;">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
-                <label style="margin: 0;">Доплата на місці:</label>
-                <div onclick="fillSurcharge()" class="pay-chip" style="padding: 2px 6px; flex: none; color: #059669; background: #D1FAE5;" title="Внести залишок">Решта</div>
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                <label style="margin: 0; color: #4B5563; font-weight: 600;">Доплата на місці:</label>
+                <div onclick="fillSurcharge()" class="pay-chip" style="padding: 2px 8px; flex: none; color: #059669; background: #D1FAE5; border-color: #A7F3D0; font-size: 11px;" title="Внести решту">
+                    Решта
+                </div>
             </div>
-            <input type="number" id="adminSurchargeAmount" value="0" style="font-weight: 700; font-size: 16px; color: #111827;">
+            <input type="number" id="adminSurchargeAmount" value="0" style="font-weight: 700; font-size: 16px; color: #111827; margin-bottom: 10px; width: 100%;">
             <div class="pay-methods" id="surchargeMethods">
                 <div class="pay-chip" data-method="ФОП" onclick="selectPayMethod('surcharge', 'ФОП')">ФОП</div>
                 <div class="pay-chip" data-method="Картка" onclick="selectPayMethod('surcharge', 'Картка')">Картка</div>
@@ -3474,16 +3476,17 @@ const appliesToRoom =
             </div>
             <input type="hidden" id="adminSurchargeMethod" value="Готівка">
         </div>
+        
     </div>
-</div>
 
-<div class="form-group" style="margin-bottom: 0;">
-    <label>Залишок (Борг):</label>
-    <div id="adminBalance" style="padding: 11px; font-size: 15px; font-weight: bold; color: #DC2626; background: #FEE2E2; border-radius: 10px; text-align: center; border: 1px solid #FECACA;">
-        0 грн
+    <div style="border-top: 1px dashed #D1D5DB; padding-top: 16px; display: flex; justify-content: space-between; align-items: center;">
+        <label style="margin: 0; font-size: 14px; font-weight: 700; color: #374151;">Залишок (Борг):</label>
+        <div id="adminBalance" style="padding: 8px 16px; font-size: 16px; font-weight: 800; color: #DC2626; background: #FEE2E2; border-radius: 8px; border: 1px solid #FECACA; min-width: 140px; text-align: center;">
+            0 грн
+        </div>
     </div>
+
 </div>
-                    </div>
 
                 </div>
             </div>
