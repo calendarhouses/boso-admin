@@ -2849,12 +2849,14 @@ function setHalfPrepayment() {
                         }
 
                         calculateBalanceLive();
-                }, 50);
-            }, 100);
+            }
+        }, 50);
+    }, 100);
             document.querySelector('.drawer-body').scrollTop = 0;
             document.getElementById('bookingDrawer').classList.add('active');
         }
 
+        
         function closeDrawer() { document.getElementById('bookingDrawer').classList.remove('active'); }
 
         document.getElementById('adminBookingForm').addEventListener('submit', async function(e) { // 🟢 Додали async
