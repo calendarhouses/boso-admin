@@ -951,6 +951,22 @@ input[type="number"] {
                     </div>
                 </div>
 
+                <h3 class="section-title" style="margin-bottom: 16px; margin-top: 24px;">Методи оплати</h3>
+<div class="metrics-grid" style="grid-template-columns: repeat(3, 1fr);">
+    <div class="metric-card" style="min-height: auto; padding: 16px;">
+        <div style="font-size: 11px; font-weight: 700; color: #059669; text-transform: uppercase; margin-bottom: 4px;">💳 На ФОП</div>
+        <div style="font-size: 22px; font-weight: 800; color: #111827;" id="statFOPLabel">0 грн</div>
+    </div>
+    <div class="metric-card" style="min-height: auto; padding: 16px;">
+        <div style="font-size: 11px; font-weight: 700; color: #6D28D9; text-transform: uppercase; margin-bottom: 4px;">🏦 На Картку</div>
+        <div style="font-size: 22px; font-weight: 800; color: #111827;" id="statCardLabel">0 грн</div>
+    </div>
+    <div class="metric-card" style="min-height: auto; padding: 16px;">
+        <div style="font-size: 11px; font-weight: 700; color: #D97706; text-transform: uppercase; margin-bottom: 4px;">💵 Готівка</div>
+        <div style="font-size: 22px; font-weight: 800; color: #111827;" id="statCashLabel">0 грн</div>
+    </div>
+</div>
+
                 <h3 class="section-title" style="margin-bottom: 16px; margin-top: 16px;">Деталізація доходу (продані послуги)</h3>
                 <div class="metrics-grid" style="grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));">
                     <div class="metric-card" id="cardGuests" onclick="openUniversalDetails('guests', 'Додаткові гості', '#1D4ED8', '#E0E7FF', 'Дохід')">
@@ -3776,6 +3792,14 @@ document.getElementById('adminGuests').addEventListener('change', updatePricePre
             editingRowNumber = null; 
             document.getElementById('drawerTitle').innerText = 'Нове бронювання'; 
             document.getElementById('adminBookingForm').reset();
+
+            // 🟢 ОБНУЛЕННЯ ОПЛАТ
+            if(document.getElementById('adminPrepayAmount')) {
+                document.getElementById('adminPrepayAmount').value = 0;
+                document.getElementById('adminSurchargeAmount').value = 0;
+                selectPayMethod('prepay', 'ФОП');
+                selectPayMethod('surcharge', 'Готівка');
+            }
             
            // ОЧИЩЕННЯ ПОЛІВ ПРИ НОВІЙ БРОНІ
             if(document.getElementById('adminComment')) document.getElementById('adminComment').value = ""; 
@@ -3992,11 +4016,11 @@ document.getElementById('adminGuests').addEventListener('change', updatePricePre
                     if(document.getElementById('adminTotalPrice')) {
                         document.getElementById('adminTotalPrice').value = booking.totalPrice || 0;
                         
-                        // Відновлюємо Аванс та Доплату
+                        // 🟢 РОЗДІЛЯЄМО ОПЛАТИ ПРИ ЗАВАНТАЖЕННІ
                         let savedPrepay = Number(booking.prepayAmount) || 0;
                         let savedSurcharge = Number(booking.surchargeAmount) || 0;
                         
-                        // Страховка для старих броней (якщо є тільки paidAmount)
+                        // Якщо бронь стара (до оновлення) і має тільки загальну оплату
                         if (savedPrepay === 0 && savedSurcharge === 0 && Number(booking.paidAmount) > 0) {
                             savedPrepay = Number(booking.paidAmount);
                         }
@@ -4004,7 +4028,7 @@ document.getElementById('adminGuests').addEventListener('change', updatePricePre
                         document.getElementById('adminPrepayAmount').value = savedPrepay;
                         document.getElementById('adminSurchargeAmount').value = savedSurcharge;
 
-                        // Відновлюємо чіпи методів оплат
+                        // Відновлюємо правильні кнопочки
                         selectPayMethod('prepay', booking.prepayMethod || 'ФОП');
                         selectPayMethod('surcharge', booking.surchargeMethod || 'Готівка');
 
@@ -4066,7 +4090,11 @@ document.getElementById('adminGuests').addEventListener('change', updatePricePre
                 prepayMethod: document.getElementById('adminPrepayMethod').value,
                 surchargeAmount: getVal('adminSurchargeAmount'),
                 surchargeMethod: document.getElementById('adminSurchargeMethod').value,
-                paidAmount: getVal('adminPrepayAmount') + getVal('adminSurchargeAmount'), // Залишаємо суму для старих лічильників
+                prepayAmount: getVal('adminPrepayAmount'),
+                prepayMethod: document.getElementById('adminPrepayMethod').value,
+                surchargeAmount: getVal('adminSurchargeAmount'),
+                surchargeMethod: document.getElementById('adminSurchargeMethod').value,
+                paidAmount: getVal('adminPrepayAmount') + getVal('adminSurchargeAmount'), // Залишаємо суму для системи
                 comment: rawComment,
                 
                 // Збираємо ручні правки з розшифровки (тепер вони не будуть нулями)
@@ -4615,6 +4643,7 @@ function bosoLeave() {
             }
 
             let currSum = 0, currCount = 0, currPaid = 0, prevSum = 0, prevCount = 0;
+            let statFOP = 0, statCard = 0, statCash = 0;
             let currGuests = 0, currPets = 0, currEarlyLate = 0, currVat = 0, currBikes = 0, currOther = 0;
             let topRoomsCount = {}; 
             
@@ -4659,6 +4688,19 @@ function bosoLeave() {
                     if (paid > 0) {
                         window.bosoDetails.paid.push({...baseObj, amount: paid});
                         totalIncome += paid;
+                        
+                        // 🟢 РОЗПОДІЛ ПО МЕТОДАХ ОПЛАТИ
+                        let pAmt = Number(b.prepayAmount) || (Number(b.paidAmount) || 0);
+                        let pMethod = b.prepayMethod || 'ФОП';
+                        if (pMethod === 'ФОП') statFOP += pAmt;
+                        if (pMethod === 'Картка') statCard += pAmt;
+                        if (pMethod === 'Готівка') statCash += pAmt;
+
+                        let sAmt = Number(b.surchargeAmount) || 0;
+                        let sMethod = b.surchargeMethod || 'Готівка';
+                        if (sMethod === 'ФОП') statFOP += sAmt;
+                        if (sMethod === 'Картка') statCard += sAmt;
+                        if (sMethod === 'Готівка') statCash += sAmt;
                     }
                     window.bosoDetails.count.push({...baseObj, amount: 0});
                     
@@ -4761,6 +4803,9 @@ function bosoLeave() {
             animateValue('metBikes', 0, currBikes, 800);
             animateValue('metEarlyLate', 0, currEarlyLate, 800);
             animateValue('metOther', 0, currOther, 800);
+            animateValue('statFOPLabel', 0, statFOP, 800);
+            animateValue('statCardLabel', 0, statCard, 800);
+            animateValue('statCashLabel', 0, statCash, 800);
             
             renderTrend('trendSum', currSum, prevSum);
             renderTrend('trendCount', currCount, prevCount);
