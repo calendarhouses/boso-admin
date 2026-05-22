@@ -1412,14 +1412,32 @@ input[type="number"] {
 
                     <div id="liveCalculatorContainer"></div>
 
-                    <div class="form-group" style="margin-top: 16px; margin-bottom: 0; padding-top: 16px; border-top: 1px dashed #E5E7EB;">
-                        <label style="color: #4B5563; font-weight: 600; font-size: 13px; margin-bottom: 8px; display: block;">Спосіб оплати (Куди надійшли кошти):</label>
-                        <div class="mode-toggle" style="margin: 0; width: 100%; display: flex; padding: 4px; background: #F3F4F6; border-radius: 12px; height: 44px;">
-                            <div class="mode-btn pay-btn active" data-val="ФОП" onclick="togglePayment('ФОП')" style="display: flex; align-items: center; justify-content: center; height: 100%; margin: 0; padding: 0; flex: 1;">ФОП / Сайт</div>
-                            <div class="mode-btn pay-btn" data-val="Картка ФО" onclick="togglePayment('Картка ФО')" style="display: flex; align-items: center; justify-content: center; height: 100%; margin: 0; padding: 0; flex: 1;">Картка (Фіз)</div>
-                            <div class="mode-btn pay-btn" data-val="Готівка" onclick="togglePayment('Готівка')" style="display: flex; align-items: center; justify-content: center; height: 100%; margin: 0; padding: 0; flex: 1;">Готівка</div>
+                    <div id="paymentSplitterBlock" style="margin-top: 16px; padding-top: 16px; border-top: 1px dashed #E5E7EB; display: none;">
+                        
+                        <div style="margin-bottom: 12px;">
+                            <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                                <label style="color: #4B5563; font-weight: 600; font-size: 13px;">Оплата авансу <span id="lblAdvAmt" style="color:#9CA3AF;font-weight:400;margin-left:4px;"></span></label>
+                            </div>
+                            <div class="mode-toggle" style="margin: 0; width: 100%; display: flex; padding: 4px; background: #F3F4F6; border-radius: 12px; height: 40px;">
+                                <div class="mode-btn pay-adv-btn active" data-val="ФОП" onclick="setPayMethod('advance', 'ФОП')" style="display:flex; align-items:center; justify-content:center; flex:1; margin:0; padding:0;">ФОП / Сайт</div>
+                                <div class="mode-btn pay-adv-btn" data-val="Картка ФО" onclick="setPayMethod('advance', 'Картка ФО')" style="display:flex; align-items:center; justify-content:center; flex:1; margin:0; padding:0;">Картка (Фіз)</div>
+                                <div class="mode-btn pay-adv-btn" data-val="Готівка" onclick="setPayMethod('advance', 'Готівка')" style="display:flex; align-items:center; justify-content:center; flex:1; margin:0; padding:0;">Готівка</div>
+                            </div>
                         </div>
-                        <input type="hidden" id="adminPaymentMethod" value="ФОП">
+
+                        <div id="payBlockRemainder" style="display: none; animation: slideInRight 0.4s cubic-bezier(0.16, 1, 0.3, 1);">
+                            <div style="display: flex; justify-content: space-between; margin-bottom: 8px; margin-top: 16px;">
+                                <label style="color: #059669; font-weight: 700; font-size: 13px;">Оплата доплати <span id="lblRemAmt" style="color:#10B981;font-weight:600;margin-left:4px;"></span></label>
+                            </div>
+                            <div class="mode-toggle" style="margin: 0; width: 100%; display: flex; padding: 4px; background: #ECFDF5; border: 1px solid #A7F3D0; border-radius: 12px; height: 40px;">
+                                <div class="mode-btn pay-rem-btn" data-val="ФОП" onclick="setPayMethod('remainder', 'ФОП')" style="display:flex; align-items:center; justify-content:center; flex:1; margin:0; padding:0; background:transparent; color:#065F46;">ФОП</div>
+                                <div class="mode-btn pay-rem-btn" data-val="Картка ФО" onclick="setPayMethod('remainder', 'Картка ФО')" style="display:flex; align-items:center; justify-content:center; flex:1; margin:0; padding:0; background:transparent; color:#065F46;">Картка (Фіз)</div>
+                                <div class="mode-btn pay-rem-btn active" data-val="Готівка" onclick="setPayMethod('remainder', 'Готівка')" style="display:flex; align-items:center; justify-content:center; flex:1; margin:0; padding:0; background:#FFF; color:#059669; box-shadow: 0 2px 4px rgba(5,150,105,0.1);">Готівка</div>
+                            </div>
+                        </div>
+
+                        <input type="hidden" id="adminMethodAdvance" value="ФОП">
+                        <input type="hidden" id="adminMethodRemainder" value="Готівка">
                     </div>
                     </form>
             </div>
@@ -3004,12 +3022,24 @@ function toggleUBD(val) {
         let selectedEarlyTime = null;
 let selectedLateTime = null;
 
-        // --- ПЕРЕМИКАЧ СПОСОБУ ОПЛАТИ ---
-function togglePayment(val) {
-    document.getElementById('adminPaymentMethod').value = val;
-    document.querySelectorAll('.pay-btn').forEach(btn => {
-        btn.classList.toggle('active', btn.getAttribute('data-val') === val);
-    });
+       // --- РОЗУМНІ КНОПКИ СПОСОБУ ОПЛАТИ ---
+function setPayMethod(type, val) {
+    if (type === 'advance') {
+        document.getElementById('adminMethodAdvance').value = val;
+        document.querySelectorAll('.pay-adv-btn').forEach(btn => btn.classList.remove('active'));
+        document.querySelector(`.pay-adv-btn[data-val="${val}"]`).classList.add('active');
+    } else {
+        document.getElementById('adminMethodRemainder').value = val;
+        document.querySelectorAll('.pay-rem-btn').forEach(btn => {
+            btn.style.background = 'transparent';
+            btn.style.boxShadow = 'none';
+            btn.classList.remove('active');
+        });
+        const activeBtn = document.querySelector(`.pay-rem-btn[data-val="${val}"]`);
+        activeBtn.classList.add('active');
+        activeBtn.style.background = '#FFF';
+        activeBtn.style.boxShadow = '0 2px 4px rgba(5,150,105,0.1)';
+    }
 }
         
 function toggleAdminService(type) {
@@ -3584,6 +3614,29 @@ function calculateBalanceLive() {
         balEl.style.borderColor = "#FECACA";
     }
 
+    // 🟢 МАГІЯ СПЛІТТЕРА: Показуємо блоки оплати залежно від суми
+    let splitBlock = document.getElementById('paymentSplitterBlock');
+    let remBlock = document.getElementById('payBlockRemainder');
+    
+    if (total > 0 && paid > 0) {
+        splitBlock.style.display = 'block';
+        let advanceRule = Math.round(total / 2);
+        
+        let calcAdv = Math.min(paid, advanceRule);
+        let calcRem = Math.max(0, paid - advanceRule);
+
+        document.getElementById('lblAdvAmt').innerText = `(${calcAdv} грн)`;
+        
+        if (calcRem > 0) {
+            remBlock.style.display = 'block';
+            document.getElementById('lblRemAmt').innerText = `(${calcRem} грн)`;
+        } else {
+            remBlock.style.display = 'none';
+        }
+    } else {
+        splitBlock.style.display = 'none';
+    }
+    
     // 🟢 АВТОМАТИЧНА ЗМІНА СТАТУСУ (Нова бронь <-> Підтверджено)
     let activeStatusBtn = document.querySelector('.status-btn.active');
     let currentStatus = activeStatusBtn ? activeStatusBtn.getAttribute('data-status') : '';
@@ -3779,7 +3832,10 @@ document.getElementById('adminGuests').addEventListener('change', updatePricePre
             if(document.getElementById('adminDayGuests')) document.getElementById('adminDayGuests').value = 0; // 🟢 Очищаємо денних гостей 
             if(document.getElementById('adminVat')) toggleVat('Ні');
             if(document.getElementById('adminUBD')) toggleUBD('Ні');
-            if(document.getElementById('adminPaymentMethod')) togglePayment('ФОП');
+           if(document.getElementById('adminMethodAdvance')) {
+                setPayMethod('advance', 'ФОП');
+                setPayMethod('remainder', 'Готівка');
+            }
             
             // 🟢 ОБНУЛЕННЯ ГНУЧКОГО ГРАФІКА
             selectedEarlyTime = null;
@@ -3871,8 +3927,9 @@ document.getElementById('adminGuests').addEventListener('change', updatePricePre
             // 🟢 СКИДАЄМО ВСІ СТАРІ СТАНИ ПЕРЕД ЗАПОВНЕННЯМ (як у мобільній версії)
             if(document.getElementById('adminVat')) toggleVat('Ні');
             if(document.getElementById('adminUBD')) toggleUBD('Ні');
-               if(document.getElementById('adminPaymentMethod')) {
-                togglePayment(booking.paymentMethod || 'ФОП');
+              if(document.getElementById('adminMethodAdvance')) {
+                setPayMethod('advance', booking.methodAdvance || 'ФОП');
+                setPayMethod('remainder', booking.methodRemainder || 'Готівка');
             }
             if(document.getElementById('adminDayGuests')) document.getElementById('adminDayGuests').value = 0;
             
@@ -4047,7 +4104,8 @@ document.getElementById('adminGuests').addEventListener('change', updatePricePre
                 status: document.querySelector('.status-btn.active').getAttribute('data-status'),
                 totalPrice: getVal('adminTotalPrice'), 
                 paidAmount: getVal('adminPaidAmount'),
-                paymentMethod: document.getElementById('adminPaymentMethod').value, // 🟢 ДОДАНО МЕТОД ОПЛАТИ
+                methodAdvance: document.getElementById('adminMethodAdvance').value,
+                methodRemainder: document.getElementById('adminMethodRemainder').value,
                 comment: rawComment,
                 
                 // Збираємо ручні правки з розшифровки
@@ -4685,16 +4743,31 @@ function bosoLeave() {
                         incomeBreakdown.earlyLate += (feeEarlyLate * ratio);
                         incomeBreakdown.base += (paid - (feePets * ratio) - (feeGuests * ratio) - (feeEarlyLate * ratio));
 
-                        // 🟢 АНАЛІЗ СПОСОБУ ОПЛАТИ
-                        let pMethod = b.paymentMethod || 'ФОП';
-                        // Якщо бронь з сайту і немає методу - це ФОП
-                        if (String(b.source).toLowerCase().includes('сайт') && !b.paymentMethod) pMethod = 'ФОП';
+                        // 🟢 РОЗУМНИЙ РОЗПОДІЛ МЕТОДІВ ОПЛАТИ
+                        let advanceRule = Math.round(price / 2);
+                        let calcAdv = Math.min(paid, advanceRule);
+                        let calcRem = Math.max(0, paid - advanceRule);
+
+                        let mAdv = b.methodAdvance || 'ФОП';
+                        let mRem = b.methodRemainder || 'Готівка';
+
+                        // Якщо бронь з сайту і стара (немає методу) - пишемо в ФОП
+                        if (String(b.source).toLowerCase().includes('сайт') && !b.methodAdvance) mAdv = 'ФОП';
+
+                        // Додаємо аванс
+                        if (calcAdv > 0) {
+                            if (mAdv === 'Готівка') payCash += calcAdv;
+                            else if (mAdv === 'Картка ФО') payCard += calcAdv;
+                            else payFOP += calcAdv;
+                        }
                         
-                        if (pMethod === 'Готівка') payCash += paid;
-                        else if (pMethod === 'Картка ФО') payCard += paid;
-                        else payFOP += paid;
+                        // Додаємо доплату
+                        if (calcRem > 0) {
+                            if (mRem === 'Готівка') payCash += calcRem;
+                            else if (mRem === 'Картка ФО') payCard += calcRem;
+                            else payFOP += calcRem;
+                        }
                     }
-                }
                 
                 if (prevStartDate && bDate >= prevStartDate && bDate <= prevEndDate) {
                     prevSum += price; prevCount++;
@@ -4707,10 +4780,18 @@ function bosoLeave() {
                 return tDate >= startDate && tDate <= endDate;
             }).sort((a, b) => new Date(b.date) - new Date(a.date));
 
-            filteredTrans.forEach(t => {
+           filteredTrans.forEach(t => {
                 const tDate = parseSafeDate(t.date);
                 if (t.type === 'income') {
                     totalIncome += t.amount;
+                    
+                    // 🟢 НОВЕ: Розподіл ручних доходів по категоріям оплат
+                    let pMethod = t.methodAdvance || 'ФОП'; 
+                    if (pMethod === 'Готівка') payCash += t.amount;
+                    else if (pMethod === 'Картка ФО') payCard += t.amount;
+                    else payFOP += t.amount;
+                    // ----------------------------------------------------
+
                    let tObj = { name: t.comment || "Додано вручну", phone: "", date: tDate.toLocaleDateString('uk-UA', { day: 'numeric', month: 'long' }), row: null, amount: t.amount, isTrans: true, id: t.id, rawDate: tDate.getTime() };
                     
                     if (t.category === "Плата за раннє заселення/пізнє виселення") { currEarlyLate += t.amount; window.bosoDetails.earlyLate.push(tObj); }
