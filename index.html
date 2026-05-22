@@ -2570,7 +2570,7 @@ function saveInlineTransaction(type, category, idx) {
                 </tr>`;
             });
         }
-        document.getElementById('guestSearch').addEventListener('input', (e) => renderGuests(e.target.value));
+        
 
         // --- ТАБЛИЦЯ БРОНЮВАНЬ ---
         function renderTable(data) {
@@ -3586,10 +3586,6 @@ function setFullPrepayment() {
         updatePricePreview(); // Моментальний перерахунок
     }
 }
-
-// Прив'язуємо ручне введення цифр до калькулятора
-document.getElementById('adminDayGuests').addEventListener('input', updatePricePreview);
-document.getElementById('adminDayGuests').addEventListener('change', updatePricePreview);
         
 // А функція перерахунку лежить окремо
 function calculateBalanceLive() {
@@ -3739,9 +3735,6 @@ document.querySelectorAll('.status-btn').forEach(btn => {
     btn.addEventListener('click', function() { document.querySelectorAll('.status-btn').forEach(b => b.classList.remove('active')); this.classList.add('active'); }); 
 });
 
-// === ОСЬ ТУТ ВСТАВЛЯЄМО СЛУХАЧІ ДЛЯ ЖИВОГО КАЛЬКУЛЯТОРА ===
-document.getElementById('adminGuests').addEventListener('input', updatePricePreview);
-document.getElementById('adminGuests').addEventListener('change', updatePricePreview);
 
         // --- МАГІЯ ПЕРЕТЯГУВАННЯ ДАТ (DRAG & SELECT) ---
         let isGridDragging = false;
@@ -4297,23 +4290,54 @@ document.addEventListener('click', function(e) {
         }
        
         window.onload = () => {
-            switchView('grid'); // Одразу відкриваємо Шахматку
-            initApp();          // Підтягуємо дані з бази
-            if (window.Telegram && window.Telegram.WebApp) {
-                window.Telegram.WebApp.expand();
-            }
+    switchView('grid'); // Одразу відкриваємо Шахматку
+    initApp();          // Підтягуємо дані з бази
+    
+    // Безпечний запуск Telegram WebApp
+    try {
+        if (window.Telegram && window.Telegram.WebApp && typeof window.Telegram.WebApp.expand === 'function') {
+            window.Telegram.WebApp.expand();
+        }
+    } catch (e) {
+        console.warn('Telegram WebApp не доступний', e);
+    }
 
-            // 🟢 АВТООНОВЛЕННЯ КОЖНУ ХВИЛИНУ
-            setInterval(() => {
-                const isDrawerOpen = document.getElementById('bookingDrawer').classList.contains('active');
-                const isModalOpen = document.getElementById('genericModal').classList.contains('active');
-                
-                // Якщо юзер нічого не редагує і не тягне сітку — тихо оновлюємо
-                if (!isDrawerOpen && !isModalOpen && !isGridDragging) {
-                    silentSync();
-                }
-            }, 30000); 
-        };
+    // --- БЕЗПЕЧНА ПРИВ'ЯЗКА СЛУХАЧІВ (Щоб не висів прелоадер) ---
+    
+    // 1. Пошук гостей
+    const guestSearchInput = document.getElementById('guestSearch');
+    if (guestSearchInput) {
+        guestSearchInput.addEventListener('input', (e) => renderGuests(e.target.value));
+    }
+
+    // 2. Гості (живий калькулятор)
+    const adminGuestsInput = document.getElementById('adminGuests');
+    if (adminGuestsInput) {
+        adminGuestsInput.addEventListener('input', updatePricePreview);
+        adminGuestsInput.addEventListener('change', updatePricePreview);
+    }
+
+    // 3. Денні гості (живий калькулятор)
+    const adminDayGuestsInput = document.getElementById('adminDayGuests');
+    if (adminDayGuestsInput) {
+        adminDayGuestsInput.addEventListener('input', updatePricePreview);
+        adminDayGuestsInput.addEventListener('change', updatePricePreview);
+    }
+
+    // 🟢 АВТООНОВЛЕННЯ КОЖНУ ХВИЛИНУ
+    setInterval(() => {
+        const drawer = document.getElementById('bookingDrawer');
+        const modal = document.getElementById('genericModal');
+        
+        const isDrawerOpen = drawer ? drawer.classList.contains('active') : false;
+        const isModalOpen = modal ? modal.classList.contains('active') : false;
+        
+        // Якщо юзер нічого не редагує і не тягне сітку — тихо оновлюємо
+        if (!isDrawerOpen && !isModalOpen && !isGridDragging) {
+            silentSync();
+        }
+    }, 30000); 
+};
 
         // 🚀 РОБОЧИЙ РЕНДЕР КАРТКИ (ТВІЙ КОД + ПРЕМІУМ КОМЕНТАР + РОЗУМНІ ХВОСТИКИ)
         function bosoHover(element, rowId, type = 'main') {
