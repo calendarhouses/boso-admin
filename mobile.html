@@ -1884,17 +1884,19 @@
                             let balance = total - paid;
                             let sClass = String(b.status).toLowerCase();
 
-                            // 🟢 НОВА РОЗУМНА ЛОГІКА СТАТУСІВ ДЛЯ МОБІЛКИ
-                            let statusClass = 'status-new'; 
-                            if (sClass.includes('скас')) {
-                                statusClass = 'status-cancelled';
-                            } else if (String(b.source).toLowerCase().includes('hutshub') || String(b.name).toLowerCase().includes('hutshub')) {
-                                statusClass = 'status-hutshub'; // 🔒 ЖОРСТКИЙ ПРІОРИТЕТ ДЛЯ HUTSHUB
-                            } else if (total > 0 && balance <= 0) {
-                                statusClass = 'status-confirmed';
-                            } else if (sClass.includes('підтвердж')) {
-                                statusClass = 'status-confirmed';
-                            }
+                            // 🟢 РОЗУМНА ЛОГІКА СТАТУСІВ ДЛЯ МОБІЛКИ
+let statusClass = 'status-new'; 
+
+if (sClass.includes('скас')) {
+    statusClass = 'status-cancelled';
+} else if (String(b.source).toLowerCase().includes('hutshub') || String(b.name).toLowerCase().includes('hutshub')) {
+    statusClass = 'status-hutshub';
+} else if (total > 0 && balance <= 0) {
+    statusClass = 'status-confirmed'; // ТІЛЬКИ якщо оплачено повністю
+} else {
+    // Всі інші (навіть якщо статус "Підтверджено", але є борг) — залишаються "status-new" (коричневими)
+    statusClass = 'status-new'; 
+}
                             
                             let exComment = b.comment ? String(b.comment) : "";
                             let exHasEarly = exComment.includes('🕒 Ранній заїзд');
