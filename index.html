@@ -4557,7 +4557,7 @@ function bosoLeave() {
         }
 
         // 🟢 Глобальна пам'ять для ВСІХ деталей аналітики
-        window.bosoDetails = { sum: [], paid: [], debt: [], count: [], pets: [], guests: [], vat: [], bikes: [], earlyLate: [], other: [] };
+        window.bosoDetails = { sum: [], paid: [], debt: [], count: [], pets: [], guests: [], vat: [], bikes: [], earlyLate: [], other: [], fop: [], card: [], cash: [] };
 
         // --- УНІВЕРСАЛЬНЕ ВІКНО ДЕТАЛЕЙ (CRM Картки) ---
         function openUniversalDetails(type, title, colorHex, bgHex, valLabel) {
@@ -4729,6 +4729,7 @@ function bosoLeave() {
                             if (sMethod === 'ФОП') { statFOP += sAmt; window.bosoDetails.fop.push({...baseObj, amount: sAmt, name: baseObj.name + " (Доплата)"}); }
                             if (sMethod === 'Картка') { statCard += sAmt; window.bosoDetails.card.push({...baseObj, amount: sAmt, name: baseObj.name + " (Доплата)"}); }
                             if (sMethod === 'Готівка') { statCash += sAmt; window.bosoDetails.cash.push({...baseObj, amount: sAmt, name: baseObj.name + " (Доплата)"}); }
+                        }
                         }
                     window.bosoDetails.count.push({...baseObj, amount: 0});
                     
