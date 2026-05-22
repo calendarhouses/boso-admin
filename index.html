@@ -2807,18 +2807,18 @@ if (cottageStr === rShort || cottageStr.includes(rShort) || (room.id === 3 && co
                             let balance = total - paid;
                             let sClass = String(b.status).toLowerCase();
 
-                            // За замовчуванням ставимо коричневий (для Нових і тих, хто вніс 50%)
+                          // 🟢 РОЗУМНА ЛОГІКА СТАТУСІВ ДЛЯ МОБІЛКИ
 let statusClass = 'status-new'; 
 
-// 🟢 НОВА РОЗУМНА ЛОГІКА СТАТУСІВ
 if (sClass.includes('скас')) {
-    statusClass = 'status-cancelled'; // Скасовано - сірий
+    statusClass = 'status-cancelled';
 } else if (String(b.source).toLowerCase().includes('hutshub') || String(b.name).toLowerCase().includes('hutshub')) {
-    statusClass = 'status-hutshub'; // 🔒 ЖОРСТКИЙ ПРІОРИТЕТ ДЛЯ HUTSHUB (завжди фірмовий колір)
+    statusClass = 'status-hutshub';
 } else if (total > 0 && balance <= 0) {
-    statusClass = 'status-confirmed'; // Оплачено на 100% - зелений
-} else if (sClass.includes('підтвердж')) {
-    statusClass = 'status-confirmed'; // Інші підтверджені
+    statusClass = 'status-confirmed'; // ТІЛЬКИ якщо оплачено повністю
+} else {
+    // Всі інші (навіть якщо статус "Підтверджено", але є борг) — залишаються "status-new" (коричневими)
+    statusClass = 'status-new'; 
 }
 
                             // 🟢 ВІЗУАЛЬНИЙ ГНУЧКИЙ ГРАФІК: Читаємо, чи є ранній/пізній заїзд
