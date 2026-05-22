@@ -728,6 +728,23 @@ input[type="number"] {
         
         .it-body { max-height: 0; opacity: 0; padding: 0 24px; overflow: hidden; transition: max-height 0.5s ease, opacity 0.4s ease, padding 0.4s ease; }
         .it-card.active .it-body { max-height: 500px; opacity: 1; padding: 0 24px 24px; }
+
+        /* --- ПРЕМІУМ ЧІПИ МЕТОДІВ ОПЛАТИ --- */
+.pay-methods { display: flex; gap: 4px; margin-top: 6px; }
+.pay-chip {
+    flex: 1; padding: 6px 4px; font-size: 11px; font-weight: 700; color: #6B7280;
+    background: #F3F4F6; border: 1px solid transparent; border-radius: 6px;
+    cursor: pointer; text-align: center; transition: 0.2s; user-select: none;
+    display: flex; align-items: center; justify-content: center; gap: 4px;
+}
+.pay-chip:hover { background: #E5E7EB; color: #374151; }
+
+/* Кольори для активних станів */
+.pay-chip.active[data-method="Готівка"] { background: #EFF6FF; border-color: #93C5FD; color: #1D4ED8; }
+.pay-chip.active[data-method="Картка"] { background: #F5F3FF; border-color: #C4B5FD; color: #6D28D9; }
+.pay-chip.active[data-method="ФОП"] { background: #F0FDF4; border-color: #86EFAC; color: #059669; }
+
+.payment-block { background: #FAFAFA; border: 1px solid #E5E7EB; border-radius: 12px; padding: 16px; margin-bottom: 16px; }
     </style>
 </head>
 <body>
@@ -3424,36 +3441,48 @@ const appliesToRoom =
                 
                 <div class="form-grid">
                     
-                    <div class="form-group" style="margin-bottom: 0;">
-                        <label>Внесено (Аванс):</label>
-                        <div style="position: relative; display: flex; align-items: center;">
-                            <input type="number" id="adminPaidAmount" value="${savedPaidAmount}" placeholder="0" style="padding-right: 125px; width: 100%;">
-                            
-                            <div style="position: absolute; right: 6px; display: flex; gap: 4px;">
-                                <div onclick="setHalfPrepayment()" title="Встановити 50% авансу" 
-                                     style="background: #F3F4F6; color: #4B5563; font-size: 12px; font-weight: 700; padding: 4px 8px; border-radius: 6px; cursor: pointer; transition: 0.2s; display: flex; align-items: center; gap: 4px;" 
-                                     onmouseover="this.style.background='#E5E7EB'" 
-                                     onmouseout="this.style.background='#F3F4F6'">
-                                    <svg width="12" height="12" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"></path></svg>
-                                    <span id="prepayBtnText">50%</span>
-                                </div>
-                                
-                                <div onclick="setFullPrepayment()" title="Сплачено повністю" 
-                                     style="background: #D1FAE5; color: #065F46; font-size: 12px; font-weight: 700; padding: 4px 8px; border-radius: 6px; cursor: pointer; transition: 0.2s; display: flex; align-items: center; gap: 4px;" 
-                                     onmouseover="this.style.background='#A7F3D0'" 
-                                     onmouseout="this.style.background='#D1FAE5'">
-                                    <svg width="12" height="12" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"></path></svg>
-                                    100%
-                                </div>
-                            </div>
-                        </div>
-                    </div>
+                    <div class="payment-block">
+    <div class="form-grid" style="gap: 20px; margin-bottom: 0;">
+        <!-- АВАНС -->
+        <div class="form-group" style="margin-bottom: 0;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+                <label style="margin: 0;">Аванс (Внесено):</label>
+                <div style="display: flex; gap: 4px;">
+                    <div onclick="setHalfPrepayment()" class="pay-chip" style="padding: 2px 6px; flex: none;" title="50%"><span id="prepayBtnText">50%</span></div>
+                </div>
+            </div>
+            <input type="number" id="adminPrepayAmount" value="0" style="font-weight: 700; font-size: 16px; color: #111827;">
+            <div class="pay-methods" id="prepayMethods">
+                <div class="pay-chip active" data-method="ФОП" onclick="selectPayMethod('prepay', 'ФОП')">ФОП</div>
+                <div class="pay-chip" data-method="Картка" onclick="selectPayMethod('prepay', 'Картка')">Картка</div>
+                <div class="pay-chip" data-method="Готівка" onclick="selectPayMethod('prepay', 'Готівка')">Готівка</div>
+            </div>
+            <input type="hidden" id="adminPrepayMethod" value="ФОП">
+        </div>
 
-                    <div class="form-group" style="margin-bottom: 0;">
-                        <label>Залишок (Борг):</label>
-                        <div id="adminBalance" style="padding: 11px; font-size: 15px; font-weight: bold; color: #DC2626; background: #FEE2E2; border-radius: 10px; text-align: center; border: 1px solid #FECACA;">
-                            0 грн
-                        </div>
+        <!-- ДОПЛАТА -->
+        <div class="form-group" style="margin-bottom: 0;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+                <label style="margin: 0;">Доплата на місці:</label>
+                <div onclick="fillSurcharge()" class="pay-chip" style="padding: 2px 6px; flex: none; color: #059669; background: #D1FAE5;" title="Внести залишок">Решта</div>
+            </div>
+            <input type="number" id="adminSurchargeAmount" value="0" style="font-weight: 700; font-size: 16px; color: #111827;">
+            <div class="pay-methods" id="surchargeMethods">
+                <div class="pay-chip" data-method="ФОП" onclick="selectPayMethod('surcharge', 'ФОП')">ФОП</div>
+                <div class="pay-chip" data-method="Картка" onclick="selectPayMethod('surcharge', 'Картка')">Картка</div>
+                <div class="pay-chip active" data-method="Готівка" onclick="selectPayMethod('surcharge', 'Готівка')">Готівка</div>
+            </div>
+            <input type="hidden" id="adminSurchargeMethod" value="Готівка">
+        </div>
+    </div>
+</div>
+
+<div class="form-group" style="margin-bottom: 0;">
+    <label>Залишок (Борг):</label>
+    <div id="adminBalance" style="padding: 11px; font-size: 15px; font-weight: bold; color: #DC2626; background: #FEE2E2; border-radius: 10px; text-align: center; border: 1px solid #FECACA;">
+        0 грн
+    </div>
+</div>
                     </div>
 
                 </div>
@@ -3462,32 +3491,45 @@ const appliesToRoom =
     `;
 
     document.getElementById('adminTotalPrice').addEventListener('input', calculateBalanceLive);
-    document.getElementById('adminPaidAmount').addEventListener('input', calculateBalanceLive);
+    document.getElementById('adminPrepayAmount').addEventListener('input', calculateBalanceLive);
+    document.getElementById('adminSurchargeAmount').addEventListener('input', calculateBalanceLive);
     
     // 2. ОДРАЗУ ОНОВЛЮЄМО ПЛАШКУ "ЗАЛИШОК"
     calculateBalanceLive();
 }
 
-        // --- ФУНКЦІЯ ДЛЯ КНОПКИ "50% АВАНС" ---
-function setHalfPrepayment() {
-    let totalInput = document.getElementById('adminTotalPrice');
-    let paidInput = document.getElementById('adminPaidAmount');
-    if (totalInput && paidInput) {
-        let total = Number(totalInput.value) || 0;
-        paidInput.value = Math.round(total / 2); // Рахує рівно половину
-        calculateBalanceLive(); // Одразу перемальовує залишок
+        // --- ФУНКЦІЇ ДЛЯ КНОПОК ОПЛАТИ (Аванс, Доплата, Чіпи) ---
+function selectPayMethod(type, method) {
+    const hiddenInput = document.getElementById(type === 'prepay' ? 'adminPrepayMethod' : 'adminSurchargeMethod');
+    const container = document.getElementById(type === 'prepay' ? 'prepayMethods' : 'surchargeMethods');
+    
+    hiddenInput.value = method;
+    container.querySelectorAll('.pay-chip').forEach(chip => {
+        chip.classList.toggle('active', chip.getAttribute('data-method') === method);
+    });
+}
+
+function fillSurcharge() {
+    let total = Number(document.getElementById('adminTotalPrice').value) || 0;
+    let prepay = Number(document.getElementById('adminPrepayAmount').value) || 0;
+    let remainder = total - prepay;
+    
+    if (remainder > 0) {
+        document.getElementById('adminSurchargeAmount').value = remainder;
+        calculateBalanceLive();
     }
 }
 
-        // --- ФУНКЦІЯ ДЛЯ КНОПКИ "ОПЛАЧЕНО" (100%) ---
-function setFullPrepayment() {
-    let totalInput = document.getElementById('adminTotalPrice');
-    let paidInput = document.getElementById('adminPaidAmount');
-    if (totalInput && paidInput) {
-        paidInput.value = Number(totalInput.value) || 0; // Бере повну суму
-        calculateBalanceLive(); // Перемальовує залишок в 0
+function setHalfPrepayment() {
+    let total = Number(document.getElementById('adminTotalPrice').value) || 0;
+    let prepayInput = document.getElementById('adminPrepayAmount');
+    if (prepayInput) {
+        prepayInput.value = Math.round(total / 2);
+        calculateBalanceLive(); 
     }
 }
+
+// Функцію setFullPrepayment можеш взагалі видалити, бо тепер у нас кнопка "Решта" робить цю роботу ідеально.
        function changeGuests(amount) {
     let input = document.getElementById('adminGuests');
     let currentVal = parseInt(input.value) || 1;
@@ -3522,19 +3564,23 @@ function setFullPrepayment() {
 document.getElementById('adminDayGuests').addEventListener('input', updatePricePreview);
 document.getElementById('adminDayGuests').addEventListener('change', updatePricePreview);
         
-// А функція перерахунку лежить окремо
 function calculateBalanceLive() {
     let total = Number(document.getElementById('adminTotalPrice').value) || 0;
-    let paid = Number(document.getElementById('adminPaidAmount').value) || 0;
+    
+    // ТЕПЕР РАХУЄМО ОБИДВІ ОПЛАТИ
+    let prepay = Number(document.getElementById('adminPrepayAmount').value) || 0;
+    let surcharge = Number(document.getElementById('adminSurchargeAmount').value) || 0;
+    let paid = prepay + surcharge;
     let balance = total - paid;
-    let balEl = document.getElementById('adminBalance');
 
-    // РОЗУМНЕ ОНОВЛЕННЯ ТЕКСТУ НА ЗЕЛЕНІЙ КНОПЦІ 50%
     let prepayBtnText = document.getElementById('prepayBtnText');
     if (prepayBtnText) prepayBtnText.innerText = Math.round(total / 2);
 
+    let balEl = document.getElementById('adminBalance');
+    if (!balEl) return;
+
     if (balance <= 0) {
-        balEl.innerText = "Оплачено (0 грн)";
+        balEl.innerText = "Оплачено повністю (0 грн)";
         balEl.style.color = "#059669"; 
         balEl.style.background = "#D1FAE5";
         balEl.style.borderColor = "#A7F3D0";
@@ -3549,15 +3595,12 @@ function calculateBalanceLive() {
     let activeStatusBtn = document.querySelector('.status-btn.active');
     let currentStatus = activeStatusBtn ? activeStatusBtn.getAttribute('data-status') : '';
     
-    // Змінюємо статус ТІЛЬКИ якщо бронь не скасована (щоб випадково не оживити скасовану бронь)
     if (currentStatus !== 'Скасовано') {
         document.querySelectorAll('.status-btn').forEach(b => b.classList.remove('active'));
         if (paid > 0) {
-            // Якщо є хоч якась оплата -> Підтверджено
             let confBtn = document.querySelector('.status-btn[data-status="Підтверджено"]');
             if (confBtn) confBtn.classList.add('active');
         } else {
-            // Якщо оплати нуль -> Нова бронь
             let newBtn = document.querySelector('.status-btn[data-status="Нова бронь"]');
             if (newBtn) newBtn.classList.add('active');
         }
@@ -3945,11 +3988,27 @@ document.getElementById('adminGuests').addEventListener('change', updatePricePre
             else document.querySelector('.status-btn[data-status="Нова бронь"]').classList.add('active');
 
            setTimeout(() => {
-                updatePricePreview(true); // 🟢 ПЕРЕДАЄМО true, щоб підтягнулись ручні цифри
+                updatePricePreview(true); 
                 setTimeout(() => {
                     if(document.getElementById('adminTotalPrice')) {
                         document.getElementById('adminTotalPrice').value = booking.totalPrice || 0;
-                        document.getElementById('adminPaidAmount').value = booking.paidAmount || 0;
+                        
+                        // Відновлюємо Аванс та Доплату
+                        let savedPrepay = Number(booking.prepayAmount) || 0;
+                        let savedSurcharge = Number(booking.surchargeAmount) || 0;
+                        
+                        // Страховка для старих броней (якщо є тільки paidAmount)
+                        if (savedPrepay === 0 && savedSurcharge === 0 && Number(booking.paidAmount) > 0) {
+                            savedPrepay = Number(booking.paidAmount);
+                        }
+
+                        document.getElementById('adminPrepayAmount').value = savedPrepay;
+                        document.getElementById('adminSurchargeAmount').value = savedSurcharge;
+
+                        // Відновлюємо чіпи методів оплат
+                        selectPayMethod('prepay', booking.prepayMethod || 'ФОП');
+                        selectPayMethod('surcharge', booking.surchargeMethod || 'Готівка');
+
                         calculateBalanceLive();
                     }
                 }, 50);
@@ -4004,7 +4063,11 @@ document.getElementById('adminGuests').addEventListener('change', updatePricePre
                 pets: document.getElementById('adminPets').value, 
                 status: document.querySelector('.status-btn.active').getAttribute('data-status'),
                 totalPrice: getVal('adminTotalPrice'), 
-                paidAmount: getVal('adminPaidAmount'),
+               prepayAmount: getVal('adminPrepayAmount'),
+                prepayMethod: document.getElementById('adminPrepayMethod').value,
+                surchargeAmount: getVal('adminSurchargeAmount'),
+                surchargeMethod: document.getElementById('adminSurchargeMethod').value,
+                paidAmount: getVal('adminPrepayAmount') + getVal('adminSurchargeAmount'), // Залишаємо суму для старих лічильників
                 comment: rawComment,
                 
                 // Збираємо ручні правки з розшифровки (тепер вони не будуть нулями)
