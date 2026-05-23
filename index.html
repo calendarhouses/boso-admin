@@ -402,28 +402,29 @@
             background-color: #F9FAFB !important;
         }
 
-        /* Шахматка обмежень — як конструктор цін, з відступом знизу */
+        /* Шахматка обмежень — як конструктор цін */
+        #view-settings .settings-content {
+            flex: 0 1 auto;
+            height: auto;
+            overflow: visible;
+        }
+        #set-restrictions {
+            width: 100%;
+        }
         #set-restrictions .timeline-wrapper {
             margin-top: 20px;
-            margin-bottom: 28px;
-            border: 1px solid #E5E7EB;
-            border-radius: 16px;
-            background: #fff;
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
-            overflow: hidden; /* Важливо: ховає все, що вилазить за рамку */
-            display: flex;
+            margin-bottom: 24px;
             align-items: stretch;
-        }
-        #set-restrictions .timeline-sidebar {
-            padding-bottom: 0; /* Прибираємо зайвий відступ внизу */
-        }
-        #set-restrictions .timeline-rows {
-            padding-bottom: 0; /* Прибираємо зайвий відступ внизу */
+            width: 100%;
+            max-width: 100%;
         }
         #set-restrictions #restrictionScroll {
             overflow-x: auto;
             min-width: 0;
-            padding-bottom: 0;
+            flex: 1;
+        }
+        #set-restrictions .timeline-sidebar {
+            align-self: stretch;
         }
 
         .restriction-bar-menu {
@@ -1418,11 +1419,6 @@ input[type="number"] {
                         </div>
                     </div>
                 </div>
-
-                <div id="restrictionBarMenu" class="restriction-bar-menu" role="menu">
-                    <button type="button" onclick="restrictionMenuConstructor()">Конструктор обмежень</button>
-                    <button type="button" class="danger" onclick="restrictionMenuDelete()">Видалити обмеження</button>
-                </div>
                 
                 <div id="set-discounts" class="settings-tab-content" style="display: none;"> 
                    <div class="settings-title" style="justify-content: flex-start; gap: 12px;">
@@ -1503,6 +1499,11 @@ input[type="number"] {
         </div>
     </div>
         
+    <div id="restrictionBarMenu" class="restriction-bar-menu" role="menu">
+        <button type="button" onclick="restrictionMenuConstructor()">Конструктор обмежень</button>
+        <button type="button" class="danger" onclick="restrictionMenuDelete()">Видалити обмеження</button>
+    </div>
+
      <div id="customConfirmModal" class="modal-overlay" style="z-index: 3000;">
         <div class="modal-box" style="max-width: 380px; text-align: center; padding: 30px 24px;">
             <div style="background: #FEE2E2; color: #DC2626; width: 64px; height: 64px; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 20px;">
@@ -3461,8 +3462,15 @@ else if (total === 0) { finText = "Немає ціни"; badgeBg = "rgba(255,255
             renderRestrictionsGrid();
         }
 
+        function clearRestrictionCellHighlights() {
+            document.querySelectorAll('#restrictionGrid .restriction-cell').forEach(c => {
+                c.classList.remove('cell-selected', 'cell-selected-start', 'cell-selected-end');
+            });
+        }
+
         function getRestrictionCellSelectionClasses(roomId, dateStr) {
-            if (!lastRestrictionSelection || String(lastRestrictionSelection.roomId) !== String(roomId)) return '';
+            if (!lastRestrictionSelection || !lastRestrictionSelection.highlightCells) return '';
+            if (String(lastRestrictionSelection.roomId) !== String(roomId)) return '';
             if (!lastRestrictionSelection.dates || !lastRestrictionSelection.dates.includes(dateStr)) return '';
             const sorted = [...lastRestrictionSelection.dates].sort();
             let cls = 'cell-selected';
@@ -3539,21 +3547,22 @@ else if (total === 0) { finText = "Немає ціни"; badgeBg = "rgba(255,255
 
         let restrictionBarMenuEl = null;
 
-        function selectRestrictionSegment(roomId, dates, minN) {
+        function selectRestrictionSegment(roomId, dates, minN, highlightCells = false) {
             lastRestrictionSelection = {
                 roomId: String(roomId),
                 dates: [...dates].sort(),
-                minN: minN || 2
+                minN: minN || 2,
+                highlightCells: !!highlightCells
             };
-            updateRestrictionCellHighlightFromSelection();
+            if (highlightCells) updateRestrictionCellHighlightFromSelection();
+            else clearRestrictionCellHighlights();
             updateRestrictionSelectionHint();
         }
 
         function updateRestrictionCellHighlightFromSelection() {
-            document.querySelectorAll('#restrictionGrid .restriction-cell').forEach(c => {
-                c.classList.remove('cell-selected', 'cell-selected-start', 'cell-selected-end');
-            });
-            if (!lastRestrictionSelection || !lastRestrictionSelection.dates || !lastRestrictionSelection.dates.length) return;
+            clearRestrictionCellHighlights();
+            if (!lastRestrictionSelection || !lastRestrictionSelection.highlightCells) return;
+            if (!lastRestrictionSelection.dates || !lastRestrictionSelection.dates.length) return;
 
             const { roomId, dates } = lastRestrictionSelection;
             const sorted = [...dates].sort();
@@ -3583,7 +3592,7 @@ else if (total === 0) { finText = "Немає ціни"; badgeBg = "rgba(255,255
             const roomId = el.getAttribute('data-room');
             const dates = (el.getAttribute('data-dates') || '').split(',').filter(Boolean);
             const minN = parseInt(el.getAttribute('data-min'), 10) || 2;
-            selectRestrictionSegment(roomId, dates, minN);
+            selectRestrictionSegment(roomId, dates, minN, false);
             openRestrictionBarMenu(e, el);
         }
 
@@ -3745,7 +3754,11 @@ else if (total === 0) { finText = "Немає ціни"; badgeBg = "rgba(255,255
             if (scrollEl && startDate.getMonth() === today.getMonth() && startDate.getFullYear() === today.getFullYear()) {
                 scrollEl.scrollLeft = Math.max(0, (today.getDate() - 3) * cellWidth);
             }
-            updateRestrictionCellHighlightFromSelection();
+            if (lastRestrictionSelection && lastRestrictionSelection.highlightCells) {
+                updateRestrictionCellHighlightFromSelection();
+            } else {
+                clearRestrictionCellHighlights();
+            }
         }
 
         function startRestrictionCellDrag(e, cell) {
@@ -3804,7 +3817,7 @@ else if (total === 0) { finText = "Немає ціни"; badgeBg = "rgba(255,255
                     cur.setDate(cur.getDate() + 1);
                 }
 
-                lastRestrictionSelection = { roomId: restrDragRoomId, dates: dates };
+                lastRestrictionSelection = { roomId: restrDragRoomId, dates: dates, highlightCells: true };
                 updateRestrictionSelectionHint();
                 updateRestrictionCellHighlightFromSelection();
             }
