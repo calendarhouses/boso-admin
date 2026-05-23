@@ -324,50 +324,28 @@
             position: relative; padding: 0; box-sizing: border-box;
         }
         .restriction-cell.weekend-restr { background: #F9FAFB; }
-        /* Блок обмеження — як .booking-block на основній шахматці */
-        .restriction-chip {
+        /* Картка обмеження — той самий компонент, що бронь на шахматці */
+        .booking-block.restriction-chip {
             position: absolute;
-            top: 10px; left: 5px; right: 5px;
+            top: 10px;
+            left: 3px;
+            right: 3px;
+            width: auto !important;
             height: 50px;
-            border-radius: 8px;
-            display: flex;
-            flex-direction: column;
-            align-items: flex-start;
-            justify-content: center;
-            gap: 3px;
-            padding: 6px 10px;
-            background: linear-gradient(135deg, #6B8E23 0%, #4B5D28 100%);
-            border: 1px solid rgba(255, 255, 255, 0.15);
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-            pointer-events: none;
+            min-width: 0;
+            padding: 5px 8px;
             z-index: 2;
-            line-height: 1.15;
-            overflow: hidden;
-            transition: box-shadow 0.2s ease, transform 0.2s ease;
+            pointer-events: none;
+            cursor: default;
         }
-        .restriction-cell.weekend-restr .restriction-chip {
-            background: linear-gradient(135deg, #7A9A3A 0%, #556B2F 100%);
+        .booking-block.restriction-chip:hover {
+            transform: none;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
         }
-        .restriction-chip-value {
-            font-size: 13px;
-            font-weight: 700;
-            color: #FFFFFF;
-            letter-spacing: -0.02em;
-            line-height: 1.2;
-        }
-        .restriction-chip-label {
-            font-size: 9px;
-            font-weight: 600;
-            color: rgba(255, 255, 255, 0.9);
-            letter-spacing: 0.02em;
-            background: rgba(255, 255, 255, 0.22);
-            padding: 2px 6px;
-            border-radius: 4px;
-            line-height: 1.2;
-        }
-        #restrictionGrid .restriction-cell.has-restriction:hover:not(.cell-selected) .restriction-chip {
-            transform: translateY(-1px);
-            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.14);
+        #restrictionGrid .restriction-cell.has-restriction:hover:not(.cell-selected) .booking-block.restriction-chip {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 15px rgba(0, 0, 0, 0.15);
+            z-index: 3;
         }
         .restriction-selection-hint {
             font-size: 13px; color: #4B5563; margin-top: 10px; line-height: 1.45;
@@ -375,12 +353,14 @@
             border-radius: 10px; border-left: 3px solid var(--accent);
         }
 
-        /* Сітка обмежень — hover/виділення на всю клітинку (без scale) */
+        /* Сітка обмежень — той самий hover, що на шахматці */
         #restrictionGrid .restriction-cell.timeline-cell:hover:not(.cell-selected) {
-            background-color: rgba(85, 107, 47, 0.06) !important;
-            box-shadow: inset 0 0 0 2px rgba(85, 107, 47, 0.4);
-            transform: none !important;
-            z-index: 2;
+            background-color: var(--card-bg) !important;
+            transform: scale(1.1);
+            z-index: 10;
+            box-shadow: 0 8px 16px rgba(85, 107, 47, 0.15);
+            border: 2px solid var(--accent) !important;
+            border-radius: 6px;
         }
         #restrictionGrid .restriction-cell.timeline-cell.cell-selected {
             background-color: rgba(85, 107, 47, 0.14) !important;
@@ -597,10 +577,12 @@
         }
 
         .timeline-cell:hover:not(.cell-selected) {
-            background-color: rgba(85, 107, 47, 0.06) !important;
-            box-shadow: inset 0 0 0 2px rgba(85, 107, 47, 0.45);
-            transform: none;
+            background-color: var(--card-bg) !important;
+            transform: scale(1.1);
             z-index: 10;
+            box-shadow: 0 8px 16px rgba(85, 107, 47, 0.15);
+            border: 2px solid var(--accent);
+            border-radius: 6px;
             cursor: pointer;
         }
       /* --- ПРЕМІУМ КНОПКИ (ТВАРИНИ ТА СТАТУС НОМЕРІВ) --- */
@@ -3443,7 +3425,14 @@ else if (total === 0) { finText = "Немає ціни"; badgeBg = "rgba(255,255
                     const minN = getRestrictionMinNights(room.id, d);
                     const hasR = minN > 0;
                     const selCls = getRestrictionCellSelectionClasses(room.id, dateStr);
-                    const pillHtml = hasR ? `<span class="restriction-chip" title="Мінімум ${minN} ${nightWord(minN)}"><span class="restriction-chip-value">${minN}</span><span class="restriction-chip-label">мін. діб</span></span>` : '';
+                    const pillHtml = hasR ? `<div class="booking-block status-confirmed restriction-chip" title="Мінімум ${minN} діб">
+                        <div class="booking-inner-content" style="position:relative;z-index:2;display:flex;flex-direction:column;width:100%;justify-content:center;height:100%;">
+                            <div style="font-size:12px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;line-height:1.2;">мін. ${minN} діб</div>
+                            <div style="margin-top:4px;display:flex;">
+                                <span style="background:rgba(255,255,255,0.28);color:#fff;font-size:9px;font-weight:700;padding:2px 6px;border-radius:4px;white-space:nowrap;box-shadow:0 1px 2px rgba(0,0,0,0.1);">обмеження</span>
+                            </div>
+                        </div>
+                    </div>` : '';
 
                     rowHtml += `<div class="restriction-cell timeline-cell ${isWeekend ? 'weekend-restr' : ''} ${hasR ? 'has-restriction' : ''} ${selCls}"
                         data-room="${room.id}" data-date="${dateStr}"
