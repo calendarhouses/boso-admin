@@ -220,6 +220,71 @@
         .timeline-cell { width: 60px; flex-shrink: 0; border-right: 1px solid #F3F4F6; }
         .timeline-cell.weekend { background: #F9FAFB; }
 
+        .restriction-cell {
+            width: 60px; flex-shrink: 0;
+            height: 100%; min-height: 60px; align-self: stretch;
+            border-right: 1px solid #F3F4F6; cursor: pointer;
+            position: relative; padding: 0; box-sizing: border-box;
+            touch-action: none;
+        }
+        .restriction-cell.weekend-restr { background: #F9FAFB; }
+        .booking-block.restriction-chip {
+            position: absolute;
+            top: 7px;
+            height: 38px;
+            min-width: 0;
+            padding: 4px 8px;
+            z-index: 20;
+            pointer-events: auto;
+            cursor: pointer;
+            box-sizing: border-box;
+        }
+        .booking-block.restriction-chip.restriction-chip--menu-open {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.18);
+            z-index: 30;
+        }
+        .restriction-chip--single {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 2px 4px;
+            text-align: center;
+        }
+        .restriction-chip-single-num { font-size: 16px; font-weight: 700; line-height: 1; }
+        .restriction-chip-single-label { font-size: 7px; font-weight: 700; text-transform: uppercase; opacity: 0.9; margin-top: 2px; }
+        .restriction-chip--compact .restriction-chip-title { font-size: 10px; font-weight: 700; white-space: nowrap; }
+        .restriction-hint-slot { min-height: 40px; margin: 6px 0 10px; flex-shrink: 0; }
+        .restriction-selection-hint {
+            font-size: 12px; color: #4B5563; line-height: 1.45;
+            padding: 10px 12px; background: #F9FAFB; border: 1px solid #E5E7EB;
+            border-radius: 10px; border-left: 3px solid var(--accent);
+            margin: 0; visibility: hidden; opacity: 0; pointer-events: none;
+        }
+        .restriction-selection-hint.is-visible { visibility: visible; opacity: 1; pointer-events: auto; }
+        #restrictionGrid .restriction-cell.timeline-cell.cell-selected {
+            background-color: rgba(85, 107, 47, 0.14) !important;
+            border-top: 2px solid var(--accent) !important;
+            border-bottom: 2px solid var(--accent) !important;
+            border-left: none !important;
+            border-right: 1px solid #F3F4F6 !important;
+            z-index: 5;
+        }
+        #restrictionGrid .restriction-cell.timeline-cell.cell-selected-start {
+            border-left: 2px solid var(--accent) !important;
+            border-radius: 8px 0 0 8px !important;
+        }
+        #restrictionGrid .restriction-cell.timeline-cell.cell-selected-end {
+            border-right: 2px solid var(--accent) !important;
+            border-radius: 0 8px 8px 0 !important;
+        }
+        #restrictionGrid .restriction-cell.timeline-cell.cell-selected-start.cell-selected-end {
+            border-left: 2px solid var(--accent) !important;
+            border-right: 2px solid var(--accent) !important;
+            border-radius: 8px !important;
+        }
+
         /* Збільшено висоту блоку броні 46px */
         .booking-block { 
             position: absolute; height: 46px; top: 7px; border-radius: 8px; padding: 6px 8px; 
@@ -602,6 +667,7 @@
             <div class="mobile-settings-tabs">
                 <div class="m-tab active" onclick="switchSettingsTab('rooms', this)">Котеджі</div>
                 <div class="m-tab" onclick="switchSettingsTab('prices', this)">Ціни</div>
+                <div class="m-tab" onclick="switchSettingsTab('restrictions', this)">Обмеження</div>
                 <div class="m-tab" onclick="switchSettingsTab('discounts', this)">Знижки</div>
             </div>
 
@@ -631,6 +697,35 @@
                         <div class="timeline-months" id="priceMonths"></div>
                         <div class="timeline-dates" id="priceDates"></div>
                         <div class="timeline-rows" id="priceGrid"></div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="set-restrictions" class="settings-tab-content" style="display: none;">
+                <div class="form-grid" style="margin-bottom: 16px;">
+                    <button class="btn-primary" onclick="openRestrictionConstructor()">Конструктор</button>
+                    <button class="btn-outline-danger" onclick="clearRestrictionsAlert()">Видалити</button>
+                </div>
+                <div class="timeline-nav-row" style="margin-bottom: 12px;">
+                    <div class="timeline-nav">
+                        <button class="btn-icon" onclick="shiftRestrictionsTimeline(-1)"><svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-width="2" d="M15 19l-7-7 7-7"></path></svg></button>
+                        <span class="timeline-month-label" id="restrictionMonthLabel">Березень</span>
+                        <button class="btn-icon" onclick="shiftRestrictionsTimeline(1)"><svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-width="2" d="M9 5l7 7-7 7"></path></svg></button>
+                    </div>
+                    <button class="btn-secondary" style="padding: 6px 12px; font-size: 12px;" onclick="resetRestrictionsTimelineToToday()">Сьогодні</button>
+                </div>
+                <div class="restriction-hint-slot">
+                    <p class="restriction-selection-hint" id="restrictionSelectionHint" aria-live="polite"></p>
+                </div>
+                <div class="timeline-wrapper" id="restrictionsTimelineWrapper" style="height: 40vh; min-height: 300px;">
+                    <div class="timeline-sidebar">
+                        <div class="timeline-sidebar-header">Котеджі</div>
+                        <div id="restrictionRoomsList"></div>
+                    </div>
+                    <div class="timeline-grid-container" id="restrictionScroll">
+                        <div class="timeline-months" id="restrictionMonths"></div>
+                        <div class="timeline-dates" id="restrictionDates"></div>
+                        <div class="timeline-rows" id="restrictionGrid"></div>
                     </div>
                 </div>
             </div>
@@ -879,6 +974,22 @@
         </div>
     </div>
     
+    <div id="restrictionActionSheet" class="modal-overlay" style="z-index: 2500;">
+        <div class="modal-box" style="max-width: 100%; border-radius: 24px 24px 0 0; position: absolute; bottom: 0; left: 0; right: 0; margin: 0;">
+            <div class="modal-header" style="flex-direction: column; align-items: stretch; padding: 12px 20px 16px;">
+                <div class="drag-handle"></div>
+                <div style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
+                    <span>Обмеження</span>
+                    <button class="close-btn" onclick="closeRestrictionActionSheet()">✕</button>
+                </div>
+            </div>
+            <div class="modal-body" style="display: flex; flex-direction: column; gap: 10px;">
+                <button class="btn-primary" onclick="restrictionSheetConstructor()">Конструктор обмежень</button>
+                <button class="btn-outline-danger" onclick="restrictionSheetDelete()">Видалити обмеження</button>
+            </div>
+        </div>
+    </div>
+
     <div id="customConfirmModal" class="modal-overlay" style="z-index: 3000;">
         <div class="modal-box" style="padding-bottom: 20px;">
             <div class="confirm-header" style="padding-top: 12px; width: 100%; display: flex; justify-content: center; align-items: center; min-height: 30px;">
@@ -1110,6 +1221,20 @@
         function getGuestWord(count) { let n = Math.abs(parseInt(count)) % 100; let n1 = n % 10; if (n > 10 && n < 20) return "гостей"; if (n1 > 1 && n1 < 5) return "гості"; if (n1 === 1) return "гість"; return "гостей"; }
         function getVisitWord(count) { let n = Math.abs(parseInt(count)) % 100; let n1 = n % 10; if (n > 10 && n < 20) return "заїздів"; if (n1 > 1 && n1 < 5) return "заїзди"; if (n1 === 1) return "заїзд"; return "заїздів"; }
         function getNightWord(count) { let n = Math.abs(parseInt(count)) % 100; let n1 = n % 10; if (n > 10 && n < 20) return "ночей"; if (n1 > 1 && n1 < 5) return "ночі"; if (n1 === 1) return "ніч"; return "ночей"; }
+        function dateWord(n) {
+            const v = Math.abs(parseInt(n, 10)) % 100, v1 = v % 10;
+            if (v > 10 && v < 20) return 'дат';
+            if (v1 > 1 && v1 < 5) return 'дати';
+            if (v1 === 1) return 'дата';
+            return 'дат';
+        }
+        function dayWord(n) {
+            const v = Math.abs(parseInt(n, 10)) % 100, v1 = v % 10;
+            if (v > 10 && v < 20) return 'днів';
+            if (v1 > 1 && v1 < 5) return 'дні';
+            if (v1 === 1) return 'день';
+            return 'днів';
+        }
         
         let allBookings = [];
         let editingRowNumber = null;
@@ -1138,7 +1263,8 @@
         let discountsList = [];
         let customServicesList = [];
         let sysServicesList = [];
-        let customPrices = {}; 
+        let customPrices = {};
+        let restrictions = {};
         
         // --- 🚀 ДОПОМІЖНА ФУНКЦІЯ ДЛЯ ЗАСТОСУВАННЯ ДАНИХ ---
         function applyServerData(data, isSilent = false) {
@@ -1153,6 +1279,7 @@
                 if (settingsData.customServicesList) customServicesList = settingsData.customServicesList;
                 if (settingsData.sysServicesList) sysServicesList = settingsData.sysServicesList;
                 if (settingsData.customPrices) customPrices = settingsData.customPrices;
+                if (settingsData.restrictions) restrictions = settingsData.restrictions;
                 if (settingsData.transactions) transactions = settingsData.transactions;
             }
 
@@ -1174,6 +1301,9 @@
             
             if(typeof renderSettingsRooms === 'function') renderSettingsRooms();
             if(typeof renderSettingsDiscounts === 'function') renderSettingsDiscounts();
+            if (document.getElementById('set-restrictions') && document.getElementById('set-restrictions').style.display === 'block') {
+                renderRestrictionsGrid();
+            }
         }
 
         // --- 🚀 ІНІЦІАЛІЗАЦІЯ (БЕЗ КЕШУ, ЧЕКАЄМО СЕРВЕР) ---
@@ -1191,6 +1321,7 @@
                     if (settingsData.customServicesList) customServicesList = settingsData.customServicesList;
                     if (settingsData.sysServicesList) sysServicesList = settingsData.sysServicesList;
                     if (settingsData.customPrices) customPrices = settingsData.customPrices;
+                    if (settingsData.restrictions) restrictions = settingsData.restrictions;
                     if (settingsData.transactions) transactions = settingsData.transactions;
                 }
 
@@ -1232,6 +1363,7 @@
                     if (sd.roomsList) roomsList = sd.roomsList;
                     if (sd.discountsList) discountsList = sd.discountsList;
                     if (sd.customPrices) customPrices = sd.customPrices;
+                    if (sd.restrictions) restrictions = sd.restrictions;
                     if (sd.transactions) transactions = sd.transactions;
 
                     const tlScroll = document.getElementById('timelineScroll');
@@ -1255,7 +1387,7 @@
         }
         
         async function saveSettingsToCloud() {
-            const settingsToSave = { roomsList, discountsList, customServicesList, sysServicesList, customPrices, transactions }; // <--- ДОДАЙ transactions
+            const settingsToSave = { roomsList, discountsList, customServicesList, sysServicesList, customPrices, restrictions, transactions };
             try { await fetch(API_URL, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify({ action: 'saveSettings', settings: settingsToSave }) });
             } catch (error) { alert("Помилка збереження!"); }
         }
@@ -1348,6 +1480,10 @@
             document.getElementById('set-' + tabName).style.display = 'block';
             if(tabName === 'rooms') renderSettingsRooms();
             if(tabName === 'prices') renderPriceGrid();
+            if(tabName === 'restrictions') {
+                renderRestrictionsGrid();
+                scrollToRestrictionsGrid();
+            }
             if(tabName === 'discounts') renderSettingsDiscounts();
         }
 
@@ -1416,6 +1552,64 @@
             customPrices = {}; renderPriceGrid(); saveSettingsToCloud(); showToast("Ціни очищено!");
         }
 
+        function clearRestrictionsAlert() {
+            if (lastRestrictionSelection && lastRestrictionSelection.dates && lastRestrictionSelection.dates.length > 0) {
+                openCustomConfirm(
+                    "Видалити обмеження?",
+                    `Зняти обмеження з ${lastRestrictionSelection.dates.length} обраних ${dateWord(lastRestrictionSelection.dates.length)}?`,
+                    confirmDeleteRestrictionSelection
+                );
+            } else {
+                openCustomConfirm(
+                    "Очистити всі обмеження?",
+                    "Усі мінімальні терміни перебування будуть видалені.",
+                    confirmClearAllRestrictions
+                );
+            }
+        }
+        function confirmDeleteRestrictionSelection() {
+            closeCustomConfirm();
+            const sel = lastRestrictionSelection;
+            if (!sel || !sel.roomId) return;
+            const roomId = sel.roomId;
+            if (restrictions[roomId]) {
+                sel.dates.forEach(ds => { delete restrictions[roomId][ds]; });
+                if (Object.keys(restrictions[roomId]).length === 0) delete restrictions[roomId];
+            }
+            lastRestrictionSelection = null;
+            updateRestrictionSelectionHint();
+            renderRestrictionsGrid();
+            saveSettingsToCloud();
+            showToast("Обмеження знято");
+        }
+        function confirmClearAllRestrictions() {
+            closeCustomConfirm();
+            restrictions = {};
+            lastRestrictionSelection = null;
+            updateRestrictionSelectionHint();
+            renderRestrictionsGrid();
+            saveSettingsToCloud();
+            showToast("Усі обмеження очищено");
+        }
+        function openRestrictionConstructor() {
+            if (lastRestrictionSelection && lastRestrictionSelection.dates && lastRestrictionSelection.dates.length > 0) {
+                const sorted = [...lastRestrictionSelection.dates].sort();
+                const d1 = new Date(sorted[0]);
+                const d2 = new Date(sorted[sorted.length - 1]);
+                pendingRestrictionModal = {
+                    roomIds: [String(lastRestrictionSelection.roomId)],
+                    useCustomRange: true,
+                    startDate: sorted[0],
+                    endDate: sorted[sorted.length - 1],
+                    rangeLabel: `${d1.toLocaleDateString('uk-UA', { day: 'numeric', month: 'short' })} — ${d2.toLocaleDateString('uk-UA', { day: 'numeric', month: 'short', year: 'numeric' })} (${sorted.length} ${dayWord(sorted.length)})`,
+                    minNights: lastRestrictionSelection.minN || 2
+                };
+            } else {
+                pendingRestrictionModal = null;
+            }
+            openGenericModal('restriction');
+        }
+
         function openGenericModal(type, id = null) {
             currentEditType = type; currentEditId = id;
             document.getElementById('modalDeleteBtn').style.display = id ? 'flex' : 'none';
@@ -1468,6 +1662,46 @@
                         </div><input type="hidden" id="mPriceDays" value="all">
                     </div>
                 `;
+            } else if (type === 'restriction') {
+                title.innerText = 'Конструктор обмежень';
+                const pre = pendingRestrictionModal || {};
+                let roomsChips = `<div class="chip-btn" id="chip-restr-room-all" onclick="toggleAllRestrRoomsChip()">Усі котеджі</div>`;
+                roomsChips += roomsList.filter(r => r.active).map(r => {
+                    const isPre = pre.roomIds && (pre.roomIds.includes(String(r.id)) || pre.roomIds.includes(r.id));
+                    return `<div class="chip-btn restr-room-chip ${isPre ? 'active' : ''}" data-id="${r.id}" onclick="toggleSingleRestrRoomChip(this)">${r.name}</div>`;
+                }).join('');
+                const defaultMin = pre.minNights || 2;
+                const useCustom = pre.useCustomRange ? 'true' : 'false';
+                body.innerHTML = `
+                    <div class="form-group"><label>Котеджі:</label><div class="chips-container">${roomsChips}</div></div>
+                    <div class="form-group"><label>Мін. кількість діб:</label><input type="number" inputmode="numeric" id="mRestrMinNights" value="${defaultMin}" min="1" max="30"></div>
+                    <div class="form-group" id="restrPeriodGroup" style="${useCustom === 'true' ? 'display:none;' : ''}">
+                        <label>Період:</label>
+                        <div class="chips-container">
+                            <div class="chip-btn active restr-period-chip" data-val="1" onclick="selectRestrPeriodChip(this)">Поточний місяць</div>
+                            <div class="chip-btn restr-period-chip" data-val="3" onclick="selectRestrPeriodChip(this)">3 місяці</div>
+                            <div class="chip-btn restr-period-chip" data-val="12" onclick="selectRestrPeriodChip(this)">12 міс</div>
+                        </div>
+                        <input type="hidden" id="mRestrPeriod" value="1">
+                    </div>
+                    <div class="form-group" id="restrCustomRangeHint" style="${useCustom === 'true' ? '' : 'display:none;'} margin-bottom: 0;">
+                        <label>Діапазон на сітці:</label>
+                        <p style="font-size: 13px; color: #4B5563; margin: 8px 0 0;" id="restrCustomRangeText">${pre.rangeLabel || ''}</p>
+                    </div>
+                    <div class="form-group" style="margin-bottom: 0;" id="restrDaysGroup">
+                        <label>Дні тижня:</label>
+                        <div class="chips-container">
+                            <div class="chip-btn active restr-day-chip" data-val="all" onclick="selectRestrDayChip(this)">Усі</div>
+                            <div class="chip-btn restr-day-chip" data-val="weekdays" onclick="selectRestrDayChip(this)">Будні</div>
+                            <div class="chip-btn restr-day-chip" data-val="weekends" onclick="selectRestrDayChip(this)">Вихідні</div>
+                        </div>
+                        <input type="hidden" id="mRestrDays" value="all">
+                    </div>
+                    <input type="hidden" id="mRestrUseCustomRange" value="${useCustom}">
+                    <input type="hidden" id="mRestrStart" value="${pre.startDate || ''}">
+                    <input type="hidden" id="mRestrEnd" value="${pre.endDate || ''}">
+                `;
+                pendingRestrictionModal = null;
             } else if (type === 'discount') {
                 title.innerText = id ? 'Редагувати знижку' : 'Додати знижку';
                 let d = id ? discountsList.find(x => x.id === id) : {condition: "Діб в бронюванні: 2", discount: "15%", rooms: "Не обрано", roomsIds: []};
@@ -1576,7 +1810,8 @@
             if (currentEditType === 'room') { 
                 roomsList = roomsList.filter(r => r.id !== currentEditId); 
                 renderSettingsRooms(); 
-                if(document.getElementById('set-prices').style.display === 'block') renderPriceGrid(); 
+                if(document.getElementById('set-prices').style.display === 'block') renderPriceGrid();
+                if(document.getElementById('set-restrictions').style.display === 'block') renderRestrictionsGrid();
             } 
             else if (currentEditType === 'discount') { 
                 discountsList = discountsList.filter(d => d.id !== currentEditId); 
@@ -1604,7 +1839,9 @@
                 const extraPrice = parseInt(document.getElementById('mRoomExtraPrice').value) || 0; const active = document.getElementById('mRoomStatus').value === 'true';
                 if (currentEditId) { let r = roomsList.find(x => x.id === currentEditId); r.name = name; r.short = name; r.desc = desc; r.capacity = cap; r.maxCapacity = maxCap; r.extraGuestPrice = extraPrice; r.active = active; } 
                 else { roomsList.push({ id: Date.now(), name: name, short: name, desc: desc, capacity: cap, maxCapacity: maxCap, extraGuestPrice: extraPrice, priceWeekday: 4000, priceWeekend: 5000, active: active }); }
-                renderSettingsRooms(); if(document.getElementById('set-prices').style.display === 'block') renderPriceGrid();
+                renderSettingsRooms();
+                if(document.getElementById('set-prices').style.display === 'block') renderPriceGrid();
+                if(document.getElementById('set-restrictions').style.display === 'block') renderRestrictionsGrid();
             } else if (currentEditType === 'discount') {
                 const days = document.getElementById('mDiscDays').value || 2; const pct = document.getElementById('mDiscPercent').value || 15;
                 const allBtn = document.getElementById('chip-disc-room-all'); let savedIds = []; let displayRoomsText = "";
@@ -1641,6 +1878,42 @@
                     });
                 }
                 renderPriceGrid();
+            } else if (currentEditType === 'restriction') {
+                const selectedRooms = Array.from(document.querySelectorAll('.restr-room-chip.active'))
+                    .map(chip => chip.getAttribute('data-id'));
+                const minNights = parseInt(document.getElementById('mRestrMinNights').value) || 0;
+                const useCustom = document.getElementById('mRestrUseCustomRange').value === 'true';
+                const dayType = document.getElementById('mRestrDays').value;
+                if (minNights < 1) { showToast("Вкажіть мінімум 1 добу"); return; }
+                if (selectedRooms.length === 0) { showToast("Оберіть хоча б один котедж"); return; }
+                const applyToDates = (roomId, startDate, endDateInclusive) => {
+                    if (!restrictions[roomId]) restrictions[roomId] = {};
+                    let d = new Date(startDate);
+                    const end = new Date(endDateInclusive);
+                    while (d <= end) {
+                        const isWeekend = (d.getDay() === 0 || d.getDay() === 5 || d.getDay() === 6);
+                        if (dayType === 'weekdays' && isWeekend) { d.setDate(d.getDate() + 1); continue; }
+                        if (dayType === 'weekends' && !isWeekend) { d.setDate(d.getDate() + 1); continue; }
+                        restrictions[roomId][formatDateKey(d)] = minNights;
+                        d.setDate(d.getDate() + 1);
+                    }
+                };
+                if (useCustom) {
+                    const startStr = document.getElementById('mRestrStart').value;
+                    const endStr = document.getElementById('mRestrEnd').value;
+                    if (!startStr || !endStr) { showToast("Немає обраного діапазону"); return; }
+                    selectedRooms.forEach(rid => applyToDates(rid, startStr, endStr));
+                } else {
+                    const periodMonths = parseInt(document.getElementById('mRestrPeriod').value) || 1;
+                    const startDate = new Date(restrictionsTimelineBaseDate);
+                    const endDate = new Date(startDate);
+                    endDate.setMonth(endDate.getMonth() + periodMonths);
+                    endDate.setDate(endDate.getDate() - 1);
+                    selectedRooms.forEach(rid => applyToDates(rid, startDate, endDate));
+                }
+                lastRestrictionSelection = null;
+                updateRestrictionSelectionHint();
+                renderRestrictionsGrid();
             }
             saveSettingsToCloud(); closeGenericModal(); showToast("Збережено!"); 
         }
@@ -2033,7 +2306,414 @@ if (sClass.includes('скас')) {
                 }
                 rowHtml += `</div>`; gridContainer.innerHTML += rowHtml;
             });
-        } 
+        }
+
+        // --- СІТКА ОБМЕЖЕНЬ ---
+        let restrictionsTimelineBaseDate = new Date();
+        restrictionsTimelineBaseDate.setDate(1);
+        let lastRestrictionSelection = null;
+        let pendingRestrictionModal = null;
+        let isRestrictionDragging = false;
+        let restrDragRoomId = null;
+        let restrDragStartDate = null;
+        let restrDragEndDate = null;
+        let restrictionBarMenuEl = null;
+
+        function formatDateKey(d) {
+            return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+        }
+
+        function getRestrictionMinNights(roomId, dateObj) {
+            const ds = formatDateKey(dateObj);
+            if (restrictions[roomId] && restrictions[roomId][ds]) return restrictions[roomId][ds];
+            return 0;
+        }
+
+        function getBookingMinNightsRequired(room, checkIn, checkOut) {
+            if (!room) return 0;
+            let maxMin = 0;
+            const d = new Date(checkIn);
+            d.setHours(0, 0, 0, 0);
+            const end = new Date(checkOut);
+            end.setHours(0, 0, 0, 0);
+            while (d < end) {
+                const m = getRestrictionMinNights(room.id, d);
+                if (m > maxMin) maxMin = m;
+                d.setDate(d.getDate() + 1);
+            }
+            return maxMin;
+        }
+
+        function shiftRestrictionsTimeline(months) {
+            restrictionsTimelineBaseDate.setMonth(restrictionsTimelineBaseDate.getMonth() + months);
+            renderRestrictionsGrid();
+        }
+
+        function resetRestrictionsTimelineToToday() {
+            restrictionsTimelineBaseDate = new Date();
+            restrictionsTimelineBaseDate.setDate(1);
+            renderRestrictionsGrid();
+        }
+
+        function clearRestrictionCellHighlights() {
+            document.querySelectorAll('#restrictionGrid .restriction-cell').forEach(c => {
+                c.classList.remove('cell-selected', 'cell-selected-start', 'cell-selected-end');
+            });
+        }
+
+        function getRestrictionCellSelectionClasses(roomId, dateStr) {
+            if (!lastRestrictionSelection || !lastRestrictionSelection.highlightCells) return '';
+            if (String(lastRestrictionSelection.roomId) !== String(roomId)) return '';
+            if (!lastRestrictionSelection.dates || !lastRestrictionSelection.dates.includes(dateStr)) return '';
+            const sorted = [...lastRestrictionSelection.dates].sort();
+            let cls = 'cell-selected';
+            if (dateStr === sorted[0]) cls += ' cell-selected-start';
+            if (dateStr === sorted[sorted.length - 1]) cls += ' cell-selected-end';
+            return cls;
+        }
+
+        function getRestrictionSegmentsForRoom(roomId, startDate, daysCount) {
+            const segments = [];
+            let i = 0;
+            while (i < daysCount) {
+                const d = new Date(startDate);
+                d.setDate(startDate.getDate() + i);
+                const minN = getRestrictionMinNights(roomId, d);
+                if (minN <= 0) { i++; continue; }
+                let j = i + 1;
+                while (j < daysCount) {
+                    const dNext = new Date(startDate);
+                    dNext.setDate(startDate.getDate() + j);
+                    if (getRestrictionMinNights(roomId, dNext) !== minN) break;
+                    j++;
+                }
+                const dates = [];
+                for (let k = i; k < j; k++) {
+                    const dk = new Date(startDate);
+                    dk.setDate(startDate.getDate() + k);
+                    dates.push(formatDateKey(dk));
+                }
+                segments.push({ startIndex: i, length: j - i, minN, startDateStr: formatDateKey(d), dates });
+                i = j;
+            }
+            return segments;
+        }
+
+        function restrictionBarDataAttrs(roomId, segment) {
+            return `data-room="${roomId}" data-dates="${segment.dates.join(',')}" data-min="${segment.minN}"
+                ontouchstart="onRestrictionBarPointer(event)" onclick="onRestrictionBarClick(event, this)"`;
+        }
+
+        function buildRestrictionSegmentHtml(roomId, segment, blockLeft, blockWidth) {
+            const { minN, length: spanDays } = segment;
+            const attrs = restrictionBarDataAttrs(roomId, segment);
+            const title = `Мінімум ${minN} ${dayWord(minN)} — натисніть для дій`;
+            if (blockWidth < 72) {
+                return `<div class="booking-block status-confirmed restriction-chip restriction-chip--single" style="left:${blockLeft}px;width:${blockWidth}px" title="${title}" ${attrs}>
+                    <span class="restriction-chip-single-num">${minN}</span>
+                    <span class="restriction-chip-single-label">мін. діб</span>
+                </div>`;
+            }
+            if (blockWidth < 130) {
+                return `<div class="booking-block status-confirmed restriction-chip restriction-chip--compact" style="left:${blockLeft}px;width:${blockWidth}px" title="${title}" ${attrs}>
+                    <div class="booking-inner-content" style="position:relative;z-index:2;display:flex;flex-direction:column;width:100%;height:100%;justify-content:center;">
+                        <div class="restriction-chip-title">мін. ${minN} діб</div>
+                    </div>
+                </div>`;
+            }
+            const rangeHint = spanDays > 1 ? ` · ${spanDays} ${dateWord(spanDays)}` : '';
+            return `<div class="booking-block status-confirmed restriction-chip" style="left:${blockLeft}px;width:${blockWidth}px" title="${title}" ${attrs}>
+                <div class="booking-inner-content" style="position:relative;z-index:2;display:flex;flex-direction:column;width:100%;justify-content:center;height:100%;">
+                    <div style="font-size:10px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;line-height:1.2;">мін. ${minN} діб${rangeHint}</div>
+                </div>
+            </div>`;
+        }
+
+        function selectRestrictionSegment(roomId, dates, minN, highlightCells = false) {
+            lastRestrictionSelection = {
+                roomId: String(roomId),
+                dates: [...dates].sort(),
+                minN: minN || 2,
+                highlightCells: !!highlightCells
+            };
+            if (highlightCells) updateRestrictionCellHighlightFromSelection();
+            else clearRestrictionCellHighlights();
+            updateRestrictionSelectionHint();
+        }
+
+        function updateRestrictionCellHighlightFromSelection() {
+            clearRestrictionCellHighlights();
+            if (!lastRestrictionSelection || !lastRestrictionSelection.highlightCells) return;
+            if (!lastRestrictionSelection.dates || !lastRestrictionSelection.dates.length) return;
+            const { roomId, dates } = lastRestrictionSelection;
+            const sorted = [...dates].sort();
+            const cells = [];
+            document.querySelectorAll('#restrictionGrid .restriction-cell').forEach(c => {
+                if (String(c.getAttribute('data-room')) !== String(roomId)) return;
+                const ds = c.getAttribute('data-date');
+                if (sorted.includes(ds)) cells.push(c);
+            });
+            cells.sort((a, b) => a.getAttribute('data-date').localeCompare(b.getAttribute('data-date')));
+            cells.forEach((c, i) => {
+                c.classList.add('cell-selected');
+                if (i === 0) c.classList.add('cell-selected-start');
+                if (i === cells.length - 1) c.classList.add('cell-selected-end');
+            });
+        }
+
+        function onRestrictionBarPointer(e) {
+            e.stopPropagation();
+        }
+
+        function onRestrictionBarClick(e, el) {
+            e.stopPropagation();
+            e.preventDefault();
+            const roomId = el.getAttribute('data-room');
+            const dates = (el.getAttribute('data-dates') || '').split(',').filter(Boolean);
+            const minN = parseInt(el.getAttribute('data-min'), 10) || 2;
+            selectRestrictionSegment(roomId, dates, minN, false);
+            openRestrictionActionSheet(el);
+        }
+
+        function openRestrictionActionSheet(barEl) {
+            closeRestrictionActionSheet();
+            restrictionBarMenuEl = barEl;
+            if (barEl) barEl.classList.add('restriction-chip--menu-open');
+            document.getElementById('restrictionActionSheet').classList.add('active');
+        }
+
+        function closeRestrictionActionSheet() {
+            const sheet = document.getElementById('restrictionActionSheet');
+            if (sheet) sheet.classList.remove('active');
+            if (restrictionBarMenuEl) {
+                restrictionBarMenuEl.classList.remove('restriction-chip--menu-open');
+                restrictionBarMenuEl = null;
+            }
+        }
+
+        function restrictionSheetConstructor() {
+            closeRestrictionActionSheet();
+            openRestrictionConstructor();
+        }
+
+        function restrictionSheetDelete() {
+            closeRestrictionActionSheet();
+            clearRestrictionsAlert();
+        }
+
+        function updateRestrictionSelectionHint() {
+            const hint = document.getElementById('restrictionSelectionHint');
+            if (!hint) return;
+            if (lastRestrictionSelection && lastRestrictionSelection.dates && lastRestrictionSelection.dates.length > 0) {
+                const room = roomsList.find(r => String(r.id) === String(lastRestrictionSelection.roomId));
+                const name = room ? room.name : 'котедж';
+                const n = lastRestrictionSelection.dates.length;
+                hint.innerText = `Обрано ${n} ${dateWord(n)} для «${name}».`;
+                hint.classList.add('is-visible');
+            } else {
+                hint.classList.remove('is-visible');
+                hint.innerText = '';
+            }
+        }
+
+        function scrollToRestrictionsGrid() {
+            requestAnimationFrame(() => {
+                requestAnimationFrame(() => {
+                    const target = document.getElementById('restrictionsTimelineWrapper');
+                    const main = document.querySelector('.main-content');
+                    if (!target || !main) return;
+                    const targetTop = target.getBoundingClientRect().top;
+                    const mainTop = main.getBoundingClientRect().top;
+                    const nextTop = main.scrollTop + (targetTop - mainTop) - 12;
+                    main.scrollTo({ top: Math.max(0, nextTop), behavior: 'smooth' });
+                });
+            });
+        }
+
+        function renderRestrictionsGrid() {
+            const monthsContainer = document.getElementById('restrictionMonths');
+            const datesContainer = document.getElementById('restrictionDates');
+            const gridContainer = document.getElementById('restrictionGrid');
+            const roomsContainer = document.getElementById('restrictionRoomsList');
+            if (!monthsContainer) return;
+
+            monthsContainer.innerHTML = '';
+            datesContainer.innerHTML = '';
+            gridContainer.innerHTML = '';
+            roomsContainer.innerHTML = '';
+
+            const startDate = new Date(restrictionsTimelineBaseDate);
+            const daysCount = new Date(startDate.getFullYear(), startDate.getMonth() + 1, 0).getDate();
+            const cellWidth = 60;
+            const daysArr = ['Нд', 'Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб'];
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+
+            document.getElementById('restrictionMonthLabel').innerText = startDate.toLocaleString('uk-UA', { month: 'long', year: 'numeric' });
+
+            const monthName = startDate.toLocaleString('uk-UA', { month: 'long', year: 'numeric' });
+            monthsContainer.innerHTML = `<div class="timeline-month-cell" style="width: ${daysCount * cellWidth}px">${monthName}</div>`;
+
+            for (let i = 0; i < daysCount; i++) {
+                const d = new Date(startDate);
+                d.setDate(startDate.getDate() + i);
+                const isWeekend = d.getDay() === 0 || d.getDay() === 5 || d.getDay() === 6;
+                const isToday = d.getTime() === today.getTime();
+                datesContainer.innerHTML += `<div class="timeline-date ${isWeekend ? 'weekend' : ''} ${isToday ? 'today' : ''}" style="height: 56px;">${d.getDate()} <span>${daysArr[d.getDay()]}</span></div>`;
+            }
+
+            roomsList.filter(r => r.active).forEach(room => {
+                roomsContainer.innerHTML += `<div class="timeline-room" style="height: 60px;">${room.short}</div>`;
+                let rowHtml = `<div class="timeline-row-bg" style="height: 60px; position: relative;">`;
+                for (let i = 0; i < daysCount; i++) {
+                    const d = new Date(startDate);
+                    d.setDate(startDate.getDate() + i);
+                    const isWeekend = d.getDay() === 0 || d.getDay() === 5 || d.getDay() === 6;
+                    const dateStr = formatDateKey(d);
+                    const hasR = getRestrictionMinNights(room.id, d) > 0;
+                    const selCls = getRestrictionCellSelectionClasses(room.id, dateStr);
+                    rowHtml += `<div class="restriction-cell timeline-cell ${isWeekend ? 'weekend-restr' : ''} ${hasR ? 'has-restriction' : ''} ${selCls}"
+                        data-room="${room.id}" data-date="${dateStr}"
+                        onmousedown="startRestrictionCellDrag(event, this)"
+                        onmouseenter="enterRestrictionCellDrag(this)"
+                        ontouchstart="startRestrictionCellTouch(event, this)"></div>`;
+                }
+                const segments = getRestrictionSegmentsForRoom(room.id, startDate, daysCount);
+                segments.forEach(seg => {
+                    const blockLeft = seg.startIndex * cellWidth + 4;
+                    const blockWidth = seg.length * cellWidth - 8;
+                    rowHtml += buildRestrictionSegmentHtml(room.id, seg, blockLeft, blockWidth);
+                });
+                rowHtml += `</div>`;
+                gridContainer.innerHTML += rowHtml;
+            });
+
+            const scrollEl = document.getElementById('restrictionScroll');
+            if (scrollEl && startDate.getMonth() === today.getMonth() && startDate.getFullYear() === today.getFullYear()) {
+                scrollEl.scrollLeft = Math.max(0, (today.getDate() - 3) * cellWidth);
+            }
+            if (lastRestrictionSelection && lastRestrictionSelection.highlightCells) {
+                updateRestrictionCellHighlightFromSelection();
+            } else {
+                clearRestrictionCellHighlights();
+            }
+        }
+
+        function startRestrictionCellDrag(e, cell) {
+            if (e.button !== undefined && e.button !== 0) return;
+            e.preventDefault();
+            isRestrictionDragging = true;
+            restrDragRoomId = cell.getAttribute('data-room');
+            restrDragStartDate = cell.getAttribute('data-date');
+            restrDragEndDate = restrDragStartDate;
+            updateRestrictionCellHighlight();
+        }
+
+        function startRestrictionCellTouch(e, cell) {
+            if (e.touches.length !== 1) return;
+            e.preventDefault();
+            isRestrictionDragging = true;
+            restrDragRoomId = cell.getAttribute('data-room');
+            restrDragStartDate = cell.getAttribute('data-date');
+            restrDragEndDate = restrDragStartDate;
+            updateRestrictionCellHighlight();
+        }
+
+        function enterRestrictionCellDrag(cell) {
+            if (!isRestrictionDragging) return;
+            if (cell.getAttribute('data-room') !== restrDragRoomId) return;
+            restrDragEndDate = cell.getAttribute('data-date');
+            updateRestrictionCellHighlight();
+        }
+
+        function updateRestrictionCellHighlight() {
+            document.querySelectorAll('#restrictionGrid .restriction-cell').forEach(c => {
+                c.classList.remove('cell-selected', 'cell-selected-start', 'cell-selected-end');
+            });
+            if (!restrDragStartDate || !restrDragEndDate) return;
+            let d1 = new Date(restrDragStartDate);
+            let d2 = new Date(restrDragEndDate);
+            if (d1 > d2) { const t = d1; d1 = d2; d2 = t; }
+            const cells = [];
+            document.querySelectorAll('#restrictionGrid .restriction-cell').forEach(c => {
+                if (c.getAttribute('data-room') !== restrDragRoomId) return;
+                const cd = new Date(c.getAttribute('data-date'));
+                if (cd >= d1 && cd <= d2) cells.push(c);
+            });
+            cells.forEach((c, i) => {
+                c.classList.add('cell-selected');
+                if (i === 0) c.classList.add('cell-selected-start');
+                if (i === cells.length - 1) c.classList.add('cell-selected-end');
+            });
+        }
+
+        function finishRestrictionCellDrag() {
+            if (!isRestrictionDragging) return;
+            isRestrictionDragging = false;
+            if (restrDragRoomId && restrDragStartDate && restrDragEndDate) {
+                let d1 = new Date(restrDragStartDate);
+                let d2 = new Date(restrDragEndDate);
+                if (d1 > d2) { const t = d1; d1 = d2; d2 = t; }
+                const dates = [];
+                const cur = new Date(d1);
+                while (cur <= d2) {
+                    dates.push(formatDateKey(cur));
+                    cur.setDate(cur.getDate() + 1);
+                }
+                lastRestrictionSelection = { roomId: restrDragRoomId, dates: dates, highlightCells: true };
+                updateRestrictionSelectionHint();
+                updateRestrictionCellHighlightFromSelection();
+            }
+            restrDragRoomId = null;
+            restrDragStartDate = null;
+            restrDragEndDate = null;
+        }
+
+        document.addEventListener('mouseup', function() {
+            if (isRestrictionDragging) finishRestrictionCellDrag();
+        });
+        document.addEventListener('touchend', function() {
+            if (isRestrictionDragging) finishRestrictionCellDrag();
+        });
+        document.addEventListener('touchmove', function(e) {
+            if (!isRestrictionDragging || !e.touches.length) return;
+            const t = e.touches[0];
+            const el = document.elementFromPoint(t.clientX, t.clientY);
+            if (el && el.classList.contains('restriction-cell')) enterRestrictionCellDrag(el);
+        }, { passive: false });
+
+        function toggleAllRestrRoomsChip() {
+            const allBtn = document.getElementById('chip-restr-room-all');
+            const isActive = !allBtn.classList.contains('active');
+            if (isActive) {
+                allBtn.classList.add('active');
+                document.querySelectorAll('.restr-room-chip').forEach(c => c.classList.add('active'));
+            } else {
+                allBtn.classList.remove('active');
+                document.querySelectorAll('.restr-room-chip').forEach(c => c.classList.remove('active'));
+            }
+        }
+
+        function toggleSingleRestrRoomChip(el) {
+            el.classList.toggle('active');
+            const allChips = document.querySelectorAll('.restr-room-chip');
+            const activeChips = document.querySelectorAll('.restr-room-chip.active');
+            const allBtn = document.getElementById('chip-restr-room-all');
+            if (allChips.length === activeChips.length) allBtn.classList.add('active');
+            else allBtn.classList.remove('active');
+        }
+
+        function selectRestrDayChip(el) {
+            document.querySelectorAll('.restr-day-chip').forEach(c => c.classList.remove('active'));
+            el.classList.add('active');
+            document.getElementById('mRestrDays').value = el.getAttribute('data-val');
+        }
+
+        function selectRestrPeriodChip(el) {
+            document.querySelectorAll('.restr-period-chip').forEach(c => c.classList.remove('active'));
+            el.classList.add('active');
+            document.getElementById('mRestrPeriod').value = el.getAttribute('data-val');
+        }
 
         function togglePet(val) {
             document.getElementById('adminPets').value = val;
@@ -2280,6 +2960,13 @@ if (sClass.includes('скас')) {
                 if(submitBtn) { submitBtn.disabled = false; submitBtn.style.opacity = '1'; }
             }
 
+            const requiredMinNights = getBookingMinNightsRequired(room, d1, d2);
+            const restrViolation = requiredMinNights > 0 && nights < requiredMinNights;
+            const restrWarningHtml = restrViolation ? `
+                <div style="background:#FFFBEB; border:1px solid #FCD34D; border-radius:10px; padding:12px 14px; margin-bottom:16px; font-size:13px; color:#92400E; line-height:1.45;">
+                    <strong>Обмеження перебування:</strong> для обраних дат потрібно мінімум <b>${requiredMinNights}</b> ${getNightWord(requiredMinNights)}. Зараз обрано ${nights} ${getNightWord(nights)}.
+                </div>` : '';
+
             // === 1. СИСТЕМНІ БАЗОВІ РОЗРАХУНКИ ===
     let basePriceTotal = 0;
     for (let i = 0; i < nights; i++) {
@@ -2424,6 +3111,7 @@ if (sClass.includes('скас')) {
         const iconShield = `<svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="color: #9CA3AF;"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path></svg>`;
             
             cont.innerHTML = `
+        ${restrWarningHtml}
         <div class="form-section" style="background:#FDFCFB; border-color: var(--accent); padding: 16px; margin-top: 20px;">
             <span class="form-section-title" style="color:var(--accent);">Розшифровка (${nights} ${getNightWord(nights)})</span>
             <div style="font-size: 13px; color: #4B5563; margin-bottom: 16px;">
@@ -4128,6 +4816,7 @@ let                 fOut = outD.toLocaleDateString('uk-UA', { day: 'numeric', mo
             setupSwipeToClose('bookingDrawer', '.drawer', closeDrawer);
             setupSwipeToClose('genericModal', '.modal-box', closeGenericModal);
             setupSwipeToClose('customConfirmModal', '.modal-box', closeCustomConfirm);
+            setupSwipeToClose('restrictionActionSheet', '.modal-box', closeRestrictionActionSheet);
             setupSwipeToClose('uniDetailsModal', '.modal-box', () => document.getElementById('uniDetailsModal').classList.remove('active'));
             setupSwipeToClose('quickEditDrawer', '.drawer', closeQuickEdit);
             
