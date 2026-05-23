@@ -1088,6 +1088,11 @@ input[type="number"] {
                     </div>
                 </div>
                 
+                <div style="display: flex; flex-direction: column; gap: 10px; align-items: flex-end;">
+                    <button type="button" id="btnDownloadFinanceReport" class="btn-primary" onclick="downloadFinanceReportToTelegram()" style="padding: 10px 18px; font-size: 13px; justify-content: center; white-space: nowrap;">
+                        <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5M7.5 10.5 12 15m0 0 4.5-4.5M12 15V3"></path></svg>
+                        Звіт у Telegram
+                    </button>
                 <div style="display: flex; gap: 12px; align-items: center;">
                     <!-- 🟢 КАЛЕНДАРИК ЗЛІВА -->
                     <div style="position: relative;">
@@ -1111,6 +1116,7 @@ input[type="number"] {
                         </div>
                     </div>
                     <input type="hidden" id="reportPeriodVal" value="current">
+                </div>
                 </div>
             </div>
 
@@ -5585,6 +5591,55 @@ function bosoLeave() {
             }
             body.innerHTML = html;
             modal.classList.add('active');
+        }
+
+        // --- Надіслати фінансовий звіт у Telegram за обраний період ---
+        async function downloadFinanceReportToTelegram() {
+            const btn = document.getElementById('btnDownloadFinanceReport');
+            const originalHtml = btn ? btn.innerHTML : '';
+            if (btn) {
+                btn.disabled = true;
+                btn.innerHTML = '<span>Надсилаємо...</span>';
+            }
+
+            const period = document.getElementById('reportPeriodVal').value;
+            const periodLabel = document.getElementById('reportPeriodText').innerText;
+            let customStart = '';
+            let customEnd = '';
+
+            if (period === 'custom' && typeof reportRangePicker !== 'undefined' && reportRangePicker.selectedDates.length === 2) {
+                customStart = reportRangePicker.formatDate(reportRangePicker.selectedDates[0], 'Y-m-d');
+                customEnd = reportRangePicker.formatDate(reportRangePicker.selectedDates[1], 'Y-m-d');
+            }
+
+            try {
+                const res = await fetch(API_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                    body: JSON.stringify({
+                        action: 'sendFinanceReport',
+                        period: period,
+                        periodLabel: periodLabel,
+                        customStart: customStart,
+                        customEnd: customEnd
+                    })
+                });
+                const data = await res.json();
+                if (data.success) {
+                    alert('✅ Фінансовий звіт надіслано в Telegram!');
+                } else if (data.error === 'NO_DATA') {
+                    alert('За обраний період немає фінансових даних.');
+                } else {
+                    alert('Не вдалося надіслати звіт. Спробуйте ще раз.');
+                }
+            } catch (e) {
+                alert('Помилка з\'єднання. Перевірте інтернет і спробуйте знову.');
+            } finally {
+                if (btn) {
+                    btn.disabled = false;
+                    btn.innerHTML = originalHtml;
+                }
+            }
         }
 
         // --- ГОЛОВНИЙ ПРОЦЕСОР АНАЛІТИКИ ---
