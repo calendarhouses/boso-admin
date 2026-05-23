@@ -4765,6 +4765,7 @@ document.getElementById('adminGuests').addEventListener('change', updatePricePre
                 selectPayMethod('prepay', 'ФОП');
                 selectPayMethod('surcharge', 'Готівка');
             }
+            window._bookingOpenPayments = { prepay: 0, surcharge: 0 };
             
            // ОЧИЩЕННЯ ПОЛІВ ПРИ НОВІЙ БРОНІ
             if(document.getElementById('adminComment')) document.getElementById('adminComment').value = ""; 
@@ -4997,6 +4998,11 @@ document.getElementById('adminGuests').addEventListener('change', updatePricePre
                         selectPayMethod('prepay', booking.prepayMethod || 'ФОП');
                         selectPayMethod('surcharge', booking.surchargeMethod || 'Готівка');
 
+                        window._bookingOpenPayments = {
+                            prepay: savedPrepay,
+                            surcharge: savedSurcharge
+                        };
+
                         calculateBalanceLive();
                     }
                 }, 50);
@@ -5077,8 +5083,13 @@ document.getElementById('adminGuests').addEventListener('change', updatePricePre
             // 🟢 РОБИМО ЧИСТУ КОПІЮ ДЛЯ GOOGLE
             const payloadForServer = { ...bookingData };
             if (typeof editingRowNumber !== 'undefined' && editingRowNumber) {
-                const oldBooking = allBookings.find(b => b.row == editingRowNumber);
-                if (oldBooking) payloadForServer.previousSurchargeAmount = Number(oldBooking.surchargeAmount) || 0;
+                const openPay = window._bookingOpenPayments || { prepay: 0, surcharge: 0 };
+                const newSurcharge = getVal('adminSurchargeAmount');
+                const surchargeDelta = newSurcharge - (Number(openPay.surcharge) || 0);
+                if (surchargeDelta > 0) {
+                    payloadForServer.remainderPaymentAdded = true;
+                    payloadForServer.remainderPaymentAmount = surchargeDelta;
+                }
             }
 
             // ==========================================
