@@ -5076,6 +5076,10 @@ document.getElementById('adminGuests').addEventListener('change', updatePricePre
 
             // 🟢 РОБИМО ЧИСТУ КОПІЮ ДЛЯ GOOGLE
             const payloadForServer = { ...bookingData };
+            if (typeof editingRowNumber !== 'undefined' && editingRowNumber) {
+                const oldBooking = allBookings.find(b => b.row == editingRowNumber);
+                if (oldBooking) payloadForServer.previousSurchargeAmount = Number(oldBooking.surchargeAmount) || 0;
+            }
 
             // ==========================================
             // 🚀 МАГІЯ СКРІНШОТІВ (АДМІН + КЛІНІНГ)
