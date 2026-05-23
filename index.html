@@ -324,28 +324,53 @@
             position: relative; padding: 0; box-sizing: border-box;
         }
         .restriction-cell.weekend-restr { background: #F9FAFB; }
-        /* Картка обмеження — той самий компонент, що бронь на шахматці */
+        /* Смуга обмеження в рядку (як booking-block на шахматці) */
         .booking-block.restriction-chip {
             position: absolute;
             top: 10px;
-            left: 3px;
-            right: 3px;
-            width: auto !important;
             height: 50px;
             min-width: 0;
-            padding: 5px 8px;
-            z-index: 2;
+            padding: 5px 10px;
+            z-index: 3;
             pointer-events: none;
             cursor: default;
+            box-sizing: border-box;
         }
         .booking-block.restriction-chip:hover {
             transform: none;
             box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
         }
-        #restrictionGrid .restriction-cell.has-restriction:hover:not(.cell-selected) .booking-block.restriction-chip {
-            transform: translateY(-2px);
-            box-shadow: 0 8px 15px rgba(0, 0, 0, 0.15);
-            z-index: 3;
+        .restriction-chip--single {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 4px 4px;
+            text-align: center;
+        }
+        .restriction-chip-single-num {
+            font-size: 20px;
+            font-weight: 700;
+            line-height: 1;
+            letter-spacing: -0.03em;
+        }
+        .restriction-chip-single-label {
+            font-size: 8px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            opacity: 0.9;
+            margin-top: 3px;
+            line-height: 1.1;
+        }
+        .restriction-chip--compact .booking-inner-content {
+            justify-content: center !important;
+        }
+        .restriction-chip--compact .restriction-chip-title {
+            font-size: 11px;
+            font-weight: 700;
+            white-space: nowrap;
+            line-height: 1.2;
         }
         .restriction-selection-hint {
             font-size: 13px; color: #4B5563; margin-top: 10px; line-height: 1.45;
@@ -3366,6 +3391,58 @@ else if (total === 0) { finText = "Немає ціни"; badgeBg = "rgba(255,255
             return cls;
         }
 
+        function getRestrictionSegmentsForRoom(roomId, startDate, daysCount) {
+            const segments = [];
+            let i = 0;
+            while (i < daysCount) {
+                const d = new Date(startDate);
+                d.setDate(startDate.getDate() + i);
+                const minN = getRestrictionMinNights(roomId, d);
+                if (minN <= 0) { i++; continue; }
+                let j = i + 1;
+                while (j < daysCount) {
+                    const dNext = new Date(startDate);
+                    dNext.setDate(startDate.getDate() + j);
+                    if (getRestrictionMinNights(roomId, dNext) !== minN) break;
+                    j++;
+                }
+                segments.push({
+                    startIndex: i,
+                    length: j - i,
+                    minN,
+                    startDateStr: formatDateKey(d)
+                });
+                i = j;
+            }
+            return segments;
+        }
+
+        function buildRestrictionSegmentHtml(minN, blockLeft, blockWidth, spanDays) {
+            const title = `Мінімум ${minN} ${dayWord(minN)}`;
+            if (blockWidth < 72) {
+                return `<div class="booking-block status-confirmed restriction-chip restriction-chip--single" style="left:${blockLeft}px;width:${blockWidth}px" title="${title}">
+                    <span class="restriction-chip-single-num">${minN}</span>
+                    <span class="restriction-chip-single-label">мін. діб</span>
+                </div>`;
+            }
+            if (blockWidth < 130) {
+                return `<div class="booking-block status-confirmed restriction-chip restriction-chip--compact" style="left:${blockLeft}px;width:${blockWidth}px" title="${title}">
+                    <div class="booking-inner-content" style="position:relative;z-index:2;display:flex;flex-direction:column;width:100%;height:100%;justify-content:center;">
+                        <div class="restriction-chip-title">мін. ${minN} діб</div>
+                    </div>
+                </div>`;
+            }
+            const rangeHint = spanDays > 1 ? ` · ${spanDays} ${dateWord(spanDays)}` : '';
+            return `<div class="booking-block status-confirmed restriction-chip" style="left:${blockLeft}px;width:${blockWidth}px" title="${title}">
+                <div class="booking-inner-content" style="position:relative;z-index:2;display:flex;flex-direction:column;width:100%;justify-content:center;height:100%;">
+                    <div style="font-size:12px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;line-height:1.2;">мін. ${minN} діб${rangeHint}</div>
+                    <div style="margin-top:4px;display:flex;">
+                        <span style="background:rgba(255,255,255,0.28);color:#fff;font-size:9px;font-weight:700;padding:2px 6px;border-radius:4px;white-space:nowrap;box-shadow:0 1px 2px rgba(0,0,0,0.1);">обмеження</span>
+                    </div>
+                </div>
+            </div>`;
+        }
+
         function updateRestrictionSelectionHint() {
             const hint = document.getElementById('restrictionSelectionHint');
             if (!hint) return;
@@ -3422,23 +3499,22 @@ else if (total === 0) { finText = "Немає ціни"; badgeBg = "rgba(255,255
                     d.setDate(startDate.getDate() + i);
                     const isWeekend = d.getDay() === 0 || d.getDay() === 5 || d.getDay() === 6;
                     const dateStr = formatDateKey(d);
-                    const minN = getRestrictionMinNights(room.id, d);
-                    const hasR = minN > 0;
+                    const hasR = getRestrictionMinNights(room.id, d) > 0;
                     const selCls = getRestrictionCellSelectionClasses(room.id, dateStr);
-                    const pillHtml = hasR ? `<div class="booking-block status-confirmed restriction-chip" title="Мінімум ${minN} діб">
-                        <div class="booking-inner-content" style="position:relative;z-index:2;display:flex;flex-direction:column;width:100%;justify-content:center;height:100%;">
-                            <div style="font-size:12px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;line-height:1.2;">мін. ${minN} діб</div>
-                            <div style="margin-top:4px;display:flex;">
-                                <span style="background:rgba(255,255,255,0.28);color:#fff;font-size:9px;font-weight:700;padding:2px 6px;border-radius:4px;white-space:nowrap;box-shadow:0 1px 2px rgba(0,0,0,0.1);">обмеження</span>
-                            </div>
-                        </div>
-                    </div>` : '';
 
                     rowHtml += `<div class="restriction-cell timeline-cell ${isWeekend ? 'weekend-restr' : ''} ${hasR ? 'has-restriction' : ''} ${selCls}"
                         data-room="${room.id}" data-date="${dateStr}"
                         onmousedown="startRestrictionCellDrag(event, this)"
-                        onmouseenter="enterRestrictionCellDrag(this)">${pillHtml}</div>`;
+                        onmouseenter="enterRestrictionCellDrag(this)"></div>`;
                 }
+
+                const segments = getRestrictionSegmentsForRoom(room.id, startDate, daysCount);
+                segments.forEach(seg => {
+                    const blockLeft = seg.startIndex * cellWidth + 4;
+                    const blockWidth = seg.length * cellWidth - 8;
+                    rowHtml += buildRestrictionSegmentHtml(seg.minN, blockLeft, blockWidth, seg.length);
+                });
+
                 rowHtml += `</div>`;
                 gridContainer.innerHTML += rowHtml;
             });
