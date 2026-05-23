@@ -298,6 +298,24 @@
         .price-cell.weekend-price { background: #FFFBEB; color: #B45309; }
         .price-cell.weekend-price:hover { background: #FEF3C7; }
 
+        /* Сітка обмежень (мін. кількість діб) */
+        .restriction-cell {
+            display: flex; align-items: flex-end; justify-content: flex-end;
+            width: 60px; flex-shrink: 0; height: 50px; min-height: 50px;
+            border-right: 1px solid #F3F4F6; cursor: pointer; transition: 0.15s;
+            position: relative; padding: 4px 6px; box-sizing: border-box;
+        }
+        .restriction-cell:hover { background: #F3F4F6; }
+        .restriction-cell.weekend-restr { background: #FAFAFA; }
+        .restriction-cell.has-restriction { background: #FFFBEB; }
+        .restriction-cell.has-restriction.weekend-restr { background: #FEF9C3; }
+        .restriction-cell.has-restriction:hover { background: #FEF3C7; }
+        .restriction-label { font-size: 10px; font-weight: 600; color: #9CA3AF; line-height: 1.2; text-align: right; pointer-events: none; }
+        .restriction-cell.has-restriction .restriction-label { color: #78716C; }
+        .restriction-cell.cell-selected { background-color: rgba(85, 107, 47, 0.18) !important; }
+        .restriction-cell.cell-selected.has-restriction { background-color: rgba(85, 107, 47, 0.22) !important; }
+        .restriction-selection-hint { font-size: 13px; color: #6B7280; margin-top: 8px; }
+
         /* ВІКНА ТА МОДАЛКИ */
         .drawer-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(17,24,39,0.4); backdrop-filter: blur(4px); z-index: 1000; opacity: 0; pointer-events: none; transition: 0.3s; }
         .drawer-overlay.active { opacity: 1; pointer-events: all; }
@@ -780,6 +798,7 @@ input[type="number"] {
             <div class="submenu-item active" onclick="switchSettingsTab('rooms', this)">Котеджі</div>
             <div class="submenu-item" onclick="switchSettingsTab('prices', this)">Конструктор цін</div>
             <div class="submenu-item" onclick="switchSettingsTab('discounts', this)">Знижки</div>
+            <div class="submenu-item" onclick="switchSettingsTab('restrictions', this)">Обмеження</div>
         </div>
         
         <div class="menu-item" onclick="switchView('reports')" id="menu-reports">
@@ -1186,6 +1205,45 @@ input[type="number"] {
                         </div>
                     </div>
                 </div>
+
+                <div id="set-restrictions" class="settings-tab-content" style="display: none;">
+                    <div class="settings-title" style="display: flex; align-items: center; justify-content: space-between;">
+                        <div style="display: flex; align-items: center; gap: 12px;">
+                            <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126ZM12 15.75h.007v.008H12v-.008Z"/></svg>
+                            Обмеження (мін. кількість діб)
+                        </div>
+                        <div style="display: flex; gap: 16px;">
+                            <button class="btn-outline-danger" onclick="clearRestrictionsAlert()" style="padding: 10px 16px; font-size: 13px; height: auto;">Видалити</button>
+                            <button class="btn-primary" onclick="openRestrictionConstructor()" style="padding: 10px 16px; font-size: 13px;">
+                                <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path></svg>
+                                Конструктор обмежень
+                            </button>
+                        </div>
+                    </div>
+                    <p style="color: #6B7280; font-size: 14px; margin: -12px 0 20px; max-width: 720px; line-height: 1.5;">Встановлюйте мінімальну кількість ночей для конкретних дат (наприклад, вихідні — мінімум 2 доби). Обмеження відображаються на шахматці та враховуються при створенні бронювання.</p>
+
+                    <div class="timeline-toolbar" style="margin-top: 10px; justify-content: flex-start; gap: 20px;">
+                        <div class="timeline-nav">
+                            <button class="btn-icon" onclick="shiftRestrictionsTimeline(-1)"><svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg></button>
+                            <span class="timeline-month-label" id="restrictionMonthLabel">Березень 2026</span>
+                            <button class="btn-icon" onclick="shiftRestrictionsTimeline(1)"><svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg></button>
+                        </div>
+                        <button class="btn-secondary" onclick="resetRestrictionsTimelineToToday()" style="padding: 6px 16px; font-size: 13px;">Поточний місяць</button>
+                    </div>
+                    <p class="restriction-selection-hint" id="restrictionSelectionHint" style="display: none;"></p>
+
+                    <div class="timeline-wrapper" id="restrictionsTimelineWrapper" style="margin-top: 20px;">
+                        <div class="timeline-sidebar">
+                            <div class="timeline-sidebar-header">Котеджі</div>
+                            <div id="restrictionRoomsList"></div>
+                        </div>
+                        <div class="timeline-grid-container" id="restrictionScroll">
+                            <div class="timeline-months" id="restrictionMonths"></div>
+                            <div class="timeline-dates" id="restrictionDates"></div>
+                            <div class="timeline-rows" id="restrictionGrid"></div>
+                        </div>
+                    </div>
+                </div>
                 
                 <div id="set-discounts" class="settings-tab-content" style="display: none;"> 
                    <div class="settings-title" style="justify-content: flex-start; gap: 12px;">
@@ -1543,6 +1601,7 @@ function getVisitWord(count) {
         ];
 
         let customPrices = {}; // Тут будуть зберігатися ціни по датах
+        let restrictions = {}; // Мін. кількість діб: { roomId: { "YYYY-MM-DD": minNights } }
         let transactions = []; // База ручних транзакцій
 
         const incomeCategories = [
@@ -1759,6 +1818,7 @@ function saveInlineTransaction(type, category, idx) {
                 if (settingsData.customServicesList) customServicesList = settingsData.customServicesList;
                 if (settingsData.sysServicesList) sysServicesList = settingsData.sysServicesList;
                 if (settingsData.customPrices) customPrices = settingsData.customPrices;
+                if (settingsData.restrictions) restrictions = settingsData.restrictions;
                 if (settingsData.transactions) transactions = settingsData.transactions;
             }
 
@@ -1780,6 +1840,9 @@ function saveInlineTransaction(type, category, idx) {
             
             if(typeof renderSettingsRooms === 'function') renderSettingsRooms();
             if(typeof renderSettingsDiscounts === 'function') renderSettingsDiscounts();
+            if (document.getElementById('set-restrictions') && document.getElementById('set-restrictions').style.display === 'block') {
+                renderRestrictionsGrid();
+            }
         }
 
         // --- 🚀 ІНІЦІАЛІЗАЦІЯ (БЕЗ КЕШУ, ЧЕКАЄМО СЕРВЕР) ---
@@ -1797,6 +1860,7 @@ function saveInlineTransaction(type, category, idx) {
                     if (settingsData.customServicesList) customServicesList = settingsData.customServicesList;
                     if (settingsData.sysServicesList) sysServicesList = settingsData.sysServicesList;
                     if (settingsData.customPrices) customPrices = settingsData.customPrices;
+                    if (settingsData.restrictions) restrictions = settingsData.restrictions;
                     if (settingsData.transactions) transactions = settingsData.transactions;
                 }
 
@@ -1838,6 +1902,7 @@ function saveInlineTransaction(type, category, idx) {
                     if (sd.roomsList) roomsList = sd.roomsList;
                     if (sd.discountsList) discountsList = sd.discountsList;
                     if (sd.customPrices) customPrices = sd.customPrices;
+                    if (sd.restrictions) restrictions = sd.restrictions;
                     if (sd.transactions) transactions = sd.transactions;
 
                     const tlScroll = document.getElementById('timelineScroll');
@@ -1868,6 +1933,7 @@ function saveInlineTransaction(type, category, idx) {
                 customServicesList: customServicesList,
                 sysServicesList: sysServicesList,
                 customPrices: customPrices,
+                restrictions: restrictions,
                 transactions: transactions
             };
             
@@ -2021,6 +2087,7 @@ function saveInlineTransaction(type, category, idx) {
 
             if(tabName === 'rooms') renderSettingsRooms();
             if(tabName === 'prices') renderPriceGrid();
+            if(tabName === 'restrictions') renderRestrictionsGrid();
             if(tabName === 'discounts') renderSettingsDiscounts();
             if(tabName === 'services') renderSettingsServices();
         }
@@ -2099,6 +2166,67 @@ function saveInlineTransaction(type, category, idx) {
             showToast("Ціни успішно очищено!");
         }
 
+        function clearRestrictionsAlert() {
+            if (lastRestrictionSelection && lastRestrictionSelection.dates && lastRestrictionSelection.dates.length > 0) {
+                openCustomConfirm(
+                    "Видалити обмеження?",
+                    `Зняти обмеження з ${lastRestrictionSelection.dates.length} обраних дат?`,
+                    confirmDeleteRestrictionSelection
+                );
+            } else {
+                openCustomConfirm(
+                    "Очистити всі обмеження?",
+                    "Ви впевнені? Усі мінімальні терміни перебування будуть видалені.",
+                    confirmClearAllRestrictions
+                );
+            }
+        }
+
+        function confirmDeleteRestrictionSelection() {
+            closeCustomConfirm();
+            const sel = lastRestrictionSelection;
+            if (!sel || !sel.roomId) return;
+            const roomId = sel.roomId;
+            if (restrictions[roomId]) {
+                sel.dates.forEach(ds => { delete restrictions[roomId][ds]; });
+                if (Object.keys(restrictions[roomId]).length === 0) delete restrictions[roomId];
+            }
+            lastRestrictionSelection = null;
+            updateRestrictionSelectionHint();
+            renderRestrictionsGrid();
+            saveSettingsToCloud();
+            showToast("Обмеження знято");
+        }
+
+        function confirmClearAllRestrictions() {
+            closeCustomConfirm();
+            restrictions = {};
+            lastRestrictionSelection = null;
+            updateRestrictionSelectionHint();
+            renderRestrictionsGrid();
+            saveSettingsToCloud();
+            showToast("Усі обмеження очищено");
+        }
+
+        function openRestrictionConstructor() {
+            if (lastRestrictionSelection && lastRestrictionSelection.dates && lastRestrictionSelection.dates.length > 0) {
+                const sorted = [...lastRestrictionSelection.dates].sort();
+                const d1 = new Date(sorted[0]);
+                const d2 = new Date(sorted[sorted.length - 1]);
+                pendingRestrictionModal = {
+                    roomIds: [String(lastRestrictionSelection.roomId)],
+                    useCustomRange: true,
+                    startDate: sorted[0],
+                    endDate: sorted[sorted.length - 1],
+                    rangeLabel: `${d1.toLocaleDateString('uk-UA', { day: 'numeric', month: 'short' })} — ${d2.toLocaleDateString('uk-UA', { day: 'numeric', month: 'short', year: 'numeric' })} (${sorted.length} дн.)`,
+                    minNights: 2
+                };
+            } else {
+                pendingRestrictionModal = null;
+            }
+            openGenericModal('restriction');
+        }
+
         // --- УНІВЕРСАЛЬНА МОДАЛКА (Динамічна генерація полів) ---
         function openGenericModal(type, id = null) {
             currentEditType = type; currentEditId = id;
@@ -2174,6 +2302,52 @@ function saveInlineTransaction(type, category, idx) {
                         <input type="hidden" id="mPriceDays" value="all">
                     </div>
                 `;
+            } else if (type === 'restriction') {
+                title.innerText = 'Конструктор обмежень';
+                const pre = pendingRestrictionModal || {};
+                let roomsChips = `<div class="chip-btn" id="chip-restr-room-all" onclick="toggleAllRestrRoomsChip()">Усі котеджі</div>`;
+                roomsChips += roomsList.filter(r => r.active).map(r => {
+                    const isPre = pre.roomIds && (pre.roomIds.includes(String(r.id)) || pre.roomIds.includes(r.id));
+                    return `<div class="chip-btn restr-room-chip ${isPre ? 'active' : ''}" data-id="${r.id}" onclick="toggleSingleRestrRoomChip(this)">${r.name}</div>`;
+                }).join('');
+                const defaultMin = pre.minNights || 2;
+                const useCustom = pre.useCustomRange ? 'true' : 'false';
+                body.innerHTML = `
+                    <div class="form-group">
+                        <label>Оберіть котеджі:</label>
+                        <div class="chips-container">${roomsChips}</div>
+                    </div>
+                    <div class="form-group">
+                        <label>Мінімальна кількість діб:</label>
+                        <input type="number" id="mRestrMinNights" value="${defaultMin}" min="1" max="30">
+                    </div>
+                    <div class="form-group" id="restrPeriodGroup" style="${useCustom === 'true' ? 'display:none;' : ''}">
+                        <label>Оберіть період:</label>
+                        <div class="chips-container">
+                            <div class="chip-btn active restr-period-chip" data-val="1" onclick="selectRestrPeriodChip(this)">Поточний місяць</div>
+                            <div class="chip-btn restr-period-chip" data-val="3" onclick="selectRestrPeriodChip(this)">Наступні 3 місяці</div>
+                            <div class="chip-btn restr-period-chip" data-val="12" onclick="selectRestrPeriodChip(this)">Наступний рік (12 міс)</div>
+                        </div>
+                        <input type="hidden" id="mRestrPeriod" value="1">
+                    </div>
+                    <div class="form-group" id="restrCustomRangeHint" style="${useCustom === 'true' ? '' : 'display:none;'} margin-bottom: 0;">
+                        <label>Обраний діапазон на шахматці:</label>
+                        <p style="font-size: 13px; color: #4B5563; margin: 8px 0 0; line-height: 1.5;" id="restrCustomRangeText">${pre.rangeLabel || ''}</p>
+                    </div>
+                    <div class="form-group" style="margin-bottom: 0;" id="restrDaysGroup">
+                        <label>Оберіть дні тижня:</label>
+                        <div class="chips-container">
+                            <div class="chip-btn active restr-day-chip" data-val="all" onclick="selectRestrDayChip(this)">Усі дні</div>
+                            <div class="chip-btn restr-day-chip" data-val="weekdays" onclick="selectRestrDayChip(this)">Будні</div>
+                            <div class="chip-btn restr-day-chip" data-val="weekends" onclick="selectRestrDayChip(this)">Вихідні</div>
+                        </div>
+                        <input type="hidden" id="mRestrDays" value="all">
+                    </div>
+                    <input type="hidden" id="mRestrUseCustomRange" value="${useCustom}">
+                    <input type="hidden" id="mRestrStart" value="${pre.startDate || ''}">
+                    <input type="hidden" id="mRestrEnd" value="${pre.endDate || ''}">
+                `;
+                pendingRestrictionModal = null;
             } else if (type === 'discount') {
                 title.innerText = id ? 'Редагувати знижку' : 'Додати знижку';
                 
@@ -2353,6 +2527,7 @@ function saveInlineTransaction(type, category, idx) {
                 roomsList = roomsList.filter(r => r.id !== currentEditId);
                 renderSettingsRooms();
                 if(document.getElementById('set-prices').style.display === 'block') renderPriceGrid();
+                if(document.getElementById('set-restrictions').style.display === 'block') renderRestrictionsGrid();
             } 
             else if (currentEditType === 'discount') {
                 discountsList = discountsList.filter(d => d.id !== currentEditId);
@@ -2390,6 +2565,7 @@ function saveInlineTransaction(type, category, idx) {
                 }
                 renderSettingsRooms();
                 if(document.getElementById('set-prices').style.display === 'block') renderPriceGrid();
+                if(document.getElementById('set-restrictions').style.display === 'block') renderRestrictionsGrid();
 
             } else if (currentEditType === 'discount') {
                 const days = document.getElementById('mDiscDays').value || 2;
@@ -2486,7 +2662,48 @@ function saveInlineTransaction(type, category, idx) {
                     });
               }
                 renderPriceGrid();
-            } else if (currentEditType === 'transaction') {
+            } else if (currentEditType === 'restriction') {
+                const selectedRooms = Array.from(document.querySelectorAll('.restr-room-chip.active'))
+                    .map(chip => chip.getAttribute('data-id'));
+                const minNights = parseInt(document.getElementById('mRestrMinNights').value) || 0;
+                const useCustom = document.getElementById('mRestrUseCustomRange').value === 'true';
+                const dayType = document.getElementById('mRestrDays').value;
+
+                if (minNights < 1) { showToast("Вкажіть мінімум 1 добу"); return; }
+                if (selectedRooms.length === 0) { showToast("Оберіть хоча б один котедж"); return; }
+
+                const applyToDates = (roomId, startDate, endDateInclusive) => {
+                    if (!restrictions[roomId]) restrictions[roomId] = {};
+                    let d = new Date(startDate);
+                    const end = new Date(endDateInclusive);
+                    while (d <= end) {
+                        const isWeekend = (d.getDay() === 0 || d.getDay() === 5 || d.getDay() === 6);
+                        if (dayType === 'weekdays' && isWeekend) { d.setDate(d.getDate() + 1); continue; }
+                        if (dayType === 'weekends' && !isWeekend) { d.setDate(d.getDate() + 1); continue; }
+                        const dateStr = formatDateKey(d);
+                        restrictions[roomId][dateStr] = minNights;
+                        d.setDate(d.getDate() + 1);
+                    }
+                };
+
+                if (useCustom) {
+                    const startStr = document.getElementById('mRestrStart').value;
+                    const endStr = document.getElementById('mRestrEnd').value;
+                    if (!startStr || !endStr) { showToast("Немає обраного діапазону"); return; }
+                    selectedRooms.forEach(rid => applyToDates(rid, startStr, endStr));
+                } else {
+                    const periodMonths = parseInt(document.getElementById('mRestrPeriod').value) || 1;
+                    const startDate = new Date(restrictionsTimelineBaseDate);
+                    const endDate = new Date(startDate);
+                    endDate.setMonth(endDate.getMonth() + periodMonths);
+                    endDate.setDate(endDate.getDate() - 1);
+                    selectedRooms.forEach(rid => applyToDates(rid, startDate, endDate));
+                }
+
+                lastRestrictionSelection = null;
+                updateRestrictionSelectionHint();
+                renderRestrictionsGrid();
+            } else if (currentEditType === 'transaction') {
                 const tType = document.getElementById('mTransType').value;
                 const tCat = document.getElementById('mTransCategory').value;
                 const tAmount = parseInt(document.getElementById('mTransAmount').value) || 0;
@@ -3003,6 +3220,230 @@ else if (total === 0) { finText = "Немає ціни"; badgeBg = "rgba(255,255
             });
         } // <--- ОСЬ ЦІЄЇ ДУЖКИ НЕ ВИСТАЧАЛО! ВОНА ЗАКРИВАЄ renderPriceGrid()
 
+        // --- СІТКА ОБМЕЖЕНЬ ---
+        let restrictionsTimelineBaseDate = new Date();
+        restrictionsTimelineBaseDate.setDate(1);
+        let lastRestrictionSelection = null;
+        let pendingRestrictionModal = null;
+        let isRestrictionDragging = false;
+        let restrDragRoomId = null;
+        let restrDragStartDate = null;
+        let restrDragEndDate = null;
+
+        function formatDateKey(d) {
+            return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+        }
+
+        function getRestrictionMinNights(roomId, dateObj) {
+            const ds = formatDateKey(dateObj);
+            if (restrictions[roomId] && restrictions[roomId][ds]) return restrictions[roomId][ds];
+            return 0;
+        }
+
+        function getBookingMinNightsRequired(room, checkIn, checkOut) {
+            if (!room) return 0;
+            let maxMin = 0;
+            const d = new Date(checkIn);
+            d.setHours(0, 0, 0, 0);
+            const end = new Date(checkOut);
+            end.setHours(0, 0, 0, 0);
+            while (d < end) {
+                const m = getRestrictionMinNights(room.id, d);
+                if (m > maxMin) maxMin = m;
+                d.setDate(d.getDate() + 1);
+            }
+            return maxMin;
+        }
+
+        function shiftRestrictionsTimeline(months) {
+            restrictionsTimelineBaseDate.setMonth(restrictionsTimelineBaseDate.getMonth() + months);
+            renderRestrictionsGrid();
+        }
+
+        function resetRestrictionsTimelineToToday() {
+            restrictionsTimelineBaseDate = new Date();
+            restrictionsTimelineBaseDate.setDate(1);
+            renderRestrictionsGrid();
+        }
+
+        function updateRestrictionSelectionHint() {
+            const hint = document.getElementById('restrictionSelectionHint');
+            if (!hint) return;
+            if (lastRestrictionSelection && lastRestrictionSelection.dates && lastRestrictionSelection.dates.length > 0) {
+                const room = roomsList.find(r => String(r.id) === String(lastRestrictionSelection.roomId));
+                const name = room ? room.name : 'котедж';
+                hint.style.display = 'block';
+                hint.innerText = `Обрано ${lastRestrictionSelection.dates.length} дат для «${name}». Натисніть «Конструктор обмежень» або «Видалити».`;
+            } else {
+                hint.style.display = 'none';
+                hint.innerText = '';
+            }
+        }
+
+        function renderRestrictionsGrid() {
+            const monthsContainer = document.getElementById('restrictionMonths');
+            const datesContainer = document.getElementById('restrictionDates');
+            const gridContainer = document.getElementById('restrictionGrid');
+            const roomsContainer = document.getElementById('restrictionRoomsList');
+            if (!monthsContainer) return;
+
+            monthsContainer.innerHTML = '';
+            datesContainer.innerHTML = '';
+            gridContainer.innerHTML = '';
+            roomsContainer.innerHTML = '';
+
+            const startDate = new Date(restrictionsTimelineBaseDate);
+            const daysCount = new Date(startDate.getFullYear(), startDate.getMonth() + 1, 0).getDate();
+            const cellWidth = 60;
+            const daysArr = ['Нд', 'Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб'];
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+
+            document.getElementById('restrictionMonthLabel').innerText = startDate.toLocaleString('uk-UA', { month: 'long', year: 'numeric' });
+
+            const monthName = startDate.toLocaleString('uk-UA', { month: 'long', year: 'numeric' });
+            monthsContainer.innerHTML = `<div class="timeline-month-cell" style="width: ${daysCount * cellWidth}px">${monthName}</div>`;
+
+            for (let i = 0; i < daysCount; i++) {
+                const d = new Date(startDate);
+                d.setDate(startDate.getDate() + i);
+                const isWeekend = d.getDay() === 0 || d.getDay() === 5 || d.getDay() === 6;
+                const isToday = d.getTime() === today.getTime();
+                datesContainer.innerHTML += `<div class="timeline-date ${isWeekend ? 'weekend' : ''} ${isToday ? 'today' : ''}" style="height: 50px;">${d.getDate()} <span>${daysArr[d.getDay()]}</span></div>`;
+            }
+
+            roomsList.filter(r => r.active).forEach(room => {
+                roomsContainer.innerHTML += `<div class="timeline-room" style="height: 50px;">${room.short}<span>${room.desc}</span></div>`;
+                let rowHtml = `<div class="timeline-row-bg" style="height: 50px; position: relative;">`;
+
+                for (let i = 0; i < daysCount; i++) {
+                    const d = new Date(startDate);
+                    d.setDate(startDate.getDate() + i);
+                    const isWeekend = d.getDay() === 0 || d.getDay() === 5 || d.getDay() === 6;
+                    const dateStr = formatDateKey(d);
+                    const minN = getRestrictionMinNights(room.id, d);
+                    const hasR = minN > 0;
+                    const label = hasR ? `МінДіб: ${minN}` : '';
+                    const sel = lastRestrictionSelection && String(lastRestrictionSelection.roomId) === String(room.id) && lastRestrictionSelection.dates && lastRestrictionSelection.dates.includes(dateStr);
+
+                    rowHtml += `<div class="restriction-cell timeline-cell ${isWeekend ? 'weekend-restr' : ''} ${hasR ? 'has-restriction' : ''} ${sel ? 'cell-selected' : ''}"
+                        data-room="${room.id}" data-date="${dateStr}"
+                        onmousedown="startRestrictionCellDrag(event, this)"
+                        onmouseenter="enterRestrictionCellDrag(this)">${hasR ? `<span class="restriction-label">${label}</span>` : ''}</div>`;
+                }
+                rowHtml += `</div>`;
+                gridContainer.innerHTML += rowHtml;
+            });
+
+            const scrollEl = document.getElementById('restrictionScroll');
+            if (scrollEl && startDate.getMonth() === today.getMonth() && startDate.getFullYear() === today.getFullYear()) {
+                scrollEl.scrollLeft = Math.max(0, (today.getDate() - 3) * cellWidth);
+            }
+        }
+
+        function startRestrictionCellDrag(e, cell) {
+            if (e.button !== 0) return;
+            e.preventDefault();
+            isRestrictionDragging = true;
+            restrDragRoomId = cell.getAttribute('data-room');
+            restrDragStartDate = cell.getAttribute('data-date');
+            restrDragEndDate = restrDragStartDate;
+            updateRestrictionCellHighlight();
+        }
+
+        function enterRestrictionCellDrag(cell) {
+            if (!isRestrictionDragging) return;
+            if (cell.getAttribute('data-room') !== restrDragRoomId) return;
+            restrDragEndDate = cell.getAttribute('data-date');
+            updateRestrictionCellHighlight();
+        }
+
+        function updateRestrictionCellHighlight() {
+            document.querySelectorAll('#restrictionGrid .restriction-cell').forEach(c => {
+                c.classList.remove('cell-selected', 'cell-selected-start', 'cell-selected-end');
+            });
+            if (!restrDragStartDate || !restrDragEndDate) return;
+
+            let d1 = new Date(restrDragStartDate);
+            let d2 = new Date(restrDragEndDate);
+            if (d1 > d2) { const t = d1; d1 = d2; d2 = t; }
+
+            const cells = [];
+            document.querySelectorAll('#restrictionGrid .restriction-cell').forEach(c => {
+                if (c.getAttribute('data-room') !== restrDragRoomId) return;
+                const cd = new Date(c.getAttribute('data-date'));
+                if (cd >= d1 && cd <= d2) cells.push(c);
+            });
+            cells.forEach((c, i) => {
+                c.classList.add('cell-selected');
+                if (i === 0) c.classList.add('cell-selected-start');
+                if (i === cells.length - 1) c.classList.add('cell-selected-end');
+            });
+        }
+
+        function finishRestrictionCellDrag() {
+            if (!isRestrictionDragging) return;
+            isRestrictionDragging = false;
+
+            if (restrDragRoomId && restrDragStartDate && restrDragEndDate) {
+                let d1 = new Date(restrDragStartDate);
+                let d2 = new Date(restrDragEndDate);
+                if (d1 > d2) { const t = d1; d1 = d2; d2 = t; }
+
+                const dates = [];
+                const cur = new Date(d1);
+                while (cur <= d2) {
+                    dates.push(formatDateKey(cur));
+                    cur.setDate(cur.getDate() + 1);
+                }
+
+                lastRestrictionSelection = { roomId: restrDragRoomId, dates: dates };
+                updateRestrictionSelectionHint();
+                renderRestrictionsGrid();
+            }
+
+            restrDragRoomId = null;
+            restrDragStartDate = null;
+            restrDragEndDate = null;
+        }
+
+        document.addEventListener('mouseup', function(e) {
+            if (isRestrictionDragging) finishRestrictionCellDrag();
+        });
+
+        function toggleAllRestrRoomsChip() {
+            const allBtn = document.getElementById('chip-restr-room-all');
+            const isActive = !allBtn.classList.contains('active');
+            if (isActive) {
+                allBtn.classList.add('active');
+                document.querySelectorAll('.restr-room-chip').forEach(c => c.classList.add('active'));
+            } else {
+                allBtn.classList.remove('active');
+                document.querySelectorAll('.restr-room-chip').forEach(c => c.classList.remove('active'));
+            }
+        }
+
+        function toggleSingleRestrRoomChip(el) {
+            el.classList.toggle('active');
+            const allChips = document.querySelectorAll('.restr-room-chip');
+            const activeChips = document.querySelectorAll('.restr-room-chip.active');
+            const allBtn = document.getElementById('chip-restr-room-all');
+            if (allChips.length === activeChips.length) allBtn.classList.add('active');
+            else allBtn.classList.remove('active');
+        }
+
+        function selectRestrDayChip(el) {
+            document.querySelectorAll('.restr-day-chip').forEach(c => c.classList.remove('active'));
+            el.classList.add('active');
+            document.getElementById('mRestrDays').value = el.getAttribute('data-val');
+        }
+
+        function selectRestrPeriodChip(el) {
+            document.querySelectorAll('.restr-period-chip').forEach(c => c.classList.remove('active'));
+            el.classList.add('active');
+            document.getElementById('mRestrPeriod').value = el.getAttribute('data-val');
+        }
+
         // --- ПЕРЕМИКАЧ ТВАРИН ---
         function togglePet(val) {
             document.getElementById('adminPets').value = val;
@@ -3212,6 +3653,13 @@ if (guests > maxCap) {
     }
     // --- КІНЕЦЬ ПЕРЕВІРКИ ---
 
+    const requiredMinNights = getBookingMinNightsRequired(room, d1, d2);
+    const restrViolation = requiredMinNights > 0 && nights < requiredMinNights;
+    const restrWarningHtml = restrViolation ? `
+        <div style="background:#FFFBEB; border:1px solid #FCD34D; border-radius:10px; padding:12px 14px; margin-bottom:16px; font-size:13px; color:#92400E; line-height:1.45;">
+            <strong>Обмеження перебування:</strong> для обраних дат потрібно мінімум <b>${requiredMinNights}</b> ${nightWord(requiredMinNights)}. Зараз обрано ${nights} ${nightWord(nights)}.
+        </div>` : '';
+
     // === 1. СИСТЕМНІ БАЗОВІ РОЗРАХУНКИ ===
     let basePriceTotal = 0;
     for (let i = 0; i < nights; i++) {
@@ -3390,6 +3838,7 @@ const appliesToRoom =
     // МАЛЮЄМО НОВУ КРАСИВУ РОЗШИФРОВКУ З ПОЛЯМИ ВВОДУ
     cont.innerHTML = `
         <div class="form-section" style="background:#FDFCFB; border-color: var(--accent);">
+            ${restrWarningHtml}
             <span class="form-section-title" style="color:var(--accent); margin-bottom: 16px;">Розшифровка (${nights} ${nightWord(nights)})</span>
             
             <div style="font-size: 13px; color: #4B5563; margin-bottom: 16px;">
