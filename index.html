@@ -406,10 +406,24 @@
         #set-restrictions .timeline-wrapper {
             margin-top: 20px;
             margin-bottom: 28px;
+            border: 1px solid #E5E7EB;
+            border-radius: 16px;
+            background: #fff;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+            overflow: hidden; /* Важливо: ховає все, що вилазить за рамку */
+            display: flex;
+            align-items: stretch;
+        }
+        #set-restrictions .timeline-sidebar {
+            padding-bottom: 0; /* Прибираємо зайвий відступ внизу */
+        }
+        #set-restrictions .timeline-rows {
+            padding-bottom: 0; /* Прибираємо зайвий відступ внизу */
         }
         #set-restrictions #restrictionScroll {
             overflow-x: auto;
             min-width: 0;
+            padding-bottom: 0;
         }
 
         .restriction-bar-menu {
@@ -3593,24 +3607,33 @@ else if (total === 0) { finText = "Немає ціни"; badgeBg = "rgba(255,255
             menu.style.visibility = 'hidden';
             menu.classList.remove('restriction-bar-menu--above');
 
+            // Оновлюємо вміст перед вимірюванням, якщо потрібно
             const rect = barEl.getBoundingClientRect();
             const vp = getRestrictionMenuViewport();
+            
+            // Вимірюємо реальні розміри меню після display: flex
             const menuW = menu.offsetWidth || 200;
             const menuH = menu.offsetHeight || 96;
-            const gap = 10;
-
+            const gap = 8;
+            
             let left = rect.left + rect.width / 2 - menuW / 2;
             left = Math.max(vp.left, Math.min(left, vp.right - menuW));
 
+            // Перевіряємо вільний простір
             const spaceBelow = vp.bottom - rect.bottom - gap;
             const spaceAbove = rect.top - vp.top - gap;
+            
             let top;
-            if (spaceBelow >= menuH || spaceBelow >= spaceAbove) {
+            // Якщо знизу вистачає місця АБО знизу більше місця ніж зверху - відкриваємо вниз
+            if (spaceBelow >= menuH || spaceBelow > spaceAbove) {
                 top = rect.bottom + gap;
             } else {
+                // Відкриваємо вгору
                 top = rect.top - gap - menuH;
                 menu.classList.add('restriction-bar-menu--above');
             }
+            
+            // Фінальна корекція, щоб меню не вилізло за межі
             top = Math.max(vp.top, Math.min(top, vp.bottom - menuH));
 
             menu.style.left = `${left}px`;
