@@ -5744,7 +5744,7 @@ function bosoLeave() {
                 icon.style.color = '#DC2626';
                 icon.innerHTML = '<svg width="36" height="36" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>';
                 title.innerText = 'Не вдалося надіслати';
-                desc.innerText = 'Перевірте інтернет і спробуйте ще раз.';
+                desc.innerText = window._financeReportErrorMsg || 'Спробуйте ще раз або оновіть сторінку.';
             }
             modal.classList.add('active');
         }
@@ -5779,8 +5779,13 @@ function bosoLeave() {
             }
 
             try {
+                window._financeReportErrorMsg = '';
                 const screenshot = await captureFinanceReportCard(report);
-                if (!screenshot) throw new Error('screenshot');
+                if (!screenshot) {
+                    window._financeReportErrorMsg = 'Не вдалося згенерувати картку звіту. Спробуйте ще раз.';
+                    showFinanceReportResultModal('error');
+                    return;
+                }
 
                 const res = await fetch(API_URL, {
                     method: 'POST',
@@ -5797,10 +5802,19 @@ function bosoLeave() {
                 const data = await res.json();
                 if (data.success) {
                     showFinanceReportResultModal('success');
+                } else if (data.error === 'NO_SCREENSHOT') {
+                    window._financeReportErrorMsg = 'Сервер не отримав зображення. Задеплойте оновлений Apps Script (Код.js).';
+                    showFinanceReportResultModal('error');
+                } else if (data.error === 'TELEGRAM') {
+                    window._financeReportErrorMsg = data.message || 'Telegram відхилив повідомлення.';
+                    showFinanceReportResultModal('error');
                 } else {
+                    window._financeReportErrorMsg = data.message || data.error || 'Помилка на сервері.';
                     showFinanceReportResultModal('error');
                 }
             } catch (e) {
+                console.error('Finance report error:', e);
+                window._financeReportErrorMsg = 'Помилка з\'єднання з API. Перевірте, що Apps Script задеплоєно.';
                 showFinanceReportResultModal('error');
             } finally {
                 if (btn) {
