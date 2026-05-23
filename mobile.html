@@ -751,12 +751,7 @@
                 </div>
             </div>
 
-            <button type="button" id="btnDownloadFinanceReport" class="btn-primary" onclick="downloadFinanceReportToTelegram()" style="width: 100%; margin-bottom: 12px; padding: 12px 18px; font-size: 14px; justify-content: center;">
-                <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5M7.5 10.5 12 15m0 0 4.5-4.5M12 15V3"></path></svg>
-                Звіт у Telegram
-            </button>
-
-            <div style="display: flex; gap: 12px; align-items: center; margin-bottom: 20px;">
+            <div style="display: flex; gap: 12px; align-items: stretch; margin-bottom: 20px; flex-wrap: wrap;">
                 <div style="position: relative; flex-shrink: 0;">
                     <div style="width: 46px; height: 46px; border-radius: 12px; border: 1px solid #D1D5DB; background: #FFF; display: flex; align-items: center; justify-content: center; color: #4B5563;">
                         <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 0 1 2.25-2.25h13.5A2.25 2.25 0 0 1 21 7.5v11.25m-18 0A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75m-18 0v-7.5A2.25 2.25 0 0 1 5.25 9h13.5A2.25 2.25 0 0 1 21 11.25v7.5"></path></svg>
@@ -776,6 +771,10 @@
                     </div>
                 </div>
                 <input type="hidden" id="reportPeriodVal" value="current">
+                <button type="button" id="btnDownloadFinanceReport" class="btn-primary btn-report-tg" onclick="downloadFinanceReportToTelegram()" style="flex: 1; min-width: 0; min-height: 46px; justify-content: center;">
+                    <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5M7.5 10.5 12 15m0 0 4.5-4.5M12 15V3"></path></svg>
+                    Звіт у Telegram
+                </button>
             </div>
 
             <div id="rep-finance" style="display: block;">
@@ -997,6 +996,15 @@
                 <button class="btn-primary" onclick="restrictionSheetConstructor()">Конструктор обмежень</button>
                 <button class="btn-outline-danger" onclick="restrictionSheetDelete()">Видалити обмеження</button>
             </div>
+        </div>
+    </div>
+
+    <div id="financeReportResultModal" class="modal-overlay" style="z-index: 3100;">
+        <div class="modal-box" style="max-width: 400px; text-align: center; padding: 36px 28px 28px;">
+            <div id="financeReportModalIcon" style="width: 72px; height: 72px; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 20px; background: #ECFDF5; color: #059669;"></div>
+            <h3 id="financeReportModalTitle" style="font-size: 20px; font-weight: 700; color: #111827; margin-bottom: 10px;">Готово!</h3>
+            <p id="financeReportModalDesc" style="font-size: 14px; color: #6B7280; margin-bottom: 28px; line-height: 1.55;">Фінансовий звіт надіслано в Telegram.</p>
+            <button type="button" class="btn-primary" onclick="closeFinanceReportResultModal()" style="width: 100%; height: 46px; margin: 0; justify-content: center;">Зрозуміло</button>
         </div>
     </div>
 
@@ -4271,6 +4279,155 @@ function setHalfPrepayment() {
             modal.classList.add('active');
         }
 
+        function getReportPeriodDates() {
+            const period = document.getElementById('reportPeriodVal').value;
+            const now = new Date();
+            let startDate, endDate;
+            const fp = document.getElementById('customReportRange')?._flatpickr;
+
+            if (period === 'current') {
+                startDate = new Date(now.getFullYear(), now.getMonth(), 1);
+                endDate = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59);
+            } else if (period === 'prev') {
+                startDate = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+                endDate = new Date(now.getFullYear(), now.getMonth(), 0, 23, 59, 59);
+            } else if (period === 'year') {
+                startDate = new Date(now.getFullYear(), 0, 1);
+                endDate = new Date(now.getFullYear(), 11, 31, 23, 59, 59);
+            } else if (period === 'custom' && fp && fp.selectedDates.length === 2) {
+                startDate = new Date(fp.selectedDates[0]);
+                startDate.setHours(0, 0, 0, 0);
+                endDate = new Date(fp.selectedDates[1]);
+                endDate.setHours(23, 59, 59, 999);
+            } else {
+                startDate = new Date(2000, 0, 1);
+                endDate = new Date(2100, 0, 1);
+            }
+
+            return {
+                startDate,
+                endDate,
+                period,
+                periodLabel: document.getElementById('reportPeriodText').innerText
+            };
+        }
+
+        function gatherFinanceReportForPeriod() {
+            const { startDate, endDate, periodLabel } = getReportPeriodDates();
+            const breakdown = { base: 0, guests: 0, pets: 0, earlyLate: 0 };
+            const payments = { cash: 0, card: 0, fop: 0 };
+            let bookingsCount = 0;
+            let bookingIncome = 0;
+            const manualIncomeLines = [];
+
+            const addPay = (amount, method) => {
+                const amt = Math.round(Number(amount) || 0);
+                if (amt <= 0) return;
+                const m = String(method || '').trim();
+                if (m === 'Готівка') payments.cash += amt;
+                else if (m === 'Картка') payments.card += amt;
+                else payments.fop += amt;
+            };
+
+            (allBookings || []).forEach(b => {
+                if (String(b.status).toLowerCase().includes('скас')) return;
+                const bDate = parseSafeDate(b.checkIn);
+                if (bDate < startDate || bDate > endDate) return;
+                bookingsCount++;
+                const paid = Number(b.paidAmount) || 0;
+                const price = Number(b.totalPrice) || 0;
+                if (paid <= 0) return;
+                bookingIncome += paid;
+                const prepayAmt = Number(b.prepayAmount) || 0;
+                const surchargeAmt = Number(b.surchargeAmount) || 0;
+                if (prepayAmt > 0 || surchargeAmt > 0) {
+                    addPay(prepayAmt, b.prepayMethod || 'ФОП');
+                    addPay(surchargeAmt, b.surchargeMethod || 'Готівка');
+                } else {
+                    addPay(paid, b.prepayMethod || 'ФОП');
+                }
+                const feeGuests = b.extraGuestFee !== undefined && b.extraGuestFee !== '' ? Number(b.extraGuestFee) : 0;
+                const feePets = b.petFee !== undefined && b.petFee !== '' ? Number(b.petFee) : 0;
+                const feeEarlyLate = (Number(b.earlyFee) || 0) + (Number(b.lateFee) || 0);
+                const ratio = price > 0 ? paid / price : 1;
+                breakdown.pets += Math.round(feePets * ratio);
+                breakdown.guests += Math.round(feeGuests * ratio);
+                breakdown.earlyLate += Math.round(feeEarlyLate * ratio);
+                breakdown.base += Math.round(paid - (feePets * ratio) - (feeGuests * ratio) - (feeEarlyLate * ratio));
+            });
+
+            const incomeLines = [];
+            if (breakdown.base > 0) incomeLines.push({ title: 'Оренда котеджів', amount: breakdown.base, sub: '' });
+            if (breakdown.guests > 0) incomeLines.push({ title: 'Додаткові гості', amount: breakdown.guests, sub: '' });
+            if (breakdown.pets > 0) incomeLines.push({ title: 'Тварини', amount: breakdown.pets, sub: '' });
+            if (breakdown.earlyLate > 0) incomeLines.push({ title: 'Гнучкий графік', amount: breakdown.earlyLate, sub: '' });
+
+            const expenseLines = [];
+            let manualIncomeTotal = 0;
+            let totalExpense = 0;
+
+            (transactions || []).forEach(t => {
+                const tDate = parseSafeDate(t.date);
+                if (tDate < startDate || tDate > endDate) return;
+                const amt = Math.round(Number(t.amount) || 0);
+                if (amt <= 0) return;
+                const title = t.category || (t.type === 'income' ? 'Дохід' : 'Витрата');
+                const sub = t.comment ? String(t.comment).trim() : '';
+                if (t.type === 'income') {
+                    manualIncomeTotal += amt;
+                    incomeLines.push({ title, amount: amt, sub });
+                } else if (t.type === 'expense') {
+                    totalExpense += amt;
+                    expenseLines.push({ title, amount: amt, sub });
+                }
+            });
+
+            return {
+                periodLabel,
+                bookingsCount,
+                totalIncome: bookingIncome + manualIncomeTotal,
+                totalExpense,
+                profit: bookingIncome + manualIncomeTotal - totalExpense,
+                payments,
+                incomeLines,
+                expenseLines
+            };
+        }
+
+        function showFinanceReportResultModal(type) {
+            const modal = document.getElementById('financeReportResultModal');
+            const icon = document.getElementById('financeReportModalIcon');
+            const title = document.getElementById('financeReportModalTitle');
+            const desc = document.getElementById('financeReportModalDesc');
+            if (!modal || !icon || !title || !desc) return;
+
+            if (type === 'success') {
+                icon.style.background = '#ECFDF5';
+                icon.style.color = '#059669';
+                icon.innerHTML = '<svg width="36" height="36" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"></path></svg>';
+                title.innerText = 'Звіт надіслано!';
+                desc.innerText = 'Преміум-картка з фінансами вже у вашому Telegram-чаті.';
+            } else if (type === 'empty') {
+                icon.style.background = '#FEF3C7';
+                icon.style.color = '#D97706';
+                icon.innerHTML = '<svg width="36" height="36" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>';
+                title.innerText = 'Немає даних';
+                desc.innerText = 'За обраний період ще немає фінансових операцій для звіту.';
+            } else {
+                icon.style.background = '#FEE2E2';
+                icon.style.color = '#DC2626';
+                icon.innerHTML = '<svg width="36" height="36" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>';
+                title.innerText = 'Не вдалося надіслати';
+                desc.innerText = 'Перевірте інтернет і спробуйте ще раз.';
+            }
+            modal.classList.add('active');
+        }
+
+        function closeFinanceReportResultModal() {
+            const modal = document.getElementById('financeReportResultModal');
+            if (modal) modal.classList.remove('active');
+        }
+
         async function downloadFinanceReportToTelegram() {
             const btn = document.getElementById('btnDownloadFinanceReport');
             const originalHtml = btn ? btn.innerHTML : '';
@@ -4279,11 +4436,16 @@ function setHalfPrepayment() {
                 btn.innerHTML = '<span>Надсилаємо...</span>';
             }
 
+            const report = gatherFinanceReportForPeriod();
+            if (!report || (report.bookingsCount === 0 && report.totalIncome === 0 && report.totalExpense === 0)) {
+                showFinanceReportResultModal('empty');
+                if (btn) { btn.disabled = false; btn.innerHTML = originalHtml; }
+                return;
+            }
+
             const period = document.getElementById('reportPeriodVal').value;
-            const periodLabel = document.getElementById('reportPeriodText').innerText;
             let customStart = '';
             let customEnd = '';
-
             const fp = document.getElementById('customReportRange')?._flatpickr;
             if (period === 'custom' && fp && fp.selectedDates.length === 2) {
                 customStart = fp.formatDate(fp.selectedDates[0], 'Y-m-d');
@@ -4291,27 +4453,26 @@ function setHalfPrepayment() {
             }
 
             try {
+                const screenshot = await captureFinanceReportCard(report);
+                if (!screenshot) throw new Error('screenshot');
+
                 const res = await fetch(API_URL, {
                     method: 'POST',
                     headers: { 'Content-Type': 'text/plain;charset=utf-8' },
                     body: JSON.stringify({
                         action: 'sendFinanceReport',
                         period: period,
-                        periodLabel: periodLabel,
+                        periodLabel: report.periodLabel,
                         customStart: customStart,
-                        customEnd: customEnd
+                        customEnd: customEnd,
+                        screenshot: screenshot
                     })
                 });
                 const data = await res.json();
-                if (data.success) {
-                    alert('✅ Фінансовий звіт надіслано в Telegram!');
-                } else if (data.error === 'NO_DATA') {
-                    alert('За обраний період немає фінансових даних.');
-                } else {
-                    alert('Не вдалося надіслати звіт. Спробуйте ще раз.');
-                }
+                if (data.success) showFinanceReportResultModal('success');
+                else showFinanceReportResultModal('error');
             } catch (e) {
-                alert('Помилка з\'єднання. Перевірте інтернет і спробуйте знову.');
+                showFinanceReportResultModal('error');
             } finally {
                 if (btn) {
                     btn.disabled = false;
@@ -5663,6 +5824,48 @@ async function capturePremiumCard(b) {
 }
 
 // 🚀 КАРТКА ДЛЯ СПОВІЩЕННЯ ПРО ДОПЛАТУ (РЕШТА ОПЛАТИ)
+async function captureFinanceReportCard(report) {
+    const formatMoneyUa = (n) => (Math.round(Number(n) || 0)).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ' ') + ' ₴';
+    const renderLines = (lines, color) => {
+        if (!lines || !lines.length) return '<div style="font-size:14px;color:#9CA3AF;">Немає записів</div>';
+        return lines.map(l => `<div style="display:flex;justify-content:space-between;gap:12px;margin-bottom:10px;font-size:14px;"><span style="color:#4B5563;font-weight:600;">${l.title}</span><span style="font-weight:800;color:${color};white-space:nowrap;">${formatMoneyUa(l.amount)}</span></div>`).join('');
+    };
+    const container = document.createElement('div');
+    container.style.cssText = 'position:fixed;top:0;left:-9999px;width:800px;background:linear-gradient(135deg,#2C351B,#1A1F10);padding:50px 60px;box-sizing:border-box;font-family:Inter,sans-serif;display:flex;justify-content:center;';
+    const card = document.createElement('div');
+    card.style.cssText = 'width:100%;background:#FFF;border-radius:20px;padding:30px;box-shadow:0 20px 40px rgba(0,0,0,0.4);position:relative;overflow:hidden;';
+    const topAccent = document.createElement('div');
+    topAccent.style.cssText = 'position:absolute;top:0;left:0;width:100%;height:6px;background:linear-gradient(90deg,#556B2F,#8FBC8F);';
+    card.appendChild(topAccent);
+    card.innerHTML = `
+        <div style="border-bottom:1px solid #E5E7EB;padding-bottom:16px;margin-bottom:20px;">
+            <div style="font-size:20px;font-weight:900;color:#111827;line-height:1.25;">📋 ФІНАНСОВИЙ ЗВІТ | ${report.periodLabel}</div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:18px;">
+            <div style="background:#ECFDF5;border:1px solid #A7F3D0;border-radius:10px;padding:12px;text-align:center;"><div style="font-size:10px;font-weight:700;color:#059669;margin-bottom:4px;">ДОХОДИ</div><div style="font-size:16px;font-weight:900;color:#047857;">${formatMoneyUa(report.totalIncome)}</div></div>
+            <div style="background:#FEF2F2;border:1px solid #FECACA;border-radius:10px;padding:12px;text-align:center;"><div style="font-size:10px;font-weight:700;color:#DC2626;margin-bottom:4px;">ВИТРАТИ</div><div style="font-size:16px;font-weight:900;color:#B91C1C;">${formatMoneyUa(report.totalExpense)}</div></div>
+            <div style="background:#F9FAFB;border:1px solid #E5E7EB;border-radius:10px;padding:12px;text-align:center;"><div style="font-size:10px;font-weight:700;color:#4B5563;margin-bottom:4px;">ПРИБУТОК</div><div style="font-size:16px;font-weight:900;">${formatMoneyUa(report.profit)}</div></div>
+        </div>
+        <div style="margin-bottom:16px;padding:14px;background:#FAFAFA;border-radius:10px;border:1px dashed #D1D5DB;font-size:13px;">
+            <div style="font-weight:800;color:#6B7280;margin-bottom:8px;font-size:11px;">ОПЛАТИ</div>
+            💵 ${formatMoneyUa(report.payments.cash)} &nbsp; 💳 ${formatMoneyUa(report.payments.card)} &nbsp; 🏦 ${formatMoneyUa(report.payments.fop)}
+        </div>
+        <div style="margin-bottom:14px;"><div style="font-size:12px;font-weight:800;color:#059669;margin-bottom:8px;">📈 ДОХОДИ</div>${renderLines(report.incomeLines, '#059669')}</div>
+        <div style="margin-bottom:20px;"><div style="font-size:12px;font-weight:800;color:#DC2626;margin-bottom:8px;">📉 ВИТРАТИ</div>${renderLines(report.expenseLines, '#DC2626')}</div>
+        <div style="text-align:center;padding:14px;border-radius:10px;font-size:15px;font-weight:800;background:#556B2F;color:#FFF;">📅 Шахматка</div>
+    `;
+    container.appendChild(card);
+    document.body.appendChild(container);
+    try {
+        const canvas = await html2canvas(container, { width: 800, height: container.offsetHeight, windowWidth: 800, scale: 2, backgroundColor: null, useCORS: true });
+        document.body.removeChild(container);
+        return canvas.toDataURL('image/jpeg', 0.9);
+    } catch (err) {
+        if (document.body.contains(container)) document.body.removeChild(container);
+        return null;
+    }
+}
+
 async function capturePaymentCard(b, paymentInfo) {
     const container = document.createElement('div');
     container.style.position = 'fixed';
