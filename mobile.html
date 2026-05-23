@@ -4389,13 +4389,6 @@ function setHalfPrepayment() {
             };
         }
 
-        function formatFinanceReportPeriodDisplay(period, periodLabel, startDate, endDate) {
-            if (period === 'all' || period === 'custom') return periodLabel;
-            const pad = (n) => String(n).padStart(2, '0');
-            const fmt = (d) => `${pad(d.getDate())}.${pad(d.getMonth() + 1)}.${d.getFullYear()}`;
-            return `${fmt(startDate)} — ${fmt(endDate)}`;
-        }
-
         function gatherFinanceReportForPeriod() {
             const { startDate, endDate, period, periodLabel } = getReportPeriodDates();
             const periodDisplay = formatFinanceReportPeriodDisplay(period, periodLabel, startDate, endDate);
@@ -4470,6 +4463,8 @@ function setHalfPrepayment() {
             return {
                 periodLabel,
                 periodDisplay,
+                periodStart: startDate.toISOString(),
+                periodEnd: endDate.toISOString(),
                 bookingsCount,
                 totalIncome: bookingIncome + manualIncomeTotal,
                 totalExpense,
@@ -4479,6 +4474,8 @@ function setHalfPrepayment() {
                 expenseLines
             };
         }
+        window.getReportPeriodDates = getReportPeriodDates;
+        window.gatherFinanceReportForPeriod = gatherFinanceReportForPeriod;
 
         function showFinanceReportResultModal(type) {
             const modal = document.getElementById('financeReportResultModal');
@@ -4539,6 +4536,9 @@ function setHalfPrepayment() {
                 }
 
                 window._financeReportErrorMsg = '';
+                if (!report.periodDisplay) {
+                    report.periodDisplay = resolveFinanceReportPeriodText(report);
+                }
                 const screenshot = await captureFinanceReportCard(report);
                 if (!screenshot) {
                     window._financeReportErrorMsg = 'Не вдалося згенерувати картку звіту.';
@@ -5921,10 +5921,36 @@ async function capturePremiumCard(b) {
     }
 }
 
+function formatFinanceReportPeriodDisplay(period, periodLabel, startDate, endDate) {
+    if (period === 'all' || period === 'custom') return periodLabel || '';
+    const pad = (n) => String(n).padStart(2, '0');
+    const fmt = (d) => {
+        if (!d || isNaN(d.getTime())) return '';
+        return `${pad(d.getDate())}.${pad(d.getMonth() + 1)}.${d.getFullYear()}`;
+    };
+    const from = fmt(startDate);
+    const to = fmt(endDate);
+    return from && to ? `${from} — ${to}` : (periodLabel || '');
+}
+
+function resolveFinanceReportPeriodText(report) {
+    if (report && report.periodDisplay) return String(report.periodDisplay);
+    if (report && report.periodStart && report.periodEnd) {
+        return formatFinanceReportPeriodDisplay('current', '', new Date(report.periodStart), new Date(report.periodEnd));
+    }
+    if (typeof window.getReportPeriodDates === 'function') {
+        const p = window.getReportPeriodDates();
+        return formatFinanceReportPeriodDisplay(p.period, p.periodLabel, p.startDate, p.endDate);
+    }
+    const labelEl = document.getElementById('reportPeriodText');
+    return labelEl ? (labelEl.innerText || labelEl.textContent || '').trim() : '';
+}
+
 // 🚀 ПРЕМІУМ-КАРТКА ФІНАНСОВОГО ЗВІТУ (скріншот для Telegram)
 async function captureFinanceReportCard(report) {
     const formatMoneyUa = (n) => (Math.round(Number(n) || 0)).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ' ') + ' ₴';
     const esc = (s) => String(s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    const periodText = resolveFinanceReportPeriodText(report || {});
 
     const FIN_CAT_ICONS = {
         "Оренда котеджів": '<path stroke-linecap="round" stroke-linejoin="round" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />',
@@ -5997,11 +6023,11 @@ async function captureFinanceReportCard(report) {
     const iconFop = '<path stroke-linecap="round" stroke-linejoin="round" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />';
 
     card.innerHTML = `
-        <div style="display:flex;align-items:center;gap:14px;border-bottom:1px solid #E5E7EB;padding-bottom:18px;margin-bottom:22px;">
+        <div style="display:flex;align-items:flex-start;gap:14px;border-bottom:1px solid #E5E7EB;padding-bottom:18px;margin-bottom:22px;">
             ${iconBox(iconReport, '#F8FAF7', '#556B2F', 48)}
-            <div style="flex:1;min-width:0;">
+            <div style="display:block;max-width:100%;">
                 <div style="font-size:24px;font-weight:900;color:#111827;letter-spacing:-0.5px;line-height:1.2;">ФІНАНСОВИЙ ЗВІТ</div>
-                ${(report.periodDisplay || report.periodLabel) ? `<div style="font-size:14px;color:#6B7280;font-weight:600;margin-top:6px;line-height:1.35;">${esc(report.periodDisplay || report.periodLabel)}</div>` : ''}
+                ${periodText ? `<div style="font-size:14px;color:#6B7280;font-weight:600;margin-top:6px;line-height:1.35;white-space:nowrap;">${esc(periodText)}</div>` : ''}
             </div>
         </div>
 
