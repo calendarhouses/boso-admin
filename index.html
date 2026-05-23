@@ -300,21 +300,76 @@
 
         /* Сітка обмежень (мін. кількість діб) */
         .restriction-cell {
-            display: flex; align-items: flex-end; justify-content: flex-end;
+            display: flex; align-items: flex-end; justify-content: center;
             width: 60px; flex-shrink: 0; height: 50px; min-height: 50px;
-            border-right: 1px solid #F3F4F6; cursor: pointer; transition: 0.15s;
-            position: relative; padding: 4px 6px; box-sizing: border-box;
+            border-right: 1px solid #F3F4F6; cursor: pointer;
+            position: relative; padding: 6px 4px; box-sizing: border-box;
+            border-radius: 0;
+            transition: background-color 0.12s ease, box-shadow 0.12s ease;
         }
-        .restriction-cell:hover { background: #F3F4F6; }
         .restriction-cell.weekend-restr { background: #FAFAFA; }
-        .restriction-cell.has-restriction { background: #FFFBEB; }
-        .restriction-cell.has-restriction.weekend-restr { background: #FEF9C3; }
-        .restriction-cell.has-restriction:hover { background: #FEF3C7; }
-        .restriction-label { font-size: 10px; font-weight: 600; color: #9CA3AF; line-height: 1.2; text-align: right; pointer-events: none; }
-        .restriction-cell.has-restriction .restriction-label { color: #78716C; }
-        .restriction-cell.cell-selected { background-color: rgba(85, 107, 47, 0.18) !important; }
-        .restriction-cell.cell-selected.has-restriction { background-color: rgba(85, 107, 47, 0.22) !important; }
-        .restriction-selection-hint { font-size: 13px; color: #6B7280; margin-top: 8px; }
+        .restriction-cell.has-restriction {
+            background: linear-gradient(180deg, rgba(85, 107, 47, 0.07) 0%, rgba(85, 107, 47, 0.02) 100%);
+        }
+        .restriction-cell.has-restriction.weekend-restr {
+            background: linear-gradient(180deg, rgba(85, 107, 47, 0.09) 0%, rgba(210, 180, 140, 0.06) 100%);
+        }
+        .restriction-cell.has-restriction::before {
+            content: '';
+            position: absolute; left: 0; top: 8px; bottom: 8px; width: 2px;
+            background: linear-gradient(180deg, var(--accent) 0%, rgba(85, 107, 47, 0.35) 100%);
+            border-radius: 0 2px 2px 0;
+            opacity: 0.85;
+            pointer-events: none;
+        }
+        .restriction-pill {
+            display: inline-flex; flex-direction: column; align-items: center; justify-content: center;
+            min-width: 38px; padding: 4px 6px 3px;
+            background: #FFFFFF;
+            border: 1px solid rgba(85, 107, 47, 0.22);
+            border-radius: 8px;
+            box-shadow: 0 1px 2px rgba(26, 26, 26, 0.06), 0 2px 6px rgba(85, 107, 47, 0.08);
+            pointer-events: none; z-index: 1;
+            line-height: 1;
+        }
+        .restriction-pill-num {
+            font-size: 14px; font-weight: 700; color: var(--accent); letter-spacing: -0.02em;
+        }
+        .restriction-pill-text {
+            font-size: 8px; font-weight: 600; color: #6B7280;
+            text-transform: uppercase; letter-spacing: 0.04em; margin-top: 2px;
+        }
+        .restriction-selection-hint {
+            font-size: 13px; color: #4B5563; margin-top: 10px; line-height: 1.45;
+            padding: 10px 14px; background: #F9FAFB; border: 1px solid #E5E7EB;
+            border-radius: 10px; border-left: 3px solid var(--accent);
+        }
+
+        /* Виділення в сітці обмежень — строго по лініях сітки, без закруглень */
+        #restrictionGrid .restriction-cell:hover:not(.cell-selected) {
+            box-shadow: inset 0 0 0 2px rgba(85, 107, 47, 0.35);
+        }
+        #restrictionGrid .restriction-cell.cell-selected {
+            background-color: rgba(85, 107, 47, 0.14) !important;
+            z-index: 2;
+            border-radius: 0 !important;
+            border-top: none !important;
+            border-bottom: none !important;
+            border-left: none !important;
+            box-shadow: inset 0 2px 0 0 var(--accent), inset 0 -2px 0 0 var(--accent);
+        }
+        #restrictionGrid .restriction-cell.cell-selected.has-restriction {
+            background-color: rgba(85, 107, 47, 0.2) !important;
+        }
+        #restrictionGrid .restriction-cell.cell-selected-start {
+            box-shadow: inset 2px 0 0 0 var(--accent), inset 0 2px 0 0 var(--accent), inset 0 -2px 0 0 var(--accent);
+        }
+        #restrictionGrid .restriction-cell.cell-selected-end:not(.cell-selected-start) {
+            box-shadow: inset -2px 0 0 0 var(--accent), inset 0 2px 0 0 var(--accent), inset 0 -2px 0 0 var(--accent);
+        }
+        #restrictionGrid .restriction-cell.cell-selected-start.cell-selected-end {
+            box-shadow: inset 0 0 0 2px var(--accent);
+        }
 
         /* ВІКНА ТА МОДАЛКИ */
         .drawer-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(17,24,39,0.4); backdrop-filter: blur(4px); z-index: 1000; opacity: 0; pointer-events: none; transition: 0.3s; }
@@ -1563,6 +1618,22 @@ function nightWord(n) {
     return 'ночей';
 }
 
+function dateWord(n) {
+    const v = Math.abs(parseInt(n, 10)) % 100, v1 = v % 10;
+    if (v > 10 && v < 20) return 'дат';
+    if (v1 > 1 && v1 < 5) return 'дати';
+    if (v1 === 1) return 'дата';
+    return 'дат';
+}
+
+function dayWord(n) {
+    const v = Math.abs(parseInt(n, 10)) % 100, v1 = v % 10;
+    if (v > 10 && v < 20) return 'днів';
+    if (v1 > 1 && v1 < 5) return 'дні';
+    if (v1 === 1) return 'день';
+    return 'днів';
+}
+
         // --- ФУНКЦІЯ ДЛЯ ПРАВИЛЬНОЇ МНОЖИНИ ЗАЇЗДІВ (1 заїзд, 2 заїзди, 5 заїздів) ---
 function getVisitWord(count) {
     let n = Math.abs(parseInt(count)) % 100;
@@ -2170,7 +2241,7 @@ function saveInlineTransaction(type, category, idx) {
             if (lastRestrictionSelection && lastRestrictionSelection.dates && lastRestrictionSelection.dates.length > 0) {
                 openCustomConfirm(
                     "Видалити обмеження?",
-                    `Зняти обмеження з ${lastRestrictionSelection.dates.length} обраних дат?`,
+                    `Зняти обмеження з ${lastRestrictionSelection.dates.length} обраних ${dateWord(lastRestrictionSelection.dates.length)}?`,
                     confirmDeleteRestrictionSelection
                 );
             } else {
@@ -2218,7 +2289,7 @@ function saveInlineTransaction(type, category, idx) {
                     useCustomRange: true,
                     startDate: sorted[0],
                     endDate: sorted[sorted.length - 1],
-                    rangeLabel: `${d1.toLocaleDateString('uk-UA', { day: 'numeric', month: 'short' })} — ${d2.toLocaleDateString('uk-UA', { day: 'numeric', month: 'short', year: 'numeric' })} (${sorted.length} дн.)`,
+                    rangeLabel: `${d1.toLocaleDateString('uk-UA', { day: 'numeric', month: 'short' })} — ${d2.toLocaleDateString('uk-UA', { day: 'numeric', month: 'short', year: 'numeric' })} (${sorted.length} ${dayWord(sorted.length)})`,
                     minNights: 2
                 };
             } else {
@@ -3266,6 +3337,16 @@ else if (total === 0) { finText = "Немає ціни"; badgeBg = "rgba(255,255
             renderRestrictionsGrid();
         }
 
+        function getRestrictionCellSelectionClasses(roomId, dateStr) {
+            if (!lastRestrictionSelection || String(lastRestrictionSelection.roomId) !== String(roomId)) return '';
+            if (!lastRestrictionSelection.dates || !lastRestrictionSelection.dates.includes(dateStr)) return '';
+            const sorted = [...lastRestrictionSelection.dates].sort();
+            let cls = 'cell-selected';
+            if (dateStr === sorted[0]) cls += ' cell-selected-start';
+            if (dateStr === sorted[sorted.length - 1]) cls += ' cell-selected-end';
+            return cls;
+        }
+
         function updateRestrictionSelectionHint() {
             const hint = document.getElementById('restrictionSelectionHint');
             if (!hint) return;
@@ -3273,7 +3354,8 @@ else if (total === 0) { finText = "Немає ціни"; badgeBg = "rgba(255,255
                 const room = roomsList.find(r => String(r.id) === String(lastRestrictionSelection.roomId));
                 const name = room ? room.name : 'котедж';
                 hint.style.display = 'block';
-                hint.innerText = `Обрано ${lastRestrictionSelection.dates.length} дат для «${name}». Натисніть «Конструктор обмежень» або «Видалити».`;
+                const n = lastRestrictionSelection.dates.length;
+                hint.innerText = `Обрано ${n} ${dateWord(n)} для «${name}». Натисніть «Конструктор обмежень» або «Видалити».`;
             } else {
                 hint.style.display = 'none';
                 hint.innerText = '';
@@ -3323,13 +3405,13 @@ else if (total === 0) { finText = "Немає ціни"; badgeBg = "rgba(255,255
                     const dateStr = formatDateKey(d);
                     const minN = getRestrictionMinNights(room.id, d);
                     const hasR = minN > 0;
-                    const label = hasR ? `МінДіб: ${minN}` : '';
-                    const sel = lastRestrictionSelection && String(lastRestrictionSelection.roomId) === String(room.id) && lastRestrictionSelection.dates && lastRestrictionSelection.dates.includes(dateStr);
+                    const selCls = getRestrictionCellSelectionClasses(room.id, dateStr);
+                    const pillHtml = hasR ? `<span class="restriction-pill" title="Мінімум ${minN} ${nightWord(minN)}"><span class="restriction-pill-num">${minN}</span><span class="restriction-pill-text">мін. діб</span></span>` : '';
 
-                    rowHtml += `<div class="restriction-cell timeline-cell ${isWeekend ? 'weekend-restr' : ''} ${hasR ? 'has-restriction' : ''} ${sel ? 'cell-selected' : ''}"
+                    rowHtml += `<div class="restriction-cell ${isWeekend ? 'weekend-restr' : ''} ${hasR ? 'has-restriction' : ''} ${selCls}"
                         data-room="${room.id}" data-date="${dateStr}"
                         onmousedown="startRestrictionCellDrag(event, this)"
-                        onmouseenter="enterRestrictionCellDrag(this)">${hasR ? `<span class="restriction-label">${label}</span>` : ''}</div>`;
+                        onmouseenter="enterRestrictionCellDrag(this)">${pillHtml}</div>`;
                 }
                 rowHtml += `</div>`;
                 gridContainer.innerHTML += rowHtml;
