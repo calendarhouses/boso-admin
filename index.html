@@ -5633,8 +5633,16 @@ function bosoLeave() {
             };
         }
 
+        function formatFinanceReportPeriodDisplay(period, periodLabel, startDate, endDate) {
+            if (period === 'all' || period === 'custom') return periodLabel;
+            const pad = (n) => String(n).padStart(2, '0');
+            const fmt = (d) => `${pad(d.getDate())}.${pad(d.getMonth() + 1)}.${d.getFullYear()}`;
+            return `${fmt(startDate)} — ${fmt(endDate)}`;
+        }
+
         function gatherFinanceReportForPeriod() {
-            const { startDate, endDate, periodLabel } = getReportPeriodDates();
+            const { startDate, endDate, period, periodLabel } = getReportPeriodDates();
+            const periodDisplay = formatFinanceReportPeriodDisplay(period, periodLabel, startDate, endDate);
             const breakdown = { base: 0, guests: 0, pets: 0, earlyLate: 0 };
             const payments = { cash: 0, card: 0, fop: 0 };
             let bookingsCount = 0;
@@ -5710,6 +5718,7 @@ function bosoLeave() {
             const totalIncome = bookingIncome + manualIncomeTotal;
             return {
                 periodLabel,
+                periodDisplay,
                 bookingsCount,
                 totalIncome,
                 totalExpense,
@@ -6807,7 +6816,10 @@ async function captureFinanceReportCard(report) {
     card.innerHTML = `
         <div style="display:flex;align-items:center;gap:14px;border-bottom:1px solid #E5E7EB;padding-bottom:18px;margin-bottom:22px;">
             ${iconBox(iconReport, '#F8FAF7', '#556B2F', 48)}
-            <div style="font-size:24px;font-weight:900;color:#111827;letter-spacing:-0.5px;line-height:1.2;">ФІНАНСОВИЙ ЗВІТ</div>
+            <div style="flex:1;min-width:0;">
+                <div style="font-size:24px;font-weight:900;color:#111827;letter-spacing:-0.5px;line-height:1.2;">ФІНАНСОВИЙ ЗВІТ</div>
+                ${(report.periodDisplay || report.periodLabel) ? `<div style="font-size:14px;color:#6B7280;font-weight:600;margin-top:6px;line-height:1.35;">${esc(report.periodDisplay || report.periodLabel)}</div>` : ''}
+            </div>
         </div>
 
         <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:22px;">
