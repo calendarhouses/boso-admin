@@ -186,8 +186,11 @@
         .timeline-date.weekend { background: #F9FAFB; color: #EF4444; }
 
         .timeline-rows { position: relative; width: max-content; padding-bottom: 16px; }
-        .timeline-row-bg { display: flex; height: 70px; min-height: 70px; border-bottom: 1px solid #E5E7EB; position: relative; flex-shrink: 0; }
-        .timeline-cell { width: 60px; flex-shrink: 0; border-right: 1px solid #F3F4F6; }
+        .timeline-row-bg { display: flex; height: 70px; min-height: 70px; border-bottom: 1px solid #E5E7EB; position: relative; flex-shrink: 0; align-items: stretch; }
+        .timeline-cell {
+            width: 60px; flex-shrink: 0; border-right: 1px solid #F3F4F6;
+            height: 100%; min-height: 70px; align-self: stretch; box-sizing: border-box;
+        }
         .timeline-cell.weekend { background: #F9FAFB; }
 
         /* Забороняємо виділяти текст, коли тягнемо мишкою */
@@ -196,16 +199,31 @@
             -webkit-user-select: none;
         }
 
-        /* Преміум підсвітка обраних дат при перетягуванні */
+        /* Підсвітка обраних дат — на всю висоту клітинки (без scale) */
         .timeline-cell.cell-selected {
-            background-color: rgba(85, 107, 47, 0.15) !important;
+            background-color: rgba(85, 107, 47, 0.14) !important;
             border-top: 2px solid var(--accent) !important;
             border-bottom: 2px solid var(--accent) !important;
+            border-left: none !important;
+            border-right: 1px solid #F3F4F6 !important;
+            border-radius: 0 !important;
+            box-shadow: none !important;
+            transform: none !important;
             z-index: 5;
         }
-        /* Закруглюємо краї на початку і в кінці виділення */
-        .timeline-cell.cell-selected-start { border-left: 2px solid var(--accent) !important; border-radius: 8px 0 0 8px; }
-        .timeline-cell.cell-selected-end { border-right: 2px solid var(--accent) !important; border-radius: 0 8px 8px 0; }
+        .timeline-cell.cell-selected-start {
+            border-left: 2px solid var(--accent) !important;
+            border-radius: 8px 0 0 8px !important;
+        }
+        .timeline-cell.cell-selected-end {
+            border-right: 2px solid var(--accent) !important;
+            border-radius: 0 8px 8px 0 !important;
+        }
+        .timeline-cell.cell-selected-start.cell-selected-end {
+            border-left: 2px solid var(--accent) !important;
+            border-right: 2px solid var(--accent) !important;
+            border-radius: 8px !important;
+        }
         
         /* --- БЛОКИ БРОНЮВАННЯ НА ШАХМАТЦІ --- */
         .booking-block { 
@@ -298,54 +316,58 @@
         .price-cell.weekend-price { background: #FFFBEB; color: #B45309; }
         .price-cell.weekend-price:hover { background: #FEF3C7; }
 
-        /* Сітка обмежень (мін. кількість діб) */
+        /* Сітка обмежень (мін. кількість діб) — ті самі пропорції, що на шахматці */
         .restriction-cell {
-            display: flex; align-items: center; justify-content: center;
-            width: 60px; flex-shrink: 0; height: 50px; min-height: 50px;
+            width: 60px; flex-shrink: 0;
+            height: 100%; min-height: 70px; align-self: stretch;
             border-right: 1px solid #F3F4F6; cursor: pointer;
             position: relative; padding: 0; box-sizing: border-box;
         }
-        .restriction-cell.weekend-restr { background: #FAFAFA; }
-        /* Міні-блок обмеження (як картка броні на шахматці, але компактніше) */
+        .restriction-cell.weekend-restr { background: #F9FAFB; }
+        /* Блок обмеження — як .booking-block на основній шахматці */
         .restriction-chip {
             position: absolute;
-            inset: 5px 4px;
-            border-radius: 7px;
+            top: 10px; left: 5px; right: 5px;
+            height: 50px;
+            border-radius: 8px;
             display: flex;
             flex-direction: column;
-            align-items: center;
+            align-items: flex-start;
             justify-content: center;
-            gap: 1px;
-            background: linear-gradient(145deg, #9CB36E 0%, #6B8E23 48%, #556B2F 100%);
-            border: 1px solid rgba(255, 255, 255, 0.22);
-            box-shadow: 0 2px 5px rgba(85, 107, 47, 0.22), inset 0 1px 0 rgba(255, 255, 255, 0.2);
+            gap: 3px;
+            padding: 6px 10px;
+            background: linear-gradient(135deg, #6B8E23 0%, #4B5D28 100%);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
             pointer-events: none;
             z-index: 2;
-            line-height: 1;
+            line-height: 1.15;
             overflow: hidden;
+            transition: box-shadow 0.2s ease, transform 0.2s ease;
         }
         .restriction-cell.weekend-restr .restriction-chip {
-            background: linear-gradient(145deg, #B5C48A 0%, #7A9A3A 50%, #5A7228 100%);
+            background: linear-gradient(135deg, #7A9A3A 0%, #556B2F 100%);
         }
         .restriction-chip-value {
-            font-size: 15px;
+            font-size: 13px;
             font-weight: 700;
             color: #FFFFFF;
-            letter-spacing: -0.03em;
-            text-shadow: 0 1px 1px rgba(0, 0, 0, 0.12);
+            letter-spacing: -0.02em;
+            line-height: 1.2;
         }
         .restriction-chip-label {
-            font-size: 8px;
+            font-size: 9px;
             font-weight: 600;
-            color: rgba(255, 255, 255, 0.88);
-            letter-spacing: 0.06em;
-            text-transform: uppercase;
+            color: rgba(255, 255, 255, 0.9);
+            letter-spacing: 0.02em;
+            background: rgba(255, 255, 255, 0.22);
+            padding: 2px 6px;
+            border-radius: 4px;
+            line-height: 1.2;
         }
-        #restrictionGrid .restriction-cell.has-restriction.cell-selected .restriction-chip {
-            box-shadow: 0 2px 6px rgba(85, 107, 47, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.25);
-        }
-        #restrictionGrid .restriction-cell.has-restriction.timeline-cell:hover:not(.cell-selected) .restriction-chip {
-            box-shadow: 0 3px 8px rgba(85, 107, 47, 0.28), inset 0 1px 0 rgba(255, 255, 255, 0.28);
+        #restrictionGrid .restriction-cell.has-restriction:hover:not(.cell-selected) .restriction-chip {
+            transform: translateY(-1px);
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.14);
         }
         .restriction-selection-hint {
             font-size: 13px; color: #4B5563; margin-top: 10px; line-height: 1.45;
@@ -353,21 +375,15 @@
             border-radius: 10px; border-left: 3px solid var(--accent);
         }
 
-        /* Сітка обмежень — той самий hover/виділення, що на основній шахматці */
-        #restrictionGrid .restriction-cell.timeline-cell {
-            height: 50px;
-            min-height: 50px;
-        }
+        /* Сітка обмежень — hover/виділення на всю клітинку (без scale) */
         #restrictionGrid .restriction-cell.timeline-cell:hover:not(.cell-selected) {
-            background-color: var(--card-bg) !important;
-            transform: scale(1.08);
-            z-index: 10;
-            box-shadow: 0 8px 16px rgba(85, 107, 47, 0.15);
-            border: 2px solid var(--accent) !important;
-            border-radius: 8px;
+            background-color: rgba(85, 107, 47, 0.06) !important;
+            box-shadow: inset 0 0 0 2px rgba(85, 107, 47, 0.4);
+            transform: none !important;
+            z-index: 2;
         }
         #restrictionGrid .restriction-cell.timeline-cell.cell-selected {
-            background-color: rgba(85, 107, 47, 0.15) !important;
+            background-color: rgba(85, 107, 47, 0.14) !important;
             border-top: 2px solid var(--accent) !important;
             border-bottom: 2px solid var(--accent) !important;
             border-left: none !important;
@@ -378,7 +394,7 @@
             z-index: 5;
         }
         #restrictionGrid .restriction-cell.timeline-cell.cell-selected.has-restriction {
-            background-color: rgba(85, 107, 47, 0.18) !important;
+            background-color: rgba(85, 107, 47, 0.1) !important;
         }
         #restrictionGrid .restriction-cell.timeline-cell.cell-selected-start {
             border-left: 2px solid var(--accent) !important;
@@ -580,13 +596,11 @@
             z-index: 1; /* Базовий рівень */
         }
 
-        .timeline-cell:hover {
-            background-color: var(--card-bg) !important;
-            transform: scale(1.1); /* Зменшили масштаб, тепер воно піднімається елегантно */
-            z-index: 10; /* Піднімається, АЛЕ залишається під бронями! */
-            box-shadow: 0 8px 16px rgba(85, 107, 47, 0.15);
-            border: 2px solid var(--accent);
-            border-radius: 6px;
+        .timeline-cell:hover:not(.cell-selected) {
+            background-color: rgba(85, 107, 47, 0.06) !important;
+            box-shadow: inset 0 0 0 2px rgba(85, 107, 47, 0.45);
+            transform: none;
+            z-index: 10;
             cursor: pointer;
         }
       /* --- ПРЕМІУМ КНОПКИ (ТВАРИНИ ТА СТАТУС НОМЕРІВ) --- */
@@ -3087,7 +3101,7 @@ function saveInlineTransaction(type, category, idx) {
 
             // 🟢 МАГІЯ ТУТ: Формуємо цілий рядок ОДРАЗУ, щоб браузер не ламав події!
             roomsList.filter(r => r.active).forEach((room, roomIndex) => {
-                roomsContainer.innerHTML += `<div class="timeline-room" style="height: 50px;">${room.short}<span>${room.desc}</span></div>`;
+                roomsContainer.innerHTML += `<div class="timeline-room">${room.short}<span>${room.desc}</span></div>`;
                 let rowHtml = `<div class="timeline-row-bg" id="grid-row-${roomIndex}" style="position: relative;">`;
                 
                 for (let i = 0; i < daysCount; i++) {
@@ -3414,12 +3428,12 @@ else if (total === 0) { finText = "Немає ціни"; badgeBg = "rgba(255,255
                 d.setDate(startDate.getDate() + i);
                 const isWeekend = d.getDay() === 0 || d.getDay() === 5 || d.getDay() === 6;
                 const isToday = d.getTime() === today.getTime();
-                datesContainer.innerHTML += `<div class="timeline-date ${isWeekend ? 'weekend' : ''} ${isToday ? 'today' : ''}" style="height: 50px;">${d.getDate()} <span>${daysArr[d.getDay()]}</span></div>`;
+                datesContainer.innerHTML += `<div class="timeline-date ${isWeekend ? 'weekend' : ''} ${isToday ? 'today' : ''}">${d.getDate()} <span>${daysArr[d.getDay()]}</span></div>`;
             }
 
             roomsList.filter(r => r.active).forEach(room => {
-                roomsContainer.innerHTML += `<div class="timeline-room" style="height: 50px;">${room.short}<span>${room.desc}</span></div>`;
-                let rowHtml = `<div class="timeline-row-bg" style="height: 50px; position: relative;">`;
+                roomsContainer.innerHTML += `<div class="timeline-room">${room.short}<span>${room.desc}</span></div>`;
+                let rowHtml = `<div class="timeline-row-bg" style="position: relative;">`;
 
                 for (let i = 0; i < daysCount; i++) {
                     const d = new Date(startDate);
