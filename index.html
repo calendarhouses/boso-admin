@@ -331,14 +331,17 @@
             height: 50px;
             min-width: 0;
             padding: 5px 10px;
-            z-index: 3;
-            pointer-events: none;
-            cursor: default;
+            z-index: 20;
+            pointer-events: auto;
+            cursor: pointer;
             box-sizing: border-box;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
         }
-        .booking-block.restriction-chip:hover {
-            transform: none;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        .booking-block.restriction-chip:hover,
+        .booking-block.restriction-chip.restriction-chip--menu-open {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.18);
+            z-index: 30;
         }
         .restriction-chip--single {
             display: flex;
@@ -378,14 +381,92 @@
             border-radius: 10px; border-left: 3px solid var(--accent);
         }
 
-        /* Сітка обмежень — той самий hover, що на шахматці */
-        #restrictionGrid .restriction-cell.timeline-cell:hover:not(.cell-selected) {
+        /* Hover клітинки — лише порожні (без картки обмеження) */
+        #restrictionGrid .restriction-cell.timeline-cell:not(.has-restriction):hover:not(.cell-selected) {
             background-color: var(--card-bg) !important;
             transform: scale(1.1);
             z-index: 10;
             box-shadow: 0 8px 16px rgba(85, 107, 47, 0.15);
             border: 2px solid var(--accent) !important;
             border-radius: 6px;
+        }
+        #restrictionGrid .restriction-cell.has-restriction:hover:not(.cell-selected) {
+            transform: none !important;
+            box-shadow: none !important;
+            border: none !important;
+            border-right: 1px solid #F3F4F6 !important;
+            border-radius: 0 !important;
+            z-index: 1;
+        }
+        #restrictionGrid .restriction-cell.weekend-restr.has-restriction:hover:not(.cell-selected) {
+            background-color: #F9FAFB !important;
+        }
+
+        /* Обгортка шахматки обмежень — не випадає з блоку налаштувань */
+        .restrictions-grid-shell {
+            margin-top: 20px;
+            border-radius: 16px;
+            border: 1px solid #E5E7EB;
+            background: #fff;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+            overflow: hidden;
+        }
+        .restrictions-grid-shell .timeline-wrapper {
+            margin-top: 0;
+            border: none;
+            box-shadow: none;
+            border-radius: 0;
+            overflow: visible;
+            align-items: stretch;
+        }
+        .restrictions-grid-shell #restrictionScroll {
+            overflow-x: auto;
+            overflow-y: visible;
+            min-width: 0;
+        }
+        .restrictions-grid-shell .timeline-rows {
+            padding-bottom: 0;
+        }
+        .restrictions-grid-shell .timeline-sidebar {
+            padding-bottom: 0;
+            align-self: stretch;
+        }
+
+        .restriction-bar-menu {
+            position: fixed;
+            z-index: 3500;
+            display: none;
+            flex-direction: column;
+            gap: 4px;
+            background: #fff;
+            border: 1px solid #E5E7EB;
+            border-radius: 12px;
+            padding: 6px;
+            box-shadow: 0 16px 32px rgba(17, 24, 39, 0.14);
+            min-width: 200px;
+        }
+        .restriction-bar-menu button {
+            width: 100%;
+            border: none;
+            border-radius: 8px;
+            padding: 10px 14px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            text-align: left;
+            background: #F9FAFB;
+            color: #374151;
+            transition: 0.15s;
+        }
+        .restriction-bar-menu button:hover {
+            background: #F3F4F6;
+            color: #111827;
+        }
+        .restriction-bar-menu button.danger {
+            color: #DC2626;
+        }
+        .restriction-bar-menu button.danger:hover {
+            background: #FEF2F2;
         }
         #restrictionGrid .restriction-cell.timeline-cell.cell-selected {
             background-color: rgba(85, 107, 47, 0.14) !important;
@@ -1331,17 +1412,24 @@ input[type="number"] {
                     </div>
                     <p class="restriction-selection-hint" id="restrictionSelectionHint" style="display: none;"></p>
 
-                    <div class="timeline-wrapper" id="restrictionsTimelineWrapper" style="margin-top: 20px;">
-                        <div class="timeline-sidebar">
-                            <div class="timeline-sidebar-header">Котеджі</div>
-                            <div id="restrictionRoomsList"></div>
-                        </div>
-                        <div class="timeline-grid-container" id="restrictionScroll">
-                            <div class="timeline-months" id="restrictionMonths"></div>
-                            <div class="timeline-dates" id="restrictionDates"></div>
-                            <div class="timeline-rows" id="restrictionGrid"></div>
+                    <div class="restrictions-grid-shell">
+                        <div class="timeline-wrapper" id="restrictionsTimelineWrapper">
+                            <div class="timeline-sidebar">
+                                <div class="timeline-sidebar-header">Котеджі</div>
+                                <div id="restrictionRoomsList"></div>
+                            </div>
+                            <div class="timeline-grid-container" id="restrictionScroll">
+                                <div class="timeline-months" id="restrictionMonths"></div>
+                                <div class="timeline-dates" id="restrictionDates"></div>
+                                <div class="timeline-rows" id="restrictionGrid"></div>
+                            </div>
                         </div>
                     </div>
+                </div>
+
+                <div id="restrictionBarMenu" class="restriction-bar-menu" role="menu">
+                    <button type="button" onclick="restrictionMenuConstructor()">Конструктор обмежень</button>
+                    <button type="button" class="danger" onclick="restrictionMenuDelete()">Видалити обмеження</button>
                 </div>
                 
                 <div id="set-discounts" class="settings-tab-content" style="display: none;"> 
@@ -2334,7 +2422,7 @@ function saveInlineTransaction(type, category, idx) {
                     startDate: sorted[0],
                     endDate: sorted[sorted.length - 1],
                     rangeLabel: `${d1.toLocaleDateString('uk-UA', { day: 'numeric', month: 'short' })} — ${d2.toLocaleDateString('uk-UA', { day: 'numeric', month: 'short', year: 'numeric' })} (${sorted.length} ${dayWord(sorted.length)})`,
-                    minNights: 2
+                    minNights: lastRestrictionSelection.minN || 2
                 };
             } else {
                 pendingRestrictionModal = null;
@@ -3406,34 +3494,48 @@ else if (total === 0) { finText = "Немає ціни"; badgeBg = "rgba(255,255
                     if (getRestrictionMinNights(roomId, dNext) !== minN) break;
                     j++;
                 }
+                const dates = [];
+                for (let k = i; k < j; k++) {
+                    const dk = new Date(startDate);
+                    dk.setDate(startDate.getDate() + k);
+                    dates.push(formatDateKey(dk));
+                }
                 segments.push({
                     startIndex: i,
                     length: j - i,
                     minN,
-                    startDateStr: formatDateKey(d)
+                    startDateStr: formatDateKey(d),
+                    dates
                 });
                 i = j;
             }
             return segments;
         }
 
-        function buildRestrictionSegmentHtml(minN, blockLeft, blockWidth, spanDays) {
-            const title = `Мінімум ${minN} ${dayWord(minN)}`;
+        function restrictionBarDataAttrs(roomId, segment) {
+            return `data-room="${roomId}" data-dates="${segment.dates.join(',')}" data-min="${segment.minN}"
+                onmousedown="onRestrictionBarPointer(event)" onclick="onRestrictionBarClick(event, this)"`;
+        }
+
+        function buildRestrictionSegmentHtml(roomId, segment, blockLeft, blockWidth) {
+            const { minN, length: spanDays } = segment;
+            const attrs = restrictionBarDataAttrs(roomId, segment);
+            const title = `Мінімум ${minN} ${dayWord(minN)} — натисніть для дій`;
             if (blockWidth < 72) {
-                return `<div class="booking-block status-confirmed restriction-chip restriction-chip--single" style="left:${blockLeft}px;width:${blockWidth}px" title="${title}">
+                return `<div class="booking-block status-confirmed restriction-chip restriction-chip--single" style="left:${blockLeft}px;width:${blockWidth}px" title="${title}" ${attrs}>
                     <span class="restriction-chip-single-num">${minN}</span>
                     <span class="restriction-chip-single-label">мін. діб</span>
                 </div>`;
             }
             if (blockWidth < 130) {
-                return `<div class="booking-block status-confirmed restriction-chip restriction-chip--compact" style="left:${blockLeft}px;width:${blockWidth}px" title="${title}">
+                return `<div class="booking-block status-confirmed restriction-chip restriction-chip--compact" style="left:${blockLeft}px;width:${blockWidth}px" title="${title}" ${attrs}>
                     <div class="booking-inner-content" style="position:relative;z-index:2;display:flex;flex-direction:column;width:100%;height:100%;justify-content:center;">
                         <div class="restriction-chip-title">мін. ${minN} діб</div>
                     </div>
                 </div>`;
             }
             const rangeHint = spanDays > 1 ? ` · ${spanDays} ${dateWord(spanDays)}` : '';
-            return `<div class="booking-block status-confirmed restriction-chip" style="left:${blockLeft}px;width:${blockWidth}px" title="${title}">
+            return `<div class="booking-block status-confirmed restriction-chip" style="left:${blockLeft}px;width:${blockWidth}px" title="${title}" ${attrs}>
                 <div class="booking-inner-content" style="position:relative;z-index:2;display:flex;flex-direction:column;width:100%;justify-content:center;height:100%;">
                     <div style="font-size:12px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;line-height:1.2;">мін. ${minN} діб${rangeHint}</div>
                     <div style="margin-top:4px;display:flex;">
@@ -3441,6 +3543,91 @@ else if (total === 0) { finText = "Немає ціни"; badgeBg = "rgba(255,255
                     </div>
                 </div>
             </div>`;
+        }
+
+        let restrictionBarMenuEl = null;
+
+        function selectRestrictionSegment(roomId, dates, minN) {
+            lastRestrictionSelection = {
+                roomId: String(roomId),
+                dates: [...dates].sort(),
+                minN: minN || 2
+            };
+            updateRestrictionCellHighlightFromSelection();
+            updateRestrictionSelectionHint();
+        }
+
+        function updateRestrictionCellHighlightFromSelection() {
+            document.querySelectorAll('#restrictionGrid .restriction-cell').forEach(c => {
+                c.classList.remove('cell-selected', 'cell-selected-start', 'cell-selected-end');
+            });
+            if (!lastRestrictionSelection || !lastRestrictionSelection.dates || !lastRestrictionSelection.dates.length) return;
+
+            const { roomId, dates } = lastRestrictionSelection;
+            const sorted = [...dates].sort();
+            const cells = [];
+            document.querySelectorAll('#restrictionGrid .restriction-cell').forEach(c => {
+                if (String(c.getAttribute('data-room')) !== String(roomId)) return;
+                const ds = c.getAttribute('data-date');
+                if (sorted.includes(ds)) cells.push(c);
+            });
+            cells.sort((a, b) => a.getAttribute('data-date').localeCompare(b.getAttribute('data-date')));
+            cells.forEach((c, i) => {
+                c.classList.add('cell-selected');
+                if (i === 0) c.classList.add('cell-selected-start');
+                if (i === cells.length - 1) c.classList.add('cell-selected-end');
+            });
+        }
+
+        function onRestrictionBarPointer(e) {
+            e.stopPropagation();
+            if (e.button !== 0) return;
+            isRestrictionDragging = false;
+        }
+
+        function onRestrictionBarClick(e, el) {
+            e.stopPropagation();
+            e.preventDefault();
+            const roomId = el.getAttribute('data-room');
+            const dates = (el.getAttribute('data-dates') || '').split(',').filter(Boolean);
+            const minN = parseInt(el.getAttribute('data-min'), 10) || 2;
+            selectRestrictionSegment(roomId, dates, minN);
+            openRestrictionBarMenu(e, el);
+        }
+
+        function openRestrictionBarMenu(e, barEl) {
+            closeRestrictionBarMenu();
+            restrictionBarMenuEl = barEl;
+            barEl.classList.add('restriction-chip--menu-open');
+            const menu = document.getElementById('restrictionBarMenu');
+            if (!menu) return;
+            const rect = barEl.getBoundingClientRect();
+            menu.style.display = 'flex';
+            const menuW = 200;
+            let left = rect.left + rect.width / 2 - menuW / 2;
+            left = Math.max(12, Math.min(left, window.innerWidth - menuW - 12));
+            menu.style.left = `${left}px`;
+            menu.style.top = `${rect.bottom + 8}px`;
+            menu.style.transform = 'none';
+        }
+
+        function closeRestrictionBarMenu() {
+            const menu = document.getElementById('restrictionBarMenu');
+            if (menu) menu.style.display = 'none';
+            if (restrictionBarMenuEl) {
+                restrictionBarMenuEl.classList.remove('restriction-chip--menu-open');
+                restrictionBarMenuEl = null;
+            }
+        }
+
+        function restrictionMenuConstructor() {
+            closeRestrictionBarMenu();
+            openRestrictionConstructor();
+        }
+
+        function restrictionMenuDelete() {
+            closeRestrictionBarMenu();
+            clearRestrictionsAlert();
         }
 
         function updateRestrictionSelectionHint() {
@@ -3512,7 +3699,7 @@ else if (total === 0) { finText = "Немає ціни"; badgeBg = "rgba(255,255
                 segments.forEach(seg => {
                     const blockLeft = seg.startIndex * cellWidth + 4;
                     const blockWidth = seg.length * cellWidth - 8;
-                    rowHtml += buildRestrictionSegmentHtml(seg.minN, blockLeft, blockWidth, seg.length);
+                    rowHtml += buildRestrictionSegmentHtml(room.id, seg, blockLeft, blockWidth);
                 });
 
                 rowHtml += `</div>`;
@@ -3523,6 +3710,7 @@ else if (total === 0) { finText = "Немає ціни"; badgeBg = "rgba(255,255
             if (scrollEl && startDate.getMonth() === today.getMonth() && startDate.getFullYear() === today.getFullYear()) {
                 scrollEl.scrollLeft = Math.max(0, (today.getDate() - 3) * cellWidth);
             }
+            updateRestrictionCellHighlightFromSelection();
         }
 
         function startRestrictionCellDrag(e, cell) {
@@ -3583,7 +3771,7 @@ else if (total === 0) { finText = "Немає ціни"; badgeBg = "rgba(255,255
 
                 lastRestrictionSelection = { roomId: restrDragRoomId, dates: dates };
                 updateRestrictionSelectionHint();
-                renderRestrictionsGrid();
+                updateRestrictionCellHighlightFromSelection();
             }
 
             restrDragRoomId = null;
@@ -3593,6 +3781,14 @@ else if (total === 0) { finText = "Немає ціни"; badgeBg = "rgba(255,255
 
         document.addEventListener('mouseup', function(e) {
             if (isRestrictionDragging) finishRestrictionCellDrag();
+        });
+
+        document.addEventListener('click', function(e) {
+            const menu = document.getElementById('restrictionBarMenu');
+            if (!menu || menu.style.display === 'none') return;
+            if (menu.contains(e.target)) return;
+            if (e.target.closest && e.target.closest('.restriction-chip')) return;
+            closeRestrictionBarMenu();
         });
 
         function toggleAllRestrRoomsChip() {
