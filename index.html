@@ -2658,7 +2658,12 @@ function saveInlineTransaction(type, category, idx) {
             document.getElementById('genericModal').classList.add('active');
         }
 
-        function closeGenericModal() { document.getElementById('genericModal').classList.remove('active'); }
+        function closeGenericModal() {
+            if (currentEditType === 'restriction') {
+                clearRestrictionSelection();
+            }
+            document.getElementById('genericModal').classList.remove('active');
+        }
 
         // --- УНІВЕРСАЛЬНЕ ВІКНО ПІДТВЕРДЖЕННЯ ---
         function openCustomConfirm(title, desc, actionFunction) {
@@ -3493,6 +3498,21 @@ else if (total === 0) { finText = "Немає ціни"; badgeBg = "rgba(255,255
             });
         }
 
+        function clearRestrictionSelection() {
+            lastRestrictionSelection = null;
+            updateRestrictionSelectionHint();
+            clearRestrictionCellHighlights();
+        }
+
+        function isSameRestrictionSelection(roomId, dates) {
+            if (!lastRestrictionSelection || !lastRestrictionSelection.highlightCells) return false;
+            if (String(lastRestrictionSelection.roomId) !== String(roomId)) return false;
+            const a = [...dates].sort();
+            const b = [...(lastRestrictionSelection.dates || [])].sort();
+            if (a.length !== b.length) return false;
+            return a.every((d, i) => d === b[i]);
+        }
+
         function getRestrictionCellSelectionClasses(roomId, dateStr) {
             if (!lastRestrictionSelection || !lastRestrictionSelection.highlightCells) return '';
             if (String(lastRestrictionSelection.roomId) !== String(roomId)) return '';
@@ -3856,9 +3876,13 @@ else if (total === 0) { finText = "Немає ціни"; badgeBg = "rgba(255,255
                     cur.setDate(cur.getDate() + 1);
                 }
 
-                lastRestrictionSelection = { roomId: restrDragRoomId, dates: dates, highlightCells: true };
-                updateRestrictionSelectionHint();
-                updateRestrictionCellHighlightFromSelection();
+                if (isSameRestrictionSelection(restrDragRoomId, dates)) {
+                    clearRestrictionSelection();
+                } else {
+                    lastRestrictionSelection = { roomId: restrDragRoomId, dates: dates, highlightCells: true };
+                    updateRestrictionSelectionHint();
+                    updateRestrictionCellHighlightFromSelection();
+                }
             }
 
             restrDragRoomId = null;

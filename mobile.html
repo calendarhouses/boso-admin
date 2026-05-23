@@ -225,12 +225,11 @@
             height: 100%; min-height: 60px; align-self: stretch;
             border-right: 1px solid #F3F4F6; cursor: pointer;
             position: relative; padding: 0; box-sizing: border-box;
-            touch-action: none;
         }
         .restriction-cell.weekend-restr { background: #F9FAFB; }
         .booking-block.restriction-chip {
             position: absolute;
-            top: 7px;
+            top: 50%;
             height: 38px;
             min-width: 0;
             padding: 4px 8px;
@@ -238,14 +237,20 @@
             pointer-events: auto;
             cursor: pointer;
             box-sizing: border-box;
+            transform: translateY(-50%);
+            display: flex;
+            align-items: center;
         }
         .booking-block.restriction-chip.restriction-chip--menu-open {
-            transform: translateY(-2px);
+            transform: translateY(calc(-50% - 2px));
             box-shadow: 0 8px 16px rgba(0, 0, 0, 0.18);
             z-index: 30;
         }
+        .restriction-chip--single,
+        .restriction-chip--compact .booking-inner-content {
+            justify-content: center !important;
+        }
         .restriction-chip--single {
-            display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
@@ -712,7 +717,7 @@
                         <span class="timeline-month-label" id="restrictionMonthLabel">Березень</span>
                         <button class="btn-icon" onclick="shiftRestrictionsTimeline(1)"><svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-width="2" d="M9 5l7 7-7 7"></path></svg></button>
                     </div>
-                    <button class="btn-secondary" style="padding: 6px 12px; font-size: 12px;" onclick="resetRestrictionsTimelineToToday()">Сьогодні</button>
+                    <button class="btn-secondary" style="padding: 6px 12px; font-size: 12px; width: auto; flex-shrink: 0;" onclick="resetRestrictionsTimelineToToday()">Сьогодні</button>
                 </div>
                 <div class="restriction-hint-slot">
                     <p class="restriction-selection-hint" id="restrictionSelectionHint" aria-live="polite"></p>
@@ -1745,7 +1750,12 @@
             document.getElementById('genericModal').classList.add('active');
         }
 
-        function closeGenericModal() { document.getElementById('genericModal').classList.remove('active'); }
+        function closeGenericModal() {
+            if (currentEditType === 'restriction') {
+                clearRestrictionSelection();
+            }
+            document.getElementById('genericModal').classList.remove('active');
+        }
 
         function openCustomConfirm(title, desc, actionFunction) {
             document.getElementById('confirmModalTitle').innerText = title; document.getElementById('confirmModalDesc').innerText = desc;
@@ -2361,6 +2371,21 @@ if (sClass.includes('скас')) {
             });
         }
 
+        function clearRestrictionSelection() {
+            lastRestrictionSelection = null;
+            updateRestrictionSelectionHint();
+            clearRestrictionCellHighlights();
+        }
+
+        function isSameRestrictionSelection(roomId, dates) {
+            if (!lastRestrictionSelection || !lastRestrictionSelection.highlightCells) return false;
+            if (String(lastRestrictionSelection.roomId) !== String(roomId)) return false;
+            const a = [...dates].sort();
+            const b = [...(lastRestrictionSelection.dates || [])].sort();
+            if (a.length !== b.length) return false;
+            return a.every((d, i) => d === b[i]);
+        }
+
         function getRestrictionCellSelectionClasses(roomId, dateStr) {
             if (!lastRestrictionSelection || !lastRestrictionSelection.highlightCells) return '';
             if (String(lastRestrictionSelection.roomId) !== String(roomId)) return '';
@@ -2576,7 +2601,9 @@ if (sClass.includes('скас')) {
                         data-room="${room.id}" data-date="${dateStr}"
                         onmousedown="startRestrictionCellDrag(event, this)"
                         onmouseenter="enterRestrictionCellDrag(this)"
-                        ontouchstart="startRestrictionCellTouch(event, this)"></div>`;
+                        ontouchstart="startRestrictionTouchDrag(event, this)"
+                        ontouchmove="moveRestrictionTouchDrag(event)"
+                        ontouchend="endRestrictionTouchDrag(event, this)"></div>`;
                 }
                 const segments = getRestrictionSegmentsForRoom(room.id, startDate, daysCount);
                 segments.forEach(seg => {
@@ -2609,14 +2636,92 @@ if (sClass.includes('скас')) {
             updateRestrictionCellHighlight();
         }
 
-        function startRestrictionCellTouch(e, cell) {
-            if (e.touches.length !== 1) return;
-            e.preventDefault();
-            isRestrictionDragging = true;
-            restrDragRoomId = cell.getAttribute('data-room');
-            restrDragStartDate = cell.getAttribute('data-date');
-            restrDragEndDate = restrDragStartDate;
-            updateRestrictionCellHighlight();
+        let restrTouchHoldTimer = null;
+        let isRestrTouchSelecting = false;
+        let restrHasMoved = false;
+        let restrCurrentTouchX = null;
+        let restrCurrentTouchY = null;
+        let restrAutoScrollReq = null;
+
+        function startRestrictionTouchDrag(e, cell) {
+            restrHasMoved = false;
+            isRestrTouchSelecting = false;
+            if (restrAutoScrollReq) cancelAnimationFrame(restrAutoScrollReq);
+
+            restrTouchHoldTimer = setTimeout(() => {
+                isRestrTouchSelecting = true;
+                isRestrictionDragging = true;
+                restrDragRoomId = cell.getAttribute('data-room');
+                restrDragStartDate = cell.getAttribute('data-date');
+                restrDragEndDate = restrDragStartDate;
+                const touch = e.touches[0];
+                restrCurrentTouchX = touch.clientX;
+                restrCurrentTouchY = touch.clientY;
+                updateRestrictionCellHighlight();
+                if (navigator.vibrate) navigator.vibrate(40);
+                restrAutoScrollReq = requestAnimationFrame(restrAutoScrollLoop);
+            }, 400);
+        }
+
+        function moveRestrictionTouchDrag(e) {
+            restrHasMoved = true;
+            if (!isRestrTouchSelecting) {
+                clearTimeout(restrTouchHoldTimer);
+                return;
+            }
+            if (e.cancelable) e.preventDefault();
+            const touch = e.touches[0];
+            restrCurrentTouchX = touch.clientX;
+            restrCurrentTouchY = touch.clientY;
+            checkRestrictionElementUnderFinger();
+        }
+
+        function checkRestrictionElementUnderFinger() {
+            if (restrCurrentTouchX === null || restrCurrentTouchY === null) return;
+            const targetCell = document.elementFromPoint(restrCurrentTouchX, restrCurrentTouchY);
+            if (targetCell && targetCell.classList.contains('restriction-cell') && targetCell.getAttribute('data-room') === restrDragRoomId) {
+                const newDate = targetCell.getAttribute('data-date');
+                if (restrDragEndDate !== newDate) {
+                    restrDragEndDate = newDate;
+                    updateRestrictionCellHighlight();
+                }
+            }
+        }
+
+        function restrAutoScrollLoop() {
+            if (!isRestrTouchSelecting) return;
+            const scrollContainer = document.getElementById('restrictionScroll');
+            if (scrollContainer && restrCurrentTouchX !== null) {
+                const speed = 12;
+                if (restrCurrentTouchX < 150) {
+                    scrollContainer.scrollLeft -= speed;
+                    checkRestrictionElementUnderFinger();
+                } else if (restrCurrentTouchX > window.innerWidth - 60) {
+                    scrollContainer.scrollLeft += speed;
+                    checkRestrictionElementUnderFinger();
+                }
+            }
+            restrAutoScrollReq = requestAnimationFrame(restrAutoScrollLoop);
+        }
+
+        function endRestrictionTouchDrag(e, cell) {
+            clearTimeout(restrTouchHoldTimer);
+            if (restrAutoScrollReq) cancelAnimationFrame(restrAutoScrollReq);
+            restrCurrentTouchX = null;
+            restrCurrentTouchY = null;
+
+            if (isRestrTouchSelecting) {
+                isRestrTouchSelecting = false;
+                finishRestrictionCellDrag();
+            } else if (!restrHasMoved) {
+                const roomId = cell.getAttribute('data-room');
+                const dateStr = cell.getAttribute('data-date');
+                if (lastRestrictionSelection && lastRestrictionSelection.highlightCells
+                    && String(lastRestrictionSelection.roomId) === String(roomId)
+                    && lastRestrictionSelection.dates.includes(dateStr)) {
+                    clearRestrictionSelection();
+                }
+            }
         }
 
         function enterRestrictionCellDrag(cell) {
@@ -2660,9 +2765,13 @@ if (sClass.includes('скас')) {
                     dates.push(formatDateKey(cur));
                     cur.setDate(cur.getDate() + 1);
                 }
-                lastRestrictionSelection = { roomId: restrDragRoomId, dates: dates, highlightCells: true };
-                updateRestrictionSelectionHint();
-                updateRestrictionCellHighlightFromSelection();
+                if (isSameRestrictionSelection(restrDragRoomId, dates)) {
+                    clearRestrictionSelection();
+                } else {
+                    lastRestrictionSelection = { roomId: restrDragRoomId, dates: dates, highlightCells: true };
+                    updateRestrictionSelectionHint();
+                    updateRestrictionCellHighlightFromSelection();
+                }
             }
             restrDragRoomId = null;
             restrDragStartDate = null;
@@ -2670,17 +2779,8 @@ if (sClass.includes('скас')) {
         }
 
         document.addEventListener('mouseup', function() {
-            if (isRestrictionDragging) finishRestrictionCellDrag();
+            if (isRestrictionDragging && !isRestrTouchSelecting) finishRestrictionCellDrag();
         });
-        document.addEventListener('touchend', function() {
-            if (isRestrictionDragging) finishRestrictionCellDrag();
-        });
-        document.addEventListener('touchmove', function(e) {
-            if (!isRestrictionDragging || !e.touches.length) return;
-            const t = e.touches[0];
-            const el = document.elementFromPoint(t.clientX, t.clientY);
-            if (el && el.classList.contains('restriction-cell')) enterRestrictionCellDrag(el);
-        }, { passive: false });
 
         function toggleAllRestrRoomsChip() {
             const allBtn = document.getElementById('chip-restr-room-all');
@@ -4831,7 +4931,7 @@ let                 fOut = outD.toLocaleDateString('uk-UA', { day: 'numeric', mo
                 const isQuickEditOpen = document.getElementById('quickEditDrawer').classList.contains('active');
                 
                 // Якщо всі шторки закриті і палець не тягне сітку — тихо оновлюємо
-                if (!isDrawerOpen && !isModalOpen && !isQuickEditOpen && !isGridDragging && !isTouchSelecting) {
+                if (!isDrawerOpen && !isModalOpen && !isQuickEditOpen && !isGridDragging && !isTouchSelecting && !isRestrTouchSelecting) {
                     silentSync();
                 }
             }, 30000); 
