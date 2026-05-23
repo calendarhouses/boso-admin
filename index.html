@@ -375,10 +375,25 @@
             white-space: nowrap;
             line-height: 1.2;
         }
+        .restriction-hint-slot {
+            min-height: 46px;
+            margin: 6px 0 10px;
+            flex-shrink: 0;
+        }
         .restriction-selection-hint {
-            font-size: 13px; color: #4B5563; margin-top: 10px; line-height: 1.45;
+            font-size: 13px; color: #4B5563; line-height: 1.45;
             padding: 10px 14px; background: #F9FAFB; border: 1px solid #E5E7EB;
             border-radius: 10px; border-left: 3px solid var(--accent);
+            margin: 0;
+            visibility: hidden;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.15s ease;
+        }
+        .restriction-selection-hint.is-visible {
+            visibility: visible;
+            opacity: 1;
+            pointer-events: auto;
         }
 
         /* Hover клітинки — лише порожні (без картки обмеження) */
@@ -402,10 +417,17 @@
             background-color: #F9FAFB !important;
         }
 
-        /* Шахматка обмежень — як конструктор цін */
+        /* Налаштування: білий блок росте разом із контентом (не обрізає шахматку) */
+        #view-settings {
+            flex: 1 1 auto;
+            min-height: 0;
+            height: auto !important;
+            align-self: stretch;
+        }
         #view-settings .settings-content {
-            flex: 0 1 auto;
+            flex: 0 0 auto;
             height: auto;
+            width: 100%;
             overflow: visible;
         }
         #set-restrictions {
@@ -421,7 +443,6 @@
         #set-restrictions #restrictionScroll {
             overflow-x: auto;
             min-width: 0;
-            flex: 1;
         }
         #set-restrictions .timeline-sidebar {
             align-self: stretch;
@@ -1322,7 +1343,7 @@ input[type="number"] {
             </div>
         </div> <!-- 🟢 І ЗАКРИВАЄМО ВЕСЬ РОЗДІЛ ЗВІТІВ -->
 
-        <div id="view-settings" style="display: none; flex-direction: column; height: 100%;">
+        <div id="view-settings" style="display: none; flex-direction: column;">
             <div class="settings-content">
                 
                 <div id="set-rooms" class="settings-tab-content">
@@ -1405,7 +1426,9 @@ input[type="number"] {
                         </div>
                         <button class="btn-secondary" onclick="resetRestrictionsTimelineToToday()" style="padding: 6px 16px; font-size: 13px;">Поточний місяць</button>
                     </div>
-                    <p class="restriction-selection-hint" id="restrictionSelectionHint" style="display: none;"></p>
+                    <div class="restriction-hint-slot">
+                        <p class="restriction-selection-hint" id="restrictionSelectionHint" aria-live="polite"></p>
+                    </div>
 
                     <div class="timeline-wrapper" id="restrictionsTimelineWrapper">
                         <div class="timeline-sidebar">
@@ -2283,7 +2306,10 @@ function saveInlineTransaction(type, category, idx) {
 
             if(tabName === 'rooms') renderSettingsRooms();
             if(tabName === 'prices') renderPriceGrid();
-            if(tabName === 'restrictions') renderRestrictionsGrid();
+            if(tabName === 'restrictions') {
+                renderRestrictionsGrid();
+                scrollToRestrictionsGrid();
+            }
             if(tabName === 'discounts') renderSettingsDiscounts();
             if(tabName === 'services') renderSettingsServices();
         }
@@ -3680,13 +3706,27 @@ else if (total === 0) { finText = "Немає ціни"; badgeBg = "rgba(255,255
             if (lastRestrictionSelection && lastRestrictionSelection.dates && lastRestrictionSelection.dates.length > 0) {
                 const room = roomsList.find(r => String(r.id) === String(lastRestrictionSelection.roomId));
                 const name = room ? room.name : 'котедж';
-                hint.style.display = 'block';
                 const n = lastRestrictionSelection.dates.length;
                 hint.innerText = `Обрано ${n} ${dateWord(n)} для «${name}». Натисніть «Конструктор обмежень» або «Видалити».`;
+                hint.classList.add('is-visible');
             } else {
-                hint.style.display = 'none';
+                hint.classList.remove('is-visible');
                 hint.innerText = '';
             }
+        }
+
+        function scrollToRestrictionsGrid() {
+            requestAnimationFrame(() => {
+                requestAnimationFrame(() => {
+                    const target = document.getElementById('restrictionsTimelineWrapper');
+                    const main = document.querySelector('.main-content');
+                    if (!target || !main) return;
+                    const targetTop = target.getBoundingClientRect().top;
+                    const mainTop = main.getBoundingClientRect().top;
+                    const nextTop = main.scrollTop + (targetTop - mainTop) - 20;
+                    main.scrollTo({ top: Math.max(0, nextTop), behavior: 'smooth' });
+                });
+            });
         }
 
         function renderRestrictionsGrid() {
