@@ -285,7 +285,12 @@
         }
 
         return fetch(url, opts).then(function (res) {
-            return res;
+            return parseApiJson(res.clone()).then(function (data) {
+                if (handleApiAuthError(data)) {
+                    throw new Error('UNAUTHORIZED');
+                }
+                return res;
+            });
         });
     }
 

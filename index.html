@@ -2255,6 +2255,7 @@ function saveInlineTransaction(type, category, idx) {
                     body: JSON.stringify({ action: 'saveSettings', settings: settingsToSave }) 
                 });
             } catch (error) {
+                if (error && error.message === 'UNAUTHORIZED') return;
                 alert("Помилка збереження налаштувань в хмару!");
             }
         }
@@ -2810,7 +2811,8 @@ function saveInlineTransaction(type, category, idx) {
                 body: JSON.stringify({ action: 'deleteBooking', row: rowToDelete }) 
             }).then(() => {
                 silentSync(); // 🟢 ТИХЕ ОНОВЛЕННЯ!
-            }).catch(() => {
+            }).catch((err) => {
+                if (err && err.message === 'UNAUTHORIZED') return;
                 showToast("Помилка синхронізації!");
             });
 
@@ -5238,6 +5240,7 @@ document.getElementById('adminGuests').addEventListener('change', updatePricePre
                 }
                 silentSync(); // 🟢 ТИХЕ ОНОВЛЕННЯ БЕЗ СТРИБКІВ!
             }).catch(error => {
+                if (error && error.message === 'UNAUTHORIZED') return;
                 showToast("Помилка синхронізації!");
             });
         });
@@ -5939,6 +5942,7 @@ function bosoLeave() {
                     showFinanceReportResultModal('error');
                 }
             } catch (e) {
+                if (e && e.message === 'UNAUTHORIZED') return;
                 console.error('Finance report error:', e);
                 window._financeReportErrorMsg = 'Помилка з\'єднання з API. Перевірте, що Apps Script задеплоєно.';
                 showFinanceReportResultModal('error');

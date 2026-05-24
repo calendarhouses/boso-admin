@@ -1530,7 +1530,10 @@
         async function saveSettingsToCloud() {
             const settingsToSave = { roomsList, discountsList, customServicesList, sysServicesList, customPrices, restrictions, transactions };
             try { await BosoAuth.apiFetch(API_URL, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify({ action: 'saveSettings', settings: settingsToSave }) });
-            } catch (error) { alert("Помилка збереження!"); }
+            } catch (error) {
+                if (error && error.message === 'UNAUTHORIZED') return;
+                alert("Помилка збереження!");
+            }
         }
 
         let currentEditType = null; let currentEditId = null;
@@ -1950,7 +1953,8 @@
                 body: JSON.stringify({ action: 'deleteBooking', row: rowToDelete }) 
             }).then(() => {
                 silentSync(); // 🟢 ТИХЕ ОНОВЛЕННЯ!
-            }).catch(() => {
+            }).catch((err) => {
+                if (err && err.message === 'UNAUTHORIZED') return;
                 showToast("Помилка синхронізації!");
             });
 
@@ -3947,6 +3951,7 @@ function setHalfPrepayment() {
                 }
                 silentSync();
             }).catch(error => {
+                if (error && error.message === 'UNAUTHORIZED') return;
                 showToast("Помилка синхронізації!");
             });
         });
@@ -4675,6 +4680,7 @@ function setHalfPrepayment() {
                     showFinanceReportResultModal('error');
                 }
             } catch (e) {
+                if (e && e.message === 'UNAUTHORIZED') return;
                 console.error('Finance report error:', e);
                 window._financeReportErrorMsg = 'Помилка з\'єднання з API.';
                 showFinanceReportResultModal('error');
