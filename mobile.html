@@ -1344,7 +1344,7 @@
         
         let initialFetchPromise = null;
         function startInitialDataFetch() {
-            initialFetchPromise = BosoAuth.apiFetch(API_URL + "?action=initData&t=" + new Date().getTime())
+            initialFetchPromise = BosoAuth.apiFetch(API_URL + "?action=adminInitData&t=" + new Date().getTime())
                 .then(function (res) {
                     return BosoAuth.parseApiJson(res).then(function (data) {
                         if (BosoAuth.handleApiAuthError(data)) throw new Error('UNAUTHORIZED');
@@ -1495,7 +1495,7 @@
         // --- 🟢 ТИХА СИНХРОНІЗАЦІЯ (Фонове оновлення після твоїх дій) ---
         async function silentSync() {
             try {
-                const res = await BosoAuth.apiFetch(API_URL + "?action=initData&t=" + new Date().getTime());
+                const res = await BosoAuth.apiFetch(API_URL + "?action=adminInitData&t=" + new Date().getTime());
                 const data = await res.json();
                 
                 if (data && data.bookings) {
