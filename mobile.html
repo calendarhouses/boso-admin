@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
     <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     
@@ -667,9 +668,43 @@
 .pay-chip.active[data-method="ФОП"] { background: #F0FDF4; border-color: #86EFAC; color: #059669; }
 
 .payment-block { background: #FAFAFA; border: 1px solid #E5E7EB; border-radius: 12px; padding: 16px; margin-bottom: 16px; }
+
+        #auth-login-screen {
+            position: fixed; inset: 0; z-index: 99999;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            background: linear-gradient(145deg, #1A1A1A 0%, #2C2C2C 45%, #3a4a28 100%);
+            padding: 24px;
+        }
+        .auth-login-card {
+            width: 100%; max-width: 400px;
+            background: rgba(253, 252, 251, 0.98);
+            border-radius: 24px; padding: 40px 28px 32px;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.45);
+            text-align: center;
+        }
+        .auth-login-logo { font-size: 32px; font-weight: 800; letter-spacing: 2px; color: #1A1A1A; margin-bottom: 8px; }
+        .auth-login-logo span { color: var(--accent); }
+        .auth-login-subtitle { font-size: 14px; color: #757575; font-weight: 500; margin-bottom: 32px; }
+        #googleSignInBtn { display: flex; justify-content: center; min-height: 44px; }
+        #auth-login-error {
+            display: none; margin-top: 18px; padding: 12px;
+            background: #FEE2E2; color: #991B1B; border-radius: 10px; font-size: 13px; font-weight: 600;
+        }
+        #admin-app { flex: 1; width: 100%; min-height: 0; flex-direction: column; display: none; }
+        .mobile-logout-btn { margin-bottom: 16px; }
     </style>
 </head>
 <body>
+    <div id="auth-login-screen">
+        <div class="auth-login-card">
+            <div class="auth-login-logo">BOSO<span>.</span></div>
+            <div class="auth-login-subtitle">Панель Управління</div>
+            <div id="googleSignInBtn"></div>
+            <div id="auth-login-error"></div>
+        </div>
+    </div>
+
+    <div id="admin-app" style="display: none;">
     <div id="preloader">
         <div class="pulse-logo">BOSO</div>
     </div>
@@ -739,6 +774,7 @@
         </div>
 
         <div id="view-settings" style="display: none; flex-direction: column;">
+            <button type="button" class="btn-secondary mobile-logout-btn tap-btn" onclick="BosoAuth.logout()">Вийти з акаунту</button>
             <div class="mobile-settings-tabs">
                 <div class="m-tab active" onclick="switchSettingsTab('rooms', this)">Котеджі</div>
                 <div class="m-tab" onclick="switchSettingsTab('prices', this)">Ціни</div>
@@ -1292,18 +1328,34 @@
         </div>
     </div>
     
+    </div><!-- /#admin-app -->
+
     <div id="premiumTooltip" class="premium-tooltip"></div>
     <div id="toast-container"></div>
 
+    <script src="/auth.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
     <script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/l10n/uk.js"></script>
 
     <script>
         // ВАЖЛИВО: ВСТАВ СВОЄ ПОСИЛАННЯ З GOOGLE SCRIPT!
-        const API_URL = "https://script.google.com/macros/s/AKfycbx1RYoMJySplZ18Wv54PQjxzHnZqIb3Wsw63oG-PAOKMvuXEym8Y7aFS-L_pxvfX6o4DQ/exec";
+        window.BOSO_API_URL = "https://script.google.com/macros/s/AKfycbx1RYoMJySplZ18Wv54PQjxzHnZqIb3Wsw63oG-PAOKMvuXEym8Y7aFS-L_pxvfX6o4DQ/exec";
+        const API_URL = window.BOSO_API_URL;
         
-        // 🚀 РАННІЙ СТАРТ: Запускаємо запит до бази ОДРАЗУ, не чекаючи відмальовки сторінки
-        const initialFetchPromise = fetch(API_URL + "?action=initData&t=" + new Date().getTime()).then(res => res.json());
+        let initialFetchPromise = null;
+        function startInitialDataFetch() {
+            initialFetchPromise = BosoAuth.apiFetch(API_URL + "?action=initData&t=" + new Date().getTime()).then(function (res) {
+                if (!res.ok) throw new Error('initData failed');
+                return res.json();
+            }).then(function (data) {
+                if (data && data.error === 'UNAUTHORIZED') {
+                    BosoAuth.logout();
+                    throw new Error('UNAUTHORIZED');
+                }
+                return data;
+            });
+            return initialFetchPromise;
+        }
         
         function getGuestWord(count) { let n = Math.abs(parseInt(count)) % 100; let n1 = n % 10; if (n > 10 && n < 20) return "гостей"; if (n1 > 1 && n1 < 5) return "гості"; if (n1 === 1) return "гість"; return "гостей"; }
         function getVisitWord(count) { let n = Math.abs(parseInt(count)) % 100; let n1 = n % 10; if (n > 10 && n < 20) return "заїздів"; if (n1 > 1 && n1 < 5) return "заїзди"; if (n1 === 1) return "заїзд"; return "заїздів"; }
@@ -1441,7 +1493,7 @@
         // --- 🟢 ТИХА СИНХРОНІЗАЦІЯ (Фонове оновлення після твоїх дій) ---
         async function silentSync() {
             try {
-                const res = await fetch(API_URL + "?action=initData&t=" + new Date().getTime());
+                const res = await BosoAuth.apiFetch(API_URL + "?action=initData&t=" + new Date().getTime());
                 const data = await res.json();
                 
                 if (data && data.bookings) {
@@ -1475,7 +1527,7 @@
         
         async function saveSettingsToCloud() {
             const settingsToSave = { roomsList, discountsList, customServicesList, sysServicesList, customPrices, restrictions, transactions };
-            try { await fetch(API_URL, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify({ action: 'saveSettings', settings: settingsToSave }) });
+            try { await BosoAuth.apiFetch(API_URL, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify({ action: 'saveSettings', settings: settingsToSave }) });
             } catch (error) { alert("Помилка збереження!"); }
         }
 
@@ -1890,7 +1942,7 @@
             }
 
             // 🟢 ФОНОВА ВІДПРАВКА В GOOGLE (Без блокування екрану)
-            fetch(API_URL, { 
+            BosoAuth.apiFetch(API_URL, { 
                 method: 'POST', 
                 headers: { 'Content-Type': 'text/plain;charset=utf-8' }, 
                 body: JSON.stringify({ action: 'deleteBooking', row: rowToDelete }) 
@@ -3881,7 +3933,7 @@ function setHalfPrepayment() {
             btn.disabled = false;
 
             // ФОНОВА ВІДПРАВКА В GOOGLE
-            fetch(API_URL, { 
+            BosoAuth.apiFetch(API_URL, { 
                 method: 'POST', 
                 headers: { 'Content-Type': 'text/plain;charset=utf-8' }, 
                 body: JSON.stringify(payloadForServer) 
@@ -4599,7 +4651,7 @@ function setHalfPrepayment() {
                     return;
                 }
 
-                const res = await fetch(API_URL, {
+                const res = await BosoAuth.apiFetch(API_URL, {
                     method: 'POST',
                     headers: { 'Content-Type': 'text/plain;charset=utf-8' },
                     body: JSON.stringify({
@@ -5297,32 +5349,32 @@ let                 fOut = outD.toLocaleDateString('uk-UA', { day: 'numeric', mo
             lastTouchEnd = now;
         }, { passive: false });
         
-      window.onload = () => { 
-            switchView('grid'); 
-            initApp(); 
-            // Ініціалізація свайпів за новими правилами
+        function startAdminPanel() {
+            startInitialDataFetch();
+            switchView('grid');
+            initApp();
             setupSwipeToClose('bookingDrawer', '.drawer', closeDrawer);
             setupSwipeToClose('genericModal', '.modal-box', closeGenericModal);
             setupSwipeToClose('customConfirmModal', '.modal-box', closeCustomConfirm);
             setupSwipeToClose('restrictionActionSheet', '.modal-box', closeRestrictionActionSheet);
             setupSwipeToClose('uniDetailsModal', '.modal-box', () => document.getElementById('uniDetailsModal').classList.remove('active'));
             setupSwipeToClose('quickEditDrawer', '.drawer', closeQuickEdit);
-            
             if (window.Telegram && window.Telegram.WebApp) {
-               window.Telegram.WebApp.expand(); 
+                window.Telegram.WebApp.expand();
             }
-
-            // 🟢 АВТООНОВЛЕННЯ КОЖНУ ХВИЛИНУ
             setInterval(() => {
+                if (!BosoAuth.isAuthenticated()) return;
                 const isDrawerOpen = document.getElementById('bookingDrawer').classList.contains('active');
                 const isModalOpen = document.getElementById('genericModal').classList.contains('active');
                 const isQuickEditOpen = document.getElementById('quickEditDrawer').classList.contains('active');
-                
-                // Якщо всі шторки закриті і палець не тягне сітку — тихо оновлюємо
                 if (!isDrawerOpen && !isModalOpen && !isQuickEditOpen && !isGridDragging && !isTouchSelecting && !isRestrTouchSelecting) {
                     silentSync();
                 }
-            }, 30000); 
+            }, 30000);
+        }
+
+        window.onload = () => {
+            BosoAuth.bootstrap(startAdminPanel);
         };
 
         // --- МАГІЯ СВАЙПУ ПО ДАТАХ З АВТОСКРОЛОМ ---

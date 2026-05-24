@@ -4,6 +4,7 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="apple-mobile-web-app-title" content="BOSO">
@@ -965,9 +966,56 @@ input[type="number"] {
 .pay-chip.active[data-method="ФОП"] { background: #F0FDF4; border-color: #86EFAC; color: #059669; }
 
 .payment-block { background: #FAFAFA; border: 1px solid #E5E7EB; border-radius: 12px; padding: 16px; margin-bottom: 16px; }
+
+        /* --- ЕКРАН ВХОДУ (Google) --- */
+        #auth-login-screen {
+            position: fixed; inset: 0; z-index: 99999;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            background: linear-gradient(145deg, #1A1A1A 0%, #2C2C2C 45%, #3a4a28 100%);
+            padding: 24px;
+        }
+        .auth-login-card {
+            width: 100%; max-width: 420px;
+            background: rgba(253, 252, 251, 0.98);
+            border-radius: 24px;
+            padding: 48px 40px 40px;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.45);
+            text-align: center;
+        }
+        .auth-login-logo {
+            font-size: 36px; font-weight: 800; letter-spacing: 2px;
+            color: #1A1A1A; margin-bottom: 8px;
+        }
+        .auth-login-logo span { color: var(--accent); }
+        .auth-login-subtitle {
+            font-size: 14px; color: #757575; font-weight: 500;
+            margin-bottom: 36px; letter-spacing: 0.3px;
+        }
+        #googleSignInBtn { display: flex; justify-content: center; min-height: 44px; }
+        #auth-login-error {
+            display: none; margin-top: 20px; padding: 12px 16px;
+            background: #FEE2E2; color: #991B1B; border-radius: 10px;
+            font-size: 14px; font-weight: 600;
+        }
+        .sidebar-logout-wrap { margin-top: auto; padding: 16px 12px 8px; border-top: 1px solid #374151; }
+        .menu-item.logout-item { color: #FCA5A5 !important; margin: 4px 12px; }
+        .menu-item.logout-item:hover { background: rgba(220, 38, 38, 0.15) !important; color: #FECACA !important; }
+        #admin-app { flex: 1; width: 100%; min-height: 0; }
+        #admin-app > .sidebar { flex-shrink: 0; }
+        #admin-app > .main-content { flex: 1; min-width: 0; }
     </style>
 </head>
 <body>
+    <div id="auth-login-screen">
+        <div class="auth-login-card">
+            <div class="auth-login-logo">BOSO<span>.</span></div>
+            <div class="auth-login-subtitle">Панель Управління</div>
+            <div id="googleSignInBtn"></div>
+            <div id="auth-login-error"></div>
+        </div>
+    </div>
+
+    <div id="admin-app" style="display: none;">
     <div id="preloader">
         <div class="pulse-logo">BOSO</div>
     </div>
@@ -1007,6 +1055,15 @@ input[type="number"] {
             <div class="menu-item-content">
                 <svg class="menu-icon" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
                 Звіти
+            </div>
+        </div>
+
+        <div class="sidebar-logout-wrap">
+            <div class="menu-item logout-item" onclick="BosoAuth.logout()">
+                <div class="menu-item-content">
+                    <svg class="menu-icon" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0 0 13.5 3h-6a2.25 2.25 0 0 0-2.25 2.25v13.5A2.25 2.25 0 0 0 7.5 21h6a2.25 2.25 0 0 0 2.25-2.25V15m3 0 3-3m0 0-3-3m3 3H9"/></svg>
+                    Вийти
+                </div>
             </div>
         </div>
 
@@ -1742,17 +1799,33 @@ input[type="number"] {
         </div>
     </div>
 
+    </div><!-- /#admin-app -->
+
     <div id="toast-container"></div>
 
+    <script src="/auth.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
     <script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/l10n/uk.js"></script>
 
     <script>
         // ВАЖЛИВО: ВСТАВ СВОЄ ПОСИЛАННЯ З GOOGLE SCRIPT!
-        const API_URL = "https://script.google.com/macros/s/AKfycbx1RYoMJySplZ18Wv54PQjxzHnZqIb3Wsw63oG-PAOKMvuXEym8Y7aFS-L_pxvfX6o4DQ/exec";
+        window.BOSO_API_URL = "https://script.google.com/macros/s/AKfycbx1RYoMJySplZ18Wv54PQjxzHnZqIb3Wsw63oG-PAOKMvuXEym8Y7aFS-L_pxvfX6o4DQ/exec";
+        const API_URL = window.BOSO_API_URL;
         
-        // 🚀 РАННІЙ СТАРТ: Запускаємо запит ДО того, як завантажиться сторінка
-        const initialFetchPromise = fetch(API_URL + "?action=initData&t=" + new Date().getTime()).then(res => res.json());
+        let initialFetchPromise = null;
+        function startInitialDataFetch() {
+            initialFetchPromise = BosoAuth.apiFetch(API_URL + "?action=initData&t=" + new Date().getTime()).then(function (res) {
+                if (!res.ok) throw new Error('initData failed');
+                return res.json();
+            }).then(function (data) {
+                if (data && data.error === 'UNAUTHORIZED') {
+                    BosoAuth.logout();
+                    throw new Error('UNAUTHORIZED');
+                }
+                return data;
+            });
+            return initialFetchPromise;
+        }
 
         // --- ФУНКЦІЯ ДЛЯ ПРАВИЛЬНОЇ МНОЖИНИ (1 гість, 2 гості, 5 гостей) ---
 function getGuestWord(count) {
@@ -2129,7 +2202,7 @@ function saveInlineTransaction(type, category, idx) {
         // --- 🟢 ТИХА СИНХРОНІЗАЦІЯ (Фонове оновлення після твоїх дій) ---
         async function silentSync() {
             try {
-                const res = await fetch(API_URL + "?action=initData&t=" + new Date().getTime());
+                const res = await BosoAuth.apiFetch(API_URL + "?action=initData&t=" + new Date().getTime());
                 const data = await res.json();
                 
                 if (data && data.bookings) {
@@ -2174,7 +2247,7 @@ function saveInlineTransaction(type, category, idx) {
             };
             
             try {
-                await fetch(API_URL, { 
+                await BosoAuth.apiFetch(API_URL, { 
                     method: 'POST', 
                     headers: { 'Content-Type': 'text/plain;charset=utf-8' }, 
                     body: JSON.stringify({ action: 'saveSettings', settings: settingsToSave }) 
@@ -2729,7 +2802,7 @@ function saveInlineTransaction(type, category, idx) {
             }
 
             // 🟢 ФОНОВА ВІДПРАВКА В GOOGLE (Без блокування екрану)
-            fetch(API_URL, { 
+            BosoAuth.apiFetch(API_URL, { 
                 method: 'POST', 
                 headers: { 'Content-Type': 'text/plain;charset=utf-8' }, 
                 body: JSON.stringify({ action: 'deleteBooking', row: rowToDelete }) 
@@ -5151,7 +5224,7 @@ document.getElementById('adminGuests').addEventListener('change', updatePricePre
             btn.disabled = false;
 
             // 🟢 ФОНОВА ВІДПРАВКА В GOOGLE (разом з фоткою)
-            fetch(API_URL, { 
+            BosoAuth.apiFetch(API_URL, { 
                 method: 'POST', 
                 headers: { 'Content-Type': 'text/plain;charset=utf-8' }, 
                 body: JSON.stringify(payloadForServer) 
@@ -5324,23 +5397,25 @@ document.addEventListener('click', function(e) {
             }
         }
        
-        window.onload = () => {
-            switchView('grid'); // Одразу відкриваємо Шахматку
-            initApp();          // Підтягуємо дані з бази
+        function startAdminPanel() {
+            startInitialDataFetch();
+            switchView('grid');
+            initApp();
             if (window.Telegram && window.Telegram.WebApp) {
                 window.Telegram.WebApp.expand();
             }
-
-            // 🟢 АВТООНОВЛЕННЯ КОЖНУ ХВИЛИНУ
             setInterval(() => {
+                if (!BosoAuth.isAuthenticated()) return;
                 const isDrawerOpen = document.getElementById('bookingDrawer').classList.contains('active');
                 const isModalOpen = document.getElementById('genericModal').classList.contains('active');
-                
-                // Якщо юзер нічого не редагує і не тягне сітку — тихо оновлюємо
                 if (!isDrawerOpen && !isModalOpen && !isGridDragging) {
                     silentSync();
                 }
-            }, 30000); 
+            }, 30000);
+        }
+
+        window.onload = () => {
+            BosoAuth.bootstrap(startAdminPanel);
         };
 
         // 🚀 РОБОЧИЙ РЕНДЕР КАРТКИ (ТВІЙ КОД + ПРЕМІУМ КОМЕНТАР + РОЗУМНІ ХВОСТИКИ)
@@ -5836,7 +5911,7 @@ function bosoLeave() {
                     return;
                 }
 
-                const res = await fetch(API_URL, {
+                const res = await BosoAuth.apiFetch(API_URL, {
                     method: 'POST',
                     headers: { 'Content-Type': 'text/plain;charset=utf-8' },
                     body: JSON.stringify({
