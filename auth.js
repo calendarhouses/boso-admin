@@ -216,6 +216,16 @@
         return !!(s && s.email && s.sessionToken);
     }
 
+    /** Сесія недійсна на сервері — лише локально, без reload і без adminLogout */
+    function sessionExpired(message) {
+        clearSession();
+        showLoginScreen();
+        showLoginError(message || 'Сесію завершено. Увійдіть через Google.');
+        waitForGsi(function () {
+            if (gsiReady) renderGoogleButton();
+        });
+    }
+
     function logout() {
         var s = getSession();
         var apiUrl = getApiUrl();
@@ -275,12 +285,26 @@
         }
 
         return fetch(url, opts).then(function (res) {
-            if (res.status === 401) {
-                clearSession();
-                showLoginScreen();
-            }
             return res;
         });
+    }
+
+    function parseApiJson(res) {
+        return res.text().then(function (text) {
+            try {
+                return JSON.parse(text);
+            } catch (e) {
+                return { error: 'PARSE_ERROR', raw: text };
+            }
+        });
+    }
+
+    function handleApiAuthError(data) {
+        if (data && data.error === 'UNAUTHORIZED') {
+            sessionExpired('Сесію завершено. Увійдіть через Google ще раз.');
+            return true;
+        }
+        return false;
     }
 
     function bootstrap(onReady) {
@@ -313,6 +337,9 @@
             return s ? s.email : '';
         },
         apiFetch: apiFetch,
+        parseApiJson: parseApiJson,
+        handleApiAuthError: handleApiAuthError,
+        sessionExpired: sessionExpired,
         logout: logout,
         appendAuthToUrl: appendAuthToUrl
     };

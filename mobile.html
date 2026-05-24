@@ -1344,16 +1344,14 @@
         
         let initialFetchPromise = null;
         function startInitialDataFetch() {
-            initialFetchPromise = BosoAuth.apiFetch(API_URL + "?action=initData&t=" + new Date().getTime()).then(function (res) {
-                if (!res.ok) throw new Error('initData failed');
-                return res.json();
-            }).then(function (data) {
-                if (data && data.error === 'UNAUTHORIZED') {
-                    BosoAuth.logout();
-                    throw new Error('UNAUTHORIZED');
-                }
-                return data;
-            });
+            initialFetchPromise = BosoAuth.apiFetch(API_URL + "?action=initData&t=" + new Date().getTime())
+                .then(function (res) {
+                    return BosoAuth.parseApiJson(res).then(function (data) {
+                        if (BosoAuth.handleApiAuthError(data)) throw new Error('UNAUTHORIZED');
+                        if (!res.ok || data.error === 'PARSE_ERROR') throw new Error('initData failed');
+                        return data;
+                    });
+                });
             return initialFetchPromise;
         }
         
@@ -1478,8 +1476,12 @@
                 if(typeof renderSettingsServices === 'function') renderSettingsServices();
 
             } catch (error) {
-                console.error("Помилка завантаження даних:", error); 
-                showToast("Помилка завантаження з бази!");
+                console.error("Помилка завантаження даних:", error);
+                if (error && error.message === 'UNAUTHORIZED') {
+                    showToast("Сесію завершено. Увійдіть знову.");
+                } else if (BosoAuth.isAuthenticated()) {
+                    showToast("Помилка завантаження з бази. Перевірте інтернет.");
+                }
             } finally {
                 // 🟢 ХОВАЄМО ПРЕЛОАДЕР ТІЛЬКИ ПІСЛЯ ТОГО, ЯК УСІ ДАНІ З'ЯВИЛИСЯ
                 const preloader = document.getElementById('preloader');
