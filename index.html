@@ -3349,7 +3349,10 @@ else if (statusClass === 'status-hutshub') { finText = "Hutshub"; badgeBg = "rgb
 else if (total === 0) { finText = "Немає ціни"; badgeBg = "rgba(255,255,255,0.3)"; badgeColor = "#1A1A1A"; }
                             else if (paid === 0) { finText = "Очікує оплату"; badgeBg = "#F59E0B"; } 
                             else if (balance <= 0) { finText = "Оплачено"; badgeBg = "#10B981"; } 
-                            else { finText = `Борг: ${balance} грн`; badgeBg = "#EF4444"; }
+                            else {
+                                finText = (durationDays === 1) ? 'Борг' : `Борг: ${balance} грн`;
+                                badgeBg = "#EF4444";
+                            }
 
                             let guestName = String(b.name).replace(' (Ручна бронь)', '');
 
@@ -4162,7 +4165,7 @@ if (guests > maxCap) {
     const restrViolation = requiredMinNights > 0 && nights < requiredMinNights;
     const restrWarningHtml = restrViolation ? `
         <div style="background:#FFFBEB; border:1px solid #FCD34D; border-radius:10px; padding:12px 14px; margin-bottom:16px; font-size:13px; color:#92400E; line-height:1.45;">
-            <strong>Обмеження перебування:</strong> для обраних дат потрібно мінімум <b>${requiredMinNights}</b> ${nightWord(requiredMinNights)}. Зараз обрано ${nights} ${nightWord(nights)}.
+            <strong>Обмеження для гостей на сайті:</strong> мінімум <b>${requiredMinNights}</b> ${nightWord(requiredMinNights)} (зараз ${nights} ${nightWord(nights)}). У адмінці зберегти можна.
         </div>` : '';
 
     // === 1. СИСТЕМНІ БАЗОВІ РОЗРАХУНКИ ===
@@ -5163,6 +5166,8 @@ document.getElementById('adminGuests').addEventListener('change', updatePricePre
             }).then(res => res.json()).then(json => {
                 if (json.error === "OVERLAP") { 
                     alert("❌ ПОМИЛКА: Ці дати щойно були зайняті."); 
+                } else if (json.error === "MIN_STAY") {
+                    alert(`❌ Сервер відхилив збереження: мінімум ${json.requiredMin || '?'} ${nightWord(json.requiredMin || 2)}. Задеплойте оновлений Apps Script.`);
                 }
                 silentSync(); // 🟢 ТИХЕ ОНОВЛЕННЯ БЕЗ СТРИБКІВ!
             }).catch(error => {
