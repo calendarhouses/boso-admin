@@ -1119,18 +1119,18 @@
                                 <label>Джерело:</label>
                                 <div class="custom-select-wrapper" id="sourceWrapper">
                                     <div class="custom-select-trigger" onclick="toggleCustomSelect('sourceWrapper')">
-                                        <span id="sourceSelectedText">Instagram</span>
+                                        <span id="sourceSelectedText">Адмінка</span>
                                         <svg width="14" height="14" fill="none" stroke="#6B7280" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
                                     </div>
                                     <div class="custom-select-options">
-    <div class="custom-option selected" onclick="selectOption('sourceWrapper', 'adminSource', 'Instagram', this)">Instagram</div>
-    <div class="custom-option" onclick="selectOption('sourceWrapper', 'adminSource', 'Telegram', this)">Telegram</div>
-    <div class="custom-option" onclick="selectOption('sourceWrapper', 'adminSource', 'Сайт', this)">Сайт</div>
-    <div class="custom-option" onclick="selectOption('sourceWrapper', 'adminSource', 'Телефон', this)">Телефон</div>
-    <div class="custom-option" onclick="selectOption('sourceWrapper', 'adminSource', 'Hutshub', this)">Hutshub</div>
-</div>
+                                        <div class="custom-option selected" onclick="selectOption('sourceWrapper', 'adminSource', 'Адмінка', this)">Адмінка</div>
+                                        <div class="custom-option" onclick="selectOption('sourceWrapper', 'adminSource', 'Instagram', this)">Instagram</div>
+                                        <div class="custom-option" onclick="selectOption('sourceWrapper', 'adminSource', 'Telegram Бот', this)">Telegram Бот</div>
+                                        <div class="custom-option" onclick="selectOption('sourceWrapper', 'adminSource', 'Сайт', this)">Сайт</div>
+                                        <div class="custom-option" onclick="selectOption('sourceWrapper', 'adminSource', 'Hutshub', this)">Hutshub</div>
+                                    </div>
                                 </div>
-                                <input type="hidden" id="adminSource" value="Instagram">
+                                <input type="hidden" id="adminSource" value="Адмінка">
                             </div>
                         </div>
                         <div class="form-group" style="margin-top: 12px;">
@@ -3591,7 +3591,7 @@ function setHalfPrepayment() {
             let defaultDesc = activeRooms.find(r => r.name === defaultRoom)?.desc || "";
             document.getElementById('adminCottage').value = defaultRoom;
             document.getElementById('cottageSelectedText').innerText = defaultRoom ? `${defaultRoom} (${defaultDesc})` : "Оберіть котедж";
-            document.getElementById('adminSource').value = "Instagram"; document.getElementById('sourceSelectedText').innerText = "Instagram";
+            setBookingSourceDefault();
 
            if (prefillDateStart) {
                 checkInPicker.setDate(prefillDateStart); 
@@ -3705,6 +3705,7 @@ function setHalfPrepayment() {
             
             document.getElementById('adminCottage').value = savedRoom;
             document.getElementById('cottageSelectedText').innerText = savedRoom ? `${savedRoom} (${savedDesc})` : "Оберіть котедж";
+            setBookingSourceFromSaved(booking.source);
             checkInPicker.setDate(booking.checkIn); checkOutPicker.setDate(booking.checkOut);
             
             if (document.getElementById('adminPets')) { togglePet((booking.pets === "Так" || booking.pets === true) ? "Так" : "Ні"); }
@@ -3791,6 +3792,7 @@ function setHalfPrepayment() {
                 phone: document.getElementById('adminPhone').value, 
                 guests: document.getElementById('adminGuests').value,
                 pets: document.getElementById('adminPets').value, 
+                source: document.getElementById('adminSource').value,
                 status: document.querySelector('.status-btn.active').getAttribute('data-status'),
                 
                 totalPrice: getVal('adminTotalPrice'), 
@@ -3897,8 +3899,35 @@ function setHalfPrepayment() {
             document.querySelectorAll('.custom-select-wrapper').forEach(w => { if(w.id !== wrapperId) w.classList.remove('open'); });
             document.getElementById(wrapperId).classList.toggle('open');
         }
+        function isHutshubBooking(b) {
+            return String((b && b.source) || '').toLowerCase().includes('hutshub');
+        }
+
+        function setBookingSourceDefault() {
+            const def = 'Адмінка';
+            document.getElementById('adminSource').value = def;
+            document.getElementById('sourceSelectedText').innerText = def;
+            document.querySelectorAll('#sourceWrapper .custom-option').forEach(opt => {
+                opt.classList.remove('selected');
+                if (opt.innerText.trim() === def) opt.classList.add('selected');
+            });
+        }
+
+        function setBookingSourceFromSaved(savedSource) {
+            let src = savedSource || 'Адмінка';
+            if (src === 'Telegram') src = 'Telegram Бот';
+            const known = ['Адмінка', 'Instagram', 'Telegram Бот', 'Сайт', 'Hutshub'];
+            if (known.indexOf(src) === -1) src = 'Адмінка';
+            document.getElementById('adminSource').value = src;
+            document.getElementById('sourceSelectedText').innerText = src;
+            document.querySelectorAll('#sourceWrapper .custom-option').forEach(opt => {
+                opt.classList.remove('selected');
+                if (opt.innerText.trim() === src) opt.classList.add('selected');
+            });
+        }
+
         function selectOption(wrapperId, inputId, value, element = null, displayText = null) {
-            document.getElementById(inputId).value = value; 
+            document.getElementById(inputId).value = value;
             document.getElementById(wrapperId).querySelector('span').innerText = displayText || value;
             document.getElementById(wrapperId).classList.remove('open');
             
@@ -5097,7 +5126,7 @@ let                 fOut = outD.toLocaleDateString('uk-UA', { day: 'numeric', mo
             globalRoomCounts = {}; globalRoomMoney = {}; globalRoomNights = {};
             const sourceCounts = {}; const revenueTimeline = {}; 
             roomsList.forEach(r => { globalRoomCounts[r.name] = 0; globalRoomMoney[r.name] = 0; globalRoomNights[r.name] = 0; });
-            ['Instagram', 'Telegram', 'Сайт', 'Телефон'].forEach(s => sourceCounts[s] = 0);
+            ['Адмінка', 'Instagram', 'Telegram Бот', 'Сайт', 'Hutshub'].forEach(s => sourceCounts[s] = 0);
 
             allBookings.forEach(b => {
                 if (String(b.status).toLowerCase().includes('скас')) return;
@@ -5695,12 +5724,15 @@ let                 fOut = outD.toLocaleDateString('uk-UA', { day: 'numeric', mo
 
         // 🚀 ПРЕМІУМ-КАРТКА (Додано Базову Вартість)
 async function capturePremiumCard(b) {
+    const isHutshub = isHutshubBooking(b);
     const container = document.createElement('div');
     container.style.position = 'fixed';
     container.style.top = '0'; 
     container.style.left = '-9999px'; 
     container.style.width = '800px'; 
-    container.style.background = 'linear-gradient(135deg, #2C351B 0%, #1A1F10 100%)'; 
+    container.style.background = isHutshub
+        ? 'linear-gradient(135deg, #C9D6D2 0%, #B2C4BE 100%)'
+        : 'linear-gradient(135deg, #2C351B 0%, #1A1F10 100%)'; 
     container.style.padding = '60px 120px'; 
     container.style.boxSizing = 'border-box';
     container.style.fontFamily = "'Inter', sans-serif";
@@ -5722,7 +5754,9 @@ async function capturePremiumCard(b) {
     topAccent.style.left = '0';
     topAccent.style.width = '100%';
     topAccent.style.height = '6px';
-    topAccent.style.background = 'linear-gradient(90deg, #556B2F 0%, #8FBC8F 100%)';
+    topAccent.style.background = isHutshub
+        ? 'linear-gradient(90deg, #1A332A 0%, #4A6B5F 100%)'
+        : 'linear-gradient(90deg, #556B2F 0%, #8FBC8F 100%)';
     card.appendChild(topAccent);
 
     // 🟢 КОЛЬОРОВІ ІКОНКИ
@@ -5849,11 +5883,34 @@ async function capturePremiumCard(b) {
     let finText = ""; let finColor = ""; let finBg = ""; let finBorder = "";
     let statusClass = String(b.status).toLowerCase();
 
-    if (statusClass.includes('скас')) { finText = "СКАСОВАНО"; finBg = "#F3F4F6"; finColor = "#6B7280"; finBorder = "#E5E7EB"; } 
+    if (isHutshub) {
+        finText = "ПІДТВЕРДЖЕНО (HUTSHUB)";
+        finBg = "#C9D6D2"; finColor = "#1A332A"; finBorder = "rgba(26, 51, 42, 0.2)";
+    } else if (statusClass.includes('скас')) { finText = "СКАСОВАНО"; finBg = "#F3F4F6"; finColor = "#6B7280"; finBorder = "#E5E7EB"; } 
     else if (total === 0) { finText = "БЕЗ ЦІНИ"; finBg = "#F3F4F6"; finColor = "#4B5563"; finBorder = "#E5E7EB"; } 
     else if (paid === 0) { finText = `ОЧІКУЄ АВАНС: ${Math.round(total / 2)} ₴`; finBg = "#FEF3C7"; finColor = "#B45309"; finBorder = "#FDE68A"; } 
     else if (balance <= 0) { finText = `ОПЛАЧЕНО ПОВНІСТЮ`; finBg = "#D1FAE5"; finColor = "#059669"; finBorder = "#A7F3D0"; } 
     else { finText = `ЗАЛИШОК ДО СПЛАТИ: ${balance} ₴`; finBg = "#FEE2E2"; finColor = "#DC2626"; finBorder = "#FECACA"; }
+
+    const hutshubBadge = isHutshub
+        ? `<span style="font-size: 11px; font-weight: 800; letter-spacing: 0.6px; text-transform: uppercase; color: #1A332A; background: #C9D6D2; border: 1px solid rgba(26,51,42,0.15); padding: 6px 12px; border-radius: 8px;">Hutshub</span>`
+        : '';
+    const paymentBlockHtml = isHutshub
+        ? `<div style="margin-top: 5px; padding: 16px 18px; background: #F4F7F5; border-radius: 12px; border: 1px solid rgba(26,51,42,0.12); font-size: 15px; color: #1A332A; font-weight: 700; text-align: center;">💳 Оплата на платформі Hutshub</div>`
+        : `<div style="margin-top: 5px; padding-top: 16px; border-top: 1px dashed #E5E7EB;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                    <span style="color: #6B7280; font-weight: 700; font-size: 16px; display:flex; align-items:center;">
+                        ${iconSum} Сума:
+                    </span> 
+                    <span style="font-weight: 800; color: #111827; font-size: 18px;">${total} ₴</span>
+                </div>
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <span style="color: #6B7280; font-weight: 700; font-size: 16px; display:flex; align-items:center;">
+                        ${iconPaid} Внесено:
+                    </span> 
+                    <span style="font-weight: 900; color: #059669; font-size: 18px;">${paid} ₴</span>
+                </div>
+            </div>`;
 
     card.innerHTML = `
         <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #E5E7EB; padding-bottom: 20px; margin-bottom: 20px;">
@@ -5861,8 +5918,9 @@ async function capturePremiumCard(b) {
                 <span style="font-weight: 900; font-size: 24px; color: #111827; letter-spacing: -0.5px; line-height: 1.1;">${b.name || "Гість"}</span>
                 <span style="font-size: 16px; color: #6B7280; font-weight: 600;">${displayPhone}</span>
             </div>
-            <div style="text-align: right; display: flex; flex-direction: column; justify-content: center; gap: 8px;">
-                <span style="font-size: 14px; color: #556B2F; font-weight: 800; background: #F0FDF4; border: 1px solid #DCF1D3; padding: 8px 16px; border-radius: 8px; white-space: nowrap;">${b.guests} ${guestWord}</span>
+            <div style="text-align: right; display: flex; flex-direction: column; justify-content: center; align-items: flex-end; gap: 8px;">
+                ${hutshubBadge}
+                <span style="font-size: 14px; color: ${isHutshub ? '#1A332A' : '#556B2F'}; font-weight: 800; background: ${isHutshub ? 'rgba(255,255,255,0.45)' : '#F0FDF4'}; border: 1px solid ${isHutshub ? 'rgba(26,51,42,0.12)' : '#DCF1D3'}; padding: 8px 16px; border-radius: 8px; white-space: nowrap;">${b.guests} ${guestWord}</span>
             </div>
         </div>
         
@@ -5877,28 +5935,15 @@ async function capturePremiumCard(b) {
                 <span style="color: #6B7280; font-weight: 600; display:flex; align-items:center;">
                     <span style="margin-right:8px; display:flex;">${iconCalendar}</span> Дати:
                 </span> 
-                <span style="font-weight: 800; color: #556B2F; font-size: 17px; text-align: right;">${inDate} — ${outDate}</span>
+                <span style="font-weight: 800; color: ${isHutshub ? '#1A332A' : '#556B2F'}; font-size: 17px; text-align: right;">${inDate} — ${outDate}</span>
             </div>
             
-            ${extraHtml ? `<div style="margin-top: 5px; padding: 18px 20px; background: #FAFAFA; border-radius: 12px; border: 1px dashed #D1D5DB;">${extraHtml}</div>` : ''}
+            ${!isHutshub && extraHtml ? `<div style="margin-top: 5px; padding: 18px 20px; background: #FAFAFA; border-radius: 12px; border: 1px dashed #D1D5DB;">${extraHtml}</div>` : ''}
 
-            <div style="margin-top: 5px; padding-top: 16px; border-top: 1px dashed #E5E7EB;">
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
-                    <span style="color: #6B7280; font-weight: 700; font-size: 16px; display:flex; align-items:center;">
-                        ${iconSum} Сума:
-                    </span> 
-                    <span style="font-weight: 800; color: #111827; font-size: 18px;">${total} ₴</span>
-                </div>
-                <div style="display: flex; justify-content: space-between; align-items: center;">
-                    <span style="color: #6B7280; font-weight: 700; font-size: 16px; display:flex; align-items:center;">
-                        ${iconPaid} Внесено:
-                    </span> 
-                    <span style="font-weight: 900; color: #059669; font-size: 18px;">${paid} ₴</span>
-                </div>
-            </div>
+            ${paymentBlockHtml}
         </div>
 
-        ${commentHtml}
+        ${!isHutshub ? commentHtml : ''}
 
         <div style="margin-top: 25px; display: flex; align-items: center; justify-content: center; padding: 14px; border-radius: 10px; font-size: 15px; font-weight: 800; text-transform: uppercase; letter-spacing: 1px; background: ${finBg}; color: ${finColor}; border: 1px solid ${finBorder};">
             ${finText}
@@ -6245,12 +6290,15 @@ async function capturePaymentCard(b, paymentInfo) {
 
         // 🚀 ГЕНЕРАТОР КАРТКИ ДЛЯ КЛІНІНГУ (БЕЗ ЦІН І ТЕЛЕФОНУ)
 async function captureCleaningCard(b) {
+    const isHutshub = isHutshubBooking(b);
     const container = document.createElement('div');
     container.style.position = 'fixed';
     container.style.top = '0'; 
     container.style.left = '-9999px'; 
     container.style.width = '800px'; 
-    container.style.background = 'linear-gradient(135deg, #2C351B 0%, #1A1F10 100%)'; 
+    container.style.background = isHutshub
+        ? 'linear-gradient(135deg, #C9D6D2 0%, #B2C4BE 100%)'
+        : 'linear-gradient(135deg, #2C351B 0%, #1A1F10 100%)'; 
     container.style.padding = '60px 120px'; 
     container.style.boxSizing = 'border-box';
     container.style.fontFamily = "'Inter', sans-serif";
@@ -6270,7 +6318,9 @@ async function captureCleaningCard(b) {
     topAccent.style.position = 'absolute';
     topAccent.style.top = '0'; topAccent.style.left = '0';
     topAccent.style.width = '100%'; topAccent.style.height = '6px';
-    topAccent.style.background = 'linear-gradient(90deg, #556B2F 0%, #8FBC8F 100%)';
+    topAccent.style.background = isHutshub
+        ? 'linear-gradient(90deg, #1A332A 0%, #4A6B5F 100%)'
+        : 'linear-gradient(90deg, #556B2F 0%, #8FBC8F 100%)';
     card.appendChild(topAccent);
 
     // Іконки
@@ -6344,14 +6394,17 @@ async function captureCleaningCard(b) {
     else if (n1 > 1 && n1 < 5) guestWordTxt = 'гості';
     else if (n1 === 1) guestWordTxt = 'гість';
 
+    const cleaningTitle = isHutshub ? 'Нова бронь | Hutshub' : 'Нова Бронь';
+    const cleaningSubtitle = isHutshub ? 'Підготовка котеджу' : 'Наряд на підготовку';
+
     card.innerHTML = `
         <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #E5E7EB; padding-bottom: 20px; margin-bottom: 20px;">
             <div style="display: flex; flex-direction: column; gap: 6px;">
-                <span style="font-weight: 900; font-size: 24px; color: #111827; letter-spacing: -0.5px; line-height: 1.1;">Нова Бронь</span>
-                <span style="font-size: 14px; color: #6B7280; font-weight: 600;">Наряд на підготовку</span>
+                <span style="font-weight: 900; font-size: 24px; color: #111827; letter-spacing: -0.5px; line-height: 1.1;">${cleaningTitle}</span>
+                <span style="font-size: 14px; color: #6B7280; font-weight: 600;">${cleaningSubtitle}</span>
             </div>
             <div style="text-align: right; display: flex; flex-direction: column; justify-content: center; gap: 8px;">
-                <span style="font-size: 14px; color: #556B2F; font-weight: 800; background: #F0FDF4; border: 1px solid #DCF1D3; padding: 8px 16px; border-radius: 8px; white-space: nowrap;">${guestsNum} ${guestWordTxt.toUpperCase()}</span>
+                <span style="font-size: 14px; color: ${isHutshub ? '#1A332A' : '#556B2F'}; font-weight: 800; background: ${isHutshub ? 'rgba(255,255,255,0.45)' : '#F0FDF4'}; border: 1px solid ${isHutshub ? 'rgba(26,51,42,0.12)' : '#DCF1D3'}; padding: 8px 16px; border-radius: 8px; white-space: nowrap;">${guestsNum} ${guestWordTxt.toUpperCase()}</span>
             </div>
         </div>
         
@@ -6366,13 +6419,13 @@ async function captureCleaningCard(b) {
                 <span style="color: #6B7280; font-weight: 600; display:flex; align-items:center;">
                     <span style="margin-right:8px; display:flex;">${iconCalendar}</span> Дати:
                 </span> 
-                <span style="font-weight: 800; color: #556B2F; font-size: 17px; text-align: right;">${inDate} — ${outDate}</span>
+                <span style="font-weight: 800; color: ${isHutshub ? '#1A332A' : '#556B2F'}; font-size: 17px; text-align: right;">${inDate} — ${outDate}</span>
             </div>
             
-            ${extraHtml ? `<div style="margin-top: 5px; padding: 18px 20px; background: #FAFAFA; border-radius: 12px; border: 1px dashed #D1D5DB;">${extraHtml}</div>` : ''}
+            ${!isHutshub && extraHtml ? `<div style="margin-top: 5px; padding: 18px 20px; background: #FAFAFA; border-radius: 12px; border: 1px dashed #D1D5DB;">${extraHtml}</div>` : ''}
         </div>
 
-        ${commentHtml}
+        ${!isHutshub ? commentHtml : ''}
     `;
     
     container.appendChild(card);
