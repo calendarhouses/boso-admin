@@ -1,0 +1,23 @@
+{
+  "name": "BOSO",
+  "short_name": "BOSO",
+  "description": "BOSO — панель управління",
+  "start_url": "/mobile.html",
+  "display": "standalone",
+  "background_color": "#FDFCFB",
+  "theme_color": "#556B2F",
+  "icons": [
+    {
+      "src": "/icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    }
+  ]
+}
