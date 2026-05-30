@@ -6173,6 +6173,20 @@ function bosoLeave() {
             return Math.max(1, Math.round((cout - cin) / 86400000));
         }
 
+        function bosoNightsUsedByDate(checkIn, checkOut, asOfDate) {
+            const cin = bosoDateOnly(checkIn);
+            const cout = bosoDateOnly(checkOut);
+            const asOf = bosoDateOnly(asOfDate);
+            if (asOf < cin) return 0;
+            let nightsUsed = 0;
+            const d = new Date(cin);
+            while (d < cout) {
+                if (d <= asOf) nightsUsed++;
+                d.setDate(d.getDate() + 1);
+            }
+            return nightsUsed;
+        }
+
         /** Скільки вартості послуги вже «надано» на дату зрізу (пропорційно ночам). */
         function bosoEarnedAtDate(checkIn, checkOut, totalPrice, asOfDate) {
             const price = Math.round(Number(totalPrice) || 0);
@@ -6183,7 +6197,7 @@ function bosoLeave() {
             if (asOf < cin) return 0;
             if (asOf >= cout) return price;
             const totalNights = bosoBookingNights(checkIn, checkOut);
-            const nightsUsed = Math.max(0, Math.round((asOf - cin) / 86400000));
+            const nightsUsed = bosoNightsUsedByDate(checkIn, checkOut, asOfDate);
             return Math.round(price * nightsUsed / totalNights);
         }
 
