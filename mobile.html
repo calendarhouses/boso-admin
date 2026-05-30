@@ -3893,6 +3893,7 @@ function setHalfPrepayment() {
             const originalText = btn.innerText; 
             btn.innerText = "Збереження..."; 
             btn.disabled = true;
+            await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));
             
             const getVal = (id) => {
                 const el = document.getElementById(id);
@@ -4569,19 +4570,17 @@ function setHalfPrepayment() {
                 const fp = flatpickr(el, {
                     locale: 'uk', dateFormat: 'Y-m-d', altInput: true, altFormat: 'd.m.Y',
                     defaultDate: el.value || undefined, allowInput: false, disableMobile: true,
+                    clickOpens: false,
                     onChange: function(_d, dateStr) {
                         if (window._bookingPayments && window._bookingPayments[idx]) window._bookingPayments[idx].date = dateStr;
                     },
                     onReady: function(_dates, _dateStr, inst) {
                         const target = inst.altInput || inst.input;
                         if (!target) return;
-                        target.addEventListener('click', function(e) {
-                            if (inst.isOpen) {
-                                e.preventDefault();
-                                e.stopImmediatePropagation();
-                                inst.close();
-                            }
-                        }, true);
+                        target.addEventListener('mousedown', function(e) {
+                            e.preventDefault();
+                            inst.toggle();
+                        });
                     }
                 });
                 window._pjDatePickers.push(fp);

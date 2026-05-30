@@ -5230,6 +5230,7 @@ document.getElementById('adminGuests').addEventListener('change', updatePricePre
             const originalText = btn.innerText; 
             btn.innerText = "Збереження..."; 
             btn.disabled = true;
+            await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));
             
             // 🟢 ФУНКЦІЯ ДЛЯ ПРАВИЛЬНОГО ЧИТАННЯ ЦИФР З СПАНІВ ТА ІНПУТІВ
             const getVal = (id) => {
@@ -5892,6 +5893,7 @@ function bosoLeave() {
                     defaultDate: el.value || undefined,
                     allowInput: false,
                     disableMobile: true,
+                    clickOpens: false,
                     onChange: function(_dates, dateStr) {
                         if (!window._bookingPayments || !window._bookingPayments[idx]) return;
                         window._bookingPayments[idx].date = dateStr;
@@ -5899,13 +5901,10 @@ function bosoLeave() {
                     onReady: function(_dates, _dateStr, inst) {
                         const target = inst.altInput || inst.input;
                         if (!target) return;
-                        target.addEventListener('click', function(e) {
-                            if (inst.isOpen) {
-                                e.preventDefault();
-                                e.stopImmediatePropagation();
-                                inst.close();
-                            }
-                        }, true);
+                        target.addEventListener('mousedown', function(e) {
+                            e.preventDefault();
+                            inst.toggle();
+                        });
                     }
                 });
                 window._pjDatePickers.push(fp);
