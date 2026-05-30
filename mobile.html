@@ -605,13 +605,12 @@
         .pj-date-wrap .flatpickr-wrapper { width: 100%; }
         .pj-date-wrap .flatpickr-input, .pj-date-wrap input.form-control.input {
             width: 100% !important; box-sizing: border-box; padding: 10px 12px !important; font-size: 14px !important;
-            font-family: inherit !important; border: 1.5px solid var(--accent) !important; border-radius: 10px !important;
-            background: #F8FAF7 !important; height: auto !important; cursor: pointer;
-            box-shadow: 0 0 0 3px rgba(85, 107, 47, 0.1) !important;
+            font-family: inherit !important; border: 1px solid #E5E7EB !important; border-radius: 10px !important;
+            background: #F9FAFB !important; height: auto !important; cursor: pointer;
         }
         .pj-date-wrap .flatpickr-input:focus, .pj-date-wrap input.form-control.input:focus {
             outline: none; border-color: var(--accent) !important; background: #FFF !important;
-            box-shadow: 0 0 0 3px rgba(85, 107, 47, 0.18) !important;
+            box-shadow: 0 0 0 3px rgba(85, 107, 47, 0.1) !important;
         }
         .pj-field { width: 100%; box-sizing: border-box; padding: 10px 12px; font-size: 14px; font-family: inherit; border: 1px solid #E5E7EB; border-radius: 10px; background: #F9FAFB; }
         .pj-field:focus { outline: none; border-color: var(--accent); background: #FFF; box-shadow: 0 0 0 3px rgba(85, 107, 47, 0.1); }
@@ -4729,6 +4728,18 @@ function setHalfPrepayment() {
             window._bookingPayments = window._bookingPayments || [];
             window._bookingPayments.push({ id: 'P-' + Date.now(), date: bosoFormatDateIso(new Date()), amount: 0, method: document.getElementById('adminPrepayMethod')?.value || 'ФОП', type: 'prepay', note: '' });
             renderPaymentJournalList();
+            requestAnimationFrame(() => {
+                const rows = document.querySelectorAll('#paymentJournalList .pj-row');
+                const lastRow = rows[rows.length - 1];
+                if (!lastRow) return;
+                const drawerBody = document.querySelector('#bookingDrawer .drawer-body');
+                if (drawerBody) {
+                    const top = lastRow.getBoundingClientRect().top - drawerBody.getBoundingClientRect().top + drawerBody.scrollTop - 16;
+                    drawerBody.scrollTo({ top: Math.max(0, top), behavior: 'smooth' });
+                } else {
+                    lastRow.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                }
+            });
         };
         function bosoBuildPaymentsForSave() {
             let payments = (window._bookingPayments || []).map(p => ({
