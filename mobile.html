@@ -3228,8 +3228,29 @@ if (sClass.includes('скас')) {
 
             if (!checkInStr || !checkOutStr || !roomName) { cont.innerHTML = ''; return; }
 
-            let savedPaidAmount = 0;
-            if (document.getElementById('adminPaidAmount')) { savedPaidAmount = Number(document.getElementById('adminPaidAmount').value) || 0; }
+            let savedPrepay = 0;
+            let savedSurcharge = 0;
+            let savedPrepayMethod = 'ФОП';
+            let savedSurchargeMethod = 'Готівка';
+            const paysBeforeRebuild = window._bookingPayments || [];
+            if (document.getElementById('adminPrepayAmount')) {
+                savedPrepay = Number(document.getElementById('adminPrepayAmount').value) || 0;
+                savedSurcharge = Number(document.getElementById('adminSurchargeAmount').value) || 0;
+                savedPrepayMethod = document.getElementById('adminPrepayMethod')?.value || savedPrepayMethod;
+                savedSurchargeMethod = document.getElementById('adminSurchargeMethod')?.value || savedSurchargeMethod;
+            } else if (paysBeforeRebuild.length) {
+                savedPrepay = bosoSumPaymentsByBucket(paysBeforeRebuild, 'prepay');
+                savedSurcharge = bosoSumPaymentsByBucket(paysBeforeRebuild, 'surcharge');
+                const lastPrepay = [...paysBeforeRebuild].reverse().find(p => bosoIsPrepayType(p.type) && Number(p.amount) > 0);
+                const lastSurcharge = [...paysBeforeRebuild].reverse().find(p => bosoIsSurchargeType(p.type) && Number(p.amount) > 0);
+                if (lastPrepay) savedPrepayMethod = lastPrepay.method || savedPrepayMethod;
+                if (lastSurcharge) savedSurchargeMethod = lastSurcharge.method || savedSurchargeMethod;
+            } else if (window._bookingOpenPayments) {
+                savedPrepay = Number(window._bookingOpenPayments.prepay) || 0;
+                savedSurcharge = Number(window._bookingOpenPayments.surcharge) || 0;
+            } else if (document.getElementById('adminPaidAmount')) {
+                savedPrepay = Number(document.getElementById('adminPaidAmount').value) || 0;
+            }
 
             let safeIn = checkInStr.includes('.') ? checkInStr.split('.').reverse().join('-') : checkInStr;
             let safeOut = checkOutStr.includes('.') ? checkOutStr.split('.').reverse().join('-') : checkOutStr;
@@ -3546,7 +3567,7 @@ if (sClass.includes('скас')) {
                                     <span id="prepayBtnText">${Math.round(totalPrice / 2)}</span>
                                 </div>
                             </div>
-                            <input type="number" inputmode="numeric" pattern="[0-9]*" id="adminPrepayAmount" value="${savedPaidAmount}" style="font-weight: 700; font-size: 16px; color: #111827; margin-bottom: 10px; width: 100%; box-sizing: border-box; padding: 12px 16px; border-radius: 10px; border: 1px solid #D1D5DB; background: #FAFAFA; outline: none;">
+                            <input type="number" inputmode="numeric" pattern="[0-9]*" id="adminPrepayAmount" value="${savedPrepay}" style="font-weight: 700; font-size: 16px; color: #111827; margin-bottom: 10px; width: 100%; box-sizing: border-box; padding: 12px 16px; border-radius: 10px; border: 1px solid #D1D5DB; background: #FAFAFA; outline: none;">
                             <div class="pay-methods" id="prepayMethods">
                                 <div class="pay-chip active" data-method="ФОП" onclick="selectPayMethod('prepay', 'ФОП')">ФОП</div>
                                 <div class="pay-chip" data-method="Картка" onclick="selectPayMethod('prepay', 'Картка')">Картка</div>
@@ -3562,7 +3583,7 @@ if (sClass.includes('скас')) {
                                     Решта
                                 </div>
                             </div>
-                            <input type="number" inputmode="numeric" pattern="[0-9]*" id="adminSurchargeAmount" value="0" style="font-weight: 700; font-size: 16px; color: #111827; margin-bottom: 10px; width: 100%; box-sizing: border-box; padding: 12px 16px; border-radius: 10px; border: 1px solid #D1D5DB; background: #FAFAFA; outline: none;">
+                            <input type="number" inputmode="numeric" pattern="[0-9]*" id="adminSurchargeAmount" value="${savedSurcharge}" style="font-weight: 700; font-size: 16px; color: #111827; margin-bottom: 10px; width: 100%; box-sizing: border-box; padding: 12px 16px; border-radius: 10px; border: 1px solid #D1D5DB; background: #FAFAFA; outline: none;">
                             <div class="pay-methods" id="surchargeMethods">
                                 <div class="pay-chip" data-method="ФОП" onclick="selectPayMethod('surcharge', 'ФОП')">ФОП</div>
                                 <div class="pay-chip" data-method="Картка" onclick="selectPayMethod('surcharge', 'Картка')">Картка</div>
@@ -3602,6 +3623,9 @@ if (sClass.includes('скас')) {
     if (prepayInp) prepayInp.addEventListener('input', calculateBalanceLive);
     if (surchargeInp) surchargeInp.addEventListener('input', calculateBalanceLive);
     
+    selectPayMethod('prepay', savedPrepayMethod);
+    selectPayMethod('surcharge', savedSurchargeMethod);
+
     calculateBalanceLive();
     renderPaymentJournalList();
 }
@@ -3707,7 +3731,9 @@ function setHalfPrepayment() {
         document.getElementById('adminGuests').addEventListener('change', updatePricePreview);
 
         function openNewBookingDrawer(prefillRoom = null, prefillDateStart = null, prefillDateEnd = null) {
-            editingRowNumber = null; document.getElementById('drawerTitle').innerText = 'Нова бронь'; 
+            editingRowNumber = null;
+            prevFormState = { checkIn: "", checkOut: "", cottage: "", guests: 0, pets: "", dayGuests: 0, early: null, late: null };
+            document.getElementById('drawerTitle').innerText = 'Нова бронь'; 
             document.getElementById('adminBookingForm').reset(); document.getElementById('adminDeleteBtn').style.display = 'none';
             document.getElementById('liveCalculatorContainer').innerHTML = '';
             if(document.getElementById('adminComment')) document.getElementById('adminComment').value = "";
@@ -3773,7 +3799,22 @@ function setHalfPrepayment() {
                 return;
             }
             const booking = allBookings.find(b => b.row == rowNumber); if (!booking) return;
-            editingRowNumber = rowNumber; document.getElementById('drawerTitle').innerText = `Деталі броні`;
+            editingRowNumber = rowNumber;
+            prevFormState = { checkIn: "", checkOut: "", cottage: "", guests: 0, pets: "", dayGuests: 0, early: null, late: null };
+
+            let savedPrepayInit = Number(booking.prepayAmount) || 0;
+            let savedSurchargeInit = Number(booking.surchargeAmount) || 0;
+            if (savedPrepayInit === 0 && savedSurchargeInit === 0 && Number(booking.paidAmount) > 0) {
+                savedPrepayInit = Number(booking.paidAmount);
+            }
+            window._bookingOpenPayments = { prepay: savedPrepayInit, surcharge: savedSurchargeInit };
+            window._bookingPayments = bosoGetBookingPayments(booking);
+            window._bookingPaymentMeta = {
+                createdAt: booking.createdAt || booking.checkIn,
+                checkOut: booking.checkOut
+            };
+
+            document.getElementById('drawerTitle').innerText = `Деталі броні`;
             document.getElementById('adminDeleteBtn').style.display = 'flex';
             document.getElementById('adminName').value = String(booking.name).replace(' (Ручна бронь)', '');
             document.getElementById('adminPhone').value = '+' + formatPhone(booking.phone);

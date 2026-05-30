@@ -4256,10 +4256,29 @@ function getDayPrice(room, dateObj) {
 
     if (!checkInStr || !checkOutStr || !roomName) { cont.innerHTML = ''; return; }
 
-    // 1. РЯТУЄМО ВНЕСЕНИЙ АВАНС ПЕРЕД ПЕРЕМАЛЬОВКОЮ (щоб він не зникав)
-    let savedPaidAmount = 0;
-    if (document.getElementById('adminPaidAmount')) {
-        savedPaidAmount = Number(document.getElementById('adminPaidAmount').value) || 0;
+    // 1. РЯТУЄМО ОПЛАТИ ПЕРЕД ПЕРЕМАЛЬОВКОЮ (щоб вони не скидались при зміні тварин/послуг)
+    let savedPrepay = 0;
+    let savedSurcharge = 0;
+    let savedPrepayMethod = 'ФОП';
+    let savedSurchargeMethod = 'Готівка';
+    const paysBeforeRebuild = window._bookingPayments || [];
+    if (document.getElementById('adminPrepayAmount')) {
+        savedPrepay = Number(document.getElementById('adminPrepayAmount').value) || 0;
+        savedSurcharge = Number(document.getElementById('adminSurchargeAmount').value) || 0;
+        savedPrepayMethod = document.getElementById('adminPrepayMethod')?.value || savedPrepayMethod;
+        savedSurchargeMethod = document.getElementById('adminSurchargeMethod')?.value || savedSurchargeMethod;
+    } else if (paysBeforeRebuild.length) {
+        savedPrepay = bosoSumPaymentsByBucket(paysBeforeRebuild, 'prepay');
+        savedSurcharge = bosoSumPaymentsByBucket(paysBeforeRebuild, 'surcharge');
+        const lastPrepay = [...paysBeforeRebuild].reverse().find(p => bosoIsPrepayType(p.type) && Number(p.amount) > 0);
+        const lastSurcharge = [...paysBeforeRebuild].reverse().find(p => bosoIsSurchargeType(p.type) && Number(p.amount) > 0);
+        if (lastPrepay) savedPrepayMethod = lastPrepay.method || savedPrepayMethod;
+        if (lastSurcharge) savedSurchargeMethod = lastSurcharge.method || savedSurchargeMethod;
+    } else if (window._bookingOpenPayments) {
+        savedPrepay = Number(window._bookingOpenPayments.prepay) || 0;
+        savedSurcharge = Number(window._bookingOpenPayments.surcharge) || 0;
+    } else if (document.getElementById('adminPaidAmount')) {
+        savedPrepay = Number(document.getElementById('adminPaidAmount').value) || 0;
     }
 
     let safeIn = checkInStr.includes('.') ? checkInStr.split('.').reverse().join('-') : checkInStr;
@@ -4655,7 +4674,7 @@ const appliesToRoom =
                         <div class="pay-row-block">
                             <label>Аванс (Внесено):</label>
                             <div class="pay-amount-inwrap">
-                                <input type="number" id="adminPrepayAmount" value="${savedPaidAmount}">
+                                <input type="number" id="adminPrepayAmount" value="${savedPrepay}">
                                 <div onclick="setHalfPrepayment()" class="pay-chip pay-quick-chip" title="Внести 50%">
                                     <span id="prepayBtnText">${Math.round(totalPrice / 2)}</span>
                                 </div>
@@ -4671,7 +4690,7 @@ const appliesToRoom =
                         <div class="pay-row-block">
                             <label>Доплата на місці:</label>
                             <div class="pay-amount-inwrap">
-                                <input type="number" id="adminSurchargeAmount" value="0">
+                                <input type="number" id="adminSurchargeAmount" value="${savedSurcharge}">
                                 <div onclick="fillSurcharge()" class="pay-chip pay-quick-chip pay-quick-chip-green" title="Внести решту">Решта</div>
                             </div>
                             <div class="pay-methods" id="surchargeMethods">
@@ -4711,6 +4730,9 @@ const appliesToRoom =
     document.getElementById('adminPrepayAmount').addEventListener('input', calculateBalanceLive);
     document.getElementById('adminSurchargeAmount').addEventListener('input', calculateBalanceLive);
     
+    selectPayMethod('prepay', savedPrepayMethod);
+    selectPayMethod('surcharge', savedSurchargeMethod);
+
     // 2. ОДРАЗУ ОНОВЛЮЄМО ПЛАШКУ "ЗАЛИШОК"
     calculateBalanceLive();
     renderPaymentJournalList();
@@ -4996,7 +5018,8 @@ document.getElementById('adminGuests').addEventListener('change', updatePricePre
         });
         
         function openNewBookingDrawer(prefillRoom = null, prefillDateStart = null, prefillDateEnd = null) {
-            editingRowNumber = null; 
+            editingRowNumber = null;
+            prevFormState = { checkIn: "", checkOut: "", cottage: "", guests: 0, pets: "", dayGuests: 0, early: null, late: null };
             document.getElementById('drawerTitle').innerText = 'Нове бронювання'; 
             document.getElementById('adminBookingForm').reset();
 
@@ -5090,7 +5113,20 @@ document.getElementById('adminGuests').addEventListener('change', updatePricePre
             const booking = allBookings.find(b => b.row == rowNumber);
             if (!booking) return;
             editingRowNumber = rowNumber;
-            
+            prevFormState = { checkIn: "", checkOut: "", cottage: "", guests: 0, pets: "", dayGuests: 0, early: null, late: null };
+
+            let savedPrepayInit = Number(booking.prepayAmount) || 0;
+            let savedSurchargeInit = Number(booking.surchargeAmount) || 0;
+            if (savedPrepayInit === 0 && savedSurchargeInit === 0 && Number(booking.paidAmount) > 0) {
+                savedPrepayInit = Number(booking.paidAmount);
+            }
+            window._bookingOpenPayments = { prepay: savedPrepayInit, surcharge: savedSurchargeInit };
+            window._bookingPayments = bosoGetBookingPayments(booking);
+            window._bookingPaymentMeta = {
+                createdAt: booking.createdAt || booking.checkIn,
+                checkOut: booking.checkOut
+            };
+
             document.getElementById('drawerTitle').innerText = `Деталі броні ${booking.id || ''}`;
             document.getElementById('adminDeleteBtn').style.display = 'flex';
             
