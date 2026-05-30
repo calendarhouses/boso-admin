@@ -596,8 +596,9 @@
         .payment-journal-title { font-size: 12px; font-weight: 700; color: #374151; margin: 0 0 2px; }
         .payment-journal-sub { font-size: 10px; color: #9CA3AF; margin: 0; line-height: 1.35; }
         .pj-add-btn { flex-shrink: 0; padding: 8px 12px; font-size: 11px; font-weight: 700; color: var(--accent); background: #F8FAF7; border: 1px solid #BFE0A6; border-radius: 10px; cursor: pointer; font-family: inherit; }
-        .pj-table { background: #FFF; border: 1px solid #E5E7EB; border-radius: 12px; overflow: hidden; }
-        .pj-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; padding: 14px; border-bottom: 1px solid #F3F4F6; }
+        .pj-table { background: #FFF; border: 1px solid #E5E7EB; border-radius: 12px; overflow: visible; }
+        .pj-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; padding: 14px; border-bottom: 1px solid #F3F4F6; position: relative; overflow: visible; }
+        .pj-row:has(.custom-select-wrapper.open) { z-index: 30; }
         .pj-row:last-child { border-bottom: none; }
         .pj-row-label { grid-column: 1 / -1; font-size: 10px; font-weight: 700; text-transform: uppercase; color: #9CA3AF; margin: 4px 0 2px; letter-spacing: 0.04em; }
         .pj-date-wrap { grid-column: 1 / -1; }
@@ -611,16 +612,10 @@
         .pj-field:focus { outline: none; border-color: var(--accent); background: #FFF; box-shadow: 0 0 0 3px rgba(85, 107, 47, 0.1); }
         .pj-field.pj-amount { font-weight: 700; grid-column: 1 / -1; }
         .pj-select-wrap { position: relative; width: 100%; min-width: 0; }
-        .pj-select {
-            width: 100%; box-sizing: border-box; padding: 10px 36px 10px 12px; font-size: 14px; font-weight: 600;
-            font-family: inherit; color: #111827; background: #F9FAFB; border: 1px solid #E5E7EB; border-radius: 10px;
-            appearance: none; -webkit-appearance: none; cursor: pointer;
-        }
-        .pj-select-wrap::after {
-            content: ''; position: absolute; right: 14px; top: 50%; margin-top: -2px;
-            width: 7px; height: 7px; border-right: 2px solid #9CA3AF; border-bottom: 2px solid #9CA3AF;
-            transform: rotate(45deg); pointer-events: none;
-        }
+        .pj-dd.custom-select-wrapper { width: 100%; min-width: 0; }
+        .pj-dd .custom-select-trigger { padding: 10px 12px; font-size: 14px; font-weight: 600; border-radius: 10px; min-height: 44px; }
+        .pj-dd .custom-select-options { z-index: 1200; margin-top: 4px; padding: 4px; max-height: 180px; box-shadow: 0 12px 28px rgba(0,0,0,0.12); }
+        .pj-dd .custom-option { padding: 10px 12px; font-size: 14px; font-weight: 600; }
         .pj-del { grid-column: 1 / -1; width: 100%; margin-top: 4px; height: 42px; border: none; border-radius: 10px; background: #F3F4F6; color: #6B7280; font-size: 13px; font-weight: 600; cursor: pointer; }
         .pj-del:hover { background: #FEE2E2; color: #DC2626; }
         .pj-empty { padding: 20px; text-align: center; font-size: 12px; color: #9CA3AF; border: 1px dashed #E5E7EB; border-radius: 12px; background: #FAFAFA; }
@@ -4568,27 +4563,57 @@ function setHalfPrepayment() {
         }
         function bosoInitPaymentJournalPickers() {
             bosoDestroyPaymentJournalPickers();
+            const drawerBody = document.querySelector('#bookingDrawer .drawer-body');
             document.querySelectorAll('#paymentJournalList .pj-date-input').forEach((el) => {
                 const idx = parseInt(el.getAttribute('data-pj-idx'), 10);
                 const fp = flatpickr(el, {
                     locale: 'uk', dateFormat: 'Y-m-d', altInput: true, altFormat: 'd.m.Y',
                     defaultDate: el.value || undefined, allowInput: false, disableMobile: true,
+                    clickOpens: false,
+                    appendTo: drawerBody || undefined,
                     onChange: function(_d, dateStr) {
                         if (window._bookingPayments && window._bookingPayments[idx]) window._bookingPayments[idx].date = dateStr;
+                    },
+                    onReady: function(_dates, _dateStr, inst) {
+                        const target = inst.altInput || inst.input;
+                        if (!target) return;
+                        target.addEventListener('click', function(e) {
+                            e.stopPropagation();
+                            if (inst.isOpen) inst.close();
+                            else inst.open();
+                        });
                     }
                 });
                 window._pjDatePickers.push(fp);
             });
         }
         function bosoRenderPaymentSelect(idx, field, options, currentVal) {
-            const onChange = field === 'method'
-                ? `bosoUpdatePaymentField(${idx}, 'method', this.value)`
-                : `bosoUpdatePaymentField(${idx}, 'type', this.value)`;
-            const opts = options.map((opt) =>
-                `<option value="${opt.value}"${currentVal === opt.value ? ' selected' : ''}>${opt.label}</option>`
+            const wrapperId = `pj-dd-${field}-${idx}`;
+            const current = options.find((o) => o.value === currentVal) || options[0];
+            const optsHtml = options.map((opt) =>
+                `<div class="custom-option${opt.value === currentVal ? ' selected' : ''}" onclick="bosoPickPaymentOption(${idx}, '${field}', '${opt.value}', this, '${wrapperId}')">${opt.label}</div>`
             ).join('');
-            return `<div class="pj-select-wrap"><select class="pj-select" onchange="${onChange}">${opts}</select></div>`;
+            return `<div class="custom-select-wrapper pj-dd" id="${wrapperId}">
+                <div class="custom-select-trigger" onclick="toggleCustomSelect('${wrapperId}')">
+                    <span class="pj-dd-label">${current.label}</span>
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M6 9l6 6 6-6"/></svg>
+                </div>
+                <div class="custom-select-options">${optsHtml}</div>
+            </div>`;
         }
+        window.bosoPickPaymentOption = function(idx, field, value, el, wrapperId) {
+            if (!window._bookingPayments || !window._bookingPayments[idx]) return;
+            window._bookingPayments[idx][field] = value;
+            const wrap = document.getElementById(wrapperId);
+            if (wrap) {
+                const lbl = wrap.querySelector('.pj-dd-label');
+                if (lbl) lbl.innerText = el.innerText.trim();
+                wrap.querySelectorAll('.custom-option').forEach((o) => o.classList.remove('selected'));
+                el.classList.add('selected');
+                wrap.classList.remove('open');
+            }
+            bosoSyncPaymentFieldsFromJournal();
+        };
         function bosoBuildLegacyPayments(b) {
             const prepay = Math.round(Number(b.prepayAmount) || 0);
             const surcharge = Math.round(Number(b.surchargeAmount) || 0);
