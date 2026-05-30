@@ -1221,21 +1221,21 @@ input[type="number"] {
                             <span class="metric-val" id="metDebt" style="color: #DC2626;">0 грн</span>
                         </div>
                     </div>
-                    <div class="metric-card" onclick="openUniversalDetails('creditor', 'Аванси гостей', '#B45309', '#FFFBEB', 'Аванс')">
+                    <div class="metric-card" onclick="openUniversalDetails('creditor', 'Кредиторка на кінець періоду', '#B45309', '#FFFBEB', 'Сума')">
                         <div class="mc-header">
                             <div class="metric-icon" style="background:#FFFBEB; color:#B45309;"><svg width="22" height="22" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg></div>
                         </div>
                         <div class="mc-body">
-                            <span class="metric-title" style="color:#B45309;">Аванси (ми винні)</span>
+                            <span class="metric-title" style="color:#B45309;">Кредиторка</span>
                             <span class="metric-val" id="metCreditor" style="color:#B45309;">0 грн</span>
                         </div>
                     </div>
-                    <div class="metric-card danger-card" onclick="openUniversalDetails('accrualDebtor', 'Дебіторка на кінець періоду', '#DC2626', '#FEF2F2', 'Борг')">
+                    <div class="metric-card danger-card" onclick="openUniversalDetails('accrualDebtor', 'Дебіторка на кінець періоду', '#DC2626', '#FEF2F2', 'Сума')">
                         <div class="mc-header">
                             <div class="metric-icon" style="background:#FEE2E2; color:#DC2626;"><svg width="22" height="22" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg></div>
                         </div>
                         <div class="mc-body">
-                            <span class="metric-title" style="color:#DC2626;">Дебіторка (нам винні)</span>
+                            <span class="metric-title" style="color:#DC2626;">Дебіторка</span>
                             <span class="metric-val" id="metAccrualDebtor" style="color:#DC2626;">0 грн</span>
                         </div>
                     </div>
@@ -1400,30 +1400,23 @@ input[type="number"] {
                     </div>
                 </div>
 
-                <div id="accrualSummaryPanel" style="display:grid; grid-template-columns:repeat(auto-fit,minmax(200px,1fr)); gap:12px; margin:16px 0 8px;">
-                    <div class="metric-card" style="cursor:pointer; border:1px solid #FDE68A; background:#FFFBEB;" onclick="openUniversalDetails('creditor', 'Аванси гостей (ми винні послугу)', '#B45309', '#FFFBEB', 'Аванс')">
+                <div id="accrualSummaryPanel" style="display:grid; grid-template-columns:1fr 1fr; gap:12px; margin:16px 0 8px;">
+                    <div class="metric-card fin-accrual-creditor" style="cursor:pointer; border:1px solid #FCD34D; background:linear-gradient(145deg,#FFFBEB 0%,#FEF3C7 100%); box-shadow:0 1px 3px rgba(180,83,9,0.08);" onclick="openUniversalDetails('creditor', 'Кредиторка на кінець періоду', '#B45309', '#FFFBEB', 'Сума')">
                         <div class="mc-body">
-                            <span class="metric-title" style="color:#B45309;">Аванси (ми винні)</span>
+                            <span class="metric-title" style="color:#B45309;font-weight:700;">Кредиторка</span>
                             <span class="metric-val" id="finCreditor" style="color:#B45309;">0 грн</span>
-                            <span style="font-size:11px;color:#9CA3AF;font-weight:500;">на кінець періоду</span>
+                            <span style="font-size:11px;color:#92400E;font-weight:500;">на кінець періоду</span>
                         </div>
                     </div>
-                    <div class="metric-card danger-card" style="cursor:pointer;" onclick="openUniversalDetails('accrualDebtor', 'Дебіторка (нам винні)', '#DC2626', '#FEF2F2', 'Борг')">
+                    <div class="metric-card fin-accrual-debtor" style="cursor:pointer; border:1px solid #F9A8D4; background:linear-gradient(145deg,#FDF2F8 0%,#FCE7F3 100%); box-shadow:0 1px 3px rgba(190,24,93,0.1);" onclick="openUniversalDetails('accrualDebtor', 'Дебіторка на кінець періоду', '#BE185D', '#FDF2F8', 'Сума')">
                         <div class="mc-body">
-                            <span class="metric-title" style="color:#DC2626;">Дебіторка (нам винні)</span>
-                            <span class="metric-val" id="finDebtor" style="color:#DC2626;">0 грн</span>
-                            <span style="font-size:11px;color:#9CA3AF;font-weight:500;">на кінець періоду</span>
-                        </div>
-                    </div>
-                    <div class="metric-card" style="border:1px solid #A7F3D0; background:#F0FDF4;">
-                        <div class="mc-body">
-                            <span class="metric-title" style="color:#059669;">Надано послуг (нараховано)</span>
-                            <span class="metric-val" id="finAccruedPeriod" style="color:#059669;">0 грн</span>
-                            <span style="font-size:11px;color:#9CA3AF;font-weight:500;">за обраний період</span>
+                            <span class="metric-title" style="color:#BE185D;font-weight:700;">Дебіторка</span>
+                            <span class="metric-val" id="finDebtor" style="color:#BE185D;">0 грн</span>
+                            <span style="font-size:11px;color:#9D174D;font-weight:500;">на кінець періоду</span>
                         </div>
                     </div>
                 </div>
-                <p id="accrualHintText" style="font-size:12px;color:#6B7280;margin:0 0 12px;line-height:1.45;">Аванс — гроші вже в касі, але гість ще не відпочив. Дебіторка — гість уже відпочив, але ще не доплатив. Стан на останній день обраного періоду.</p>
+                <p id="accrualHintText" style="font-size:12px;color:#6B7280;margin:0 0 12px;line-height:1.45;">Кредиторка — гроші в касі, послуга ще попереду. Дебіторка — послуга надана, гроші ще не закриті. Стан на останній день обраного періоду (журнал платежів).</p>
 
                 <div style="position: relative; margin-top: 10px;">
                     <!-- ТАБЛИЦЯ (Видима за замовчуванням) -->
@@ -6035,7 +6028,7 @@ function bosoLeave() {
                 const debt = Math.max(0, earnedSnap - paid);
                 if (advance > 0) {
                     creditorTotal += advance;
-                    creditorItems.push(bosoBookingDetailRow(b, advance, ' · аванс'));
+                    creditorItems.push(bosoBookingDetailRow(b, advance, ' · кредиторка'));
                 }
                 if (debt > 0) {
                     debtorTotal += debt;
@@ -6063,8 +6056,7 @@ function bosoLeave() {
             const fmt = (n) => Math.round(Number(n) || 0).toLocaleString('uk-UA') + ' грн';
             const ids = [
                 ['finCreditor', 'metCreditor', accrual.creditorTotal],
-                ['finDebtor', 'metAccrualDebtor', accrual.debtorTotal],
-                ['finAccruedPeriod', null, accrual.earnedInPeriod]
+                ['finDebtor', 'metAccrualDebtor', accrual.debtorTotal]
             ];
             ids.forEach(([a, b, val]) => {
                 if (a) { const el = document.getElementById(a); if (el) el.innerText = fmt(val); }
@@ -6072,7 +6064,7 @@ function bosoLeave() {
             });
             const hint = document.getElementById('accrualHintText');
             if (hint && accrual.snapshotLabel) {
-                hint.innerText = `Стан на ${accrual.snapshotLabel}: аванси та дебіторка за датами з журналу платежів (каса на дату зрізу vs нарахований дохід).`;
+                hint.innerText = `Стан на ${accrual.snapshotLabel}: кредиторка та дебіторка за журналом платежів і нарахуванням по ночах.`;
             }
         }
         window.calculateAccrualBalances = calculateAccrualBalances;
@@ -7401,21 +7393,16 @@ async function captureFinanceReportCard(report) {
         </div>
 
         ${report.accrual ? `
-        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:16px;">
-            <div style="background:#FFFBEB;border:1px solid #FDE68A;border-radius:12px;padding:12px;text-align:center;">
-                <div style="font-size:10px;font-weight:800;color:#B45309;text-transform:uppercase;margin-bottom:4px;">Аванси (ми винні)</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px;">
+            <div style="background:#FFFBEB;border:1px solid #FCD34D;border-radius:12px;padding:12px;text-align:center;">
+                <div style="font-size:10px;font-weight:800;color:#B45309;text-transform:uppercase;margin-bottom:4px;">Кредиторка</div>
                 <div style="font-size:16px;font-weight:900;color:#B45309;">${formatMoneyUa(report.accrual.creditorTotal)}</div>
-                <div style="font-size:10px;color:#9CA3AF;margin-top:4px;">на ${esc(report.accrual.snapshotLabel || 'кінець періоду')}</div>
+                <div style="font-size:10px;color:#92400E;margin-top:4px;">на ${esc(report.accrual.snapshotLabel || 'кінець періоду')}</div>
             </div>
-            <div style="background:#FEF2F2;border:1px solid #FECACA;border-radius:12px;padding:12px;text-align:center;">
-                <div style="font-size:10px;font-weight:800;color:#DC2626;text-transform:uppercase;margin-bottom:4px;">Дебіторка</div>
-                <div style="font-size:16px;font-weight:900;color:#DC2626;">${formatMoneyUa(report.accrual.debtorTotal)}</div>
-                <div style="font-size:10px;color:#9CA3AF;margin-top:4px;">на ${esc(report.accrual.snapshotLabel || 'кінець періоду')}</div>
-            </div>
-            <div style="background:#F0FDF4;border:1px solid #A7F3D0;border-radius:12px;padding:12px;text-align:center;">
-                <div style="font-size:10px;font-weight:800;color:#059669;text-transform:uppercase;margin-bottom:4px;">Надано послуг</div>
-                <div style="font-size:16px;font-weight:900;color:#059669;">${formatMoneyUa(report.accrual.earnedInPeriod)}</div>
-                <div style="font-size:10px;color:#9CA3AF;margin-top:4px;">за період</div>
+            <div style="background:#FDF2F8;border:1px solid #F9A8D4;border-radius:12px;padding:12px;text-align:center;">
+                <div style="font-size:10px;font-weight:800;color:#BE185D;text-transform:uppercase;margin-bottom:4px;">Дебіторка</div>
+                <div style="font-size:16px;font-weight:900;color:#BE185D;">${formatMoneyUa(report.accrual.debtorTotal)}</div>
+                <div style="font-size:10px;color:#9D174D;margin-top:4px;">на ${esc(report.accrual.snapshotLabel || 'кінець періоду')}</div>
             </div>
         </div>` : ''}
 

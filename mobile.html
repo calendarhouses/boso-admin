@@ -900,17 +900,14 @@
                 </div>
 
                 <div id="accrualSummaryPanel" style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin:12px 0;">
-                    <div class="metric-card" style="border:1px solid #FDE68A; background:#FFFBEB;" onclick="openUniversalDetails('creditor', 'Аванси гостей', '#B45309', '#FFFBEB', 'Аванс')">
-                        <div class="mc-body"><span class="metric-title" style="color:#B45309;font-size:11px;">Аванси (ми винні)</span><span class="metric-val" id="finCreditor" style="color:#B45309;font-size:18px;">0 грн</span></div>
+                    <div class="metric-card" style="border:1px solid #FCD34D; background:linear-gradient(145deg,#FFFBEB,#FEF3C7);" onclick="openUniversalDetails('creditor', 'Кредиторка', '#B45309', '#FFFBEB', 'Сума')">
+                        <div class="mc-body"><span class="metric-title" style="color:#B45309;font-size:11px;font-weight:700;">Кредиторка</span><span class="metric-val" id="finCreditor" style="color:#B45309;font-size:18px;">0 грн</span><span style="font-size:10px;color:#92400E;">на кінець періоду</span></div>
                     </div>
-                    <div class="metric-card danger-card" onclick="openUniversalDetails('accrualDebtor', 'Дебіторка', '#DC2626', '#FEF2F2', 'Борг')">
-                        <div class="mc-body"><span class="metric-title" style="color:#DC2626;font-size:11px;">Дебіторка</span><span class="metric-val" id="finDebtor" style="color:#DC2626;font-size:18px;">0 грн</span></div>
-                    </div>
-                    <div class="metric-card" style="grid-column:1/-1; border:1px solid #A7F3D0; background:#F0FDF4;">
-                        <div class="mc-body"><span class="metric-title" style="color:#059669;font-size:11px;">Надано послуг за період</span><span class="metric-val" id="finAccruedPeriod" style="color:#059669;font-size:18px;">0 грн</span></div>
+                    <div class="metric-card" style="border:1px solid #F9A8D4; background:linear-gradient(145deg,#FDF2F8,#FCE7F3);" onclick="openUniversalDetails('accrualDebtor', 'Дебіторка', '#BE185D', '#FDF2F8', 'Сума')">
+                        <div class="mc-body"><span class="metric-title" style="color:#BE185D;font-size:11px;font-weight:700;">Дебіторка</span><span class="metric-val" id="finDebtor" style="color:#BE185D;font-size:18px;">0 грн</span><span style="font-size:10px;color:#9D174D;">на кінець періоду</span></div>
                     </div>
                 </div>
-                <p id="accrualHintText" style="font-size:11px;color:#6B7280;margin:0 0 12px;line-height:1.4;">Аванс — гроші в касі, послуга ще попереду. Дебіторка — послуга надана, гроші ще не закриті.</p>
+                <p id="accrualHintText" style="font-size:11px;color:#6B7280;margin:0 0 12px;line-height:1.4;">Кредиторка — гроші в касі, послуга попереду. Дебіторка — послуга надана, гроші не закриті.</p>
 
                 <div style="position: relative;">
                     <div id="financeTableWrap" class="fade-section fade-visible">
@@ -947,11 +944,11 @@
                         <div class="mc-header"><div class="metric-icon" style="background:#FEE2E2; color:#DC2626;"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg></div></div>
                         <div class="mc-body"><span class="metric-title" style="color: #DC2626;">Борг (заїзди)</span><span class="metric-val" id="metDebt" style="color: #DC2626;">0 грн</span></div>
                     </div>
-                    <div class="metric-card" onclick="openUniversalDetails('creditor', 'Аванси гостей', '#B45309', '#FFFBEB', 'Аванс')">
+                    <div class="metric-card" onclick="openUniversalDetails('creditor', 'Кредиторка', '#B45309', '#FFFBEB', 'Сума')">
                         <div class="mc-header"><div class="metric-icon" style="background:#FFFBEB; color:#B45309;"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg></div></div>
-                        <div class="mc-body"><span class="metric-title" style="color:#B45309;">Аванси</span><span class="metric-val" id="metCreditor" style="color:#B45309;">0 грн</span></div>
+                        <div class="mc-body"><span class="metric-title" style="color:#B45309;">Кредиторка</span><span class="metric-val" id="metCreditor" style="color:#B45309;">0 грн</span></div>
                     </div>
-                    <div class="metric-card danger-card" onclick="openUniversalDetails('accrualDebtor', 'Дебіторка', '#DC2626', '#FEF2F2', 'Борг')">
+                    <div class="metric-card danger-card" onclick="openUniversalDetails('accrualDebtor', 'Дебіторка', '#DC2626', '#FEF2F2', 'Сума')">
                         <div class="mc-header"><div class="metric-icon" style="background:#FEE2E2; color:#DC2626;"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg></div></div>
                         <div class="mc-body"><span class="metric-title" style="color:#DC2626;">Дебіторка</span><span class="metric-val" id="metAccrualDebtor" style="color:#DC2626;">0 грн</span></div>
                     </div>
@@ -4679,7 +4676,7 @@ function setHalfPrepayment() {
                 if (startDate && endDate) earnedInPeriod += bosoEarnedInPeriod(b.checkIn, b.checkOut, price, startDate, endDate);
                 const advance = Math.max(0, paid - earnedSnap);
                 const debt = Math.max(0, earnedSnap - paid);
-                if (advance > 0) { creditorTotal += advance; creditorItems.push(bosoBookingDetailRow(b, advance, ' · аванс')); }
+                if (advance > 0) { creditorTotal += advance; creditorItems.push(bosoBookingDetailRow(b, advance, ' · кредиторка')); }
                 if (debt > 0) { debtorTotal += debt; debtorItems.push(bosoBookingDetailRow(b, debt, ' · борг')); }
             });
             creditorItems.sort((a, b) => b.amount - a.amount);
@@ -4692,12 +4689,12 @@ function setHalfPrepayment() {
         }
         function updateAccrualPanel(accrual) {
             const fmt = (n) => Math.round(Number(n) || 0).toLocaleString('uk-UA') + ' грн';
-            [['finCreditor', 'metCreditor', accrual.creditorTotal], ['finDebtor', 'metAccrualDebtor', accrual.debtorTotal], ['finAccruedPeriod', null, accrual.earnedInPeriod]].forEach(([a, b, val]) => {
+            [['finCreditor', 'metCreditor', accrual.creditorTotal], ['finDebtor', 'metAccrualDebtor', accrual.debtorTotal]].forEach(([a, b, val]) => {
                 if (a) { const el = document.getElementById(a); if (el) el.innerText = fmt(val); }
                 if (b) { const el = document.getElementById(b); if (el) el.innerText = fmt(val); }
             });
             const hint = document.getElementById('accrualHintText');
-            if (hint && accrual.snapshotLabel) hint.innerText = `Стан на ${accrual.snapshotLabel}: за датами з журналу платежів (каса vs нарахування).`;
+            if (hint && accrual.snapshotLabel) hint.innerText = `Стан на ${accrual.snapshotLabel}: кредиторка та дебіторка (журнал платежів).`;
         }
         window.calculateAccrualBalances = calculateAccrualBalances;
 
@@ -6430,17 +6427,13 @@ async function captureFinanceReportCard(report) {
 
         ${report.accrual ? `
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px;">
-            <div style="background:#FFFBEB;border:1px solid #FDE68A;border-radius:12px;padding:12px;text-align:center;">
-                <div style="font-size:10px;font-weight:800;color:#B45309;text-transform:uppercase;">Аванси</div>
+            <div style="background:#FFFBEB;border:1px solid #FCD34D;border-radius:12px;padding:12px;text-align:center;">
+                <div style="font-size:10px;font-weight:800;color:#B45309;text-transform:uppercase;">Кредиторка</div>
                 <div style="font-size:16px;font-weight:900;color:#B45309;">${formatMoneyUa(report.accrual.creditorTotal)}</div>
             </div>
-            <div style="background:#FEF2F2;border:1px solid #FECACA;border-radius:12px;padding:12px;text-align:center;">
-                <div style="font-size:10px;font-weight:800;color:#DC2626;text-transform:uppercase;">Дебіторка</div>
-                <div style="font-size:16px;font-weight:900;color:#DC2626;">${formatMoneyUa(report.accrual.debtorTotal)}</div>
-            </div>
-            <div style="grid-column:1/-1;background:#F0FDF4;border:1px solid #A7F3D0;border-radius:12px;padding:12px;text-align:center;">
-                <div style="font-size:10px;font-weight:800;color:#059669;text-transform:uppercase;">Надано послуг</div>
-                <div style="font-size:16px;font-weight:900;color:#059669;">${formatMoneyUa(report.accrual.earnedInPeriod)}</div>
+            <div style="background:#FDF2F8;border:1px solid #F9A8D4;border-radius:12px;padding:12px;text-align:center;">
+                <div style="font-size:10px;font-weight:800;color:#BE185D;text-transform:uppercase;">Дебіторка</div>
+                <div style="font-size:16px;font-weight:900;color:#BE185D;">${formatMoneyUa(report.accrual.debtorTotal)}</div>
             </div>
         </div>` : ''}
 
