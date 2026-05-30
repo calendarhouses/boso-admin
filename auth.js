@@ -16,6 +16,7 @@
     let onReadyCallback = null;
     let gsiReady = false;
     let loginInProgress = false;
+    let gsiWaitTimer = null;
 
     function getApiUrl() {
         return global.BOSO_API_URL || DEFAULT_API_URL;
@@ -76,6 +77,7 @@
         var app = document.getElementById('admin-app');
         if (login) login.style.display = 'flex';
         if (app) app.style.display = 'none';
+        setTimeout(updateSignInUi, 0);
     }
 
     function showAdminApp() {
@@ -163,18 +165,36 @@
         exchangeGoogleCredentialForSession(response.credential, claims, email);
     }
 
+    function updateSignInUi() {
+        var container = document.getElementById('googleSignInBtn');
+        var fallback = document.getElementById('googleSignInFallback');
+        if (!fallback) return;
+        var hasIframe = !!(container && container.querySelector('iframe'));
+        fallback.style.display = hasIframe ? 'none' : 'inline-flex';
+    }
+
     function renderGoogleButton() {
         var container = document.getElementById('googleSignInBtn');
-        if (!container || !global.google || !global.google.accounts || !global.google.accounts.id) return;
+        if (!container || !global.google || !global.google.accounts || !global.google.accounts.id) {
+            updateSignInUi();
+            return false;
+        }
         container.innerHTML = '';
-        global.google.accounts.id.renderButton(container, {
-            theme: 'outline',
-            size: 'large',
-            text: 'signin_with',
-            shape: 'pill',
-            locale: 'uk',
-            width: 280
-        });
+        try {
+            global.google.accounts.id.renderButton(container, {
+                theme: 'outline',
+                size: 'large',
+                text: 'signin_with',
+                shape: 'pill',
+                locale: 'uk',
+                width: 280
+            });
+        } catch (e) {
+            updateSignInUi();
+            return false;
+        }
+        setTimeout(updateSignInUi, 400);
+        return true;
     }
 
     function initGsi() {
@@ -190,19 +210,80 @@
         return true;
     }
 
+    function showGsiLoadError() {
+        if (isAuthenticated()) return;
+        showLoginError('Не вдалося завантажити Google. Оновіть сторінку, вимкніть блокувальник або вийдіть з приватного режиму Safari.');
+        updateSignInUi();
+    }
+
+    function onGsiScriptLoad() {
+        global.__bosoGsiLoaded = true;
+        if (gsiWaitTimer) {
+            clearInterval(gsiWaitTimer);
+            gsiWaitTimer = null;
+        }
+        if (!isAuthenticated()) {
+            initGsi();
+        }
+    }
+
     function waitForGsi(cb) {
         if (initGsi()) {
             cb();
             return;
         }
+        if (global.__bosoGsiLoaded) {
+            initGsi();
+            cb();
+            return;
+        }
         var attempts = 0;
-        var timer = setInterval(function () {
+        if (gsiWaitTimer) clearInterval(gsiWaitTimer);
+        gsiWaitTimer = setInterval(function () {
             attempts++;
-            if (initGsi() || attempts > 80) {
-                clearInterval(timer);
+            if (initGsi()) {
+                clearInterval(gsiWaitTimer);
+                gsiWaitTimer = null;
+                cb();
+                return;
+            }
+            if (attempts > 120) {
+                clearInterval(gsiWaitTimer);
+                gsiWaitTimer = null;
+                showGsiLoadError();
                 cb();
             }
         }, 100);
+    }
+
+    function triggerGoogleSignIn() {
+        showLoginError('');
+        if (!initGsi()) {
+            waitForGsi(function () {
+                if (!gsiReady) {
+                    showGsiLoadError();
+                    return;
+                }
+                triggerGoogleSignIn();
+            });
+            return;
+        }
+        renderGoogleButton();
+        setTimeout(function () {
+            if (document.querySelector('#googleSignInBtn iframe')) return;
+            try {
+                global.google.accounts.id.prompt(function (notification) {
+                    if (!notification) return;
+                    if (notification.isNotDisplayed && notification.isNotDisplayed()) {
+                        showGsiLoadError();
+                    } else if (notification.isSkippedMoment && notification.isSkippedMoment()) {
+                        showGsiLoadError();
+                    }
+                });
+            } catch (e) {
+                showGsiLoadError();
+            }
+        }, 300);
     }
 
     function getSession() {
@@ -222,7 +303,11 @@
         showLoginScreen();
         showLoginError(message || 'Сесію завершено. Увійдіть через Google.');
         waitForGsi(function () {
-            if (gsiReady) renderGoogleButton();
+            if (gsiReady) {
+                renderGoogleButton();
+            } else {
+                updateSignInUi();
+            }
         });
     }
 
@@ -325,16 +410,20 @@
         }
 
         waitForGsi(function () {
-            if (!gsiReady) return;
             if (!isAuthenticated()) {
-                renderGoogleButton();
+                if (gsiReady) renderGoogleButton();
+                else updateSignInUi();
             }
         });
     }
 
+    global.__bosoGsiOnLoad = onGsiScriptLoad;
+    if (global.__bosoGsiLoaded) onGsiScriptLoad();
+
     global.BosoAuth = {
         CLIENT_ID: GOOGLE_CLIENT_ID,
         bootstrap: bootstrap,
+        triggerGoogleSignIn: triggerGoogleSignIn,
         isAuthenticated: isAuthenticated,
         getSession: getSession,
         getEmail: function () {
