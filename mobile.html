@@ -3610,6 +3610,8 @@ function fillSurcharge() {
     
     if (remainder > 0) {
         document.getElementById('adminSurchargeAmount').value = remainder;
+        bosoReconcilePaymentFieldToJournal('surcharge');
+        renderPaymentJournalList();
         calculateBalanceLive();
     }
 }
@@ -3619,6 +3621,8 @@ function setHalfPrepayment() {
     let prepayInput = document.getElementById('adminPrepayAmount');
     if (prepayInput) {
         prepayInput.value = Math.round(total / 2);
+        bosoReconcilePaymentFieldToJournal('prepay');
+        renderPaymentJournalList();
         calculateBalanceLive(); 
     }
 }
@@ -3963,8 +3967,7 @@ function setHalfPrepayment() {
                 const openPay = window._bookingOpenPayments || { prepay: 0, surcharge: 0 };
                 const newSurcharge = getVal('adminSurchargeAmount');
                 const surchargeDelta = newSurcharge - (Number(openPay.surcharge) || 0);
-                const hadJournalAdd = paymentsForSave.some(p => bosoIsSurchargeType(p.type) && p.note === 'доплата');
-                if (surchargeDelta > 0 && !hadJournalAdd) {
+                if (surchargeDelta > 0) {
                     payloadForServer.remainderPaymentAdded = true;
                     payloadForServer.remainderPaymentAmount = surchargeDelta;
                 }
@@ -4741,28 +4744,57 @@ function setHalfPrepayment() {
                 }
             });
         };
+        function bosoPaymentBucketFilter(bucket) {
+            return bucket === 'prepay'
+                ? (p) => bosoIsPrepayType(p.type)
+                : (p) => bosoIsSurchargeType(p.type);
+        }
+
+        function bosoReconcilePaymentFieldToJournal(bucket) {
+            const isPrepay = bucket === 'prepay';
+            const fieldEl = document.getElementById(isPrepay ? 'adminPrepayAmount' : 'adminSurchargeAmount');
+            const methodEl = document.getElementById(isPrepay ? 'adminPrepayMethod' : 'adminSurchargeMethod');
+            if (!fieldEl) return;
+            const target = Math.round(Number(fieldEl.value) || 0);
+            const method = methodEl?.value || (isPrepay ? 'ФОП' : 'Готівка');
+            const payments = window._bookingPayments || [];
+            const filter = bosoPaymentBucketFilter(bucket);
+            const current = payments.filter(filter).reduce((s, p) => s + (Math.round(Number(p.amount)) || 0), 0);
+            const delta = target - current;
+            if (delta === 0) return;
+            if (delta > 0) {
+                payments.push({
+                    id: 'P-' + Date.now() + (isPrepay ? '-p' : '-s'),
+                    date: bosoFormatDateIso(new Date()),
+                    amount: delta,
+                    method: method,
+                    type: isPrepay ? 'prepay' : 'surcharge',
+                    note: isPrepay ? '' : 'доплата'
+                });
+            } else {
+                let toRemove = -delta;
+                for (let i = payments.length - 1; i >= 0 && toRemove > 0; i--) {
+                    if (!filter(payments[i])) continue;
+                    const amt = Math.round(Number(payments[i].amount) || 0);
+                    if (amt <= toRemove) {
+                        toRemove -= amt;
+                        payments.splice(i, 1);
+                    } else {
+                        payments[i].amount = amt - toRemove;
+                        toRemove = 0;
+                    }
+                }
+            }
+            window._bookingPayments = payments;
+        }
+
         function bosoBuildPaymentsForSave() {
-            let payments = (window._bookingPayments || []).map(p => ({
+            bosoReconcilePaymentFieldToJournal('prepay');
+            bosoReconcilePaymentFieldToJournal('surcharge');
+            return (window._bookingPayments || []).map(p => ({
                 id: p.id, date: String(p.date || '').substring(0, 10), amount: Math.round(Number(p.amount) || 0),
                 method: p.method || 'ФОП', type: p.type || 'prepay', note: p.note || ''
             })).filter(p => p.amount !== 0);
-            const prepay = Number(document.getElementById('adminPrepayAmount')?.value) || 0;
-            const surcharge = Number(document.getElementById('adminSurchargeAmount')?.value) || 0;
-            const prepayMethod = document.getElementById('adminPrepayMethod')?.value || 'ФОП';
-            const surchargeMethod = document.getElementById('adminSurchargeMethod')?.value || 'Готівка';
-            const journalPrepay = bosoSumPaymentsByBucket(payments, 'prepay');
-            const journalSurcharge = bosoSumPaymentsByBucket(payments, 'surcharge');
-            const created = window._bookingPaymentMeta?.createdAt || document.getElementById('adminCheckIn')?.value;
-            const checkOut = document.getElementById('adminCheckOut')?.value;
-            if (prepay !== journalPrepay) {
-                payments = payments.filter(p => !bosoIsPrepayType(p.type));
-                if (prepay !== 0) payments.push({ id: 'P-' + Date.now() + '-p', date: created, amount: prepay, method: prepayMethod, type: 'prepay', note: '' });
-            }
-            if (surcharge !== journalSurcharge) {
-                payments = payments.filter(p => !bosoIsSurchargeType(p.type));
-                if (surcharge !== 0) payments.push({ id: 'P-' + Date.now() + '-s', date: checkOut, amount: surcharge, method: surchargeMethod, type: 'surcharge', note: '' });
-            }
-            return payments;
         }
         function bosoBookingNights(checkIn, checkOut) {
             const cin = bosoDateOnly(checkIn);
