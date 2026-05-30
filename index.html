@@ -978,14 +978,15 @@ input[type="number"] {
         .pj-date-wrap .flatpickr-input,
         .pj-date-wrap input.form-control.input {
             width: 100% !important; box-sizing: border-box; padding: 9px 10px !important; font-size: 13px !important;
-            font-family: inherit !important; color: #111827 !important; background: #F9FAFB !important;
-            border: 1px solid #E5E7EB !important; border-radius: 8px !important; height: auto !important;
+            font-family: inherit !important; color: #111827 !important; background: #F8FAF7 !important;
+            border: 1.5px solid var(--accent) !important; border-radius: 8px !important; height: auto !important;
             cursor: pointer;
+            box-shadow: 0 0 0 3px rgba(85, 107, 47, 0.1) !important;
         }
         .pj-date-wrap .flatpickr-input:focus,
         .pj-date-wrap input.form-control.input:focus {
             border-color: var(--accent) !important; background: #FFF !important;
-            box-shadow: 0 0 0 3px rgba(85, 107, 47, 0.12) !important;
+            box-shadow: 0 0 0 3px rgba(85, 107, 47, 0.18) !important;
         }
         .pj-date-wrap input.pj-date-input[type="hidden"] { display: none !important; }
         .flatpickr-calendar.open { z-index: 1300 !important; }
@@ -6029,7 +6030,7 @@ function bosoLeave() {
                     <input type="number" class="pj-field pj-amount${neg ? ' pj-amount-negative' : ''}" value="${Number(p.amount) || 0}" onchange="bosoUpdatePaymentField(${idx}, 'amount', this.value)">
                     ${bosoRenderPaymentSelect(idx, 'method', methodOpts, method)}
                     ${bosoRenderPaymentSelect(idx, 'type', typeOpts, uiType)}
-                    <button type="button" class="pj-del" onclick="bosoRemovePaymentRow(${idx})" title="Видалити">×</button>
+                    <button type="button" class="pj-del" onclick="bosoConfirmRemovePaymentRow(${idx})" title="Видалити">×</button>
                 </div>`;
             }).join('');
             box.innerHTML = `<div class="pj-table"><div class="pj-thead"><span>Дата</span><span>Сума</span><span>Метод</span><span>Тип</span><span></span></div>${rows}</div>`;
@@ -6041,6 +6042,24 @@ function bosoLeave() {
             if (field === 'amount') window._bookingPayments[idx].amount = Math.round(Number(val) || 0);
             else window._bookingPayments[idx][field] = val;
             bosoSyncPaymentFieldsFromJournal();
+        };
+
+        window.bosoConfirmRemovePaymentRow = function(idx) {
+            const p = (window._bookingPayments || [])[idx];
+            if (!p) return;
+            const amt = Math.round(Number(p.amount) || 0);
+            const iso = String(p.date || '').substring(0, 10);
+            const parts = iso.split('-');
+            const dateLabel = parts.length === 3 ? `${parts[2]}.${parts[1]}.${parts[0]}` : 'без дати';
+            const amtLabel = amt !== 0 ? ` на ${amt.toLocaleString('uk-UA')} грн` : '';
+            openCustomConfirm(
+                'Видалити платіж?',
+                `Запис від ${dateLabel}${amtLabel} буде прибрано з журналу. Натисніть «Зберегти бронь», щоб застосувати зміни.`,
+                function() {
+                    closeCustomConfirm();
+                    bosoRemovePaymentRow(idx);
+                }
+            );
         };
 
         window.bosoRemovePaymentRow = function(idx) {
