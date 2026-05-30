@@ -1454,6 +1454,7 @@
         
         // --- 🟢 ДОДАНІ ГЛОБАЛЬНІ ЗМІННІ ДЛЯ РОЗШИФРОВКИ ТА ШАХМАТКИ ---
         let prevFormState = {}; 
+        window._bookingDrawerLoading = false;
         let dragRoom = null;
         let dragStartDate = null;
         let dragEndDate = null;
@@ -1483,7 +1484,7 @@
         function applyServerData(data, isSilent = false) {
             if (!data || !data.bookings) return;
             
-            allBookings = data.bookings;
+            allBookings = bosoMapBookingsFromServer(data.bookings);
             const settingsData = data.settings || {};
             
             if (settingsData && Object.keys(settingsData).length > 0) {
@@ -1525,7 +1526,7 @@
                 // Використовуємо запит, який стартував ще на самому початку скрипта
                 const data = await initialFetchPromise;
                 
-                allBookings = data.bookings || [];
+                allBookings = bosoMapBookingsFromServer(data.bookings || []);
                 const settingsData = data.settings || {};
                 
                 if (settingsData && Object.keys(settingsData).length > 0) {
@@ -1575,7 +1576,7 @@
                 const data = await res.json();
                 
                 if (data && data.bookings) {
-                    allBookings = data.bookings;
+                    allBookings = bosoMapBookingsFromServer(data.bookings);
                     const sd = data.settings || {};
                     if (sd.roomsList) roomsList = sd.roomsList;
                     if (sd.discountsList) discountsList = sd.discountsList;
@@ -3048,7 +3049,7 @@ if (sClass.includes('скас')) {
         function togglePet(val) {
             document.getElementById('adminPets').value = val;
             document.querySelectorAll('.pet-btn').forEach(btn => { btn.classList.toggle('active', btn.getAttribute('data-val') === val); });
-            updatePricePreview();
+            if (!window._bookingDrawerLoading) updatePricePreview();
         }
         function toggleRoomStatus(val) {
             document.getElementById('mRoomStatus').value = val;
@@ -3059,13 +3060,13 @@ if (sClass.includes('скас')) {
         function toggleVat(val) {
             document.getElementById('adminVat').value = val;
             document.querySelectorAll('.vat-btn').forEach(btn => { btn.classList.toggle('active', btn.getAttribute('data-val') === val); });
-            updatePricePreview(); 
+            if (!window._bookingDrawerLoading) updatePricePreview(); 
         }
 
         function toggleUBD(val) {
             document.getElementById('adminUBD').value = val;
             document.querySelectorAll('.ubd-btn').forEach(btn => { btn.classList.toggle('active', btn.getAttribute('data-val') === val); });
-            updatePricePreview(); 
+            if (!window._bookingDrawerLoading) updatePricePreview(); 
         }
 
         function changeAdminDayGuests(amount) {
@@ -3214,6 +3215,7 @@ if (sClass.includes('скас')) {
         
         function updatePricePreview(isInitialLoad = false) {
     if (typeof isInitialLoad !== 'boolean') isInitialLoad = false;
+    if (window._bookingDrawerLoading && !isInitialLoad) return;
             const checkInStr = document.getElementById('adminCheckIn') ? document.getElementById('adminCheckIn').value : document.getElementById('adminStart').value; 
             const checkOutStr = document.getElementById('adminCheckOut') ? document.getElementById('adminCheckOut').value : document.getElementById('adminEnd').value;
             const roomName = document.getElementById('adminCottage') ? document.getElementById('adminCottage').value : document.getElementById('adminRoom').value; 
@@ -3233,18 +3235,22 @@ if (sClass.includes('скас')) {
             let savedPrepayMethod = 'ФОП';
             let savedSurchargeMethod = 'Готівка';
             const paysBeforeRebuild = window._bookingPayments || [];
-            if (document.getElementById('adminPrepayAmount')) {
-                savedPrepay = Number(document.getElementById('adminPrepayAmount').value) || 0;
-                savedSurcharge = Number(document.getElementById('adminSurchargeAmount').value) || 0;
-                savedPrepayMethod = document.getElementById('adminPrepayMethod')?.value || savedPrepayMethod;
-                savedSurchargeMethod = document.getElementById('adminSurchargeMethod')?.value || savedSurchargeMethod;
-            } else if (paysBeforeRebuild.length) {
-                savedPrepay = bosoSumPaymentsByBucket(paysBeforeRebuild, 'prepay');
-                savedSurcharge = bosoSumPaymentsByBucket(paysBeforeRebuild, 'surcharge');
+            const journalPrepay = paysBeforeRebuild.length ? bosoSumPaymentsByBucket(paysBeforeRebuild, 'prepay') : 0;
+            const journalSurcharge = paysBeforeRebuild.length ? bosoSumPaymentsByBucket(paysBeforeRebuild, 'surcharge') : 0;
+            const prepayFieldEl = document.getElementById('adminPrepayAmount');
+
+            if (journalPrepay + journalSurcharge > 0) {
+                savedPrepay = journalPrepay;
+                savedSurcharge = journalSurcharge;
                 const lastPrepay = [...paysBeforeRebuild].reverse().find(p => bosoIsPrepayType(p.type) && Number(p.amount) > 0);
                 const lastSurcharge = [...paysBeforeRebuild].reverse().find(p => bosoIsSurchargeType(p.type) && Number(p.amount) > 0);
                 if (lastPrepay) savedPrepayMethod = lastPrepay.method || savedPrepayMethod;
                 if (lastSurcharge) savedSurchargeMethod = lastSurcharge.method || savedSurchargeMethod;
+            } else if (prepayFieldEl) {
+                savedPrepay = Number(prepayFieldEl.value) || 0;
+                savedSurcharge = Number(document.getElementById('adminSurchargeAmount').value) || 0;
+                savedPrepayMethod = document.getElementById('adminPrepayMethod')?.value || savedPrepayMethod;
+                savedSurchargeMethod = document.getElementById('adminSurchargeMethod')?.value || savedSurchargeMethod;
             } else if (window._bookingOpenPayments) {
                 savedPrepay = Number(window._bookingOpenPayments.prepay) || 0;
                 savedSurcharge = Number(window._bookingOpenPayments.surcharge) || 0;
@@ -3446,10 +3452,20 @@ if (sClass.includes('скас')) {
     // 🟢 ВІДНОВЛЮЄМО ЗАГАЛЬНУ ЦІНУ
     if (isInitialLoad && editingRowNumber) {
         const b = allBookings.find(x => x.row == editingRowNumber);
-        if (b && b.totalPrice !== undefined && b.totalPrice !== "") {
-            totalPrice = Number(b.totalPrice);
-            discountAmount = (basePriceTotal + extraGuestFee + petFee + dayGuestsFee + earlyFee + lateFee) - totalPrice;
-            if (discountAmount < 0) discountAmount = 0; 
+        if (b) {
+            if (b.discountAmount !== undefined && b.discountAmount !== "") {
+                discountAmount = Number(b.discountAmount);
+                isDiscEdited = true;
+            }
+            if (b.totalPrice !== undefined && b.totalPrice !== "") {
+                totalPrice = Number(b.totalPrice);
+                if (!isDiscEdited) {
+                    discountAmount = (basePriceTotal + extraGuestFee + petFee + dayGuestsFee + earlyFee + lateFee) - totalPrice;
+                    if (discountAmount < 0) discountAmount = 0;
+                }
+            } else if (isDiscEdited) {
+                totalPrice = (basePriceTotal + extraGuestFee - discountAmount) + petFee + dayGuestsFee + earlyFee + lateFee;
+            }
         }
     }
 
@@ -3620,8 +3636,14 @@ if (sClass.includes('скас')) {
     const surchargeInp = document.getElementById('adminSurchargeAmount');
     
     if (totalInp) totalInp.addEventListener('input', calculateBalanceLive);
-    if (prepayInp) prepayInp.addEventListener('input', calculateBalanceLive);
-    if (surchargeInp) surchargeInp.addEventListener('input', calculateBalanceLive);
+    if (prepayInp) prepayInp.addEventListener('input', function() {
+        window._bookingPaymentsManuallyEdited = true;
+        calculateBalanceLive();
+    });
+    if (surchargeInp) surchargeInp.addEventListener('input', function() {
+        window._bookingPaymentsManuallyEdited = true;
+        calculateBalanceLive();
+    });
     
     selectPayMethod('prepay', savedPrepayMethod);
     selectPayMethod('surcharge', savedSurchargeMethod);
@@ -3711,7 +3733,7 @@ function setHalfPrepayment() {
     let activeStatusBtn = document.querySelector('.status-btn.active');
     let currentStatus = activeStatusBtn ? activeStatusBtn.getAttribute('data-status') : '';
     
-    if (currentStatus !== 'Скасовано') {
+    if (!editingRowNumber && !window._bookingDrawerLoading && currentStatus !== 'Скасовано') {
         document.querySelectorAll('.status-btn').forEach(b => b.classList.remove('active'));
         if (paid > 0) {
             let confBtn = document.querySelector('.status-btn[data-status="Підтверджено"]');
@@ -3748,6 +3770,7 @@ function setHalfPrepayment() {
                 selectPayMethod('surcharge', 'Готівка');
             }
             window._bookingOpenPayments = { prepay: 0, surcharge: 0 };
+            window._bookingPaymentsManuallyEdited = false;
             window._bookingPayments = [];
             window._bookingPaymentMeta = { createdAt: bosoFormatDateIso(new Date()), checkOut: '' };
             if(document.getElementById('adminPets')) togglePet('Ні');
@@ -3799,6 +3822,7 @@ function setHalfPrepayment() {
                 return;
             }
             const booking = allBookings.find(b => b.row == rowNumber); if (!booking) return;
+            window._bookingDrawerLoading = true;
             editingRowNumber = rowNumber;
             prevFormState = { checkIn: "", checkOut: "", cottage: "", guests: 0, pets: "", dayGuests: 0, early: null, late: null };
 
@@ -3809,6 +3833,7 @@ function setHalfPrepayment() {
             }
             window._bookingOpenPayments = { prepay: savedPrepayInit, surcharge: savedSurchargeInit };
             window._bookingPayments = bosoGetBookingPayments(booking);
+            window._bookingPaymentsManuallyEdited = false;
             window._bookingPaymentMeta = {
                 createdAt: booking.createdAt || booking.checkIn,
                 checkOut: booking.checkOut
@@ -3938,6 +3963,7 @@ function setHalfPrepayment() {
                         calculateBalanceLive();
                         renderPaymentJournalList();
             }
+                    window._bookingDrawerLoading = false;
         }, 50);
     }, 100);
             document.querySelector('.drawer-body').scrollTop = 0;
@@ -4679,6 +4705,24 @@ function setHalfPrepayment() {
             }
             bosoSyncPaymentFieldsFromJournal();
         };
+        function bosoNormalizeBookingRecord(b) {
+            if (!b || typeof b !== 'object') return b;
+            const pays = bosoGetBookingPayments(b);
+            if (!pays.length) return b;
+            const prepay = bosoSumPaymentsByBucket(pays, 'prepay');
+            const surcharge = bosoSumPaymentsByBucket(pays, 'surcharge');
+            const paid = pays.reduce((s, p) => s + (Math.round(Number(p.amount)) || 0), 0);
+            if ((Number(b.prepayAmount) || 0) === 0 && prepay > 0) b.prepayAmount = prepay;
+            if ((Number(b.surchargeAmount) || 0) === 0 && surcharge > 0) b.surchargeAmount = surcharge;
+            if ((Number(b.paidAmount) || 0) === 0 && paid > 0) b.paidAmount = paid;
+            if (!Array.isArray(b.payments) || !b.payments.length) b.payments = pays;
+            return b;
+        }
+
+        function bosoMapBookingsFromServer(bookings) {
+            return (bookings || []).map(b => bosoNormalizeBookingRecord({ ...b }));
+        }
+
         function bosoBuildLegacyPayments(b) {
             const prepay = Math.round(Number(b.prepayAmount) || 0);
             const surcharge = Math.round(Number(b.surchargeAmount) || 0);
@@ -4843,8 +4887,24 @@ function setHalfPrepayment() {
         }
 
         function bosoBuildPaymentsForSave() {
-            bosoReconcilePaymentFieldToJournal('prepay');
-            bosoReconcilePaymentFieldToJournal('surcharge');
+            const payments = window._bookingPayments || [];
+            const journalPrepay = bosoSumPaymentsByBucket(payments, 'prepay');
+            const journalSurcharge = bosoSumPaymentsByBucket(payments, 'surcharge');
+            const fieldPrepay = Math.round(Number(document.getElementById('adminPrepayAmount')?.value) || 0);
+            const fieldSurcharge = Math.round(Number(document.getElementById('adminSurchargeAmount')?.value) || 0);
+            const openPay = window._bookingOpenPayments || { prepay: 0, surcharge: 0 };
+            const openTotal = (Number(openPay.prepay) || 0) + (Number(openPay.surcharge) || 0);
+            const journalTotal = journalPrepay + journalSurcharge;
+
+            if (!window._bookingPaymentsManuallyEdited && openTotal > 0 && fieldPrepay === 0 && fieldSurcharge === 0 && journalTotal > 0) {
+                const prepayEl = document.getElementById('adminPrepayAmount');
+                const surchargeEl = document.getElementById('adminSurchargeAmount');
+                if (prepayEl) prepayEl.value = journalPrepay;
+                if (surchargeEl) surchargeEl.value = journalSurcharge;
+            } else {
+                bosoReconcilePaymentFieldToJournal('prepay');
+                bosoReconcilePaymentFieldToJournal('surcharge');
+            }
             return (window._bookingPayments || []).map(p => ({
                 id: p.id, date: String(p.date || '').substring(0, 10), amount: Math.round(Number(p.amount) || 0),
                 method: p.method || 'ФОП', type: p.type || 'prepay', note: p.note || ''

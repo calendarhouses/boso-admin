@@ -2014,6 +2014,7 @@ function getVisitWord(count) {
    let editingRowNumber = null;
    let globalDebtorsHtml = ''; // 🟢 ВСТАВ ТУТ: Глобальна пам'ять для боржників
         let prevFormState = { checkIn: "", checkOut: "", cottage: "", guests: 0, pets: "", dayGuests: 0, early: null, late: null };
+        window._bookingDrawerLoading = false;
 
         // --- БАЗОВІ ДАНІ НАЛАШТУВАНЬ ---
         let roomsList = [
@@ -2246,7 +2247,7 @@ function saveInlineTransaction(type, category, idx) {
         function applyServerData(data, isSilent = false) {
             if (!data || !data.bookings) return;
             
-            allBookings = data.bookings;
+            allBookings = bosoMapBookingsFromServer(data.bookings);
             const settingsData = data.settings || {};
             
             if (settingsData && Object.keys(settingsData).length > 0) {
@@ -2288,7 +2289,7 @@ function saveInlineTransaction(type, category, idx) {
                 // Використовуємо запит, який стартував ще на самому початку скрипта
                 const data = await initialFetchPromise;
                 
-                allBookings = data.bookings || [];
+                allBookings = bosoMapBookingsFromServer(data.bookings || []);
                 const settingsData = data.settings || {};
                 
                 if (settingsData && Object.keys(settingsData).length > 0) {
@@ -2338,7 +2339,7 @@ function saveInlineTransaction(type, category, idx) {
                 const data = await res.json();
                 
                 if (data && data.bookings) {
-                    allBookings = data.bookings;
+                    allBookings = bosoMapBookingsFromServer(data.bookings);
                     const sd = data.settings || {};
                     if (sd.roomsList) roomsList = sd.roomsList;
                     if (sd.discountsList) discountsList = sd.discountsList;
@@ -4169,7 +4170,7 @@ else if (total === 0) { finText = "Немає ціни"; badgeBg = "rgba(255,255
             document.querySelectorAll('.pet-btn').forEach(btn => {
                 btn.classList.toggle('active', btn.getAttribute('data-val') === val);
             });
-            updatePricePreview(); // Моментально перераховуємо ціну!
+            if (!window._bookingDrawerLoading) updatePricePreview();
         }
 
         function toggleVat(val) {
@@ -4177,7 +4178,7 @@ else if (total === 0) { finText = "Немає ціни"; badgeBg = "rgba(255,255
     document.querySelectorAll('.vat-btn').forEach(btn => {
         btn.classList.toggle('active', btn.getAttribute('data-val') === val);
     });
-    updatePricePreview(); 
+    if (!window._bookingDrawerLoading) updatePricePreview();
 }
 
 function toggleUBD(val) {
@@ -4185,7 +4186,7 @@ function toggleUBD(val) {
     document.querySelectorAll('.ubd-btn').forEach(btn => {
         btn.classList.toggle('active', btn.getAttribute('data-val') === val);
     });
-    updatePricePreview(); // Перерахує знижку 10%
+    if (!window._bookingDrawerLoading) updatePricePreview();
 }
 
         let selectedEarlyTime = null;
@@ -4246,6 +4247,7 @@ function getDayPrice(room, dateObj) {
         // --- ПАНЕЛЬ ДЕТАЛЕЙ БРОНЮВАННЯ ТА ЖИВИЙ КАЛЬКУЛЯТОР ---
         function updatePricePreview(isInitialLoad) {
     if (typeof isInitialLoad !== 'boolean') isInitialLoad = false; // Захист від випадкових спрацювань
+    if (window._bookingDrawerLoading && !isInitialLoad) return;
     const checkInStr = document.getElementById('adminCheckIn').value;
     const checkOutStr = document.getElementById('adminCheckOut').value;
     const roomName = document.getElementById('adminCottage').value;
@@ -4262,18 +4264,22 @@ function getDayPrice(room, dateObj) {
     let savedPrepayMethod = 'ФОП';
     let savedSurchargeMethod = 'Готівка';
     const paysBeforeRebuild = window._bookingPayments || [];
-    if (document.getElementById('adminPrepayAmount')) {
-        savedPrepay = Number(document.getElementById('adminPrepayAmount').value) || 0;
-        savedSurcharge = Number(document.getElementById('adminSurchargeAmount').value) || 0;
-        savedPrepayMethod = document.getElementById('adminPrepayMethod')?.value || savedPrepayMethod;
-        savedSurchargeMethod = document.getElementById('adminSurchargeMethod')?.value || savedSurchargeMethod;
-    } else if (paysBeforeRebuild.length) {
-        savedPrepay = bosoSumPaymentsByBucket(paysBeforeRebuild, 'prepay');
-        savedSurcharge = bosoSumPaymentsByBucket(paysBeforeRebuild, 'surcharge');
+    const journalPrepay = paysBeforeRebuild.length ? bosoSumPaymentsByBucket(paysBeforeRebuild, 'prepay') : 0;
+    const journalSurcharge = paysBeforeRebuild.length ? bosoSumPaymentsByBucket(paysBeforeRebuild, 'surcharge') : 0;
+    const prepayFieldEl = document.getElementById('adminPrepayAmount');
+
+    if (journalPrepay + journalSurcharge > 0) {
+        savedPrepay = journalPrepay;
+        savedSurcharge = journalSurcharge;
         const lastPrepay = [...paysBeforeRebuild].reverse().find(p => bosoIsPrepayType(p.type) && Number(p.amount) > 0);
         const lastSurcharge = [...paysBeforeRebuild].reverse().find(p => bosoIsSurchargeType(p.type) && Number(p.amount) > 0);
         if (lastPrepay) savedPrepayMethod = lastPrepay.method || savedPrepayMethod;
         if (lastSurcharge) savedSurchargeMethod = lastSurcharge.method || savedSurchargeMethod;
+    } else if (prepayFieldEl) {
+        savedPrepay = Number(prepayFieldEl.value) || 0;
+        savedSurcharge = Number(document.getElementById('adminSurchargeAmount').value) || 0;
+        savedPrepayMethod = document.getElementById('adminPrepayMethod')?.value || savedPrepayMethod;
+        savedSurchargeMethod = document.getElementById('adminSurchargeMethod')?.value || savedSurchargeMethod;
     } else if (window._bookingOpenPayments) {
         savedPrepay = Number(window._bookingOpenPayments.prepay) || 0;
         savedSurcharge = Number(window._bookingOpenPayments.surcharge) || 0;
@@ -4557,11 +4563,20 @@ const appliesToRoom =
     // 🟢 ВІДНОВЛЮЄМО РУЧНУ ЗНИЖКУ/ЗАГАЛЬНУ ЦІНУ
     if (isInitialLoad && editingRowNumber) {
         const b = allBookings.find(x => x.row == editingRowNumber);
-        if (b && b.totalPrice !== undefined && b.totalPrice !== "") {
-            totalPrice = Number(b.totalPrice);
-            // Реверсивно вираховуємо суму знижки, щоб математика зійшлася
-            discountAmount = (basePriceTotal + extraGuestFee + petFee + dayGuestFee + earlyFee + lateFee) - totalPrice;
-            if (discountAmount < 0) discountAmount = 0; 
+        if (b) {
+            if (b.discountAmount !== undefined && b.discountAmount !== "") {
+                discountAmount = Number(b.discountAmount);
+                isDiscEdited = true;
+            }
+            if (b.totalPrice !== undefined && b.totalPrice !== "") {
+                totalPrice = Number(b.totalPrice);
+                if (!isDiscEdited) {
+                    discountAmount = (basePriceTotal + extraGuestFee + petFee + dayGuestFee + earlyFee + lateFee) - totalPrice;
+                    if (discountAmount < 0) discountAmount = 0;
+                }
+            } else if (isDiscEdited) {
+                totalPrice = amountToDiscount - discountAmount + petFee + dayGuestFee + earlyFee + lateFee;
+            }
         }
     }
 
@@ -4727,8 +4742,14 @@ const appliesToRoom =
     `;
 
     document.getElementById('adminTotalPrice').addEventListener('input', calculateBalanceLive);
-    document.getElementById('adminPrepayAmount').addEventListener('input', calculateBalanceLive);
-    document.getElementById('adminSurchargeAmount').addEventListener('input', calculateBalanceLive);
+    document.getElementById('adminPrepayAmount').addEventListener('input', function() {
+        window._bookingPaymentsManuallyEdited = true;
+        calculateBalanceLive();
+    });
+    document.getElementById('adminSurchargeAmount').addEventListener('input', function() {
+        window._bookingPaymentsManuallyEdited = true;
+        calculateBalanceLive();
+    });
     
     selectPayMethod('prepay', savedPrepayMethod);
     selectPayMethod('surcharge', savedSurchargeMethod);
@@ -4835,11 +4856,10 @@ function calculateBalanceLive() {
         balEl.style.borderColor = "#FECACA";
     }
 
-    // 🟢 АВТОМАТИЧНА ЗМІНА СТАТУСУ (Нова бронь <-> Підтверджено)
+    // Авто-статус тільки для НОВИХ броней (не чіпаємо існуючі при глюку UI)
     let activeStatusBtn = document.querySelector('.status-btn.active');
     let currentStatus = activeStatusBtn ? activeStatusBtn.getAttribute('data-status') : '';
-    
-    if (currentStatus !== 'Скасовано') {
+    if (!editingRowNumber && !window._bookingDrawerLoading && currentStatus !== 'Скасовано') {
         document.querySelectorAll('.status-btn').forEach(b => b.classList.remove('active'));
         if (paid > 0) {
             let confBtn = document.querySelector('.status-btn[data-status="Підтверджено"]');
@@ -5032,6 +5052,7 @@ document.getElementById('adminGuests').addEventListener('change', updatePricePre
             }
             window._bookingOpenPayments = { prepay: 0, surcharge: 0 };
             window._bookingPayments = [];
+            window._bookingPaymentsManuallyEdited = false;
             window._bookingPaymentMeta = { createdAt: bosoFormatDateIso(new Date()), checkOut: '' };
             
            // ОЧИЩЕННЯ ПОЛІВ ПРИ НОВІЙ БРОНІ
@@ -5112,6 +5133,7 @@ document.getElementById('adminGuests').addEventListener('change', updatePricePre
             
             const booking = allBookings.find(b => b.row == rowNumber);
             if (!booking) return;
+            window._bookingDrawerLoading = true;
             editingRowNumber = rowNumber;
             prevFormState = { checkIn: "", checkOut: "", cottage: "", guests: 0, pets: "", dayGuests: 0, early: null, late: null };
 
@@ -5122,6 +5144,7 @@ document.getElementById('adminGuests').addEventListener('change', updatePricePre
             }
             window._bookingOpenPayments = { prepay: savedPrepayInit, surcharge: savedSurchargeInit };
             window._bookingPayments = bosoGetBookingPayments(booking);
+            window._bookingPaymentsManuallyEdited = false;
             window._bookingPaymentMeta = {
                 createdAt: booking.createdAt || booking.checkIn,
                 checkOut: booking.checkOut
@@ -5278,6 +5301,7 @@ document.getElementById('adminGuests').addEventListener('change', updatePricePre
                         calculateBalanceLive();
                         renderPaymentJournalList();
                     }
+                    window._bookingDrawerLoading = false;
                 }, 50);
             }, 100);
 
@@ -6004,6 +6028,24 @@ function bosoLeave() {
             bosoSyncPaymentFieldsFromJournal();
         };
 
+        function bosoNormalizeBookingRecord(b) {
+            if (!b || typeof b !== 'object') return b;
+            const pays = bosoGetBookingPayments(b);
+            if (!pays.length) return b;
+            const prepay = bosoSumPaymentsByBucket(pays, 'prepay');
+            const surcharge = bosoSumPaymentsByBucket(pays, 'surcharge');
+            const paid = pays.reduce((s, p) => s + (Math.round(Number(p.amount)) || 0), 0);
+            if ((Number(b.prepayAmount) || 0) === 0 && prepay > 0) b.prepayAmount = prepay;
+            if ((Number(b.surchargeAmount) || 0) === 0 && surcharge > 0) b.surchargeAmount = surcharge;
+            if ((Number(b.paidAmount) || 0) === 0 && paid > 0) b.paidAmount = paid;
+            if (!Array.isArray(b.payments) || !b.payments.length) b.payments = pays;
+            return b;
+        }
+
+        function bosoMapBookingsFromServer(bookings) {
+            return (bookings || []).map(b => bosoNormalizeBookingRecord({ ...b }));
+        }
+
         function bosoBuildLegacyPayments(b) {
             const prepay = Math.round(Number(b.prepayAmount) || 0);
             const surcharge = Math.round(Number(b.surchargeAmount) || 0);
@@ -6191,8 +6233,25 @@ function bosoLeave() {
         }
 
         function bosoBuildPaymentsForSave() {
-            bosoReconcilePaymentFieldToJournal('prepay');
-            bosoReconcilePaymentFieldToJournal('surcharge');
+            const payments = window._bookingPayments || [];
+            const journalPrepay = bosoSumPaymentsByBucket(payments, 'prepay');
+            const journalSurcharge = bosoSumPaymentsByBucket(payments, 'surcharge');
+            const fieldPrepay = Math.round(Number(document.getElementById('adminPrepayAmount')?.value) || 0);
+            const fieldSurcharge = Math.round(Number(document.getElementById('adminSurchargeAmount')?.value) || 0);
+            const openPay = window._bookingOpenPayments || { prepay: 0, surcharge: 0 };
+            const openTotal = (Number(openPay.prepay) || 0) + (Number(openPay.surcharge) || 0);
+            const journalTotal = journalPrepay + journalSurcharge;
+
+            // Захист: UI показав 0 через баг, але журнал ще має платежі — не знищуємо їх
+            if (!window._bookingPaymentsManuallyEdited && openTotal > 0 && fieldPrepay === 0 && fieldSurcharge === 0 && journalTotal > 0) {
+                const prepayEl = document.getElementById('adminPrepayAmount');
+                const surchargeEl = document.getElementById('adminSurchargeAmount');
+                if (prepayEl) prepayEl.value = journalPrepay;
+                if (surchargeEl) surchargeEl.value = journalSurcharge;
+            } else {
+                bosoReconcilePaymentFieldToJournal('prepay');
+                bosoReconcilePaymentFieldToJournal('surcharge');
+            }
             return (window._bookingPayments || []).map(p => ({
                 id: p.id,
                 date: String(p.date || '').substring(0, 10),
