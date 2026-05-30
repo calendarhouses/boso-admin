@@ -6305,7 +6305,12 @@ function bosoLeave() {
                     if (sAmt > 0) bookingIncome += Math.round(sAmt);
                 }
 
-                if (paid > 0) {
+                let periodPaidSum = periodPays.reduce((s, p) => s + (Math.round(Number(p.amount)) || 0), 0);
+                if (periodPays.length === 0 && paid > 0) {
+                    periodPaidSum = Math.round(Number(b.prepayAmount) || Number(b.paidAmount) || 0) + Math.round(Number(b.surchargeAmount) || 0);
+                }
+
+                if (periodPaidSum > 0) {
                     const inD = parseSafeDate(b.checkIn);
                     const outD = parseSafeDate(b.checkOut);
                     const nights = Math.max(1, Math.round((outD - inD) / 86400000));
@@ -6316,11 +6321,11 @@ function bosoLeave() {
                     let feeGuests = b.extraGuestFee !== undefined && b.extraGuestFee !== '' ? Number(b.extraGuestFee) : (extraGuests * extraPrice * nights);
                     let feePets = b.petFee !== undefined && b.petFee !== '' ? Number(b.petFee) : ((b.pets === 'Так' || b.pets === true) ? (500 + 200 * nights) : 0);
                     let feeEarlyLate = (Number(b.earlyFee) || 0) + (Number(b.lateFee) || 0);
-                    const ratio = price > 0 ? paid / price : 1;
+                    const ratio = price > 0 ? periodPaidSum / price : 1;
                     breakdown.pets += Math.round(feePets * ratio);
                     breakdown.guests += Math.round(feeGuests * ratio);
                     breakdown.earlyLate += Math.round(feeEarlyLate * ratio);
-                    breakdown.base += Math.round(paid - (feePets * ratio) - (feeGuests * ratio) - (feeEarlyLate * ratio));
+                    breakdown.base += Math.round(periodPaidSum - (feePets * ratio) - (feeGuests * ratio) - (feeEarlyLate * ratio));
                 }
             });
 
@@ -7539,19 +7544,17 @@ async function captureFinanceReportCard(report) {
 
         <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:12px;">
             <div style="background:#ECFDF5;border:1px solid #A7F3D0;border-radius:12px;padding:14px;text-align:center;">
-                <div style="font-size:11px;font-weight:800;color:#059669;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:6px;">Доходи</div>
-                <div style="font-size:10px;color:#6B7280;font-weight:600;margin-bottom:4px;">заїзди періоду</div>
-                <div style="font-size:18px;font-weight:900;color:#047857;">${formatMoneyUa(report.totalIncome)}</div>
+                <div style="font-size:11px;font-weight:800;color:#059669;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:8px;">Доходи</div>
+                <div style="font-size:18px;font-weight:900;color:#047857;line-height:1.2;">${formatMoneyUa(report.totalIncome)}</div>
+                <div style="font-size:10px;color:#6B7280;font-weight:600;margin-top:6px;">заїзди періоду</div>
             </div>
             <div style="background:#FEF2F2;border:1px solid #FECACA;border-radius:12px;padding:14px;text-align:center;">
-                <div style="font-size:11px;font-weight:800;color:#DC2626;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:6px;">Витрати</div>
-                <div style="font-size:10px;color:transparent;font-weight:600;margin-bottom:4px;">.</div>
-                <div style="font-size:18px;font-weight:900;color:#B91C1C;">${formatMoneyUa(report.totalExpense)}</div>
+                <div style="font-size:11px;font-weight:800;color:#DC2626;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:8px;">Витрати</div>
+                <div style="font-size:18px;font-weight:900;color:#B91C1C;line-height:1.2;">${formatMoneyUa(report.totalExpense)}</div>
             </div>
             <div style="background:#F8FAF7;border:1px solid #BFE0A6;border-radius:12px;padding:14px;text-align:center;">
-                <div style="font-size:11px;font-weight:800;color:#556B2F;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:6px;">Прибуток</div>
-                <div style="font-size:10px;color:transparent;font-weight:600;margin-bottom:4px;">.</div>
-                <div style="font-size:18px;font-weight:900;color:#111827;">${formatMoneyUa(report.profit)}</div>
+                <div style="font-size:11px;font-weight:800;color:#556B2F;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:8px;">Прибуток</div>
+                <div style="font-size:18px;font-weight:900;color:#111827;line-height:1.2;">${formatMoneyUa(report.profit)}</div>
             </div>
         </div>
 
