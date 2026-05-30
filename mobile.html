@@ -601,7 +601,10 @@
         .pj-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; padding: 14px; border-bottom: 1px solid #F3F4F6; position: relative; overflow: visible; }
         .pj-row:has(.custom-select-wrapper.open) { z-index: 30; }
         .pj-row:last-child { border-bottom: none; }
-        .pj-row-label { grid-column: 1 / -1; font-size: 10px; font-weight: 700; text-transform: uppercase; color: #9CA3AF; margin: 4px 0 2px; letter-spacing: 0.04em; }
+        .pj-row > .pj-row-label { grid-column: 1 / -1; font-size: 10px; font-weight: 700; text-transform: uppercase; color: #9CA3AF; margin: 4px 0 2px; letter-spacing: 0.04em; }
+        .pj-meta-row { grid-column: 1 / -1; display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+        .pj-meta-col { min-width: 0; }
+        .pj-meta-col .pj-row-label { margin-top: 0; }
         .pj-date-wrap { grid-column: 1 / -1; }
         .pj-date-wrap .flatpickr-wrapper { width: 100%; }
         .pj-date-wrap .flatpickr-input, .pj-date-wrap input.form-control.input {
@@ -714,6 +717,20 @@
 .pay-chip.active[data-method="ФОП"] { background: #F0FDF4; border-color: #86EFAC; color: #059669; }
 
 .payment-block { background: #FAFAFA; border: 1px solid #E5E7EB; border-radius: 12px; padding: 16px; margin-bottom: 16px; }
+.pay-rows-stack { display: flex; flex-direction: column; gap: 20px; margin-bottom: 20px; }
+.pay-row-block { width: 100%; }
+.pay-row-block > label { display: block; margin: 0 0 8px; color: #4B5563; font-weight: 600; font-size: 14px; }
+.pay-amount-inwrap { position: relative; width: 100%; margin-bottom: 10px; }
+.pay-amount-inwrap input {
+    width: 100%; box-sizing: border-box; padding: 12px 72px 12px 16px !important;
+    font-weight: 700; font-size: 16px; color: #111827; border: 1px solid #D1D5DB; border-radius: 10px;
+    background: #FAFAFA; font-family: inherit; outline: none;
+}
+.pay-amount-inwrap .pay-quick-chip {
+    position: absolute; right: 8px; top: 50%; transform: translateY(-50%);
+    flex: none; min-width: 52px; padding: 4px 10px; font-size: 11px; z-index: 2;
+}
+.pay-quick-chip-green { color: #059669 !important; background: #D1FAE5 !important; border-color: #A7F3D0 !important; }
 
         #auth-login-screen {
             position: fixed; inset: 0; z-index: 99999;
@@ -3579,16 +3596,16 @@ if (sClass.includes('скас')) {
                 </div>
                 
                 <div class="payment-block">
-                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px;">
-                        
-                        <div class="form-group" style="margin-bottom: 0;">
-                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
-                                <label style="margin: 0; color: #4B5563; font-weight: 600; font-size: 12px;">Аванс (Внесено):</label>
-                                <div onclick="setHalfPrepayment()" class="pay-chip" style="padding: 2px 6px; flex: none; font-size: 10px;" title="Внести 50%">
+                    <div class="pay-rows-stack">
+
+                        <div class="pay-row-block">
+                            <label>Аванс (Внесено):</label>
+                            <div class="pay-amount-inwrap">
+                                <input type="number" inputmode="numeric" pattern="[0-9]*" id="adminPrepayAmount" value="${savedPrepay}">
+                                <div onclick="setHalfPrepayment()" class="pay-chip pay-quick-chip" title="Внести 50%">
                                     <span id="prepayBtnText">${Math.round(totalPrice / 2)}</span>
                                 </div>
                             </div>
-                            <input type="number" inputmode="numeric" pattern="[0-9]*" id="adminPrepayAmount" value="${savedPrepay}" style="font-weight: 700; font-size: 16px; color: #111827; margin-bottom: 10px; width: 100%; box-sizing: border-box; padding: 12px 16px; border-radius: 10px; border: 1px solid #D1D5DB; background: #FAFAFA; outline: none;">
                             <div class="pay-methods" id="prepayMethods">
                                 <div class="pay-chip active" data-method="ФОП" onclick="selectPayMethod('prepay', 'ФОП')">ФОП</div>
                                 <div class="pay-chip" data-method="Картка" onclick="selectPayMethod('prepay', 'Картка')">Картка</div>
@@ -3597,14 +3614,12 @@ if (sClass.includes('скас')) {
                             <input type="hidden" id="adminPrepayMethod" value="ФОП">
                         </div>
 
-                        <div class="form-group" style="margin-bottom: 0;">
-                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
-                                <label style="margin: 0; color: #4B5563; font-weight: 600; font-size: 12px;">Доплата на місці:</label>
-                                <div onclick="fillSurcharge()" class="pay-chip" style="padding: 2px 6px; flex: none; color: #059669; background: #D1FAE5; border-color: #A7F3D0; font-size: 10px;" title="Внести решту">
-                                    Решта
-                                </div>
+                        <div class="pay-row-block">
+                            <label>Доплата на місці:</label>
+                            <div class="pay-amount-inwrap">
+                                <input type="number" inputmode="numeric" pattern="[0-9]*" id="adminSurchargeAmount" value="${savedSurcharge}">
+                                <div onclick="fillSurcharge()" class="pay-chip pay-quick-chip pay-quick-chip-green" title="Внести решту">Решта</div>
                             </div>
-                            <input type="number" inputmode="numeric" pattern="[0-9]*" id="adminSurchargeAmount" value="${savedSurcharge}" style="font-weight: 700; font-size: 16px; color: #111827; margin-bottom: 10px; width: 100%; box-sizing: border-box; padding: 12px 16px; border-radius: 10px; border: 1px solid #D1D5DB; background: #FAFAFA; outline: none;">
                             <div class="pay-methods" id="surchargeMethods">
                                 <div class="pay-chip" data-method="ФОП" onclick="selectPayMethod('surcharge', 'ФОП')">ФОП</div>
                                 <div class="pay-chip" data-method="Картка" onclick="selectPayMethod('surcharge', 'Картка')">Картка</div>
@@ -3612,7 +3627,7 @@ if (sClass.includes('скас')) {
                             </div>
                             <input type="hidden" id="adminSurchargeMethod" value="Готівка">
                         </div>
-                        
+
                     </div>
 
                     <div style="border-top: 1px dashed #D1D5DB; padding-top: 12px; display: flex; justify-content: space-between; align-items: center;">
@@ -4792,10 +4807,16 @@ function setHalfPrepayment() {
                     <div class="pj-date-wrap"><input type="text" class="pj-date-input" data-pj-idx="${idx}" value="${dateVal}" readonly></div>
                     <div class="pj-row-label">Сума, грн</div>
                     <input type="number" inputmode="numeric" class="pj-field pj-amount" value="${Number(p.amount) || 0}" onchange="bosoUpdatePaymentField(${idx}, 'amount', this.value)" style="color:${neg ? '#DC2626' : '#111827'}">
-                    <div class="pj-row-label">Метод</div>
-                    ${bosoRenderPaymentSelect(idx, 'method', methodOpts, method)}
-                    <div class="pj-row-label">Тип</div>
-                    ${bosoRenderPaymentSelect(idx, 'type', typeOpts, uiType)}
+                    <div class="pj-meta-row">
+                        <div class="pj-meta-col">
+                            <div class="pj-row-label">Метод</div>
+                            ${bosoRenderPaymentSelect(idx, 'method', methodOpts, method)}
+                        </div>
+                        <div class="pj-meta-col">
+                            <div class="pj-row-label">Тип</div>
+                            ${bosoRenderPaymentSelect(idx, 'type', typeOpts, uiType)}
+                        </div>
+                    </div>
                     <button type="button" class="pj-del" onclick="bosoConfirmRemovePaymentRow(${idx})">Видалити платіж</button>
                 </div>`;
             }).join('');
