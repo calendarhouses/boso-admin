@@ -987,6 +987,8 @@ input[type="number"] {
             border-color: var(--accent) !important; background: #FFF !important;
             box-shadow: 0 0 0 3px rgba(85, 107, 47, 0.12) !important;
         }
+        .pj-date-wrap input.pj-date-input[type="hidden"] { display: none !important; }
+        .flatpickr-calendar.open { z-index: 1300 !important; }
         .pj-select-wrap { position: relative; width: 100%; min-width: 0; }
         .pj-dd.custom-select-wrapper { width: 100%; min-width: 0; }
         .pj-dd .custom-select-trigger {
@@ -5302,7 +5304,6 @@ document.getElementById('adminGuests').addEventListener('change', updatePricePre
             // ==========================================
             // 🚀 МАГІЯ СКРІНШОТІВ (АДМІН + КЛІНІНГ)
             // ==========================================
-            btn.innerText = "Формуємо картки..."; 
             
             if (payloadForServer.remainderPaymentAdded && typeof capturePaymentCard === 'function') {
                 try {
@@ -5881,7 +5882,6 @@ function bosoLeave() {
 
         function bosoInitPaymentJournalPickers() {
             bosoDestroyPaymentJournalPickers();
-            const drawerBody = document.querySelector('#bookingDrawer .drawer-body');
             document.querySelectorAll('#paymentJournalList .pj-date-input').forEach((el) => {
                 const idx = parseInt(el.getAttribute('data-pj-idx'), 10);
                 const fp = flatpickr(el, {
@@ -5892,9 +5892,6 @@ function bosoLeave() {
                     defaultDate: el.value || undefined,
                     allowInput: false,
                     disableMobile: true,
-                    clickOpens: false,
-                    static: false,
-                    appendTo: drawerBody || undefined,
                     onChange: function(_dates, dateStr) {
                         if (!window._bookingPayments || !window._bookingPayments[idx]) return;
                         window._bookingPayments[idx].date = dateStr;
@@ -5903,10 +5900,12 @@ function bosoLeave() {
                         const target = inst.altInput || inst.input;
                         if (!target) return;
                         target.addEventListener('click', function(e) {
-                            e.stopPropagation();
-                            if (inst.isOpen) inst.close();
-                            else inst.open();
-                        });
+                            if (inst.isOpen) {
+                                e.preventDefault();
+                                e.stopImmediatePropagation();
+                                inst.close();
+                            }
+                        }, true);
                     }
                 });
                 window._pjDatePickers.push(fp);
