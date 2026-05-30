@@ -597,14 +597,31 @@
         .payment-journal-sub { font-size: 10px; color: #9CA3AF; margin: 0; line-height: 1.35; }
         .pj-add-btn { flex-shrink: 0; padding: 8px 12px; font-size: 11px; font-weight: 700; color: var(--accent); background: #F8FAF7; border: 1px solid #BFE0A6; border-radius: 10px; cursor: pointer; font-family: inherit; }
         .pj-table { background: #FFF; border: 1px solid #E5E7EB; border-radius: 12px; overflow: hidden; }
-        .pj-thead { display: none; }
-        .pj-row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; padding: 12px; border-bottom: 1px solid #F3F4F6; }
-        .pj-row:last-child { border-bottom: none; }
+        .pj-card { padding: 14px; border-bottom: 1px solid #F3F4F6; }
+        .pj-card:last-child { border-bottom: none; }
+        .pj-card-label { font-size: 10px; font-weight: 700; text-transform: uppercase; color: #9CA3AF; margin-bottom: 6px; letter-spacing: 0.04em; }
         .pj-field { width: 100%; box-sizing: border-box; padding: 10px 12px; font-size: 14px; font-family: inherit; border: 1px solid #E5E7EB; border-radius: 10px; background: #F9FAFB; }
         .pj-field:focus { outline: none; border-color: var(--accent); background: #FFF; box-shadow: 0 0 0 3px rgba(85, 107, 47, 0.1); }
-        .pj-field.pj-amount { font-weight: 700; grid-column: 1 / -1; }
-        .pj-select { appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='none' stroke='%239CA3AF' stroke-width='2'%3E%3Cpath d='M3 4.5L6 7.5L9 4.5'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 10px center; padding-right: 28px; }
-        .pj-del { grid-column: 1 / -1; width: 100%; height: 40px; border: none; border-radius: 10px; background: #F3F4F6; color: #6B7280; font-size: 14px; font-weight: 600; cursor: pointer; }
+        .pj-field.pj-amount { font-weight: 700; margin-bottom: 12px; }
+        .pj-date-wrap { margin-bottom: 12px; }
+        .pj-date-wrap .flatpickr-wrapper { width: 100%; }
+        .pj-date-wrap .flatpickr-input, .pj-date-wrap input.form-control.input {
+            width: 100% !important; box-sizing: border-box; padding: 10px 12px !important; font-size: 14px !important;
+            font-family: inherit !important; border: 1px solid #E5E7EB !important; border-radius: 10px !important;
+            background: #F9FAFB !important; height: auto !important;
+        }
+        .pj-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+        .pj-chip {
+            flex: 1; min-width: 52px; padding: 8px 6px; font-size: 11px; font-weight: 700; text-align: center;
+            border-radius: 8px; border: 1px solid #E5E7EB; background: #F3F4F6; color: #6B7280; cursor: pointer; font-family: inherit;
+        }
+        .pj-chip.active[data-pj-method="ФОП"] { background: #F0FDF4; border-color: #86EFAC; color: #059669; }
+        .pj-chip.active[data-pj-method="Картка"] { background: #F5F3FF; border-color: #C4B5FD; color: #6D28D9; }
+        .pj-chip.active[data-pj-method="Готівка"] { background: #EFF6FF; border-color: #93C5FD; color: #1D4ED8; }
+        .pj-chip.active[data-pj-type="prepay"] { background: #FFFBEB; border-color: #FCD34D; color: #B45309; }
+        .pj-chip.active[data-pj-type="surcharge"] { background: #ECFDF5; border-color: #6EE7B7; color: #047857; }
+        .pj-chip.active[data-pj-type="refund"] { background: #FEF2F2; border-color: #FECACA; color: #DC2626; }
+        .pj-del { width: 100%; margin-top: 12px; height: 40px; border: none; border-radius: 10px; background: #F3F4F6; color: #6B7280; font-size: 13px; font-weight: 600; cursor: pointer; }
         .pj-del:hover { background: #FEE2E2; color: #DC2626; }
         .pj-empty { padding: 20px; text-align: center; font-size: 12px; color: #9CA3AF; border: 1px dashed #E5E7EB; border-radius: 12px; background: #FAFAFA; }
 
@@ -4540,6 +4557,48 @@ function setHalfPrepayment() {
         }
         function bosoIsPrepayType(t) { return t === 'prepay' || t === 'online' || t === 'adjustment'; }
         function bosoIsSurchargeType(t) { return t === 'surcharge' || t === 'remainder'; }
+        function bosoNormalizePaymentTypeForUi(t) {
+            if (t === 'surcharge' || t === 'remainder') return 'surcharge';
+            if (t === 'refund') return 'refund';
+            return 'prepay';
+        }
+        function bosoDestroyPaymentJournalPickers() {
+            (window._pjDatePickers || []).forEach((fp) => { try { if (fp && fp.destroy) fp.destroy(); } catch (e) {} });
+            window._pjDatePickers = [];
+        }
+        function bosoInitPaymentJournalPickers() {
+            bosoDestroyPaymentJournalPickers();
+            document.querySelectorAll('#paymentJournalList .pj-date-input').forEach((el) => {
+                const idx = parseInt(el.getAttribute('data-pj-idx'), 10);
+                const fp = flatpickr(el, {
+                    locale: 'uk', dateFormat: 'Y-m-d', altInput: true, altFormat: 'd.m.Y',
+                    defaultDate: el.value || undefined, allowInput: false, disableMobile: true,
+                    onChange: function(_d, dateStr) {
+                        if (window._bookingPayments && window._bookingPayments[idx]) window._bookingPayments[idx].date = dateStr;
+                    }
+                });
+                window._pjDatePickers.push(fp);
+            });
+        }
+        function bosoRenderPaymentChips(idx, field, options, currentVal) {
+            const attr = field === 'method' ? 'data-pj-method' : 'data-pj-type';
+            const fn = field === 'method' ? 'bosoSetPaymentMethod' : 'bosoSetPaymentType';
+            return `<div class="pj-chips">${options.map((opt) => {
+                const active = currentVal === opt.value ? ' active' : '';
+                return `<button type="button" class="pj-chip${active}" ${attr}="${opt.value}" onclick="${fn}(${idx}, '${opt.value}')">${opt.label}</button>`;
+            }).join('')}</div>`;
+        }
+        window.bosoSetPaymentMethod = function(idx, method) {
+            if (!window._bookingPayments || !window._bookingPayments[idx]) return;
+            window._bookingPayments[idx].method = method;
+            renderPaymentJournalList();
+        };
+        window.bosoSetPaymentType = function(idx, type) {
+            if (!window._bookingPayments || !window._bookingPayments[idx]) return;
+            window._bookingPayments[idx].type = type;
+            bosoSyncPaymentFieldsFromJournal();
+            renderPaymentJournalList();
+        };
         function bosoBuildLegacyPayments(b) {
             const prepay = Math.round(Number(b.prepayAmount) || 0);
             const surcharge = Math.round(Number(b.surchargeAmount) || 0);
@@ -4552,8 +4611,9 @@ function setHalfPrepayment() {
             return payments;
         }
         function bosoGetBookingPayments(b) {
-            if (b && Array.isArray(b.payments) && b.payments.length) return b.payments.map(p => ({ ...p }));
-            return bosoBuildLegacyPayments(b || {});
+            const mapOne = (p) => ({ ...p, type: bosoNormalizePaymentTypeForUi(p.type) });
+            if (b && Array.isArray(b.payments) && b.payments.length) return b.payments.map(mapOne);
+            return bosoBuildLegacyPayments(b || {}).map(mapOne);
         }
         function bosoPaidUntilDate(b, asOfDate) {
             const pays = bosoGetBookingPayments(b);
@@ -4581,37 +4641,37 @@ function setHalfPrepayment() {
             if (lastPrepay) selectPayMethod('prepay', lastPrepay.method || 'ФОП');
             if (lastSurcharge) selectPayMethod('surcharge', lastSurcharge.method || 'Готівка');
             calculateBalanceLive();
-            renderPaymentJournalList();
         }
         function renderPaymentJournalList() {
             const box = document.getElementById('paymentJournalList');
             if (!box) return;
+            bosoDestroyPaymentJournalPickers();
             const pays = window._bookingPayments || [];
             if (!pays.length) {
                 box.innerHTML = '<div class="pj-empty">Немає записів — «+ Платіж» або аванс / доплата вище.</div>';
                 return;
             }
+            const methodOpts = [{ value: 'ФОП', label: 'ФОП' }, { value: 'Картка', label: 'Картка' }, { value: 'Готівка', label: 'Готівка' }];
+            const typeOpts = [{ value: 'prepay', label: 'Аванс' }, { value: 'surcharge', label: 'Доплата' }, { value: 'refund', label: 'Поверн.' }];
             const rows = pays.map((p, idx) => {
                 const dateVal = String(p.date || '').substring(0, 10);
                 const neg = Number(p.amount) < 0;
-                return `<div class="pj-row">
-                    <input type="date" class="pj-field" value="${dateVal}" onchange="bosoUpdatePaymentField(${idx}, 'date', this.value)">
-                    <input type="number" inputmode="numeric" class="pj-field pj-amount${neg ? ' pj-amount-negative' : ''}" value="${Number(p.amount) || 0}" onchange="bosoUpdatePaymentField(${idx}, 'amount', this.value)" style="color:${neg ? '#DC2626' : '#111827'}">
-                    <select class="pj-field pj-select" onchange="bosoUpdatePaymentField(${idx}, 'method', this.value)">
-                        <option value="ФОП" ${p.method==='ФОП'?'selected':''}>ФОП</option>
-                        <option value="Картка" ${p.method==='Картка'?'selected':''}>Картка</option>
-                        <option value="Готівка" ${p.method==='Готівка'?'selected':''}>Готівка</option>
-                    </select>
-                    <select class="pj-field pj-select" onchange="bosoUpdatePaymentField(${idx}, 'type', this.value)">
-                        <option value="prepay" ${p.type==='prepay'?'selected':''}>Аванс</option>
-                        <option value="online" ${p.type==='online'?'selected':''}>Онлайн</option>
-                        <option value="surcharge" ${p.type==='surcharge'?'selected':''}>Доплата</option>
-                        <option value="refund" ${p.type==='refund'?'selected':''}>Повернення</option>
-                    </select>
+                const uiType = bosoNormalizePaymentTypeForUi(p.type);
+                const method = p.method || 'ФОП';
+                return `<div class="pj-card">
+                    <div class="pj-card-label">Дата</div>
+                    <div class="pj-date-wrap"><input type="text" class="pj-date-input" data-pj-idx="${idx}" value="${dateVal}" readonly></div>
+                    <div class="pj-card-label">Сума, грн</div>
+                    <input type="number" inputmode="numeric" class="pj-field pj-amount" value="${Number(p.amount) || 0}" onchange="bosoUpdatePaymentField(${idx}, 'amount', this.value)" style="color:${neg ? '#DC2626' : '#111827'}">
+                    <div class="pj-card-label">Метод</div>
+                    ${bosoRenderPaymentChips(idx, 'method', methodOpts, method)}
+                    <div class="pj-card-label" style="margin-top:10px;">Тип</div>
+                    ${bosoRenderPaymentChips(idx, 'type', typeOpts, uiType)}
                     <button type="button" class="pj-del" onclick="bosoRemovePaymentRow(${idx})">Видалити платіж</button>
                 </div>`;
             }).join('');
             box.innerHTML = `<div class="pj-table">${rows}</div>`;
+            bosoInitPaymentJournalPickers();
         }
         window.bosoUpdatePaymentField = function(idx, field, val) {
             if (!window._bookingPayments || !window._bookingPayments[idx]) return;
@@ -4622,6 +4682,7 @@ function setHalfPrepayment() {
         window.bosoRemovePaymentRow = function(idx) {
             window._bookingPayments = (window._bookingPayments || []).filter((_, i) => i !== idx);
             bosoSyncPaymentFieldsFromJournal();
+            renderPaymentJournalList();
         };
         window.bosoAddPaymentRow = function() {
             window._bookingPayments = window._bookingPayments || [];

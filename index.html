@@ -955,15 +955,16 @@ input[type="number"] {
             transition: 0.2s; font-family: inherit;
         }
         .pj-add-btn:hover { background: #ECFDF5; box-shadow: 0 4px 12px rgba(85, 107, 47, 0.12); }
-        .pj-table { background: #FFF; border: 1px solid #E5E7EB; border-radius: 12px; overflow: hidden; box-shadow: 0 1px 2px rgba(0,0,0,0.04); }
+        .pj-table { background: #FFF; border: 1px solid #E5E7EB; border-radius: 12px; overflow-x: auto; box-shadow: 0 1px 2px rgba(0,0,0,0.04); }
+        .pj-table-inner { min-width: 520px; }
         .pj-thead {
-            display: grid; grid-template-columns: minmax(120px, 1.3fr) 88px 1fr 1fr 40px; gap: 8px;
-            padding: 10px 12px; background: #F9FAFB; border-bottom: 1px solid #E5E7EB;
+            display: grid; grid-template-columns: 112px 92px minmax(168px, 1.4fr) minmax(148px, 1.2fr) 40px; gap: 10px;
+            padding: 10px 14px; background: #F9FAFB; border-bottom: 1px solid #E5E7EB;
             font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; color: #9CA3AF;
         }
         .pj-row {
-            display: grid; grid-template-columns: minmax(120px, 1.3fr) 88px 1fr 1fr 40px; gap: 8px;
-            align-items: center; padding: 10px 12px; border-bottom: 1px solid #F3F4F6;
+            display: grid; grid-template-columns: 112px 92px minmax(168px, 1.4fr) minmax(148px, 1.2fr) 40px; gap: 10px;
+            align-items: center; padding: 12px 14px; border-bottom: 1px solid #F3F4F6;
         }
         .pj-row:last-child { border-bottom: none; }
         .pj-row:hover { background: #FAFAFA; }
@@ -972,11 +973,33 @@ input[type="number"] {
         .pj-field:focus { outline: none; border-color: var(--accent); background: #FFF; box-shadow: 0 0 0 3px rgba(85, 107, 47, 0.12); }
         .pj-field.pj-amount { font-weight: 700; }
         .pj-field.pj-amount-negative { color: #DC2626; }
-        .pj-select {
-            appearance: none; cursor: pointer;
-            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='none' stroke='%239CA3AF' stroke-width='2'%3E%3Cpath d='M3 4.5L6 7.5L9 4.5'/%3E%3C/svg%3E");
-            background-repeat: no-repeat; background-position: right 10px center; padding-right: 28px;
+        .pj-date-wrap { width: 100%; min-width: 0; }
+        .pj-date-wrap .flatpickr-wrapper { width: 100%; }
+        .pj-date-wrap .flatpickr-input,
+        .pj-date-wrap input.form-control.input {
+            width: 100% !important; box-sizing: border-box; padding: 9px 10px !important; font-size: 13px !important;
+            font-family: inherit !important; color: #111827 !important; background: #F9FAFB !important;
+            border: 1px solid #E5E7EB !important; border-radius: 8px !important; height: auto !important;
+            cursor: pointer;
         }
+        .pj-date-wrap .flatpickr-input:focus,
+        .pj-date-wrap input.form-control.input:focus {
+            border-color: var(--accent) !important; background: #FFF !important;
+            box-shadow: 0 0 0 3px rgba(85, 107, 47, 0.12) !important;
+        }
+        .pj-chips { display: flex; flex-wrap: wrap; gap: 4px; min-width: 0; }
+        .pj-chip {
+            flex: 1 1 auto; min-width: 46px; padding: 6px 6px; font-size: 10px; font-weight: 700; line-height: 1.1;
+            text-align: center; border-radius: 6px; border: 1px solid #E5E7EB; background: #F3F4F6; color: #6B7280;
+            cursor: pointer; transition: 0.15s; font-family: inherit; white-space: nowrap;
+        }
+        .pj-chip:hover { background: #E5E7EB; color: #374151; }
+        .pj-chip.active[data-pj-method="ФОП"] { background: #F0FDF4; border-color: #86EFAC; color: #059669; }
+        .pj-chip.active[data-pj-method="Картка"] { background: #F5F3FF; border-color: #C4B5FD; color: #6D28D9; }
+        .pj-chip.active[data-pj-method="Готівка"] { background: #EFF6FF; border-color: #93C5FD; color: #1D4ED8; }
+        .pj-chip.active[data-pj-type="prepay"] { background: #FFFBEB; border-color: #FCD34D; color: #B45309; }
+        .pj-chip.active[data-pj-type="surcharge"] { background: #ECFDF5; border-color: #6EE7B7; color: #047857; }
+        .pj-chip.active[data-pj-type="refund"] { background: #FEF2F2; border-color: #FECACA; color: #DC2626; }
         .pj-del {
             width: 36px; height: 36px; border: none; border-radius: 8px; background: #F3F4F6; color: #9CA3AF;
             font-size: 18px; line-height: 1; cursor: pointer; transition: 0.2s; display: flex; align-items: center; justify-content: center;
@@ -5845,6 +5868,61 @@ function bosoLeave() {
             return t === 'surcharge' || t === 'remainder';
         }
 
+        /** Тип у UI: лише аванс / доплата / повернення (online → аванс). */
+        function bosoNormalizePaymentTypeForUi(t) {
+            if (t === 'surcharge' || t === 'remainder') return 'surcharge';
+            if (t === 'refund') return 'refund';
+            return 'prepay';
+        }
+
+        function bosoDestroyPaymentJournalPickers() {
+            (window._pjDatePickers || []).forEach((fp) => { try { if (fp && fp.destroy) fp.destroy(); } catch (e) {} });
+            window._pjDatePickers = [];
+        }
+
+        function bosoInitPaymentJournalPickers() {
+            bosoDestroyPaymentJournalPickers();
+            document.querySelectorAll('#paymentJournalList .pj-date-input').forEach((el) => {
+                const idx = parseInt(el.getAttribute('data-pj-idx'), 10);
+                const fp = flatpickr(el, {
+                    locale: 'uk',
+                    dateFormat: 'Y-m-d',
+                    altInput: true,
+                    altFormat: 'd.m.Y',
+                    defaultDate: el.value || undefined,
+                    allowInput: false,
+                    disableMobile: true,
+                    onChange: function(_dates, dateStr) {
+                        if (!window._bookingPayments || !window._bookingPayments[idx]) return;
+                        window._bookingPayments[idx].date = dateStr;
+                    }
+                });
+                window._pjDatePickers.push(fp);
+            });
+        }
+
+        function bosoRenderPaymentChips(idx, field, options, currentVal) {
+            const attr = field === 'method' ? 'data-pj-method' : 'data-pj-type';
+            const fn = field === 'method' ? 'bosoSetPaymentMethod' : 'bosoSetPaymentType';
+            return `<div class="pj-chips">${options.map((opt) => {
+                const active = currentVal === opt.value ? ' active' : '';
+                return `<button type="button" class="pj-chip${active}" ${attr}="${opt.value}" onclick="${fn}(${idx}, '${opt.value}')">${opt.label}</button>`;
+            }).join('')}</div>`;
+        }
+
+        window.bosoSetPaymentMethod = function(idx, method) {
+            if (!window._bookingPayments || !window._bookingPayments[idx]) return;
+            window._bookingPayments[idx].method = method;
+            renderPaymentJournalList();
+        };
+
+        window.bosoSetPaymentType = function(idx, type) {
+            if (!window._bookingPayments || !window._bookingPayments[idx]) return;
+            window._bookingPayments[idx].type = type;
+            bosoSyncPaymentFieldsFromJournal();
+            renderPaymentJournalList();
+        };
+
         function bosoBuildLegacyPayments(b) {
             const prepay = Math.round(Number(b.prepayAmount) || 0);
             const surcharge = Math.round(Number(b.surchargeAmount) || 0);
@@ -5864,8 +5942,9 @@ function bosoLeave() {
         }
 
         function bosoGetBookingPayments(b) {
-            if (b && Array.isArray(b.payments) && b.payments.length) return b.payments.map(p => ({ ...p }));
-            return bosoBuildLegacyPayments(b || {});
+            const mapOne = (p) => ({ ...p, type: bosoNormalizePaymentTypeForUi(p.type) });
+            if (b && Array.isArray(b.payments) && b.payments.length) return b.payments.map(mapOne);
+            return bosoBuildLegacyPayments(b || {}).map(mapOne);
         }
 
         function bosoPaidUntilDate(b, asOfDate) {
@@ -5902,38 +5981,42 @@ function bosoLeave() {
             if (lastPrepay) selectPayMethod('prepay', lastPrepay.method || 'ФОП');
             if (lastSurcharge) selectPayMethod('surcharge', lastSurcharge.method || 'Готівка');
             calculateBalanceLive();
-            renderPaymentJournalList();
         }
 
         function renderPaymentJournalList() {
             const box = document.getElementById('paymentJournalList');
             if (!box) return;
+            bosoDestroyPaymentJournalPickers();
             const pays = window._bookingPayments || [];
             if (!pays.length) {
                 box.innerHTML = '<div class="pj-empty">Немає записів — натисніть «+ Платіж» або вкажіть аванс / доплату вище.</div>';
                 return;
             }
+            const methodOpts = [
+                { value: 'ФОП', label: 'ФОП' },
+                { value: 'Картка', label: 'Картка' },
+                { value: 'Готівка', label: 'Готівка' }
+            ];
+            const typeOpts = [
+                { value: 'prepay', label: 'Аванс' },
+                { value: 'surcharge', label: 'Доплата' },
+                { value: 'refund', label: 'Поверн.' }
+            ];
             const rows = pays.map((p, idx) => {
                 const neg = Number(p.amount) < 0;
                 const dateVal = String(p.date || '').substring(0, 10);
+                const uiType = bosoNormalizePaymentTypeForUi(p.type);
+                const method = p.method || 'ФОП';
                 return `<div class="pj-row">
-                    <input type="date" class="pj-field" value="${dateVal}" onchange="bosoUpdatePaymentField(${idx}, 'date', this.value)">
+                    <div class="pj-date-wrap"><input type="text" class="pj-date-input" data-pj-idx="${idx}" value="${dateVal}" readonly placeholder="дата"></div>
                     <input type="number" class="pj-field pj-amount${neg ? ' pj-amount-negative' : ''}" value="${Number(p.amount) || 0}" onchange="bosoUpdatePaymentField(${idx}, 'amount', this.value)">
-                    <select class="pj-field pj-select" onchange="bosoUpdatePaymentField(${idx}, 'method', this.value)">
-                        <option value="ФОП" ${p.method === 'ФОП' ? 'selected' : ''}>ФОП</option>
-                        <option value="Картка" ${p.method === 'Картка' ? 'selected' : ''}>Картка</option>
-                        <option value="Готівка" ${p.method === 'Готівка' ? 'selected' : ''}>Готівка</option>
-                    </select>
-                    <select class="pj-field pj-select" onchange="bosoUpdatePaymentField(${idx}, 'type', this.value)">
-                        <option value="prepay" ${p.type === 'prepay' ? 'selected' : ''}>Аванс</option>
-                        <option value="online" ${p.type === 'online' ? 'selected' : ''}>Онлайн</option>
-                        <option value="surcharge" ${p.type === 'surcharge' ? 'selected' : ''}>Доплата</option>
-                        <option value="refund" ${p.type === 'refund' ? 'selected' : ''}>Повернення</option>
-                    </select>
+                    ${bosoRenderPaymentChips(idx, 'method', methodOpts, method)}
+                    ${bosoRenderPaymentChips(idx, 'type', typeOpts, uiType)}
                     <button type="button" class="pj-del" onclick="bosoRemovePaymentRow(${idx})" title="Видалити">×</button>
                 </div>`;
             }).join('');
-            box.innerHTML = `<div class="pj-table"><div class="pj-thead"><span>Дата</span><span>Сума</span><span>Метод</span><span>Тип</span><span></span></div>${rows}</div>`;
+            box.innerHTML = `<div class="pj-table"><div class="pj-table-inner"><div class="pj-thead"><span>Дата</span><span>Сума</span><span>Метод</span><span>Тип</span><span></span></div>${rows}</div></div>`;
+            bosoInitPaymentJournalPickers();
         }
 
         window.bosoUpdatePaymentField = function(idx, field, val) {
@@ -5946,6 +6029,7 @@ function bosoLeave() {
         window.bosoRemovePaymentRow = function(idx) {
             window._bookingPayments = (window._bookingPayments || []).filter((_, i) => i !== idx);
             bosoSyncPaymentFieldsFromJournal();
+            renderPaymentJournalList();
         };
 
         window.bosoAddPaymentRow = function() {
