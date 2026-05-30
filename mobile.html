@@ -597,31 +597,31 @@
         .payment-journal-sub { font-size: 10px; color: #9CA3AF; margin: 0; line-height: 1.35; }
         .pj-add-btn { flex-shrink: 0; padding: 8px 12px; font-size: 11px; font-weight: 700; color: var(--accent); background: #F8FAF7; border: 1px solid #BFE0A6; border-radius: 10px; cursor: pointer; font-family: inherit; }
         .pj-table { background: #FFF; border: 1px solid #E5E7EB; border-radius: 12px; overflow: hidden; }
-        .pj-card { padding: 14px; border-bottom: 1px solid #F3F4F6; }
-        .pj-card:last-child { border-bottom: none; }
-        .pj-card-label { font-size: 10px; font-weight: 700; text-transform: uppercase; color: #9CA3AF; margin-bottom: 6px; letter-spacing: 0.04em; }
-        .pj-field { width: 100%; box-sizing: border-box; padding: 10px 12px; font-size: 14px; font-family: inherit; border: 1px solid #E5E7EB; border-radius: 10px; background: #F9FAFB; }
-        .pj-field:focus { outline: none; border-color: var(--accent); background: #FFF; box-shadow: 0 0 0 3px rgba(85, 107, 47, 0.1); }
-        .pj-field.pj-amount { font-weight: 700; margin-bottom: 12px; }
-        .pj-date-wrap { margin-bottom: 12px; }
+        .pj-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; padding: 14px; border-bottom: 1px solid #F3F4F6; }
+        .pj-row:last-child { border-bottom: none; }
+        .pj-row-label { grid-column: 1 / -1; font-size: 10px; font-weight: 700; text-transform: uppercase; color: #9CA3AF; margin: 4px 0 2px; letter-spacing: 0.04em; }
+        .pj-date-wrap { grid-column: 1 / -1; }
         .pj-date-wrap .flatpickr-wrapper { width: 100%; }
         .pj-date-wrap .flatpickr-input, .pj-date-wrap input.form-control.input {
             width: 100% !important; box-sizing: border-box; padding: 10px 12px !important; font-size: 14px !important;
             font-family: inherit !important; border: 1px solid #E5E7EB !important; border-radius: 10px !important;
             background: #F9FAFB !important; height: auto !important;
         }
-        .pj-chips { display: flex; flex-wrap: wrap; gap: 6px; }
-        .pj-chip {
-            flex: 1; min-width: 52px; padding: 8px 6px; font-size: 11px; font-weight: 700; text-align: center;
-            border-radius: 8px; border: 1px solid #E5E7EB; background: #F3F4F6; color: #6B7280; cursor: pointer; font-family: inherit;
+        .pj-field { width: 100%; box-sizing: border-box; padding: 10px 12px; font-size: 14px; font-family: inherit; border: 1px solid #E5E7EB; border-radius: 10px; background: #F9FAFB; }
+        .pj-field:focus { outline: none; border-color: var(--accent); background: #FFF; box-shadow: 0 0 0 3px rgba(85, 107, 47, 0.1); }
+        .pj-field.pj-amount { font-weight: 700; grid-column: 1 / -1; }
+        .pj-select-wrap { position: relative; width: 100%; min-width: 0; }
+        .pj-select {
+            width: 100%; box-sizing: border-box; padding: 10px 36px 10px 12px; font-size: 14px; font-weight: 600;
+            font-family: inherit; color: #111827; background: #F9FAFB; border: 1px solid #E5E7EB; border-radius: 10px;
+            appearance: none; -webkit-appearance: none; cursor: pointer;
         }
-        .pj-chip.active[data-pj-method="ФОП"] { background: #F0FDF4; border-color: #86EFAC; color: #059669; }
-        .pj-chip.active[data-pj-method="Картка"] { background: #F5F3FF; border-color: #C4B5FD; color: #6D28D9; }
-        .pj-chip.active[data-pj-method="Готівка"] { background: #EFF6FF; border-color: #93C5FD; color: #1D4ED8; }
-        .pj-chip.active[data-pj-type="prepay"] { background: #FFFBEB; border-color: #FCD34D; color: #B45309; }
-        .pj-chip.active[data-pj-type="surcharge"] { background: #ECFDF5; border-color: #6EE7B7; color: #047857; }
-        .pj-chip.active[data-pj-type="refund"] { background: #FEF2F2; border-color: #FECACA; color: #DC2626; }
-        .pj-del { width: 100%; margin-top: 12px; height: 40px; border: none; border-radius: 10px; background: #F3F4F6; color: #6B7280; font-size: 13px; font-weight: 600; cursor: pointer; }
+        .pj-select-wrap::after {
+            content: ''; position: absolute; right: 14px; top: 50%; margin-top: -2px;
+            width: 7px; height: 7px; border-right: 2px solid #9CA3AF; border-bottom: 2px solid #9CA3AF;
+            transform: rotate(45deg); pointer-events: none;
+        }
+        .pj-del { grid-column: 1 / -1; width: 100%; margin-top: 4px; height: 42px; border: none; border-radius: 10px; background: #F3F4F6; color: #6B7280; font-size: 13px; font-weight: 600; cursor: pointer; }
         .pj-del:hover { background: #FEE2E2; color: #DC2626; }
         .pj-empty { padding: 20px; text-align: center; font-size: 12px; color: #9CA3AF; border: 1px dashed #E5E7EB; border-radius: 12px; background: #FAFAFA; }
 
@@ -4580,25 +4580,15 @@ function setHalfPrepayment() {
                 window._pjDatePickers.push(fp);
             });
         }
-        function bosoRenderPaymentChips(idx, field, options, currentVal) {
-            const attr = field === 'method' ? 'data-pj-method' : 'data-pj-type';
-            const fn = field === 'method' ? 'bosoSetPaymentMethod' : 'bosoSetPaymentType';
-            return `<div class="pj-chips">${options.map((opt) => {
-                const active = currentVal === opt.value ? ' active' : '';
-                return `<button type="button" class="pj-chip${active}" ${attr}="${opt.value}" onclick="${fn}(${idx}, '${opt.value}')">${opt.label}</button>`;
-            }).join('')}</div>`;
+        function bosoRenderPaymentSelect(idx, field, options, currentVal) {
+            const onChange = field === 'method'
+                ? `bosoUpdatePaymentField(${idx}, 'method', this.value)`
+                : `bosoUpdatePaymentField(${idx}, 'type', this.value)`;
+            const opts = options.map((opt) =>
+                `<option value="${opt.value}"${currentVal === opt.value ? ' selected' : ''}>${opt.label}</option>`
+            ).join('');
+            return `<div class="pj-select-wrap"><select class="pj-select" onchange="${onChange}">${opts}</select></div>`;
         }
-        window.bosoSetPaymentMethod = function(idx, method) {
-            if (!window._bookingPayments || !window._bookingPayments[idx]) return;
-            window._bookingPayments[idx].method = method;
-            renderPaymentJournalList();
-        };
-        window.bosoSetPaymentType = function(idx, type) {
-            if (!window._bookingPayments || !window._bookingPayments[idx]) return;
-            window._bookingPayments[idx].type = type;
-            bosoSyncPaymentFieldsFromJournal();
-            renderPaymentJournalList();
-        };
         function bosoBuildLegacyPayments(b) {
             const prepay = Math.round(Number(b.prepayAmount) || 0);
             const surcharge = Math.round(Number(b.surchargeAmount) || 0);
@@ -4652,21 +4642,21 @@ function setHalfPrepayment() {
                 return;
             }
             const methodOpts = [{ value: 'ФОП', label: 'ФОП' }, { value: 'Картка', label: 'Картка' }, { value: 'Готівка', label: 'Готівка' }];
-            const typeOpts = [{ value: 'prepay', label: 'Аванс' }, { value: 'surcharge', label: 'Доплата' }, { value: 'refund', label: 'Поверн.' }];
+            const typeOpts = [{ value: 'prepay', label: 'Аванс' }, { value: 'surcharge', label: 'Доплата' }, { value: 'refund', label: 'Повернення' }];
             const rows = pays.map((p, idx) => {
                 const dateVal = String(p.date || '').substring(0, 10);
                 const neg = Number(p.amount) < 0;
                 const uiType = bosoNormalizePaymentTypeForUi(p.type);
                 const method = p.method || 'ФОП';
-                return `<div class="pj-card">
-                    <div class="pj-card-label">Дата</div>
+                return `<div class="pj-row">
+                    <div class="pj-row-label">Дата</div>
                     <div class="pj-date-wrap"><input type="text" class="pj-date-input" data-pj-idx="${idx}" value="${dateVal}" readonly></div>
-                    <div class="pj-card-label">Сума, грн</div>
+                    <div class="pj-row-label">Сума, грн</div>
                     <input type="number" inputmode="numeric" class="pj-field pj-amount" value="${Number(p.amount) || 0}" onchange="bosoUpdatePaymentField(${idx}, 'amount', this.value)" style="color:${neg ? '#DC2626' : '#111827'}">
-                    <div class="pj-card-label">Метод</div>
-                    ${bosoRenderPaymentChips(idx, 'method', methodOpts, method)}
-                    <div class="pj-card-label" style="margin-top:10px;">Тип</div>
-                    ${bosoRenderPaymentChips(idx, 'type', typeOpts, uiType)}
+                    <div class="pj-row-label">Метод</div>
+                    ${bosoRenderPaymentSelect(idx, 'method', methodOpts, method)}
+                    <div class="pj-row-label">Тип</div>
+                    ${bosoRenderPaymentSelect(idx, 'type', typeOpts, uiType)}
                     <button type="button" class="pj-del" onclick="bosoRemovePaymentRow(${idx})">Видалити платіж</button>
                 </div>`;
             }).join('');
