@@ -937,6 +937,53 @@ input[type="number"] {
         .fin-box.expense span, .fin-box.expense h3 { color: #DC2626; }
         .fin-box.profit span { color: var(--accent); } .fin-box.profit h3 { color: var(--text-main); }
 
+        .finance-accrual-row { grid-template-columns: 1fr 1fr; margin-bottom: 16px; margin-top: 0; }
+        .fin-box.fin-accrual-creditor { background: #FFFBEB; border-color: #FDE68A; cursor: pointer; }
+        .fin-box.fin-accrual-creditor span, .fin-box.fin-accrual-creditor h3 { color: #B45309; }
+        .fin-box.fin-accrual-debtor { background: #EFF6FF; border-color: #BFDBFE; cursor: pointer; }
+        .fin-box.fin-accrual-debtor span, .fin-box.fin-accrual-debtor h3 { color: #2563EB; }
+        .fin-box .fin-accrual-note { font-size: 11px; font-weight: 600; text-transform: none; letter-spacing: 0; opacity: 0.75; margin-top: 2px; }
+
+        /* --- Журнал платежів (форма броні) --- */
+        .payment-journal { margin-top: 16px; padding-top: 16px; border-top: 1px solid #E5E7EB; }
+        .payment-journal-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; margin-bottom: 12px; }
+        .payment-journal-title { font-size: 13px; font-weight: 700; color: #374151; margin: 0 0 2px; }
+        .payment-journal-sub { font-size: 11px; color: #9CA3AF; line-height: 1.35; margin: 0; }
+        .pj-add-btn {
+            flex-shrink: 0; padding: 8px 14px; font-size: 12px; font-weight: 700; color: var(--accent);
+            background: #F8FAF7; border: 1px solid #BFE0A6; border-radius: 10px; cursor: pointer;
+            transition: 0.2s; font-family: inherit;
+        }
+        .pj-add-btn:hover { background: #ECFDF5; box-shadow: 0 4px 12px rgba(85, 107, 47, 0.12); }
+        .pj-table { background: #FFF; border: 1px solid #E5E7EB; border-radius: 12px; overflow: hidden; box-shadow: 0 1px 2px rgba(0,0,0,0.04); }
+        .pj-thead {
+            display: grid; grid-template-columns: minmax(120px, 1.3fr) 88px 1fr 1fr 40px; gap: 8px;
+            padding: 10px 12px; background: #F9FAFB; border-bottom: 1px solid #E5E7EB;
+            font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; color: #9CA3AF;
+        }
+        .pj-row {
+            display: grid; grid-template-columns: minmax(120px, 1.3fr) 88px 1fr 1fr 40px; gap: 8px;
+            align-items: center; padding: 10px 12px; border-bottom: 1px solid #F3F4F6;
+        }
+        .pj-row:last-child { border-bottom: none; }
+        .pj-row:hover { background: #FAFAFA; }
+        .pj-field { width: 100%; box-sizing: border-box; padding: 9px 10px; font-size: 13px; font-family: inherit;
+            color: #111827; background: #F9FAFB; border: 1px solid #E5E7EB; border-radius: 8px; transition: border-color 0.2s, box-shadow 0.2s, background 0.2s; }
+        .pj-field:focus { outline: none; border-color: var(--accent); background: #FFF; box-shadow: 0 0 0 3px rgba(85, 107, 47, 0.12); }
+        .pj-field.pj-amount { font-weight: 700; }
+        .pj-field.pj-amount-negative { color: #DC2626; }
+        .pj-select {
+            appearance: none; cursor: pointer;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='none' stroke='%239CA3AF' stroke-width='2'%3E%3Cpath d='M3 4.5L6 7.5L9 4.5'/%3E%3C/svg%3E");
+            background-repeat: no-repeat; background-position: right 10px center; padding-right: 28px;
+        }
+        .pj-del {
+            width: 36px; height: 36px; border: none; border-radius: 8px; background: #F3F4F6; color: #9CA3AF;
+            font-size: 18px; line-height: 1; cursor: pointer; transition: 0.2s; display: flex; align-items: center; justify-content: center;
+        }
+        .pj-del:hover { background: #FEE2E2; color: #DC2626; }
+        .pj-empty { padding: 28px 16px; text-align: center; font-size: 13px; color: #9CA3AF; background: #FAFAFA; border-radius: 12px; border: 1px dashed #E5E7EB; }
+
         /* Сітка карток транзакцій */
         .inline-trans-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 20px; width: 100%; align-items: start;}
         .it-card { background: #fff; border: 1px solid #E5E7EB; border-radius: 16px; overflow: hidden; transition: 0.3s ease; cursor: pointer; display: flex; flex-direction: column; }
@@ -1400,20 +1447,16 @@ input[type="number"] {
                     </div>
                 </div>
 
-                <div id="accrualSummaryPanel" style="display:grid; grid-template-columns:1fr 1fr; gap:12px; margin:16px 0 8px;">
-                    <div class="metric-card fin-accrual-creditor" style="cursor:pointer; border:1px solid #FCD34D; background:linear-gradient(145deg,#FFFBEB 0%,#FEF3C7 100%); box-shadow:0 1px 3px rgba(180,83,9,0.08);" onclick="openUniversalDetails('creditor', 'Кредиторка на кінець періоду', '#B45309', '#FFFBEB', 'Сума')">
-                        <div class="mc-body">
-                            <span class="metric-title" style="color:#B45309;font-weight:700;">Кредиторка</span>
-                            <span class="metric-val" id="finCreditor" style="color:#B45309;">0 грн</span>
-                            <span style="font-size:11px;color:#92400E;font-weight:500;">на кінець періоду</span>
-                        </div>
+                <div class="finance-summary finance-accrual-row" id="accrualSummaryPanel">
+                    <div class="fin-box fin-accrual-creditor" onclick="openUniversalDetails('creditor', 'Кредиторка на кінець періоду', '#B45309', '#FFFBEB', 'Сума')">
+                        <span>Кредиторка</span>
+                        <h3 id="finCreditor">0 грн</h3>
+                        <span class="fin-accrual-note">на кінець періоду</span>
                     </div>
-                    <div class="metric-card fin-accrual-debtor" style="cursor:pointer; border:1px solid #F9A8D4; background:linear-gradient(145deg,#FDF2F8 0%,#FCE7F3 100%); box-shadow:0 1px 3px rgba(190,24,93,0.1);" onclick="openUniversalDetails('accrualDebtor', 'Дебіторка на кінець періоду', '#BE185D', '#FDF2F8', 'Сума')">
-                        <div class="mc-body">
-                            <span class="metric-title" style="color:#BE185D;font-weight:700;">Дебіторка</span>
-                            <span class="metric-val" id="finDebtor" style="color:#BE185D;">0 грн</span>
-                            <span style="font-size:11px;color:#9D174D;font-weight:500;">на кінець періоду</span>
-                        </div>
+                    <div class="fin-box fin-accrual-debtor" onclick="openUniversalDetails('accrualDebtor', 'Дебіторка на кінець періоду', '#2563EB', '#EFF6FF', 'Сума')">
+                        <span>Дебіторка</span>
+                        <h3 id="finDebtor">0 грн</h3>
+                        <span class="fin-accrual-note">на кінець періоду</span>
                     </div>
                 </div>
                 <p id="accrualHintText" style="font-size:12px;color:#6B7280;margin:0 0 12px;line-height:1.45;">Кредиторка — гроші в касі, послуга ще попереду. Дебіторка — послуга надана, гроші ще не закриті. Стан на останній день обраного періоду (журнал платежів).</p>
@@ -4599,12 +4642,14 @@ const appliesToRoom =
                         </div>
                     </div>
 
-                    <div style="border-top: 1px solid #E5E7EB; margin-top: 16px; padding-top: 14px;">
-                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
-                            <label style="margin:0; font-weight:700; font-size:13px; color:#374151;">Журнал платежів</label>
-                            <button type="button" onclick="bosoAddPaymentRow()" style="font-size:11px;padding:4px 10px;border-radius:6px;border:1px solid #D1D5DB;background:#fff;cursor:pointer;">+ Платіж</button>
+                    <div class="payment-journal">
+                        <div class="payment-journal-head">
+                            <div>
+                                <p class="payment-journal-title">Журнал платежів</p>
+                                <p class="payment-journal-sub">Дата, сума, метод і тип — для каси та нарахування</p>
+                            </div>
+                            <button type="button" class="pj-add-btn" onclick="bosoAddPaymentRow()">+ Платіж</button>
                         </div>
-                        <div style="font-size:10px;color:#9CA3AF;margin-bottom:6px;">Дата · сума · метод · тип — для точного касового та нарахувального обліку</div>
                         <div id="paymentJournalList"></div>
                     </div>
 
@@ -5865,30 +5910,30 @@ function bosoLeave() {
             if (!box) return;
             const pays = window._bookingPayments || [];
             if (!pays.length) {
-                box.innerHTML = '<div style="font-size:12px;color:#9CA3AF;padding:8px 0;">Немає записів — додайте платіж або вкажіть аванс/доплату.</div>';
+                box.innerHTML = '<div class="pj-empty">Немає записів — натисніть «+ Платіж» або вкажіть аванс / доплату вище.</div>';
                 return;
             }
-            const typeLabel = { prepay: 'Аванс', online: 'Онлайн', surcharge: 'Доплата', remainder: 'Доплата', refund: 'Повернення', adjustment: 'Коригування' };
-            box.innerHTML = pays.map((p, idx) => {
-                const lbl = typeLabel[p.type] || p.type;
-                const amtColor = Number(p.amount) < 0 ? '#DC2626' : '#111827';
-                return `<div class="pj-row" style="display:grid;grid-template-columns:1fr 72px 88px 72px 28px;gap:6px;align-items:center;margin-bottom:6px;font-size:12px;">
-                    <input type="date" value="${String(p.date || '').substring(0, 10)}" onchange="bosoUpdatePaymentField(${idx}, 'date', this.value)" style="font-size:12px;padding:4px;">
-                    <input type="number" value="${Number(p.amount) || 0}" onchange="bosoUpdatePaymentField(${idx}, 'amount', this.value)" style="font-size:12px;padding:4px;font-weight:700;color:${amtColor}">
-                    <select onchange="bosoUpdatePaymentField(${idx}, 'method', this.value)" style="font-size:11px;padding:4px;">
+            const rows = pays.map((p, idx) => {
+                const neg = Number(p.amount) < 0;
+                const dateVal = String(p.date || '').substring(0, 10);
+                return `<div class="pj-row">
+                    <input type="date" class="pj-field" value="${dateVal}" onchange="bosoUpdatePaymentField(${idx}, 'date', this.value)">
+                    <input type="number" class="pj-field pj-amount${neg ? ' pj-amount-negative' : ''}" value="${Number(p.amount) || 0}" onchange="bosoUpdatePaymentField(${idx}, 'amount', this.value)">
+                    <select class="pj-field pj-select" onchange="bosoUpdatePaymentField(${idx}, 'method', this.value)">
                         <option value="ФОП" ${p.method === 'ФОП' ? 'selected' : ''}>ФОП</option>
                         <option value="Картка" ${p.method === 'Картка' ? 'selected' : ''}>Картка</option>
                         <option value="Готівка" ${p.method === 'Готівка' ? 'selected' : ''}>Готівка</option>
                     </select>
-                    <select onchange="bosoUpdatePaymentField(${idx}, 'type', this.value)" style="font-size:11px;padding:4px;">
+                    <select class="pj-field pj-select" onchange="bosoUpdatePaymentField(${idx}, 'type', this.value)">
                         <option value="prepay" ${p.type === 'prepay' ? 'selected' : ''}>Аванс</option>
                         <option value="online" ${p.type === 'online' ? 'selected' : ''}>Онлайн</option>
                         <option value="surcharge" ${p.type === 'surcharge' ? 'selected' : ''}>Доплата</option>
-                        <option value="refund" ${p.type === 'refund' ? 'selected' : ''}>Поверн.</option>
+                        <option value="refund" ${p.type === 'refund' ? 'selected' : ''}>Повернення</option>
                     </select>
-                    <button type="button" onclick="bosoRemovePaymentRow(${idx})" style="border:none;background:#FEE2E2;color:#DC2626;border-radius:6px;cursor:pointer;height:28px;">×</button>
+                    <button type="button" class="pj-del" onclick="bosoRemovePaymentRow(${idx})" title="Видалити">×</button>
                 </div>`;
             }).join('');
+            box.innerHTML = `<div class="pj-table"><div class="pj-thead"><span>Дата</span><span>Сума</span><span>Метод</span><span>Тип</span><span></span></div>${rows}</div>`;
         }
 
         window.bosoUpdatePaymentField = function(idx, field, val) {
@@ -7399,10 +7444,10 @@ async function captureFinanceReportCard(report) {
                 <div style="font-size:16px;font-weight:900;color:#B45309;">${formatMoneyUa(report.accrual.creditorTotal)}</div>
                 <div style="font-size:10px;color:#92400E;margin-top:4px;">на ${esc(report.accrual.snapshotLabel || 'кінець періоду')}</div>
             </div>
-            <div style="background:#FDF2F8;border:1px solid #F9A8D4;border-radius:12px;padding:12px;text-align:center;">
-                <div style="font-size:10px;font-weight:800;color:#BE185D;text-transform:uppercase;margin-bottom:4px;">Дебіторка</div>
-                <div style="font-size:16px;font-weight:900;color:#BE185D;">${formatMoneyUa(report.accrual.debtorTotal)}</div>
-                <div style="font-size:10px;color:#9D174D;margin-top:4px;">на ${esc(report.accrual.snapshotLabel || 'кінець періоду')}</div>
+            <div style="background:#EFF6FF;border:1px solid #BFDBFE;border-radius:12px;padding:12px;text-align:center;">
+                <div style="font-size:10px;font-weight:800;color:#2563EB;text-transform:uppercase;margin-bottom:4px;">Дебіторка</div>
+                <div style="font-size:16px;font-weight:900;color:#2563EB;">${formatMoneyUa(report.accrual.debtorTotal)}</div>
+                <div style="font-size:10px;color:#3B82F6;margin-top:4px;">на ${esc(report.accrual.snapshotLabel || 'кінець періоду')}</div>
             </div>
         </div>` : ''}
 

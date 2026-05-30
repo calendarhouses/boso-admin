@@ -585,6 +585,28 @@
         .fin-box.income .add-btn { background: #D1FAE5; color: #059669; }
         .fin-box.expense .add-btn { background: #FEE2E2; color: #DC2626; }
         .fin-box.profit .add-btn { background: #E5E7EB; color: #4B5563; font-size: 14px;}
+        .finance-accrual-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px; }
+        .fin-box.fin-accrual-creditor { background: #FFFBEB; border-color: #FDE68A; }
+        .fin-box.fin-accrual-creditor span, .fin-box.fin-accrual-creditor h3 { color: #B45309; }
+        .fin-box.fin-accrual-debtor { background: #EFF6FF; border-color: #BFDBFE; }
+        .fin-box.fin-accrual-debtor span, .fin-box.fin-accrual-debtor h3 { color: #2563EB; }
+        .fin-box .fin-accrual-note { font-size: 10px; font-weight: 600; text-transform: none; letter-spacing: 0; opacity: 0.75; }
+        .payment-journal { margin-top: 12px; padding-top: 12px; border-top: 1px solid #E5E7EB; }
+        .payment-journal-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; margin-bottom: 10px; }
+        .payment-journal-title { font-size: 12px; font-weight: 700; color: #374151; margin: 0 0 2px; }
+        .payment-journal-sub { font-size: 10px; color: #9CA3AF; margin: 0; line-height: 1.35; }
+        .pj-add-btn { flex-shrink: 0; padding: 8px 12px; font-size: 11px; font-weight: 700; color: var(--accent); background: #F8FAF7; border: 1px solid #BFE0A6; border-radius: 10px; cursor: pointer; font-family: inherit; }
+        .pj-table { background: #FFF; border: 1px solid #E5E7EB; border-radius: 12px; overflow: hidden; }
+        .pj-thead { display: none; }
+        .pj-row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; padding: 12px; border-bottom: 1px solid #F3F4F6; }
+        .pj-row:last-child { border-bottom: none; }
+        .pj-field { width: 100%; box-sizing: border-box; padding: 10px 12px; font-size: 14px; font-family: inherit; border: 1px solid #E5E7EB; border-radius: 10px; background: #F9FAFB; }
+        .pj-field:focus { outline: none; border-color: var(--accent); background: #FFF; box-shadow: 0 0 0 3px rgba(85, 107, 47, 0.1); }
+        .pj-field.pj-amount { font-weight: 700; grid-column: 1 / -1; }
+        .pj-select { appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='none' stroke='%239CA3AF' stroke-width='2'%3E%3Cpath d='M3 4.5L6 7.5L9 4.5'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 10px center; padding-right: 28px; }
+        .pj-del { grid-column: 1 / -1; width: 100%; height: 40px; border: none; border-radius: 10px; background: #F3F4F6; color: #6B7280; font-size: 14px; font-weight: 600; cursor: pointer; }
+        .pj-del:hover { background: #FEE2E2; color: #DC2626; }
+        .pj-empty { padding: 20px; text-align: center; font-size: 12px; color: #9CA3AF; border: 1px dashed #E5E7EB; border-radius: 12px; background: #FAFAFA; }
 
         .fade-section { transition: opacity 0.3s ease, transform 0.3s ease; }
         .fade-hidden { opacity: 0; transform: scale(0.98) translateY(10px); pointer-events: none; position: absolute; width: 100%; visibility: hidden; z-index: -1; height: 0; overflow: hidden; }
@@ -899,12 +921,12 @@
                     </div>
                 </div>
 
-                <div id="accrualSummaryPanel" style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin:12px 0;">
-                    <div class="metric-card" style="border:1px solid #FCD34D; background:linear-gradient(145deg,#FFFBEB,#FEF3C7);" onclick="openUniversalDetails('creditor', 'Кредиторка', '#B45309', '#FFFBEB', 'Сума')">
-                        <div class="mc-body"><span class="metric-title" style="color:#B45309;font-size:11px;font-weight:700;">Кредиторка</span><span class="metric-val" id="finCreditor" style="color:#B45309;font-size:18px;">0 грн</span><span style="font-size:10px;color:#92400E;">на кінець періоду</span></div>
+                <div class="finance-accrual-row" id="accrualSummaryPanel">
+                    <div class="fin-box fin-accrual-creditor" onclick="openUniversalDetails('creditor', 'Кредиторка', '#B45309', '#FFFBEB', 'Сума')">
+                        <span>Кредиторка</span><h3 id="finCreditor">0 грн</h3><span class="fin-accrual-note">на кінець періоду</span>
                     </div>
-                    <div class="metric-card" style="border:1px solid #F9A8D4; background:linear-gradient(145deg,#FDF2F8,#FCE7F3);" onclick="openUniversalDetails('accrualDebtor', 'Дебіторка', '#BE185D', '#FDF2F8', 'Сума')">
-                        <div class="mc-body"><span class="metric-title" style="color:#BE185D;font-size:11px;font-weight:700;">Дебіторка</span><span class="metric-val" id="finDebtor" style="color:#BE185D;font-size:18px;">0 грн</span><span style="font-size:10px;color:#9D174D;">на кінець періоду</span></div>
+                    <div class="fin-box fin-accrual-debtor" onclick="openUniversalDetails('accrualDebtor', 'Дебіторка', '#2563EB', '#EFF6FF', 'Сума')">
+                        <span>Дебіторка</span><h3 id="finDebtor">0 грн</h3><span class="fin-accrual-note">на кінець періоду</span>
                     </div>
                 </div>
                 <p id="accrualHintText" style="font-size:11px;color:#6B7280;margin:0 0 12px;line-height:1.4;">Кредиторка — гроші в касі, послуга попереду. Дебіторка — послуга надана, гроші не закриті.</p>
@@ -3521,10 +3543,13 @@ if (sClass.includes('скас')) {
                             0 грн
                         </div>
                     </div>
-                    <div style="border-top:1px solid #E5E7EB;margin-top:12px;padding-top:10px;">
-                        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
-                            <label style="margin:0;font-weight:700;font-size:12px;">Журнал платежів</label>
-                            <button type="button" onclick="bosoAddPaymentRow()" style="font-size:10px;padding:4px 8px;border-radius:6px;border:1px solid #D1D5DB;background:#fff;">+ Платіж</button>
+                    <div class="payment-journal">
+                        <div class="payment-journal-head">
+                            <div>
+                                <p class="payment-journal-title">Журнал платежів</p>
+                                <p class="payment-journal-sub">Дата, сума, метод і тип</p>
+                            </div>
+                            <button type="button" class="pj-add-btn" onclick="bosoAddPaymentRow()">+ Платіж</button>
                         </div>
                         <div id="paymentJournalList"></div>
                     </div>
@@ -4563,16 +4588,30 @@ function setHalfPrepayment() {
             if (!box) return;
             const pays = window._bookingPayments || [];
             if (!pays.length) {
-                box.innerHTML = '<div style="font-size:11px;color:#9CA3AF;padding:6px 0;">Додайте платіж або вкажіть аванс/доплату.</div>';
+                box.innerHTML = '<div class="pj-empty">Немає записів — «+ Платіж» або аванс / доплата вище.</div>';
                 return;
             }
-            box.innerHTML = pays.map((p, idx) => `<div style="display:grid;grid-template-columns:1fr 64px 80px 64px 24px;gap:4px;margin-bottom:6px;font-size:11px;">
-                <input type="date" value="${String(p.date || '').substring(0, 10)}" onchange="bosoUpdatePaymentField(${idx}, 'date', this.value)" style="font-size:11px;padding:6px;">
-                <input type="number" inputmode="numeric" value="${Number(p.amount) || 0}" onchange="bosoUpdatePaymentField(${idx}, 'amount', this.value)" style="font-size:11px;padding:6px;font-weight:700;">
-                <select onchange="bosoUpdatePaymentField(${idx}, 'method', this.value)" style="font-size:10px;"><option value="ФОП" ${p.method==='ФОП'?'selected':''}>ФОП</option><option value="Картка" ${p.method==='Картка'?'selected':''}>Картка</option><option value="Готівка" ${p.method==='Готівка'?'selected':''}>Готівка</option></select>
-                <select onchange="bosoUpdatePaymentField(${idx}, 'type', this.value)" style="font-size:10px;"><option value="prepay" ${p.type==='prepay'?'selected':''}>Аванс</option><option value="online" ${p.type==='online'?'selected':''}>Онлайн</option><option value="surcharge" ${p.type==='surcharge'?'selected':''}>Доплата</option><option value="refund" ${p.type==='refund'?'selected':''}>Поверн.</option></select>
-                <button type="button" onclick="bosoRemovePaymentRow(${idx})" style="border:none;background:#FEE2E2;color:#DC2626;border-radius:6px;">×</button>
-            </div>`).join('');
+            const rows = pays.map((p, idx) => {
+                const dateVal = String(p.date || '').substring(0, 10);
+                const neg = Number(p.amount) < 0;
+                return `<div class="pj-row">
+                    <input type="date" class="pj-field" value="${dateVal}" onchange="bosoUpdatePaymentField(${idx}, 'date', this.value)">
+                    <input type="number" inputmode="numeric" class="pj-field pj-amount${neg ? ' pj-amount-negative' : ''}" value="${Number(p.amount) || 0}" onchange="bosoUpdatePaymentField(${idx}, 'amount', this.value)" style="color:${neg ? '#DC2626' : '#111827'}">
+                    <select class="pj-field pj-select" onchange="bosoUpdatePaymentField(${idx}, 'method', this.value)">
+                        <option value="ФОП" ${p.method==='ФОП'?'selected':''}>ФОП</option>
+                        <option value="Картка" ${p.method==='Картка'?'selected':''}>Картка</option>
+                        <option value="Готівка" ${p.method==='Готівка'?'selected':''}>Готівка</option>
+                    </select>
+                    <select class="pj-field pj-select" onchange="bosoUpdatePaymentField(${idx}, 'type', this.value)">
+                        <option value="prepay" ${p.type==='prepay'?'selected':''}>Аванс</option>
+                        <option value="online" ${p.type==='online'?'selected':''}>Онлайн</option>
+                        <option value="surcharge" ${p.type==='surcharge'?'selected':''}>Доплата</option>
+                        <option value="refund" ${p.type==='refund'?'selected':''}>Повернення</option>
+                    </select>
+                    <button type="button" class="pj-del" onclick="bosoRemovePaymentRow(${idx})">Видалити платіж</button>
+                </div>`;
+            }).join('');
+            box.innerHTML = `<div class="pj-table">${rows}</div>`;
         }
         window.bosoUpdatePaymentField = function(idx, field, val) {
             if (!window._bookingPayments || !window._bookingPayments[idx]) return;
@@ -6431,9 +6470,9 @@ async function captureFinanceReportCard(report) {
                 <div style="font-size:10px;font-weight:800;color:#B45309;text-transform:uppercase;">Кредиторка</div>
                 <div style="font-size:16px;font-weight:900;color:#B45309;">${formatMoneyUa(report.accrual.creditorTotal)}</div>
             </div>
-            <div style="background:#FDF2F8;border:1px solid #F9A8D4;border-radius:12px;padding:12px;text-align:center;">
-                <div style="font-size:10px;font-weight:800;color:#BE185D;text-transform:uppercase;">Дебіторка</div>
-                <div style="font-size:16px;font-weight:900;color:#BE185D;">${formatMoneyUa(report.accrual.debtorTotal)}</div>
+            <div style="background:#EFF6FF;border:1px solid #BFDBFE;border-radius:12px;padding:12px;text-align:center;">
+                <div style="font-size:10px;font-weight:800;color:#2563EB;text-transform:uppercase;">Дебіторка</div>
+                <div style="font-size:16px;font-weight:900;color:#2563EB;">${formatMoneyUa(report.accrual.debtorTotal)}</div>
             </div>
         </div>` : ''}
 
