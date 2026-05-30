@@ -1212,13 +1212,31 @@ input[type="number"] {
                         </div>
                     </div>
                     
-                    <div class="metric-card danger-card" onclick="openUniversalDetails('debt', 'Список боржників', '#DC2626', '#FEF2F2', 'Борг')">
+                    <div class="metric-card danger-card" onclick="openUniversalDetails('debt', 'Борг по заїздах періоду', '#DC2626', '#FEF2F2', 'Борг')">
                         <div class="mc-header">
                             <div class="metric-icon" style="background:#FEE2E2; color:#DC2626;"><svg width="22" height="22" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg></div>
                         </div>
                         <div class="mc-body">
-                            <span class="metric-title" style="color: #DC2626;">Борг гостей</span>
+                            <span class="metric-title" style="color: #DC2626;">Борг (заїзди періоду)</span>
                             <span class="metric-val" id="metDebt" style="color: #DC2626;">0 грн</span>
+                        </div>
+                    </div>
+                    <div class="metric-card" onclick="openUniversalDetails('creditor', 'Аванси гостей', '#B45309', '#FFFBEB', 'Аванс')">
+                        <div class="mc-header">
+                            <div class="metric-icon" style="background:#FFFBEB; color:#B45309;"><svg width="22" height="22" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg></div>
+                        </div>
+                        <div class="mc-body">
+                            <span class="metric-title" style="color:#B45309;">Аванси (ми винні)</span>
+                            <span class="metric-val" id="metCreditor" style="color:#B45309;">0 грн</span>
+                        </div>
+                    </div>
+                    <div class="metric-card danger-card" onclick="openUniversalDetails('accrualDebtor', 'Дебіторка на кінець періоду', '#DC2626', '#FEF2F2', 'Борг')">
+                        <div class="mc-header">
+                            <div class="metric-icon" style="background:#FEE2E2; color:#DC2626;"><svg width="22" height="22" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg></div>
+                        </div>
+                        <div class="mc-body">
+                            <span class="metric-title" style="color:#DC2626;">Дебіторка (нам винні)</span>
+                            <span class="metric-val" id="metAccrualDebtor" style="color:#DC2626;">0 грн</span>
                         </div>
                     </div>
                     
@@ -1381,6 +1399,31 @@ input[type="number"] {
                         <span>Чистий Прибуток</span><h3 id="finProfit">0 грн</h3>
                     </div>
                 </div>
+
+                <div id="accrualSummaryPanel" style="display:grid; grid-template-columns:repeat(auto-fit,minmax(200px,1fr)); gap:12px; margin:16px 0 8px;">
+                    <div class="metric-card" style="cursor:pointer; border:1px solid #FDE68A; background:#FFFBEB;" onclick="openUniversalDetails('creditor', 'Аванси гостей (ми винні послугу)', '#B45309', '#FFFBEB', 'Аванс')">
+                        <div class="mc-body">
+                            <span class="metric-title" style="color:#B45309;">Аванси (ми винні)</span>
+                            <span class="metric-val" id="finCreditor" style="color:#B45309;">0 грн</span>
+                            <span style="font-size:11px;color:#9CA3AF;font-weight:500;">на кінець періоду</span>
+                        </div>
+                    </div>
+                    <div class="metric-card danger-card" style="cursor:pointer;" onclick="openUniversalDetails('accrualDebtor', 'Дебіторка (нам винні)', '#DC2626', '#FEF2F2', 'Борг')">
+                        <div class="mc-body">
+                            <span class="metric-title" style="color:#DC2626;">Дебіторка (нам винні)</span>
+                            <span class="metric-val" id="finDebtor" style="color:#DC2626;">0 грн</span>
+                            <span style="font-size:11px;color:#9CA3AF;font-weight:500;">на кінець періоду</span>
+                        </div>
+                    </div>
+                    <div class="metric-card" style="border:1px solid #A7F3D0; background:#F0FDF4;">
+                        <div class="mc-body">
+                            <span class="metric-title" style="color:#059669;">Надано послуг (нараховано)</span>
+                            <span class="metric-val" id="finAccruedPeriod" style="color:#059669;">0 грн</span>
+                            <span style="font-size:11px;color:#9CA3AF;font-weight:500;">за обраний період</span>
+                        </div>
+                    </div>
+                </div>
+                <p id="accrualHintText" style="font-size:12px;color:#6B7280;margin:0 0 12px;line-height:1.45;">Аванс — гроші вже в касі, але гість ще не відпочив. Дебіторка — гість уже відпочив, але ще не доплатив. Стан на останній день обраного періоду.</p>
 
                 <div style="position: relative; margin-top: 10px;">
                     <!-- ТАБЛИЦЯ (Видима за замовчуванням) -->
@@ -4563,6 +4606,15 @@ const appliesToRoom =
                         </div>
                     </div>
 
+                    <div style="border-top: 1px solid #E5E7EB; margin-top: 16px; padding-top: 14px;">
+                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+                            <label style="margin:0; font-weight:700; font-size:13px; color:#374151;">Журнал платежів</label>
+                            <button type="button" onclick="bosoAddPaymentRow()" style="font-size:11px;padding:4px 10px;border-radius:6px;border:1px solid #D1D5DB;background:#fff;cursor:pointer;">+ Платіж</button>
+                        </div>
+                        <div style="font-size:10px;color:#9CA3AF;margin-bottom:6px;">Дата · сума · метод · тип — для точного касового та нарахувального обліку</div>
+                        <div id="paymentJournalList"></div>
+                    </div>
+
                 </div>
             </div>
         </div>
@@ -4574,6 +4626,7 @@ const appliesToRoom =
     
     // 2. ОДРАЗУ ОНОВЛЮЄМО ПЛАШКУ "ЗАЛИШОК"
     calculateBalanceLive();
+    renderPaymentJournalList();
 }
 
         // --- ФУНКЦІЇ ДЛЯ КНОПОК ОПЛАТИ (Аванс, Доплата, Чіпи) ---
@@ -4864,6 +4917,8 @@ document.getElementById('adminGuests').addEventListener('change', updatePricePre
                 selectPayMethod('surcharge', 'Готівка');
             }
             window._bookingOpenPayments = { prepay: 0, surcharge: 0 };
+            window._bookingPayments = [];
+            window._bookingPaymentMeta = { createdAt: bosoFormatDateIso(new Date()), checkOut: '' };
             
            // ОЧИЩЕННЯ ПОЛІВ ПРИ НОВІЙ БРОНІ
             if(document.getElementById('adminComment')) document.getElementById('adminComment').value = ""; 
@@ -5087,8 +5142,14 @@ document.getElementById('adminGuests').addEventListener('change', updatePricePre
                             prepay: savedPrepay,
                             surcharge: savedSurcharge
                         };
+                        window._bookingPayments = bosoGetBookingPayments(booking);
+                        window._bookingPaymentMeta = {
+                            createdAt: booking.createdAt || booking.checkIn,
+                            checkOut: booking.checkOut
+                        };
 
                         calculateBalanceLive();
+                        renderPaymentJournalList();
                     }
                 }, 50);
             }, 100);
@@ -5131,6 +5192,8 @@ document.getElementById('adminGuests').addEventListener('change', updatePricePre
                 rawComment = sysComment.join(' | ') + (rawComment ? '\n\nКоментар гостя: ' + rawComment : '');
             }
 
+            const paymentsForSave = bosoBuildPaymentsForSave();
+
             // 🟢 ТЕПЕР ЗБИРАЄМО ДАНІ ЧЕРЕЗ getVal()
             const bookingData = { 
                 checkIn: document.getElementById('adminCheckIn').value, 
@@ -5143,11 +5206,12 @@ document.getElementById('adminGuests').addEventListener('change', updatePricePre
                 source: document.getElementById('adminSource').value,
                 status: document.querySelector('.status-btn.active').getAttribute('data-status'),
                 totalPrice: getVal('adminTotalPrice'), 
-                prepayAmount: getVal('adminPrepayAmount'),
+                prepayAmount: bosoSumPaymentsByBucket(paymentsForSave, 'prepay'),
                 prepayMethod: document.getElementById('adminPrepayMethod').value,
-                surchargeAmount: getVal('adminSurchargeAmount'),
+                surchargeAmount: bosoSumPaymentsByBucket(paymentsForSave, 'surcharge'),
                 surchargeMethod: document.getElementById('adminSurchargeMethod').value,
-                paidAmount: getVal('adminPrepayAmount') + getVal('adminSurchargeAmount'), // Залишаємо суму для системи
+                paidAmount: paymentsForSave.reduce((s, p) => s + (Number(p.amount) || 0), 0),
+                payments: paymentsForSave,
                 comment: rawComment,
                 
                 // Збираємо ручні правки з розшифровки (тепер вони не будуть нулями)
@@ -5168,7 +5232,8 @@ document.getElementById('adminGuests').addEventListener('change', updatePricePre
                 const openPay = window._bookingOpenPayments || { prepay: 0, surcharge: 0 };
                 const newSurcharge = getVal('adminSurchargeAmount');
                 const surchargeDelta = newSurcharge - (Number(openPay.surcharge) || 0);
-                if (surchargeDelta > 0) {
+                const hadJournalAdd = paymentsForSave.some(p => bosoIsSurchargeType(p.type) && p.note === 'доплата');
+                if (surchargeDelta > 0 && !hadJournalAdd) {
                     payloadForServer.remainderPaymentAdded = true;
                     payloadForServer.remainderPaymentAmount = surchargeDelta;
                 }
@@ -5722,6 +5787,296 @@ function bosoLeave() {
             modal.classList.add('active');
         }
 
+        function bosoDateOnly(d) {
+            const x = d instanceof Date ? new Date(d.getTime()) : parseSafeDate(d);
+            x.setHours(0, 0, 0, 0);
+            return x;
+        }
+
+        function bosoFormatDateIso(d) {
+            const x = bosoDateOnly(d);
+            const pad = (n) => String(n).padStart(2, '0');
+            return `${x.getFullYear()}-${pad(x.getMonth() + 1)}-${pad(x.getDate())}`;
+        }
+
+        function bosoIsPrepayType(t) {
+            return t === 'prepay' || t === 'online' || t === 'adjustment';
+        }
+
+        function bosoIsSurchargeType(t) {
+            return t === 'surcharge' || t === 'remainder';
+        }
+
+        function bosoBuildLegacyPayments(b) {
+            const prepay = Math.round(Number(b.prepayAmount) || 0);
+            const surcharge = Math.round(Number(b.surchargeAmount) || 0);
+            let paid = Math.round(Number(b.paidAmount) || 0);
+            const created = b.createdAt || b.checkIn;
+            const payments = [];
+            if (prepay > 0) {
+                payments.push({ id: 'legacy-p', date: created, amount: prepay, method: b.prepayMethod || 'ФОП', type: String(b.source) === 'Сайт' ? 'online' : 'prepay', note: '' });
+            }
+            if (surcharge > 0) {
+                payments.push({ id: 'legacy-s', date: b.checkOut, amount: surcharge, method: b.surchargeMethod || 'Готівка', type: 'surcharge', note: '' });
+            }
+            if (!payments.length && paid > 0) {
+                if (prepay === 0 && surcharge === 0) payments.push({ id: 'legacy-t', date: created, amount: paid, method: b.prepayMethod || 'ФОП', type: 'prepay', note: '' });
+            }
+            return payments;
+        }
+
+        function bosoGetBookingPayments(b) {
+            if (b && Array.isArray(b.payments) && b.payments.length) return b.payments.map(p => ({ ...p }));
+            return bosoBuildLegacyPayments(b || {});
+        }
+
+        function bosoPaidUntilDate(b, asOfDate) {
+            const pays = bosoGetBookingPayments(b);
+            if (!pays.length) return Math.round(Number(b.paidAmount) || 0);
+            const asOf = bosoDateOnly(asOfDate);
+            return pays.filter(p => bosoDateOnly(p.date) <= asOf).reduce((s, p) => s + (Math.round(Number(p.amount)) || 0), 0);
+        }
+
+        function bosoPaymentsInPeriod(b, startDate, endDate) {
+            const start = bosoDateOnly(startDate);
+            const end = bosoDateOnly(endDate);
+            return bosoGetBookingPayments(b).filter(p => {
+                const d = bosoDateOnly(p.date);
+                return d >= start && d <= end;
+            });
+        }
+
+        function bosoSumPaymentsByBucket(payments, bucket) {
+            return (payments || []).filter(p => bucket === 'prepay' ? bosoIsPrepayType(p.type) : bosoIsSurchargeType(p.type))
+                .reduce((s, p) => s + (Math.round(Number(p.amount)) || 0), 0);
+        }
+
+        function bosoSyncPaymentFieldsFromJournal() {
+            const pays = window._bookingPayments || [];
+            const prepay = bosoSumPaymentsByBucket(pays, 'prepay');
+            const surcharge = bosoSumPaymentsByBucket(pays, 'surcharge');
+            const prepayEl = document.getElementById('adminPrepayAmount');
+            const surchargeEl = document.getElementById('adminSurchargeAmount');
+            if (prepayEl) prepayEl.value = prepay;
+            if (surchargeEl) surchargeEl.value = surcharge;
+            const lastPrepay = [...pays].reverse().find(p => bosoIsPrepayType(p.type) && Number(p.amount) > 0);
+            const lastSurcharge = [...pays].reverse().find(p => bosoIsSurchargeType(p.type) && Number(p.amount) > 0);
+            if (lastPrepay) selectPayMethod('prepay', lastPrepay.method || 'ФОП');
+            if (lastSurcharge) selectPayMethod('surcharge', lastSurcharge.method || 'Готівка');
+            calculateBalanceLive();
+            renderPaymentJournalList();
+        }
+
+        function renderPaymentJournalList() {
+            const box = document.getElementById('paymentJournalList');
+            if (!box) return;
+            const pays = window._bookingPayments || [];
+            if (!pays.length) {
+                box.innerHTML = '<div style="font-size:12px;color:#9CA3AF;padding:8px 0;">Немає записів — додайте платіж або вкажіть аванс/доплату.</div>';
+                return;
+            }
+            const typeLabel = { prepay: 'Аванс', online: 'Онлайн', surcharge: 'Доплата', remainder: 'Доплата', refund: 'Повернення', adjustment: 'Коригування' };
+            box.innerHTML = pays.map((p, idx) => {
+                const lbl = typeLabel[p.type] || p.type;
+                const amtColor = Number(p.amount) < 0 ? '#DC2626' : '#111827';
+                return `<div class="pj-row" style="display:grid;grid-template-columns:1fr 72px 88px 72px 28px;gap:6px;align-items:center;margin-bottom:6px;font-size:12px;">
+                    <input type="date" value="${String(p.date || '').substring(0, 10)}" onchange="bosoUpdatePaymentField(${idx}, 'date', this.value)" style="font-size:12px;padding:4px;">
+                    <input type="number" value="${Number(p.amount) || 0}" onchange="bosoUpdatePaymentField(${idx}, 'amount', this.value)" style="font-size:12px;padding:4px;font-weight:700;color:${amtColor}">
+                    <select onchange="bosoUpdatePaymentField(${idx}, 'method', this.value)" style="font-size:11px;padding:4px;">
+                        <option value="ФОП" ${p.method === 'ФОП' ? 'selected' : ''}>ФОП</option>
+                        <option value="Картка" ${p.method === 'Картка' ? 'selected' : ''}>Картка</option>
+                        <option value="Готівка" ${p.method === 'Готівка' ? 'selected' : ''}>Готівка</option>
+                    </select>
+                    <select onchange="bosoUpdatePaymentField(${idx}, 'type', this.value)" style="font-size:11px;padding:4px;">
+                        <option value="prepay" ${p.type === 'prepay' ? 'selected' : ''}>Аванс</option>
+                        <option value="online" ${p.type === 'online' ? 'selected' : ''}>Онлайн</option>
+                        <option value="surcharge" ${p.type === 'surcharge' ? 'selected' : ''}>Доплата</option>
+                        <option value="refund" ${p.type === 'refund' ? 'selected' : ''}>Поверн.</option>
+                    </select>
+                    <button type="button" onclick="bosoRemovePaymentRow(${idx})" style="border:none;background:#FEE2E2;color:#DC2626;border-radius:6px;cursor:pointer;height:28px;">×</button>
+                </div>`;
+            }).join('');
+        }
+
+        window.bosoUpdatePaymentField = function(idx, field, val) {
+            if (!window._bookingPayments || !window._bookingPayments[idx]) return;
+            if (field === 'amount') window._bookingPayments[idx].amount = Math.round(Number(val) || 0);
+            else window._bookingPayments[idx][field] = val;
+            bosoSyncPaymentFieldsFromJournal();
+        };
+
+        window.bosoRemovePaymentRow = function(idx) {
+            window._bookingPayments = (window._bookingPayments || []).filter((_, i) => i !== idx);
+            bosoSyncPaymentFieldsFromJournal();
+        };
+
+        window.bosoAddPaymentRow = function() {
+            const defType = 'prepay';
+            const method = document.getElementById('adminPrepayMethod')?.value || 'ФОП';
+            window._bookingPayments = window._bookingPayments || [];
+            window._bookingPayments.push({
+                id: 'P-' + Date.now(),
+                date: bosoFormatDateIso(new Date()),
+                amount: 0,
+                method: method,
+                type: defType,
+                note: ''
+            });
+            renderPaymentJournalList();
+        };
+
+        function bosoBuildPaymentsForSave() {
+            let payments = (window._bookingPayments || []).map(p => ({
+                id: p.id,
+                date: String(p.date || '').substring(0, 10),
+                amount: Math.round(Number(p.amount) || 0),
+                method: p.method || 'ФОП',
+                type: p.type || 'prepay',
+                note: p.note || ''
+            })).filter(p => p.amount !== 0);
+
+            const prepay = Number(document.getElementById('adminPrepayAmount')?.value) || 0;
+            const surcharge = Number(document.getElementById('adminSurchargeAmount')?.value) || 0;
+            const prepayMethod = document.getElementById('adminPrepayMethod')?.value || 'ФОП';
+            const surchargeMethod = document.getElementById('adminSurchargeMethod')?.value || 'Готівка';
+            const journalPrepay = bosoSumPaymentsByBucket(payments, 'prepay');
+            const journalSurcharge = bosoSumPaymentsByBucket(payments, 'surcharge');
+            const created = window._bookingPaymentMeta?.createdAt || document.getElementById('adminCheckIn')?.value;
+            const checkOut = document.getElementById('adminCheckOut')?.value;
+
+            if (prepay !== journalPrepay) {
+                payments = payments.filter(p => !bosoIsPrepayType(p.type));
+                if (prepay !== 0) payments.push({ id: 'P-' + Date.now() + '-p', date: created, amount: prepay, method: prepayMethod, type: 'prepay', note: '' });
+            }
+            if (surcharge !== journalSurcharge) {
+                payments = payments.filter(p => !bosoIsSurchargeType(p.type));
+                if (surcharge !== 0) payments.push({ id: 'P-' + Date.now() + '-s', date: checkOut, amount: surcharge, method: surchargeMethod, type: 'surcharge', note: '' });
+            }
+            return payments;
+        }
+
+        function bosoBookingNights(checkIn, checkOut) {
+            const cin = bosoDateOnly(checkIn);
+            const cout = bosoDateOnly(checkOut);
+            return Math.max(1, Math.round((cout - cin) / 86400000));
+        }
+
+        /** Скільки вартості послуги вже «надано» на дату зрізу (пропорційно ночам). */
+        function bosoEarnedAtDate(checkIn, checkOut, totalPrice, asOfDate) {
+            const price = Math.round(Number(totalPrice) || 0);
+            if (price <= 0) return 0;
+            const cin = bosoDateOnly(checkIn);
+            const cout = bosoDateOnly(checkOut);
+            const asOf = bosoDateOnly(asOfDate);
+            if (asOf < cin) return 0;
+            if (asOf >= cout) return price;
+            const totalNights = bosoBookingNights(checkIn, checkOut);
+            const nightsUsed = Math.max(0, Math.round((asOf - cin) / 86400000));
+            return Math.round(price * nightsUsed / totalNights);
+        }
+
+        /** Нарахований дохід за ночі, що потрапили в обраний період. */
+        function bosoEarnedInPeriod(checkIn, checkOut, totalPrice, startDate, endDate) {
+            const price = Math.round(Number(totalPrice) || 0);
+            if (price <= 0) return 0;
+            const cin = bosoDateOnly(checkIn);
+            const cout = bosoDateOnly(checkOut);
+            const start = bosoDateOnly(startDate);
+            const end = bosoDateOnly(endDate);
+            end.setHours(23, 59, 59, 999);
+            if (cout <= start || cin > end) return 0;
+            const totalNights = bosoBookingNights(checkIn, checkOut);
+            let nightsInPeriod = 0;
+            const d = new Date(cin);
+            while (d < cout) {
+                if (d >= start && d <= end) nightsInPeriod++;
+                d.setDate(d.getDate() + 1);
+            }
+            return Math.round(price * nightsInPeriod / totalNights);
+        }
+
+        function bosoBookingDetailRow(b, amount, suffix) {
+            const inD = parseSafeDate(b.checkIn);
+            const outD = parseSafeDate(b.checkOut);
+            const fIn = inD.toLocaleDateString('uk-UA', { day: 'numeric', month: 'long' }).replace('.', '');
+            const fOut = outD.toLocaleDateString('uk-UA', { day: 'numeric', month: 'long' }).replace('.', '');
+            return {
+                name: (String(b.name || 'Клієнт').replace(' (Ручна бронь)', '').trim() || 'Клієнт') + (suffix || ''),
+                phone: formatPhone(b.phone),
+                date: `${fIn} — ${fOut}`,
+                row: b.row,
+                amount: Math.round(amount),
+                cottage: b.cottage || '',
+                rawDate: inD.getTime()
+            };
+        }
+
+        function calculateAccrualBalances(bookings, endDate, startDate) {
+            const snapEnd = new Date(endDate);
+            snapEnd.setHours(23, 59, 59, 999);
+            let creditorTotal = 0;
+            let debtorTotal = 0;
+            let earnedInPeriod = 0;
+            const creditorItems = [];
+            const debtorItems = [];
+
+            (bookings || []).forEach(b => {
+                if (String(b.status || '').toLowerCase().includes('скас')) return;
+                const price = Number(b.totalPrice) || 0;
+                const paid = bosoPaidUntilDate(b, snapEnd);
+                if (price <= 0 && paid <= 0) return;
+
+                const earnedSnap = bosoEarnedAtDate(b.checkIn, b.checkOut, price, snapEnd);
+                if (startDate && endDate) {
+                    earnedInPeriod += bosoEarnedInPeriod(b.checkIn, b.checkOut, price, startDate, endDate);
+                }
+
+                const advance = Math.max(0, paid - earnedSnap);
+                const debt = Math.max(0, earnedSnap - paid);
+                if (advance > 0) {
+                    creditorTotal += advance;
+                    creditorItems.push(bosoBookingDetailRow(b, advance, ' · аванс'));
+                }
+                if (debt > 0) {
+                    debtorTotal += debt;
+                    debtorItems.push(bosoBookingDetailRow(b, debt, ' · борг'));
+                }
+            });
+
+            creditorItems.sort((a, b) => b.amount - a.amount);
+            debtorItems.sort((a, b) => b.amount - a.amount);
+
+            const pad = (n) => String(n).padStart(2, '0');
+            const snapLabel = `${pad(snapEnd.getDate())}.${pad(snapEnd.getMonth() + 1)}.${snapEnd.getFullYear()}`;
+
+            return {
+                creditorTotal,
+                debtorTotal,
+                earnedInPeriod,
+                creditorItems,
+                debtorItems,
+                snapshotLabel: snapLabel
+            };
+        }
+
+        function updateAccrualPanel(accrual) {
+            const fmt = (n) => Math.round(Number(n) || 0).toLocaleString('uk-UA') + ' грн';
+            const ids = [
+                ['finCreditor', 'metCreditor', accrual.creditorTotal],
+                ['finDebtor', 'metAccrualDebtor', accrual.debtorTotal],
+                ['finAccruedPeriod', null, accrual.earnedInPeriod]
+            ];
+            ids.forEach(([a, b, val]) => {
+                if (a) { const el = document.getElementById(a); if (el) el.innerText = fmt(val); }
+                if (b) { const el = document.getElementById(b); if (el) el.innerText = fmt(val); }
+            });
+            const hint = document.getElementById('accrualHintText');
+            if (hint && accrual.snapshotLabel) {
+                hint.innerText = `Стан на ${accrual.snapshotLabel}: аванси та дебіторка за датами з журналу платежів (каса на дату зрізу vs нарахований дохід).`;
+            }
+        }
+        window.calculateAccrualBalances = calculateAccrualBalances;
+
         function getReportPeriodDates() {
             const period = document.getElementById('reportPeriodVal').value;
             const now = new Date();
@@ -5775,32 +6130,47 @@ function bosoLeave() {
             (allBookings || []).forEach(b => {
                 if (String(b.status).toLowerCase().includes('скас')) return;
                 const bDate = parseSafeDate(b.checkIn);
-                if (bDate < startDate || bDate > endDate) return;
+                if (bDate >= startDate && bDate <= endDate) bookingsCount++;
+            });
 
-                bookingsCount++;
-                const paid = Number(b.paidAmount) || 0;
+            (allBookings || []).forEach(b => {
+                if (String(b.status).toLowerCase().includes('скас')) return;
                 const price = Number(b.totalPrice) || 0;
-                if (paid <= 0) return;
+                const periodPays = bosoPaymentsInPeriod(b, startDate, endDate);
+                let periodPaid = periodPays.reduce((s, p) => s + (Math.round(Number(p.amount)) || 0), 0);
 
-                bookingIncome += paid;
-                const prepayAmt = Number(b.prepayAmount) || 0;
-                const surchargeAmt = Number(b.surchargeAmount) || 0;
-                if (prepayAmt > 0 || surchargeAmt > 0) {
-                    addPay(prepayAmt, b.prepayMethod || 'ФОП');
-                    addPay(surchargeAmt, b.surchargeMethod || 'Готівка');
+                if (periodPaid <= 0) {
+                    const bDate = parseSafeDate(b.checkIn);
+                    if (bDate < startDate || bDate > endDate) return;
+                    const legacyPaid = Number(b.paidAmount) || 0;
+                    if (legacyPaid <= 0) return;
+                    periodPaid = legacyPaid;
+                    const prepayAmt = Number(b.prepayAmount) || 0;
+                    const surchargeAmt = Number(b.surchargeAmount) || 0;
+                    if (prepayAmt > 0 || surchargeAmt > 0) {
+                        addPay(prepayAmt, b.prepayMethod || 'ФОП');
+                        addPay(surchargeAmt, b.surchargeMethod || 'Готівка');
+                    } else {
+                        addPay(legacyPaid, b.prepayMethod || 'ФОП');
+                    }
                 } else {
-                    addPay(paid, b.prepayMethod || 'ФОП');
+                    periodPays.forEach(p => {
+                        if (Number(p.amount) !== 0) addPay(p.amount, p.method);
+                    });
                 }
 
+                if (periodPaid === 0) return;
+
+                bookingIncome += periodPaid;
                 const feeGuests = b.extraGuestFee !== undefined && b.extraGuestFee !== '' ? Number(b.extraGuestFee) : 0;
                 const feePets = b.petFee !== undefined && b.petFee !== '' ? Number(b.petFee) : 0;
                 const feeEarlyLate = (Number(b.earlyFee) || 0) + (Number(b.lateFee) || 0);
-                const ratio = price > 0 ? paid / price : 1;
+                const ratio = price > 0 ? periodPaid / price : 1;
 
                 breakdown.pets += Math.round(feePets * ratio);
                 breakdown.guests += Math.round(feeGuests * ratio);
                 breakdown.earlyLate += Math.round(feeEarlyLate * ratio);
-                breakdown.base += Math.round(paid - (feePets * ratio) - (feeGuests * ratio) - (feeEarlyLate * ratio));
+                breakdown.base += Math.round(periodPaid - (feePets * ratio) - (feeGuests * ratio) - (feeEarlyLate * ratio));
             });
 
             const incomeLines = [];
@@ -5830,6 +6200,7 @@ function bosoLeave() {
             });
 
             const totalIncome = bookingIncome + manualIncomeTotal;
+            const accrual = calculateAccrualBalances(allBookings || [], endDate, startDate);
             return {
                 periodLabel,
                 periodDisplay,
@@ -5841,7 +6212,8 @@ function bosoLeave() {
                 profit: totalIncome - totalExpense,
                 payments,
                 incomeLines,
-                expenseLines
+                expenseLines,
+                accrual
             };
         }
         window.getReportPeriodDates = getReportPeriodDates;
@@ -6003,14 +6375,14 @@ function bosoLeave() {
             let incomeBreakdown = { base: 0, guests: 0, pets: 0, earlyLate: 0 };
 
            // Очищаємо деталі перед підрахунком
-           window.bosoDetails = { sum: [], paid: [], debt: [], count: [], pets: [], guests: [], vat: [], bikes: [], earlyLate: [], other: [], fop: [], card: [], cash: [] };
+           window.bosoDetails = { sum: [], paid: [], debt: [], creditor: [], accrualDebtor: [], count: [], pets: [], guests: [], vat: [], bikes: [], earlyLate: [], other: [], fop: [], card: [], cash: [] };
 
             // 1. Аналіз бронювань
             allBookings.forEach(b => {
                 if (String(b.status).toLowerCase().includes('скас')) return; 
                 const bDate = parseSafeDate(b.checkIn);
                 const price = Number(b.totalPrice) || 0;
-                const paid = Number(b.paidAmount) || 0;
+                const paid = bosoPaidUntilDate(b, endDate);
                 
                 if (bDate >= startDate && bDate <= endDate) {
                     currSum += price;
@@ -6038,25 +6410,39 @@ function bosoLeave() {
                     if (price > 0) window.bosoDetails.sum.push({...baseObj, amount: price});
                     if (paid > 0) {
                         window.bosoDetails.paid.push({...baseObj, amount: paid});
-                        totalIncome += paid;
-                        
-                        // 🟢 РОЗПОДІЛ ПО МЕТОДАХ ОПЛАТИ (і пушимо в масиви для модалки)
-                        let pAmt = Number(b.prepayAmount) || (Number(b.paidAmount) || 0);
-                        let pMethod = b.prepayMethod || 'ФОП';
-                        if (pAmt > 0) {
-                            if (pMethod === 'ФОП') { statFOP += pAmt; window.bosoDetails.fop.push({...baseObj, amount: pAmt, name: baseObj.name + " (Аванс)"}); }
-                            if (pMethod === 'Картка') { statCard += pAmt; window.bosoDetails.card.push({...baseObj, amount: pAmt, name: baseObj.name + " (Аванс)"}); }
-                            if (pMethod === 'Готівка') { statCash += pAmt; window.bosoDetails.cash.push({...baseObj, amount: pAmt, name: baseObj.name + " (Аванс)"}); }
-                        }
+                    }
 
-                        let sAmt = Number(b.surchargeAmount) || 0;
-                        let sMethod = b.surchargeMethod || 'Готівка';
+                    const periodPays = bosoPaymentsInPeriod(b, startDate, endDate);
+                    periodPays.forEach(p => {
+                        const pAmt = Math.round(Number(p.amount) || 0);
+                        if (pAmt <= 0) return;
+                        totalIncome += pAmt;
+                        const pMethod = p.method || 'ФОП';
+                        const typeSuffix = bosoIsSurchargeType(p.type) ? ' (Доплата)' : ' (Аванс)';
+                        if (pMethod === 'ФОП') { statFOP += pAmt; window.bosoDetails.fop.push({...baseObj, amount: pAmt, name: baseObj.name + typeSuffix}); }
+                        else if (pMethod === 'Картка') { statCard += pAmt; window.bosoDetails.card.push({...baseObj, amount: pAmt, name: baseObj.name + typeSuffix}); }
+                        else { statCash += pAmt; window.bosoDetails.cash.push({...baseObj, amount: pAmt, name: baseObj.name + typeSuffix}); }
+                    });
+
+                    if (periodPays.length === 0 && paid > 0) {
+                        const pAmt = Number(b.prepayAmount) || (Number(b.paidAmount) || 0);
+                        const pMethod = b.prepayMethod || 'ФОП';
+                        if (pAmt > 0) {
+                            totalIncome += pAmt;
+                            if (pMethod === 'ФОП') { statFOP += pAmt; window.bosoDetails.fop.push({...baseObj, amount: pAmt, name: baseObj.name + " (Аванс)"}); }
+                            else if (pMethod === 'Картка') { statCard += pAmt; window.bosoDetails.card.push({...baseObj, amount: pAmt, name: baseObj.name + " (Аванс)"}); }
+                            else { statCash += pAmt; window.bosoDetails.cash.push({...baseObj, amount: pAmt, name: baseObj.name + " (Аванс)"}); }
+                        }
+                        const sAmt = Number(b.surchargeAmount) || 0;
+                        const sMethod = b.surchargeMethod || 'Готівка';
                         if (sAmt > 0) {
+                            totalIncome += sAmt;
                             if (sMethod === 'ФОП') { statFOP += sAmt; window.bosoDetails.fop.push({...baseObj, amount: sAmt, name: baseObj.name + " (Доплата)"}); }
-                            if (sMethod === 'Картка') { statCard += sAmt; window.bosoDetails.card.push({...baseObj, amount: sAmt, name: baseObj.name + " (Доплата)"}); }
-                            if (sMethod === 'Готівка') { statCash += sAmt; window.bosoDetails.cash.push({...baseObj, amount: sAmt, name: baseObj.name + " (Доплата)"}); }
+                            else if (sMethod === 'Картка') { statCard += sAmt; window.bosoDetails.card.push({...baseObj, amount: sAmt, name: baseObj.name + " (Доплата)"}); }
+                            else { statCash += sAmt; window.bosoDetails.cash.push({...baseObj, amount: sAmt, name: baseObj.name + " (Доплата)"}); }
                         }
-                        }
+                    }
+
                     window.bosoDetails.count.push({...baseObj, amount: 0});
                     
                     let balance = price - paid;
@@ -6131,6 +6517,11 @@ function bosoLeave() {
 
             const currDebt = Math.max(0, currSum - currPaid);
 
+            const accrual = calculateAccrualBalances(allBookings, endDate, startDate);
+            window.bosoDetails.creditor = accrual.creditorItems;
+            window.bosoDetails.accrualDebtor = accrual.debtorItems;
+            updateAccrualPanel(accrual);
+
             // Оновлення Трендів
             function renderTrend(elId, currVal, prevVal) {
                 const el = document.getElementById(elId);
@@ -6150,6 +6541,8 @@ function bosoLeave() {
             animateValue('metTotalSum', 0, currSum, 800);
             animateValue('metPaid', 0, currPaid, 800);
             animateValue('metDebt', 0, currDebt, 800);
+            animateValue('metCreditor', 0, accrual.creditorTotal, 800);
+            animateValue('metAccrualDebtor', 0, accrual.debtorTotal, 800);
             animateValue('metCount', 0, currCount, 800);
 
             animateValue('metPets', 0, currPets, 800);
@@ -6994,7 +7387,7 @@ async function captureFinanceReportCard(report) {
 
         <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:22px;">
             <div style="background:#ECFDF5;border:1px solid #A7F3D0;border-radius:12px;padding:14px;text-align:center;">
-                <div style="font-size:11px;font-weight:800;color:#059669;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:6px;">Доходи</div>
+                <div style="font-size:11px;font-weight:800;color:#059669;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:6px;">Доходи (каса)</div>
                 <div style="font-size:18px;font-weight:900;color:#047857;">${formatMoneyUa(report.totalIncome)}</div>
             </div>
             <div style="background:#FEF2F2;border:1px solid #FECACA;border-radius:12px;padding:14px;text-align:center;">
@@ -7006,6 +7399,25 @@ async function captureFinanceReportCard(report) {
                 <div style="font-size:18px;font-weight:900;color:#111827;">${formatMoneyUa(report.profit)}</div>
             </div>
         </div>
+
+        ${report.accrual ? `
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:16px;">
+            <div style="background:#FFFBEB;border:1px solid #FDE68A;border-radius:12px;padding:12px;text-align:center;">
+                <div style="font-size:10px;font-weight:800;color:#B45309;text-transform:uppercase;margin-bottom:4px;">Аванси (ми винні)</div>
+                <div style="font-size:16px;font-weight:900;color:#B45309;">${formatMoneyUa(report.accrual.creditorTotal)}</div>
+                <div style="font-size:10px;color:#9CA3AF;margin-top:4px;">на ${esc(report.accrual.snapshotLabel || 'кінець періоду')}</div>
+            </div>
+            <div style="background:#FEF2F2;border:1px solid #FECACA;border-radius:12px;padding:12px;text-align:center;">
+                <div style="font-size:10px;font-weight:800;color:#DC2626;text-transform:uppercase;margin-bottom:4px;">Дебіторка</div>
+                <div style="font-size:16px;font-weight:900;color:#DC2626;">${formatMoneyUa(report.accrual.debtorTotal)}</div>
+                <div style="font-size:10px;color:#9CA3AF;margin-top:4px;">на ${esc(report.accrual.snapshotLabel || 'кінець періоду')}</div>
+            </div>
+            <div style="background:#F0FDF4;border:1px solid #A7F3D0;border-radius:12px;padding:12px;text-align:center;">
+                <div style="font-size:10px;font-weight:800;color:#059669;text-transform:uppercase;margin-bottom:4px;">Надано послуг</div>
+                <div style="font-size:16px;font-weight:900;color:#059669;">${formatMoneyUa(report.accrual.earnedInPeriod)}</div>
+                <div style="font-size:10px;color:#9CA3AF;margin-top:4px;">за період</div>
+            </div>
+        </div>` : ''}
 
         <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:22px;">
             ${payCard('Готівка', report.payments.cash, '#EFF6FF', '#93C5FD', '#1D4ED8', iconCash)}
