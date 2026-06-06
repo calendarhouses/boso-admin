@@ -1248,7 +1248,7 @@
                         <span class="form-section-title">Гість</span>
                         <div class="form-group"><label>Ім'я та Прізвище:</label><input type="text" id="adminName" required></div>
                         <div class="form-grid">
-                            <div class="form-group"><label>Телефон:</label><input type="tel" id="adminPhone" required></div>
+                            <div class="form-group"><label>Телефон:</label><input type="tel" id="adminPhone"></div>
                             <div class="form-group">
                                 <label>Джерело:</label>
                                 <div class="custom-select-wrapper" id="sourceWrapper">
@@ -2267,9 +2267,9 @@
                             </div>
                             <div style="display:flex; flex-direction:column; gap:2px; overflow: hidden;">
                                 <div style="font-weight:700; color:var(--text-main); font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${cleanName}</div>
-                                <div style="display:inline-flex; align-items:center; gap:4px; color:#6B7280; font-size:12px; font-weight:600; padding: 2px 6px; margin-left: -6px; border-radius: 6px; background: transparent; transition: 0.2s;" onclick="copyToClipboard('+${cleanPhone}', event)">
+                                ${cleanPhone ? `<div style="display:inline-flex; align-items:center; gap:4px; color:#6B7280; font-size:12px; font-weight:600; padding: 2px 6px; margin-left: -6px; border-radius: 6px; background: transparent; transition: 0.2s;" onclick="copyToClipboard('+${cleanPhone}', event)">
                                     ${iconPhone} +${cleanPhone}
-                                </div>
+                                </div>` : ''}
                             </div>
                         </div>
                         
@@ -3862,7 +3862,7 @@ function setHalfPrepayment() {
             document.getElementById('drawerTitle').innerText = `Деталі броні`;
             document.getElementById('adminDeleteBtn').style.display = 'flex';
             document.getElementById('adminName').value = String(booking.name).replace(' (Ручна бронь)', '');
-            document.getElementById('adminPhone').value = '+' + formatPhone(booking.phone);
+            document.getElementById('adminPhone').value = booking.phone ? '+' + formatPhone(booking.phone) : '';
             document.getElementById('adminGuests').value = booking.guests || 2;
             
             // --- СКИДАЄМО ВСІ НОВІ ПОСЛУГИ ПЕРЕД ЗАПОВНЕННЯМ ---
