@@ -2016,10 +2016,15 @@ input[type="number"] {
                 </form>
             </div>
             <div class="drawer-footer" style="justify-content: space-between;">
+                <div style="display: flex; gap: 10px; align-items: center;">
                 <button type="button" class="btn-outline-danger" id="adminDeleteBtn" onclick="deleteCurrentBooking()" style="display: none; padding: 10px 16px;">
                     <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
                     Видалити
                 </button>
+                <button type="button" class="btn-secondary" id="adminResendTgBtn" onclick="resendBookingTelegramNotification()" style="display: none; padding: 10px 16px;">
+                    📨 Сповіщення в TG
+                </button>
+                </div>
                 
                 <div style="display: flex; gap: 12px; margin-left: auto;">
                     <button type="button" class="btn-secondary" onclick="closeDrawer()">Закрити</button>
@@ -5175,6 +5180,7 @@ document.getElementById('adminGuests').addEventListener('change', updatePricePre
             if (document.getElementById('adminLabelPriceLate')) document.getElementById('adminLabelPriceLate').innerHTML = 'Оберіть час';
 
             document.getElementById('adminDeleteBtn').style.display = 'none';
+            document.getElementById('adminResendTgBtn').style.display = 'none';
             document.getElementById('liveCalculatorContainer').innerHTML = '';
             
             // Скидаємо статуси та тварин
@@ -5256,6 +5262,7 @@ document.getElementById('adminGuests').addEventListener('change', updatePricePre
 
             document.getElementById('drawerTitle').innerText = `Деталі броні ${booking.id || ''}`;
             document.getElementById('adminDeleteBtn').style.display = 'flex';
+            document.getElementById('adminResendTgBtn').style.display = 'inline-flex';
             
             document.getElementById('adminName').value = String(booking.name).replace(' (Ручна бронь)', '');
             document.getElementById('adminPhone').value = booking.phone ? '+' + formatPhone(booking.phone) : '';
@@ -5416,6 +5423,90 @@ document.getElementById('adminGuests').addEventListener('change', updatePricePre
         function closeDrawer() { 
             document.getElementById('bookingDrawer').classList.remove('active'); 
         }
+
+        function buildBookingNotifyPayload(booking) {
+            return {
+                action: 'sendSuccessScreenshot',
+                orderId: booking.id,
+                id: booking.id,
+                cottage: booking.cottage,
+                name: String(booking.name || '').replace(' (Ручна бронь)', ''),
+                phone: booking.phone,
+                checkIn: booking.checkIn,
+                checkOut: booking.checkOut,
+                guests: booking.guests,
+                pets: booking.pets,
+                totalPrice: booking.totalPrice,
+                paidAmount: booking.paidAmount,
+                source: booking.source || 'Сайт',
+                comment: booking.comment || '',
+                basePrice: booking.basePrice,
+                extraGuestFee: booking.extraGuestFee,
+                petFee: booking.petFee,
+                dayGuestFee: booking.dayGuestFee,
+                earlyFee: booking.earlyFee,
+                lateFee: booking.lateFee,
+                discountAmount: booking.discountAmount
+            };
+        }
+
+        async function resendBookingTelegramNotification(bookingOrId) {
+            let booking = bookingOrId;
+            if (typeof bookingOrId === 'string') {
+                booking = allBookings.find(function(b) { return b.id === bookingOrId; });
+            } else if (!booking && editingRowNumber) {
+                booking = allBookings.find(function(b) { return b.row == editingRowNumber; });
+            }
+            if (!booking || !booking.id) {
+                showToast('Бронь не знайдено');
+                return false;
+            }
+
+            const btn = document.getElementById('adminResendTgBtn');
+            const originalHtml = btn ? btn.innerHTML : '';
+            if (btn) {
+                btn.disabled = true;
+                btn.innerHTML = 'Генеруємо...';
+            }
+
+            try {
+                const payload = buildBookingNotifyPayload(booking);
+                if (typeof capturePremiumCard !== 'function' || typeof captureCleaningCard !== 'function') {
+                    showToast('Помилка: генератор карток не завантажився');
+                    return false;
+                }
+                const cards = await Promise.all([
+                    capturePremiumCard(payload),
+                    captureCleaningCard(payload)
+                ]);
+                if (cards[0]) payload.screenshot = cards[0];
+                if (cards[1]) payload.screenshotCleaning = cards[1];
+
+                const res = await BosoAuth.apiFetch(API_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                    body: JSON.stringify(payload)
+                });
+                const json = await res.json();
+                if (json && json.success !== false) {
+                    showToast('✅ Сповіщення надіслано в Telegram');
+                    return true;
+                }
+                showToast('❌ Помилка відправки в Telegram');
+                return false;
+            } catch (err) {
+                console.error('resendBookingTelegramNotification:', err);
+                if (err && err.message === 'UNAUTHORIZED') return false;
+                showToast('❌ Помилка відправки в Telegram');
+                return false;
+            } finally {
+                if (btn) {
+                    btn.disabled = false;
+                    btn.innerHTML = originalHtml;
+                }
+            }
+        }
+        window.resendBookingById = resendBookingTelegramNotification;
 
        document.getElementById('adminBookingForm').addEventListener('submit', async function(e) {
             e.preventDefault(); 
