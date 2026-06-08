@@ -178,6 +178,14 @@
 
         var hasIframe = !!(container && container.querySelector('iframe'));
         fallback.style.display = hasIframe ? 'none' : 'inline-flex';
+        
+        if (isTelegramWebApp()) {
+            fallback.innerHTML = '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.198 2.433a2.242 2.242 0 0 0-1.022.215l-18 8.021a2.25 2.25 0 0 0-.153 4.103l4.636 1.854L10 21l3.541-3.542 4.606 3.454a2.25 2.25 0 0 0 3.585-1.192l3-15a2.25 2.25 0 0 0-2.534-2.51l-1-1z"></path></svg> Увійти через Telegram';
+            fallback.style.background = '#2AABEE';
+            fallback.style.color = '#fff';
+            fallback.style.borderColor = '#2AABEE';
+        }
+
         if (container) container.style.display = hasIframe ? 'flex' : 'none';
     }
 
@@ -273,18 +281,67 @@
         return !!(window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.initData);
     }
 
+    function exchangeTelegramInitDataForSession() {
+        var apiUrl = getApiUrl();
+        if (!apiUrl) {
+            showLoginError('Помилка конфігурації API');
+            return;
+        }
+
+        var initData = window.Telegram.WebApp.initData;
+        if (!initData) {
+            showLoginError('Немає даних Telegram для входу');
+            return;
+        }
+
+        loginInProgress = true;
+        document.getElementById('googleSignInFallback').innerText = 'Заходимо через Telegram...';
+        document.getElementById('googleSignInFallback').disabled = true;
+
+        fetch(apiUrl, {
+            method: 'POST',
+            headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+            body: JSON.stringify({
+                action: 'adminTelegramLogin',
+                initData: initData
+            })
+        }).then(function(res) { return res.json(); }).then(function(data) {
+            document.getElementById('googleSignInFallback').innerHTML = '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.198 2.433a2.242 2.242 0 0 0-1.022.215l-18 8.021a2.25 2.25 0 0 0-.153 4.103l4.636 1.854L10 21l3.541-3.542 4.606 3.454a2.25 2.25 0 0 0 3.585-1.192l3-15a2.25 2.25 0 0 0-2.534-2.51l-1-1z"></path></svg> Увійти через Telegram';
+            document.getElementById('googleSignInFallback').disabled = false;
+            
+            if (!data || !data.success || !data.sessionToken) {
+                showLoginError((data && data.message) || 'Немає доступу. Ви не адмін.');
+                loginInProgress = false;
+                throw new Error('LOGIN_FAILED');
+            }
+            
+            var name = window.Telegram.WebApp.initDataUnsafe && window.Telegram.WebApp.initDataUnsafe.user ? window.Telegram.WebApp.initDataUnsafe.user.first_name : 'Telegram User';
+            saveSession({
+                email: data.email,
+                sessionToken: data.sessionToken,
+                name: name,
+                picture: ''
+            });
+            loginInProgress = false;
+            showAdminApp();
+            
+            if (global.onAdminLoginSuccess) {
+                global.onAdminLoginSuccess(data.email);
+            }
+        }).catch(function(err) {
+            loginInProgress = false;
+            document.getElementById('googleSignInFallback').innerHTML = '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.198 2.433a2.242 2.242 0 0 0-1.022.215l-18 8.021a2.25 2.25 0 0 0-.153 4.103l4.636 1.854L10 21l3.541-3.542 4.606 3.454a2.25 2.25 0 0 0 3.585-1.192l3-15a2.25 2.25 0 0 0-2.534-2.51l-1-1z"></path></svg> Увійти через Telegram';
+            document.getElementById('googleSignInFallback').disabled = false;
+            showLoginError('Мережева помилка при авторизації');
+        });
+    }
+
     function triggerGoogleSignIn() {
         showLoginError('');
 
-        // Якщо це Telegram Web App, Google блокує авторизацію через WebView.
-        // Перенаправляємо користувача в зовнішній браузер
+        // Якщо це Telegram Web App
         if (isTelegramWebApp()) {
-            showLoginError('Відкриваємо безпечний браузер для авторизації... Якщо нічого не відбулось, натисніть "Три крапки" -> "Відкрити в браузері".');
-            try {
-                window.Telegram.WebApp.openLink(window.location.href);
-            } catch (e) {
-                console.error('Telegram openLink error:', e);
-            }
+            exchangeTelegramInitDataForSession();
             return;
         }
 
