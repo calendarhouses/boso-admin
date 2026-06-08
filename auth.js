@@ -170,13 +170,11 @@
     }
 
     function updateSignInUi() {
-        var container = document.getElementById('googleSignInBtn');
         var fallback = document.getElementById('googleSignInFallback');
         var tgBtn = document.getElementById('telegramSignInBtn');
         if (!fallback) return;
 
         if (isTelegramWebApp()) {
-            if (container) container.style.display = 'none';
             if (tgBtn) tgBtn.style.display = 'none';
             fallback.style.display = 'inline-flex';
             fallback.innerHTML = TG_BTN_HTML;
@@ -186,22 +184,15 @@
             return;
         }
 
+        fallback.style.display = 'inline-flex';
+        fallback.style.background = '#fff';
+        fallback.style.color = '#3c4043';
+        fallback.style.borderColor = '#dadce0';
         if (tgBtn) tgBtn.style.display = 'inline-flex';
-
-        var hasIframe = !!(container && container.querySelector('iframe'));
-        fallback.style.display = hasIframe ? 'none' : 'inline-flex';
-        if (container) container.style.display = hasIframe ? 'flex' : 'none';
-    }
-
-    function isMobileAdminPage() {
-        return window.innerWidth < 768 || /mobile\.html/i.test(window.location.pathname);
     }
 
     function getTelegramWidgetAuthUrl() {
-        if (isMobileAdminPage()) {
-            return window.location.origin + '/mobile.html';
-        }
-        return window.location.origin + '/';
+        return window.location.href.split('#')[0].split('?')[0];
     }
 
     function buildTelegramWidgetUserFromParams(params) {
@@ -224,15 +215,20 @@
         } catch (e) { /* ignore */ }
     }
 
-    function takeTelegramWidgetUserFromStorage() {
+    function peekTelegramWidgetPending() {
         try {
             var raw = sessionStorage.getItem(TG_WIDGET_PENDING_KEY);
-            sessionStorage.removeItem(TG_WIDGET_PENDING_KEY);
             if (!raw) return null;
             return JSON.parse(raw);
         } catch (e) {
             return null;
         }
+    }
+
+    function clearTelegramWidgetPending() {
+        try {
+            sessionStorage.removeItem(TG_WIDGET_PENDING_KEY);
+        } catch (e) { /* ignore */ }
     }
 
     function captureTelegramWidgetCallback() {
@@ -243,7 +239,7 @@
     function parseTelegramWidgetFromUrl() {
         var user = buildTelegramWidgetUserFromParams(new URLSearchParams(window.location.search));
         if (user) return user;
-        return takeTelegramWidgetUserFromStorage();
+        return peekTelegramWidgetPending();
     }
 
     captureTelegramWidgetCallback();
@@ -331,41 +327,13 @@
                 handleTelegramAuthError(data, user);
                 return;
             }
+            clearTelegramWidgetPending();
             finishTelegramSession(data, user);
         }).catch(function (err) {
             loginInProgress = false;
             console.error('Telegram widget login error:', err);
             showLoginError('Не вдалося увійти через Telegram. Спробуйте ще раз.');
         });
-    }
-
-    function renderGoogleButton() {
-        if (isTelegramWebApp()) {
-            updateSignInUi();
-            return false;
-        }
-
-        var container = document.getElementById('googleSignInBtn');
-        if (!container || !global.google || !global.google.accounts || !global.google.accounts.id) {
-            updateSignInUi();
-            return false;
-        }
-        container.innerHTML = '';
-        try {
-            global.google.accounts.id.renderButton(container, {
-                theme: 'outline',
-                size: 'large',
-                text: 'signin_with',
-                shape: 'pill',
-                locale: 'uk',
-                width: 300
-            });
-        } catch (e) {
-            updateSignInUi();
-            return false;
-        }
-        setTimeout(updateSignInUi, 400);
-        return true;
     }
 
     function initGsi() {
@@ -376,7 +344,7 @@
             auto_select: false,
             cancel_on_tap_outside: false
         });
-        renderGoogleButton();
+        updateSignInUi();
         gsiReady = true;
         return true;
     }
@@ -511,22 +479,18 @@
             });
             return;
         }
-        renderGoogleButton();
-        setTimeout(function () {
-            if (document.querySelector('#googleSignInBtn iframe')) return;
-            try {
-                global.google.accounts.id.prompt(function (notification) {
-                    if (!notification) return;
-                    if (notification.isNotDisplayed && notification.isNotDisplayed()) {
-                        showGsiLoadError();
-                    } else if (notification.isSkippedMoment && notification.isSkippedMoment()) {
-                        showGsiLoadError();
-                    }
-                });
-            } catch (e) {
-                showGsiLoadError();
-            }
-        }, 300);
+        try {
+            global.google.accounts.id.prompt(function (notification) {
+                if (!notification) return;
+                if (notification.isNotDisplayed && notification.isNotDisplayed()) {
+                    showGsiLoadError();
+                } else if (notification.isSkippedMoment && notification.isSkippedMoment()) {
+                    showGsiLoadError();
+                }
+            });
+        } catch (e) {
+            showGsiLoadError();
+        }
     }
 
     function getSession() {
@@ -546,11 +510,7 @@
         showLoginScreen();
         showLoginError(message || 'Сесію завершено. Увійдіть через Google.');
         waitForGsi(function () {
-            if (gsiReady) {
-                renderGoogleButton();
-            } else {
-                updateSignInUi();
-            }
+            updateSignInUi();
         });
     }
 
@@ -655,7 +615,6 @@
             var tgWidgetUser = parseTelegramWidgetFromUrl();
             if (tgWidgetUser) {
                 cleanTelegramWidgetUrl();
-                sessionStorage.removeItem(TG_WIDGET_PENDING_KEY);
                 clearSession();
                 showLoginScreen();
                 exchangeTelegramWidgetForSession(tgWidgetUser);
@@ -670,10 +629,7 @@
             updateSignInUi();
         } else {
             waitForGsi(function () {
-                if (!isAuthenticated()) {
-                    if (gsiReady) renderGoogleButton();
-                    else updateSignInUi();
-                }
+                if (!isAuthenticated()) updateSignInUi();
             });
         }
     }

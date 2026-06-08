@@ -18,7 +18,21 @@
         }
     })();
     </script>
-    <script src="/auth.js?v=5"></script>
+    <script>
+    (function () {
+        try {
+            var p = new URLSearchParams(window.location.search);
+            if (!p.get('id') || !p.get('hash')) return;
+            var u = { id: p.get('id'), hash: p.get('hash'), auth_date: p.get('auth_date') || '' };
+            if (p.get('first_name')) u.first_name = p.get('first_name');
+            if (p.get('last_name')) u.last_name = p.get('last_name');
+            if (p.get('username')) u.username = p.get('username');
+            if (p.get('photo_url')) u.photo_url = p.get('photo_url');
+            sessionStorage.setItem('boso_tg_widget_pending', JSON.stringify(u));
+        } catch (e) {}
+    })();
+    </script>
+    <script src="/auth.js?v=6"></script>
     <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     
@@ -764,41 +778,32 @@
             display: flex; flex-direction: column; align-items: stretch;
             gap: 12px; width: 100%; max-width: 300px; margin: 0 auto;
         }
-        #googleSignInBtn {
-            display: flex; justify-content: center; align-items: center;
-            width: 100%; min-height: 44px;
-        }
-        #googleSignInFallback,
-        #telegramSignInBtn {
+        .auth-login-btn {
             display: inline-flex; align-items: center; justify-content: center;
-            width: 100%; height: 44px; margin: 0; padding: 0 20px;
+            width: 100%; height: 44px; margin: 0; padding: 0 16px;
             border: 1px solid #dadce0; border-radius: 999px;
             background: #fff; color: #3c4043; font-size: 14px; font-weight: 600;
             font-family: inherit; cursor: pointer; box-shadow: 0 1px 2px rgba(0,0,0,0.06);
             transition: background 0.15s ease; box-sizing: border-box;
             -webkit-tap-highlight-color: transparent;
         }
-        #googleSignInFallback:hover,
-        #telegramSignInBtn:hover { background: #f8f9fa; }
-        .auth-login-btn-content {
-            display: inline-grid;
-            grid-template-columns: 18px 1fr;
-            align-items: center;
-            column-gap: 10px;
-            width: 220px;
-            text-align: left;
+        .auth-login-btn:hover { background: #f8f9fa; }
+        .auth-login-btn-inner {
+            display: flex; align-items: center; width: 196px;
         }
-        .auth-login-icon {
-            width: 18px; height: 18px;
-            display: inline-flex; align-items: center; justify-content: center;
+        .auth-login-btn-icon {
+            width: 18px; height: 18px; flex: 0 0 18px;
+            display: flex; align-items: center; justify-content: center;
         }
-        .auth-login-icon svg { width: 18px; height: 18px; display: block; }
-        .auth-login-icon--tg svg { color: #229ED9; }
+        .auth-login-btn-icon svg { width: 18px; height: 18px; display: block; }
+        .auth-login-btn-icon--tg svg { color: #229ED9; }
+        .auth-login-btn-label {
+            margin-left: 10px; line-height: 18px; text-align: left; white-space: nowrap;
+        }
         #auth-login-error {
             display: none; margin-top: 18px; padding: 12px;
             background: #FEE2E2; color: #991B1B; border-radius: 10px; font-size: 13px; font-weight: 600;
         }
-        html.tg-webapp .auth-login-actions #googleSignInBtn,
         html.tg-webapp #telegramSignInBtn { display: none !important; }
         html.tg-webapp #googleSignInFallback {
             display: inline-flex !important;
@@ -816,21 +821,20 @@
             <div class="auth-login-logo">BOSO</div>
             <div class="auth-login-subtitle">Панель Управління</div>
             <div class="auth-login-actions">
-                <div id="googleSignInBtn"></div>
-                <button type="button" id="googleSignInFallback" onclick="BosoAuth.triggerGoogleSignIn()">
-                    <span class="auth-login-btn-content">
-                        <span class="auth-login-icon">
+                <button type="button" class="auth-login-btn" id="googleSignInFallback" onclick="BosoAuth.triggerGoogleSignIn()">
+                    <span class="auth-login-btn-inner">
+                        <span class="auth-login-btn-icon">
                             <svg viewBox="0 0 48 48" aria-hidden="true"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.56 2.95-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg>
                         </span>
-                        <span>Вхід через Google</span>
+                        <span class="auth-login-btn-label">Вхід через Google</span>
                     </span>
                 </button>
-                <button type="button" id="telegramSignInBtn" onclick="BosoAuth.triggerTelegramSignIn()">
-                    <span class="auth-login-btn-content">
-                        <span class="auth-login-icon auth-login-icon--tg">
+                <button type="button" class="auth-login-btn" id="telegramSignInBtn" onclick="BosoAuth.triggerTelegramSignIn()">
+                    <span class="auth-login-btn-inner">
+                        <span class="auth-login-btn-icon auth-login-btn-icon--tg">
                             <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M9.78 18.65l.28-4.23 7.68-6.92c.34-.31-.07-.46-.52-.19L7.74 13.3 3.64 12c-.88-.25-.89-.86.2-1.3l15.97-6.16c.73-.33 1.43.18 1.15 1.3l-2.72 12.81c-.19.91-.74 1.13-1.5.71L12.6 16.3l-1.99 1.93c-.23.23-.42.42-.82.42z"/></svg>
                         </span>
-                        <span>Вхід через Telegram</span>
+                        <span class="auth-login-btn-label">Вхід через Telegram</span>
                     </span>
                 </button>
             </div>
