@@ -241,7 +241,7 @@
             clearInterval(gsiWaitTimer);
             gsiWaitTimer = null;
         }
-        if (!isAuthenticated()) {
+        if (!isAuthenticated() && !isTelegramWebApp()) {
             initGsi();
         }
     }

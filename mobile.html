@@ -4,7 +4,20 @@
     <meta charset="UTF-8">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
-    <script src="https://accounts.google.com/gsi/client" async defer onload="window.__bosoGsiOnLoad&&window.__bosoGsiOnLoad()"></script>
+    <script>
+    (function () {
+        if (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.initData) {
+            document.documentElement.classList.add('tg-webapp');
+        } else {
+            var s = document.createElement('script');
+            s.src = 'https://accounts.google.com/gsi/client';
+            s.async = true;
+            s.defer = true;
+            s.onload = function () { window.__bosoGsiOnLoad && window.__bosoGsiOnLoad(); };
+            document.head.appendChild(s);
+        }
+    })();
+    </script>
     <script src="/auth.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
@@ -761,6 +774,13 @@
         #auth-login-error {
             display: none; margin-top: 18px; padding: 12px;
             background: #FEE2E2; color: #991B1B; border-radius: 10px; font-size: 13px; font-weight: 600;
+        }
+        html.tg-webapp #googleSignInBtn { display: none !important; }
+        html.tg-webapp #googleSignInFallback {
+            display: inline-flex !important;
+            background: #2AABEE !important;
+            color: #fff !important;
+            border-color: #2AABEE !important;
         }
         #admin-app { flex: 1; width: 100%; min-height: 0; flex-direction: column; display: none; }
         .mobile-logout-btn { margin-bottom: 16px; }
