@@ -12,6 +12,7 @@
     ].map(function (e) { return e.toLowerCase(); });
     const DEFAULT_API_URL = 'https://script.google.com/macros/s/AKfycbx1RYoMJySplZ18Wv54PQjxzHnZqIb3Wsw63oG-PAOKMvuXEym8Y7aFS-L_pxvfX6o4DQ/exec';
     const TG_BOT_ID = '8598885015';
+    const TG_WIDGET_PENDING_KEY = 'boso_tg_widget_pending';
 
     let session = null;
     let onReadyCallback = null;
@@ -192,12 +193,18 @@
         if (container) container.style.display = hasIframe ? 'flex' : 'none';
     }
 
-    function getTelegramWidgetAuthUrl() {
-        return window.location.origin + window.location.pathname;
+    function isMobileAdminPage() {
+        return window.innerWidth < 768 || /mobile\.html/i.test(window.location.pathname);
     }
 
-    function parseTelegramWidgetFromUrl() {
-        var params = new URLSearchParams(window.location.search);
+    function getTelegramWidgetAuthUrl() {
+        if (isMobileAdminPage()) {
+            return window.location.origin + '/mobile.html';
+        }
+        return window.location.origin + '/';
+    }
+
+    function buildTelegramWidgetUserFromParams(params) {
         if (!params.get('hash') || !params.get('id')) return null;
         var user = {
             id: params.get('id'),
@@ -210,6 +217,36 @@
         if (params.get('photo_url')) user.photo_url = params.get('photo_url');
         return user;
     }
+
+    function stashTelegramWidgetUser(user) {
+        try {
+            sessionStorage.setItem(TG_WIDGET_PENDING_KEY, JSON.stringify(user));
+        } catch (e) { /* ignore */ }
+    }
+
+    function takeTelegramWidgetUserFromStorage() {
+        try {
+            var raw = sessionStorage.getItem(TG_WIDGET_PENDING_KEY);
+            sessionStorage.removeItem(TG_WIDGET_PENDING_KEY);
+            if (!raw) return null;
+            return JSON.parse(raw);
+        } catch (e) {
+            return null;
+        }
+    }
+
+    function captureTelegramWidgetCallback() {
+        var user = buildTelegramWidgetUserFromParams(new URLSearchParams(window.location.search));
+        if (user) stashTelegramWidgetUser(user);
+    }
+
+    function parseTelegramWidgetFromUrl() {
+        var user = buildTelegramWidgetUserFromParams(new URLSearchParams(window.location.search));
+        if (user) return user;
+        return takeTelegramWidgetUserFromStorage();
+    }
+
+    captureTelegramWidgetCallback();
 
     function cleanTelegramWidgetUrl() {
         if (!window.history.replaceState) return;
@@ -618,6 +655,7 @@
             var tgWidgetUser = parseTelegramWidgetFromUrl();
             if (tgWidgetUser) {
                 cleanTelegramWidgetUrl();
+                sessionStorage.removeItem(TG_WIDGET_PENDING_KEY);
                 clearSession();
                 showLoginScreen();
                 exchangeTelegramWidgetForSession(tgWidgetUser);
