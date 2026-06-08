@@ -11,7 +11,7 @@
         'nazar.duzhik02222@gmail.com'
     ].map(function (e) { return e.toLowerCase(); });
     const DEFAULT_API_URL = 'https://script.google.com/macros/s/AKfycbx1RYoMJySplZ18Wv54PQjxzHnZqIb3Wsw63oG-PAOKMvuXEym8Y7aFS-L_pxvfX6o4DQ/exec';
-    const TG_BOT_USERNAME = 'bosohouses_bot';
+    const TG_BOT_ID = '8598885015';
 
     let session = null;
     let onReadyCallback = null;
@@ -171,12 +171,12 @@
     function updateSignInUi() {
         var container = document.getElementById('googleSignInBtn');
         var fallback = document.getElementById('googleSignInFallback');
-        var tgSlot = document.querySelector('.auth-tg-slot');
+        var tgBtn = document.getElementById('telegramSignInBtn');
         if (!fallback) return;
 
         if (isTelegramWebApp()) {
             if (container) container.style.display = 'none';
-            if (tgSlot) tgSlot.style.display = 'none';
+            if (tgBtn) tgBtn.style.display = 'none';
             fallback.style.display = 'inline-flex';
             fallback.innerHTML = TG_BTN_HTML;
             fallback.style.background = '#2AABEE';
@@ -185,7 +185,7 @@
             return;
         }
 
-        if (tgSlot) tgSlot.style.display = '';
+        if (tgBtn) tgBtn.style.display = 'inline-flex';
 
         var hasIframe = !!(container && container.querySelector('iframe'));
         fallback.style.display = hasIframe ? 'none' : 'inline-flex';
@@ -220,33 +220,18 @@
         window.history.replaceState({}, document.title, url.pathname + url.search + url.hash);
     }
 
-    function resetTelegramWidget() {
-        var container = document.getElementById('telegramSignInBtn');
-        if (!container) return;
-        container.innerHTML = '';
-        delete container.dataset.widgetLoaded;
-        renderTelegramWidget();
+    function getTelegramOAuthUrl() {
+        var returnTo = encodeURIComponent(getTelegramWidgetAuthUrl());
+        var origin = encodeURIComponent(window.location.origin);
+        return 'https://oauth.telegram.org/auth?bot_id=' + TG_BOT_ID +
+            '&origin=' + origin +
+            '&request_access=write&return_to=' + returnTo;
     }
 
-    function renderTelegramWidget() {
-        if (isTelegramWebApp()) return;
-
-        var container = document.getElementById('telegramSignInBtn');
-        if (!container || container.dataset.widgetLoaded === '1') return;
-
-        container.innerHTML = '';
-        var script = document.createElement('script');
-        script.src = 'https://telegram.org/js/telegram-widget.js?22';
-        script.async = true;
-        script.setAttribute('data-telegram-login', TG_BOT_USERNAME);
-        script.setAttribute('data-size', 'large');
-        script.setAttribute('data-radius', '20');
-        script.setAttribute('data-userpic', 'false');
-        script.setAttribute('data-request-access', 'write');
-        // Redirect-режим: Telegram повертає на сайт з ?id=&hash=... (надійніше за callback у Safari)
-        script.setAttribute('data-auth-url', getTelegramWidgetAuthUrl());
-        container.appendChild(script);
-        container.dataset.widgetLoaded = '1';
+    function triggerTelegramSignIn() {
+        if (loginInProgress || isTelegramWebApp()) return;
+        showLoginError('');
+        window.location.href = getTelegramOAuthUrl();
     }
 
     function finishTelegramSession(data, user) {
@@ -275,7 +260,6 @@
         }
         showLoginError(msg);
         loginInProgress = false;
-        resetTelegramWidget();
     }
 
     function exchangeTelegramWidgetForSession(user) {
@@ -315,7 +299,6 @@
             loginInProgress = false;
             console.error('Telegram widget login error:', err);
             showLoginError('Не вдалося увійти через Telegram. Спробуйте ще раз.');
-            resetTelegramWidget();
         });
     }
 
@@ -324,8 +307,6 @@
             updateSignInUi();
             return false;
         }
-
-        renderTelegramWidget();
 
         var container = document.getElementById('googleSignInBtn');
         if (!container || !global.google || !global.google.accounts || !global.google.accounts.id) {
@@ -377,7 +358,6 @@
         }
         if (!isAuthenticated() && !isTelegramWebApp()) {
             initGsi();
-            renderTelegramWidget();
         }
     }
 
@@ -534,7 +514,6 @@
             } else {
                 updateSignInUi();
             }
-            renderTelegramWidget();
         });
     }
 
@@ -641,7 +620,6 @@
                 cleanTelegramWidgetUrl();
                 clearSession();
                 showLoginScreen();
-                renderTelegramWidget();
                 exchangeTelegramWidgetForSession(tgWidgetUser);
                 return;
             }
@@ -657,16 +635,10 @@
                 if (!isAuthenticated()) {
                     if (gsiReady) renderGoogleButton();
                     else updateSignInUi();
-                    renderTelegramWidget();
                 }
             });
         }
     }
-
-    global.onTelegramWidgetAuth = function (user) {
-        if (!user || !user.hash) return;
-        exchangeTelegramWidgetForSession(user);
-    };
 
     global.__bosoGsiOnLoad = onGsiScriptLoad;
     if (global.__bosoGsiLoaded) onGsiScriptLoad();
@@ -675,6 +647,7 @@
         CLIENT_ID: GOOGLE_CLIENT_ID,
         bootstrap: bootstrap,
         triggerGoogleSignIn: triggerGoogleSignIn,
+        triggerTelegramSignIn: triggerTelegramSignIn,
         isAuthenticated: isAuthenticated,
         getSession: getSession,
         getEmail: function () {
