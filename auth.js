@@ -33,7 +33,9 @@
     }
 
     function isEmailAllowed(email) {
-        return ALLOWED_EMAILS.indexOf(String(email || '').toLowerCase().trim()) !== -1;
+        var normalized = String(email || '').toLowerCase().trim();
+        if (normalized.indexOf('@boso.tg') !== -1) return true;
+        return ALLOWED_EMAILS.indexOf(normalized) !== -1;
     }
 
     function loadSession() {
@@ -173,19 +175,15 @@
         if (isTelegramWebApp()) {
             if (container) container.style.display = 'none';
             fallback.style.display = 'inline-flex';
+            fallback.innerHTML = '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.198 2.433a2.242 2.242 0 0 0-1.022.215l-18 8.021a2.25 2.25 0 0 0-.153 4.103l4.636 1.854L10 21l3.541-3.542 4.606 3.454a2.25 2.25 0 0 0 3.585-1.192l3-15a2.25 2.25 0 0 0-2.534-2.51l-1-1z"></path></svg> Увійти через Telegram';
+            fallback.style.background = '#2AABEE';
+            fallback.style.color = '#fff';
+            fallback.style.borderColor = '#2AABEE';
             return;
         }
 
         var hasIframe = !!(container && container.querySelector('iframe'));
         fallback.style.display = hasIframe ? 'none' : 'inline-flex';
-        
-        if (isTelegramWebApp()) {
-            fallback.innerHTML = '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.198 2.433a2.242 2.242 0 0 0-1.022.215l-18 8.021a2.25 2.25 0 0 0-.153 4.103l4.636 1.854L10 21l3.541-3.542 4.606 3.454a2.25 2.25 0 0 0 3.585-1.192l3-15a2.25 2.25 0 0 0-2.534-2.51l-1-1z"></path></svg> Увійти через Telegram';
-            fallback.style.background = '#2AABEE';
-            fallback.style.color = '#fff';
-            fallback.style.borderColor = '#2AABEE';
-        }
-
         if (container) container.style.display = hasIframe ? 'flex' : 'none';
     }
 
@@ -281,6 +279,15 @@
         return !!(window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.initData);
     }
 
+    var TG_BTN_HTML = '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.198 2.433a2.242 2.242 0 0 0-1.022.215l-18 8.021a2.25 2.25 0 0 0-.153 4.103l4.636 1.854L10 21l3.541-3.542 4.606 3.454a2.25 2.25 0 0 0 3.585-1.192l3-15a2.25 2.25 0 0 0-2.534-2.51l-1-1z"></path></svg> Увійти через Telegram';
+
+    function resetTelegramLoginButton() {
+        var btn = document.getElementById('googleSignInFallback');
+        if (!btn) return;
+        btn.innerHTML = TG_BTN_HTML;
+        btn.disabled = false;
+    }
+
     function exchangeTelegramInitDataForSession() {
         var apiUrl = getApiUrl();
         if (!apiUrl) {
@@ -295,77 +302,64 @@
         }
 
         loginInProgress = true;
-        document.getElementById('googleSignInFallback').innerText = 'Заходимо через Telegram...';
-        document.getElementById('googleSignInFallback').disabled = true;
+        var btn = document.getElementById('googleSignInFallback');
+        btn.innerText = 'Заходимо через Telegram...';
+        btn.disabled = true;
 
-        // POST запити до Google Apps Script з 'text/plain' не викликають OPTIONS preflight.
-        // Це важливо для Telegram Web App
-        
-        var urlParams = new URLSearchParams(window.location.search);
-        var forceError = urlParams.get('forceError');
-        if (forceError) {
-             showLoginError('Тестова помилка: ' + forceError);
-             loginInProgress = false;
-             document.getElementById('googleSignInFallback').innerHTML = '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.198 2.433a2.242 2.242 0 0 0-1.022.215l-18 8.021a2.25 2.25 0 0 0-.153 4.103l4.636 1.854L10 21l3.541-3.542 4.606 3.454a2.25 2.25 0 0 0 3.585-1.192l3-15a2.25 2.25 0 0 0-2.534-2.51l-1-1z"></path></svg> Увійти через Telegram';
-             document.getElementById('googleSignInFallback').disabled = false;
-             return;
-        }
+        fetch(apiUrl, {
+            method: 'POST',
+            headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+            body: JSON.stringify({
+                action: 'adminTelegramLogin',
+                initData: initData
+            })
+        }).then(function (res) {
+            return res.text().then(function (text) {
+                try {
+                    return JSON.parse(text);
+                } catch (e) {
+                    console.error('Telegram login invalid JSON:', text.substring(0, 300));
+                    throw new Error('INVALID_RESPONSE');
+                }
+            });
+        }).then(function (data) {
+            resetTelegramLoginButton();
 
-        // Обхід проблеми з CORS в Telegram WebApp
-        var jsonpUrl = apiUrl + "?action=adminTelegramLogin&initData=" + encodeURIComponent(initData) + "&callback=onTelegramLoginCallback";
-        
-        var script = document.createElement('script');
-        script.src = jsonpUrl;
-        
-        global.onTelegramLoginCallback = function(data) {
-             document.getElementById('googleSignInFallback').innerHTML = '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.198 2.433a2.242 2.242 0 0 0-1.022.215l-18 8.021a2.25 2.25 0 0 0-.153 4.103l4.636 1.854L10 21l3.541-3.542 4.606 3.454a2.25 2.25 0 0 0 3.585-1.192l3-15a2.25 2.25 0 0 0-2.534-2.51l-1-1z"></path></svg> Увійти через Telegram';
-             document.getElementById('googleSignInFallback').disabled = false;
-             
-             if (!data || (!data.success && !data.sessionToken)) {
-                 showLoginError((data && data.message) || 'Немає доступу. Ви не адмін.');
-                 loginInProgress = false;
-                 return;
-             }
-             
-             var name = window.Telegram.WebApp.initDataUnsafe && window.Telegram.WebApp.initDataUnsafe.user ? window.Telegram.WebApp.initDataUnsafe.user.first_name : 'Telegram User';
-             saveSession({
-                 email: data.email,
-                 sessionToken: data.sessionToken,
-                 name: name,
-                 picture: ''
-             });
-             loginInProgress = false;
-             showAdminApp();
-             
-             if (global.onAdminLoginSuccess) {
-                 global.onAdminLoginSuccess(data.email);
-             }
-             
-             delete global.onTelegramLoginCallback;
-             document.body.removeChild(script);
-        };
-        
-        script.onerror = function() {
+            if (!data || !data.success || !data.sessionToken) {
+                showLoginError((data && data.message) || 'Немає доступу. Ви не адмін.');
+                loginInProgress = false;
+                return;
+            }
+
+            var unsafe = window.Telegram.WebApp.initDataUnsafe || {};
+            var user = unsafe.user || {};
+            var name = user.first_name || 'Telegram User';
+            if (user.last_name) name += ' ' + user.last_name;
+
+            saveSession({
+                email: data.email,
+                sessionToken: data.sessionToken,
+                name: name,
+                picture: user.photo_url || ''
+            });
             loginInProgress = false;
-            document.getElementById('googleSignInFallback').innerHTML = '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.198 2.433a2.242 2.242 0 0 0-1.022.215l-18 8.021a2.25 2.25 0 0 0-.153 4.103l4.636 1.854L10 21l3.541-3.542 4.606 3.454a2.25 2.25 0 0 0 3.585-1.192l3-15a2.25 2.25 0 0 0-2.534-2.51l-1-1z"></path></svg> Увійти через Telegram';
-            document.getElementById('googleSignInFallback').disabled = false;
-            showLoginError('Виникла помилка під час авторизації. Спробуйте оновити сторінку.');
-            delete global.onTelegramLoginCallback;
-            document.body.removeChild(script);
-        };
-        
-        document.body.appendChild(script);
+            showAdminApp();
+
+            if (typeof onReadyCallback === 'function') {
+                onReadyCallback();
+            }
+        }).catch(function (err) {
+            loginInProgress = false;
+            resetTelegramLoginButton();
+            console.error('Telegram login error:', err);
+            showLoginError('Не вдалося увійти. Перевірте інтернет і спробуйте ще раз.');
+        });
     }
 
     function triggerGoogleSignIn() {
         showLoginError('');
 
-        // Якщо це Telegram Web App
         if (isTelegramWebApp()) {
-            document.getElementById('googleSignInFallback').innerHTML = '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.198 2.433a2.242 2.242 0 0 0-1.022.215l-18 8.021a2.25 2.25 0 0 0-.153 4.103l4.636 1.854L10 21l3.541-3.542 4.606 3.454a2.25 2.25 0 0 0 3.585-1.192l3-15a2.25 2.25 0 0 0-2.534-2.51l-1-1z"></path></svg> Увійти через Telegram';
-            document.getElementById('googleSignInFallback').style.background = '#2AABEE';
-            document.getElementById('googleSignInFallback').style.color = '#fff';
-            document.getElementById('googleSignInFallback').style.borderColor = '#2AABEE';
             exchangeTelegramInitDataForSession();
             return;
         }
@@ -521,12 +515,16 @@
             showLoginScreen();
         }
 
-        waitForGsi(function () {
-            if (!isAuthenticated()) {
-                if (gsiReady) renderGoogleButton();
-                else updateSignInUi();
-            }
-        });
+        if (!isAuthenticated() && isTelegramWebApp()) {
+            updateSignInUi();
+        } else {
+            waitForGsi(function () {
+                if (!isAuthenticated()) {
+                    if (gsiReady) renderGoogleButton();
+                    else updateSignInUi();
+                }
+            });
+        }
     }
 
     global.__bosoGsiOnLoad = onGsiScriptLoad;
