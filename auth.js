@@ -195,11 +195,47 @@
         if (container) container.style.display = hasIframe ? 'flex' : 'none';
     }
 
+    function getTelegramWidgetAuthUrl() {
+        return window.location.origin + window.location.pathname;
+    }
+
+    function parseTelegramWidgetFromUrl() {
+        var params = new URLSearchParams(window.location.search);
+        if (!params.get('hash') || !params.get('id')) return null;
+        var user = {
+            id: params.get('id'),
+            hash: params.get('hash'),
+            auth_date: params.get('auth_date')
+        };
+        if (params.get('first_name')) user.first_name = params.get('first_name');
+        if (params.get('last_name')) user.last_name = params.get('last_name');
+        if (params.get('username')) user.username = params.get('username');
+        if (params.get('photo_url')) user.photo_url = params.get('photo_url');
+        return user;
+    }
+
+    function cleanTelegramWidgetUrl() {
+        if (!window.history.replaceState) return;
+        var url = new URL(window.location.href);
+        ['id', 'first_name', 'last_name', 'username', 'photo_url', 'auth_date', 'hash'].forEach(function (key) {
+            url.searchParams.delete(key);
+        });
+        window.history.replaceState({}, document.title, url.pathname + url.search + url.hash);
+    }
+
+    function resetTelegramWidget() {
+        var container = document.getElementById('telegramSignInBtn');
+        if (!container) return;
+        container.innerHTML = '';
+        delete container.dataset.widgetLoaded;
+        renderTelegramWidget();
+    }
+
     function renderTelegramWidget() {
         if (isTelegramWebApp()) return;
 
         var container = document.getElementById('telegramSignInBtn');
-        if (!container || container.querySelector('script[data-telegram-login]')) return;
+        if (!container || container.dataset.widgetLoaded === '1') return;
 
         container.innerHTML = '';
         var script = document.createElement('script');
@@ -210,8 +246,10 @@
         script.setAttribute('data-radius', '20');
         script.setAttribute('data-userpic', 'false');
         script.setAttribute('data-request-access', 'write');
-        script.setAttribute('data-onauth', 'onTelegramWidgetAuth(user)');
+        // Redirect-режим: Telegram повертає на сайт з ?id=&hash=... (надійніше за callback у Safari)
+        script.setAttribute('data-auth-url', getTelegramWidgetAuthUrl());
         container.appendChild(script);
+        container.dataset.widgetLoaded = '1';
     }
 
     function finishTelegramSession(data, user) {
@@ -240,6 +278,7 @@
         }
         showLoginError(msg);
         loginInProgress = false;
+        resetTelegramWidget();
     }
 
     function exchangeTelegramWidgetForSession(user) {
@@ -252,7 +291,7 @@
         }
 
         loginInProgress = true;
-        showLoginError('');
+        showLoginError('Заходимо через Telegram...');
 
         fetch(apiUrl, {
             method: 'POST',
@@ -279,6 +318,7 @@
             loginInProgress = false;
             console.error('Telegram widget login error:', err);
             showLoginError('Не вдалося увійти через Telegram. Спробуйте ще раз.');
+            resetTelegramWidget();
         });
     }
 
@@ -589,15 +629,29 @@
 
     function bootstrap(onReady) {
         onReadyCallback = onReady;
+        loginInProgress = false;
         session = loadSession();
 
         if (isAuthenticated()) {
             showAdminApp();
             if (typeof onReady === 'function') onReady();
-        } else {
-            clearSession();
-            showLoginScreen();
+            return;
         }
+
+        if (!isTelegramWebApp()) {
+            var tgWidgetUser = parseTelegramWidgetFromUrl();
+            if (tgWidgetUser) {
+                cleanTelegramWidgetUrl();
+                clearSession();
+                showLoginScreen();
+                renderTelegramWidget();
+                exchangeTelegramWidgetForSession(tgWidgetUser);
+                return;
+            }
+        }
+
+        clearSession();
+        showLoginScreen();
 
         if (!isAuthenticated() && isTelegramWebApp()) {
             updateSignInUi();
@@ -613,6 +667,7 @@
     }
 
     global.onTelegramWidgetAuth = function (user) {
+        if (!user || !user.hash) return;
         exchangeTelegramWidgetForSession(user);
     };
 
