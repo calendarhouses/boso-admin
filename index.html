@@ -1137,12 +1137,13 @@ input[type="number"] {
         }
         .auth-login-btn:hover { background: #f8f9fa; }
         .auth-login-btn-inner {
-            display: flex; align-items: center; width: 100%;
+            display: grid; width: 100%;
+            grid-template-columns: 40px 1fr 40px;
+            align-items: center;
         }
         .auth-login-btn-icon {
-            position: absolute; left: 14px; top: 50%;
-            transform: translateY(-50%);
-            width: 20px; height: 20px; flex: none;
+            grid-column: 1; justify-self: center;
+            width: 20px; height: 20px;
             display: flex; align-items: center; justify-content: center;
         }
         .auth-login-btn-icon svg { width: 20px; height: 20px; display: block; }
@@ -1150,7 +1151,7 @@ input[type="number"] {
             width: 22px; height: 22px; color: #229ED9;
         }
         .auth-login-btn-label {
-            flex: 1; text-align: center; padding-right: 34px;
+            grid-column: 2; text-align: center;
             line-height: 20px; white-space: nowrap;
         }
         #googleSignInBtn {
