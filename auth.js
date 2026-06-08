@@ -325,14 +325,19 @@
             });
         }).then(function (data) {
             resetTelegramLoginButton();
+            var unsafe = window.Telegram.WebApp.initDataUnsafe || {};
 
             if (!data || !data.success || !data.sessionToken) {
-                showLoginError((data && data.message) || 'Немає доступу. Ви не адмін.');
+                var msg = (data && data.message) || 'Немає доступу. Ви не адмін.';
+                if (msg.indexOf('списку доступу') !== -1) {
+                    var uname = (unsafe.user && unsafe.user.username) ? '@' + unsafe.user.username : 'немає @username';
+                    msg = 'Доступ заборонено для ' + uname + '. Зверніться до адміністратора.';
+                }
+                showLoginError(msg);
                 loginInProgress = false;
                 return;
             }
 
-            var unsafe = window.Telegram.WebApp.initDataUnsafe || {};
             var user = unsafe.user || {};
             var name = user.first_name || 'Telegram User';
             if (user.last_name) name += ' ' + user.last_name;
