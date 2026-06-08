@@ -21,18 +21,36 @@
     <script>
     (function () {
         try {
-            var p = new URLSearchParams(window.location.search);
-            if (!p.get('id') || !p.get('hash')) return;
-            var u = { id: p.get('id'), hash: p.get('hash'), auth_date: p.get('auth_date') || '' };
-            if (p.get('first_name')) u.first_name = p.get('first_name');
-            if (p.get('last_name')) u.last_name = p.get('last_name');
-            if (p.get('username')) u.username = p.get('username');
-            if (p.get('photo_url')) u.photo_url = p.get('photo_url');
-            sessionStorage.setItem('boso_tg_widget_pending', JSON.stringify(u));
+            var u = null;
+            var h = window.location.hash || '';
+            if (h.indexOf('tgAuthResult=') !== -1) {
+                var m = h.match(/tgAuthResult=([^&]+)/);
+                if (m && m[1]) {
+                    var d = JSON.parse(atob(m[1].replace(/-/g, '+').replace(/_/g, '/')));
+                    if (d && d.id && d.hash) {
+                        u = { id: String(d.id), hash: String(d.hash), auth_date: String(d.auth_date || '') };
+                        if (d.first_name) u.first_name = d.first_name;
+                        if (d.last_name) u.last_name = d.last_name;
+                        if (d.username) u.username = d.username;
+                        if (d.photo_url) u.photo_url = d.photo_url;
+                    }
+                }
+            }
+            if (!u) {
+                var p = new URLSearchParams(window.location.search);
+                if (p.get('id') && p.get('hash')) {
+                    u = { id: p.get('id'), hash: p.get('hash'), auth_date: p.get('auth_date') || '' };
+                    if (p.get('first_name')) u.first_name = p.get('first_name');
+                    if (p.get('last_name')) u.last_name = p.get('last_name');
+                    if (p.get('username')) u.username = p.get('username');
+                    if (p.get('photo_url')) u.photo_url = p.get('photo_url');
+                }
+            }
+            if (u) sessionStorage.setItem('boso_tg_widget_pending', JSON.stringify(u));
         } catch (e) {}
     })();
     </script>
-    <script src="/auth.js?v=6"></script>
+    <script src="/auth.js?v=7"></script>
     <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     
@@ -43,7 +61,7 @@
     <link rel="icon" type="image/png" sizes="32x32" href="/icons/favicon-32.png">
     <link rel="manifest" href="/manifest.json">
 
-    <script>if(window.innerWidth>=768)window.location.href='index.html'+window.location.search;</script>
+    <script>if(window.innerWidth>=768)window.location.href='index.html'+window.location.search+window.location.hash;</script>
     <title>BOSO | Mobile</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -789,7 +807,7 @@
         }
         .auth-login-btn:hover { background: #f8f9fa; }
         .auth-login-btn-inner {
-            display: flex; align-items: center; width: 196px;
+            display: inline-flex; align-items: center; justify-content: center; gap: 10px;
         }
         .auth-login-btn-icon {
             width: 18px; height: 18px; flex: 0 0 18px;
@@ -797,9 +815,7 @@
         }
         .auth-login-btn-icon svg { width: 18px; height: 18px; display: block; }
         .auth-login-btn-icon--tg svg { color: #229ED9; }
-        .auth-login-btn-label {
-            margin-left: 10px; line-height: 18px; text-align: left; white-space: nowrap;
-        }
+        .auth-login-btn-label { line-height: 18px; white-space: nowrap; }
         #auth-login-error {
             display: none; margin-top: 18px; padding: 12px;
             background: #FEE2E2; color: #991B1B; border-radius: 10px; font-size: 13px; font-weight: 600;

@@ -195,18 +195,44 @@
         return window.location.href.split('#')[0].split('?')[0];
     }
 
+    function normalizeTelegramWidgetUser(data) {
+        if (!data || data.id == null || !data.hash) return null;
+        var user = {
+            id: String(data.id),
+            hash: String(data.hash),
+            auth_date: data.auth_date != null ? String(data.auth_date) : ''
+        };
+        if (data.first_name) user.first_name = String(data.first_name);
+        if (data.last_name) user.last_name = String(data.last_name);
+        if (data.username) user.username = String(data.username);
+        if (data.photo_url) user.photo_url = String(data.photo_url);
+        return user;
+    }
+
+    function parseTelegramAuthFromHash() {
+        var hash = window.location.hash || '';
+        if (hash.indexOf('tgAuthResult=') === -1) return null;
+        var match = hash.match(/tgAuthResult=([^&]+)/);
+        if (!match || !match[1]) return null;
+        try {
+            var json = atob(match[1].replace(/-/g, '+').replace(/_/g, '/'));
+            return normalizeTelegramWidgetUser(JSON.parse(json));
+        } catch (e) {
+            return null;
+        }
+    }
+
     function buildTelegramWidgetUserFromParams(params) {
         if (!params.get('hash') || !params.get('id')) return null;
-        var user = {
+        return normalizeTelegramWidgetUser({
             id: params.get('id'),
             hash: params.get('hash'),
-            auth_date: params.get('auth_date')
-        };
-        if (params.get('first_name')) user.first_name = params.get('first_name');
-        if (params.get('last_name')) user.last_name = params.get('last_name');
-        if (params.get('username')) user.username = params.get('username');
-        if (params.get('photo_url')) user.photo_url = params.get('photo_url');
-        return user;
+            auth_date: params.get('auth_date'),
+            first_name: params.get('first_name'),
+            last_name: params.get('last_name'),
+            username: params.get('username'),
+            photo_url: params.get('photo_url')
+        });
     }
 
     function stashTelegramWidgetUser(user) {
@@ -232,12 +258,18 @@
     }
 
     function captureTelegramWidgetCallback() {
-        var user = buildTelegramWidgetUserFromParams(new URLSearchParams(window.location.search));
+        var user = parseTelegramAuthFromHash();
+        if (!user) {
+            user = buildTelegramWidgetUserFromParams(new URLSearchParams(window.location.search));
+        }
         if (user) stashTelegramWidgetUser(user);
     }
 
     function parseTelegramWidgetFromUrl() {
-        var user = buildTelegramWidgetUserFromParams(new URLSearchParams(window.location.search));
+        var user = parseTelegramAuthFromHash();
+        if (!user) {
+            user = buildTelegramWidgetUserFromParams(new URLSearchParams(window.location.search));
+        }
         if (user) return user;
         return peekTelegramWidgetPending();
     }
@@ -250,7 +282,7 @@
         ['id', 'first_name', 'last_name', 'username', 'photo_url', 'auth_date', 'hash'].forEach(function (key) {
             url.searchParams.delete(key);
         });
-        window.history.replaceState({}, document.title, url.pathname + url.search + url.hash);
+        window.history.replaceState({}, document.title, url.pathname + url.search);
     }
 
     function getTelegramOAuthUrl() {
