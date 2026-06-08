@@ -169,11 +169,24 @@
         var container = document.getElementById('googleSignInBtn');
         var fallback = document.getElementById('googleSignInFallback');
         if (!fallback) return;
+
+        if (isTelegramWebApp()) {
+            if (container) container.style.display = 'none';
+            fallback.style.display = 'inline-flex';
+            return;
+        }
+
         var hasIframe = !!(container && container.querySelector('iframe'));
         fallback.style.display = hasIframe ? 'none' : 'inline-flex';
+        if (container) container.style.display = hasIframe ? 'flex' : 'none';
     }
 
     function renderGoogleButton() {
+        if (isTelegramWebApp()) {
+            updateSignInUi();
+            return false;
+        }
+
         var container = document.getElementById('googleSignInBtn');
         if (!container || !global.google || !global.google.accounts || !global.google.accounts.id) {
             updateSignInUi();
@@ -256,8 +269,25 @@
         }, 100);
     }
 
+    function isTelegramWebApp() {
+        return !!(window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.initData);
+    }
+
     function triggerGoogleSignIn() {
         showLoginError('');
+
+        // Якщо це Telegram Web App, Google блокує авторизацію через WebView.
+        // Перенаправляємо користувача в зовнішній браузер
+        if (isTelegramWebApp()) {
+            showLoginError('Відкриваємо безпечний браузер для авторизації... Якщо нічого не відбулось, натисніть "Три крапки" -> "Відкрити в браузері".');
+            try {
+                window.Telegram.WebApp.openLink(window.location.href);
+            } catch (e) {
+                console.error('Telegram openLink error:', e);
+            }
+            return;
+        }
+
         if (!initGsi()) {
             waitForGsi(function () {
                 if (!gsiReady) {
