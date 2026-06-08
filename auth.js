@@ -171,14 +171,12 @@
     function updateSignInUi() {
         var container = document.getElementById('googleSignInBtn');
         var fallback = document.getElementById('googleSignInFallback');
-        var tgContainer = document.getElementById('telegramSignInBtn');
-        var divider = document.getElementById('auth-login-divider');
+        var tgSlot = document.querySelector('.auth-tg-slot');
         if (!fallback) return;
 
         if (isTelegramWebApp()) {
             if (container) container.style.display = 'none';
-            if (tgContainer) tgContainer.style.display = 'none';
-            if (divider) divider.style.display = 'none';
+            if (tgSlot) tgSlot.style.display = 'none';
             fallback.style.display = 'inline-flex';
             fallback.innerHTML = TG_BTN_HTML;
             fallback.style.background = '#2AABEE';
@@ -187,8 +185,7 @@
             return;
         }
 
-        if (tgContainer) tgContainer.style.display = 'flex';
-        if (divider) divider.style.display = 'block';
+        if (tgSlot) tgSlot.style.display = '';
 
         var hasIframe = !!(container && container.querySelector('iframe'));
         fallback.style.display = hasIframe ? 'none' : 'inline-flex';
@@ -343,7 +340,7 @@
                 text: 'signin_with',
                 shape: 'pill',
                 locale: 'uk',
-                width: 280
+                width: 300
             });
         } catch (e) {
             updateSignInUi();
