@@ -170,11 +170,13 @@
     }
 
     function updateSignInUi() {
+        var gsiContainer = document.getElementById('googleSignInBtn');
         var fallback = document.getElementById('googleSignInFallback');
         var tgBtn = document.getElementById('telegramSignInBtn');
         if (!fallback) return;
 
         if (isTelegramWebApp()) {
+            if (gsiContainer) gsiContainer.style.display = 'none';
             if (tgBtn) tgBtn.style.display = 'none';
             fallback.style.display = 'inline-flex';
             fallback.innerHTML = TG_BTN_HTML;
@@ -184,11 +186,19 @@
             return;
         }
 
-        fallback.style.display = 'inline-flex';
-        fallback.style.background = '#fff';
-        fallback.style.color = '#3c4043';
-        fallback.style.borderColor = '#dadce0';
         if (tgBtn) tgBtn.style.display = 'inline-flex';
+
+        var hasGsiBtn = !!(gsiContainer && gsiContainer.querySelector('iframe'));
+        if (hasGsiBtn) {
+            if (gsiContainer) gsiContainer.style.display = 'flex';
+            fallback.style.display = 'none';
+        } else {
+            if (gsiContainer) gsiContainer.style.display = 'none';
+            fallback.style.display = 'inline-flex';
+            fallback.style.background = '#fff';
+            fallback.style.color = '#3c4043';
+            fallback.style.borderColor = '#dadce0';
+        }
     }
 
     function getTelegramWidgetAuthUrl() {
@@ -368,6 +378,37 @@
         });
     }
 
+    function renderGoogleSignInButton() {
+        if (isTelegramWebApp()) {
+            updateSignInUi();
+            return false;
+        }
+
+        var container = document.getElementById('googleSignInBtn');
+        if (!container || !global.google || !global.google.accounts || !global.google.accounts.id) {
+            updateSignInUi();
+            return false;
+        }
+
+        container.innerHTML = '';
+        try {
+            global.google.accounts.id.renderButton(container, {
+                theme: 'outline',
+                size: 'large',
+                text: 'signin_with',
+                shape: 'pill',
+                locale: 'uk',
+                width: 300
+            });
+        } catch (e) {
+            updateSignInUi();
+            return false;
+        }
+
+        setTimeout(updateSignInUi, 400);
+        return true;
+    }
+
     function initGsi() {
         if (!global.google || !global.google.accounts || !global.google.accounts.id) return false;
         global.google.accounts.id.initialize({
@@ -376,7 +417,7 @@
             auto_select: false,
             cancel_on_tap_outside: false
         });
-        updateSignInUi();
+        renderGoogleSignInButton();
         gsiReady = true;
         return true;
     }
@@ -511,16 +552,7 @@
             });
             return;
         }
-        try {
-            global.google.accounts.id.prompt(function (notification) {
-                if (!notification) return;
-                if (notification.isNotDisplayed && notification.isNotDisplayed()) {
-                    showGsiLoadError();
-                } else if (notification.isSkippedMoment && notification.isSkippedMoment()) {
-                    showGsiLoadError();
-                }
-            });
-        } catch (e) {
+        if (!renderGoogleSignInButton()) {
             showGsiLoadError();
         }
     }
@@ -542,7 +574,8 @@
         showLoginScreen();
         showLoginError(message || 'Сесію завершено. Увійдіть через Google.');
         waitForGsi(function () {
-            updateSignInUi();
+            if (gsiReady) renderGoogleSignInButton();
+            else updateSignInUi();
         });
     }
 
@@ -661,7 +694,10 @@
             updateSignInUi();
         } else {
             waitForGsi(function () {
-                if (!isAuthenticated()) updateSignInUi();
+                if (!isAuthenticated()) {
+                    if (gsiReady) renderGoogleSignInButton();
+                    else updateSignInUi();
+                }
             });
         }
     }

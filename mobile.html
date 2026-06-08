@@ -50,7 +50,7 @@
         } catch (e) {}
     })();
     </script>
-    <script src="/auth.js?v=7"></script>
+    <script src="/auth.js?v=8"></script>
     <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     
@@ -816,10 +816,15 @@
         .auth-login-btn-icon svg { width: 18px; height: 18px; display: block; }
         .auth-login-btn-icon--tg svg { color: #229ED9; }
         .auth-login-btn-label { line-height: 18px; white-space: nowrap; }
+        #googleSignInBtn {
+            display: none; justify-content: center; align-items: center;
+            width: 100%; min-height: 44px;
+        }
         #auth-login-error {
             display: none; margin-top: 18px; padding: 12px;
             background: #FEE2E2; color: #991B1B; border-radius: 10px; font-size: 13px; font-weight: 600;
         }
+        html.tg-webapp #googleSignInBtn,
         html.tg-webapp #telegramSignInBtn { display: none !important; }
         html.tg-webapp #googleSignInFallback {
             display: inline-flex !important;
@@ -837,6 +842,7 @@
             <div class="auth-login-logo">BOSO</div>
             <div class="auth-login-subtitle">Панель Управління</div>
             <div class="auth-login-actions">
+                <div id="googleSignInBtn"></div>
                 <button type="button" class="auth-login-btn" id="googleSignInFallback" onclick="BosoAuth.triggerGoogleSignIn()">
                     <span class="auth-login-btn-inner">
                         <span class="auth-login-btn-icon">
