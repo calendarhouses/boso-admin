@@ -472,8 +472,8 @@
         return !!(window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.initData);
     }
 
-    var TG_ICON_SVG = '<svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M9.78 18.65l.28-4.23 7.68-6.92c.34-.31-.07-.46-.52-.19L7.74 13.3 3.64 12c-.88-.25-.89-.86.2-1.3l15.97-6.16c.73-.33 1.43.18 1.15 1.3l-2.72 12.81c-.19.91-.74 1.13-1.5.71L12.6 16.3l-1.99 1.93c-.23.23-.42.42-.82.42z"/></svg>';
-    var TG_BTN_HTML = TG_ICON_SVG + ' Увійти через Telegram';
+    var TG_ICON_SVG = '<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm4.64 6.8c-.15 1.58-.8 5.42-1.13 7.19-.14.75-.42 1-.68 1.03-.58.05-1.02-.38-1.58-.75-.88-.58-1.38-.94-2.23-1.5-.99-.65-.35-1.01.22-1.59.15-.15 2.71-2.48 2.76-2.69a.2.2 0 00-.05-.18c-.06-.05-.14-.03-.21-.02-.09.02-1.46.93-4.12 2.73-.39.27-.74.4-1.05.39-.34-.01-1-.19-1.48-.35-.6-.19-.11-.29.31-.48 1.18-.54 3.93-1.68 5.25-2.24 2.5-.1 3.02-1.28 3.12-1.3.02 0 .06-.01.1 0 .04.01.07.03.08.06.01.03.02.08.01.14z"/></svg>';
+    var TG_BTN_HTML = '<span class="auth-login-btn-inner"><span class="auth-login-btn-icon auth-login-btn-icon--tg">' + TG_ICON_SVG + '</span><span class="auth-login-btn-label">Увійти через Telegram</span></span>';
 
     function resetTelegramLoginButton() {
         var btn = document.getElementById('googleSignInFallback');
