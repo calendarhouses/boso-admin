@@ -175,7 +175,7 @@
         if (isTelegramWebApp()) {
             if (container) container.style.display = 'none';
             fallback.style.display = 'inline-flex';
-            fallback.innerHTML = '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.198 2.433a2.242 2.242 0 0 0-1.022.215l-18 8.021a2.25 2.25 0 0 0-.153 4.103l4.636 1.854L10 21l3.541-3.542 4.606 3.454a2.25 2.25 0 0 0 3.585-1.192l3-15a2.25 2.25 0 0 0-2.534-2.51l-1-1z"></path></svg> Увійти через Telegram';
+            fallback.innerHTML = TG_BTN_HTML;
             fallback.style.background = '#2AABEE';
             fallback.style.color = '#fff';
             fallback.style.borderColor = '#2AABEE';
@@ -279,7 +279,8 @@
         return !!(window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.initData);
     }
 
-    var TG_BTN_HTML = '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.198 2.433a2.242 2.242 0 0 0-1.022.215l-18 8.021a2.25 2.25 0 0 0-.153 4.103l4.636 1.854L10 21l3.541-3.542 4.606 3.454a2.25 2.25 0 0 0 3.585-1.192l3-15a2.25 2.25 0 0 0-2.534-2.51l-1-1z"></path></svg> Увійти через Telegram';
+    var TG_ICON_SVG = '<svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M9.78 18.65l.28-4.23 7.68-6.92c.34-.31-.07-.46-.52-.19L7.74 13.3 3.64 12c-.88-.25-.89-.86.2-1.3l15.97-6.16c.73-.33 1.43.18 1.15 1.3l-2.72 12.81c-.19.91-.74 1.13-1.5.71L12.6 16.3l-1.99 1.93c-.23.23-.42.42-.82.42z"/></svg>';
+    var TG_BTN_HTML = TG_ICON_SVG + ' Увійти через Telegram';
 
     function resetTelegramLoginButton() {
         var btn = document.getElementById('googleSignInFallback');
