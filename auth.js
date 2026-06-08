@@ -11,6 +11,7 @@
         'nazar.duzhik02222@gmail.com'
     ].map(function (e) { return e.toLowerCase(); });
     const DEFAULT_API_URL = 'https://script.google.com/macros/s/AKfycbx1RYoMJySplZ18Wv54PQjxzHnZqIb3Wsw63oG-PAOKMvuXEym8Y7aFS-L_pxvfX6o4DQ/exec';
+    const TG_BOT_USERNAME = 'bosohouses_bot';
 
     let session = null;
     let onReadyCallback = null;
@@ -170,10 +171,14 @@
     function updateSignInUi() {
         var container = document.getElementById('googleSignInBtn');
         var fallback = document.getElementById('googleSignInFallback');
+        var tgContainer = document.getElementById('telegramSignInBtn');
+        var divider = document.getElementById('auth-login-divider');
         if (!fallback) return;
 
         if (isTelegramWebApp()) {
             if (container) container.style.display = 'none';
+            if (tgContainer) tgContainer.style.display = 'none';
+            if (divider) divider.style.display = 'none';
             fallback.style.display = 'inline-flex';
             fallback.innerHTML = TG_BTN_HTML;
             fallback.style.background = '#2AABEE';
@@ -182,9 +187,99 @@
             return;
         }
 
+        if (tgContainer) tgContainer.style.display = 'flex';
+        if (divider) divider.style.display = 'block';
+
         var hasIframe = !!(container && container.querySelector('iframe'));
         fallback.style.display = hasIframe ? 'none' : 'inline-flex';
         if (container) container.style.display = hasIframe ? 'flex' : 'none';
+    }
+
+    function renderTelegramWidget() {
+        if (isTelegramWebApp()) return;
+
+        var container = document.getElementById('telegramSignInBtn');
+        if (!container || container.querySelector('script[data-telegram-login]')) return;
+
+        container.innerHTML = '';
+        var script = document.createElement('script');
+        script.src = 'https://telegram.org/js/telegram-widget.js?22';
+        script.async = true;
+        script.setAttribute('data-telegram-login', TG_BOT_USERNAME);
+        script.setAttribute('data-size', 'large');
+        script.setAttribute('data-radius', '20');
+        script.setAttribute('data-userpic', 'false');
+        script.setAttribute('data-request-access', 'write');
+        script.setAttribute('data-onauth', 'onTelegramWidgetAuth(user)');
+        container.appendChild(script);
+    }
+
+    function finishTelegramSession(data, user) {
+        var name = user.first_name || 'Telegram User';
+        if (user.last_name) name += ' ' + user.last_name;
+
+        saveSession({
+            email: data.email,
+            sessionToken: data.sessionToken,
+            name: name,
+            picture: user.photo_url || ''
+        });
+        loginInProgress = false;
+        showAdminApp();
+
+        if (typeof onReadyCallback === 'function') {
+            onReadyCallback();
+        }
+    }
+
+    function handleTelegramAuthError(data, user) {
+        var msg = (data && data.message) || 'Немає доступу. Ви не адмін.';
+        if (msg.indexOf('списку доступу') !== -1) {
+            var uname = (user && user.username) ? '@' + user.username : 'немає @username';
+            msg = 'Доступ заборонено для ' + uname + '. Зверніться до адміністратора.';
+        }
+        showLoginError(msg);
+        loginInProgress = false;
+    }
+
+    function exchangeTelegramWidgetForSession(user) {
+        if (loginInProgress) return;
+
+        var apiUrl = getApiUrl();
+        if (!apiUrl) {
+            showLoginError('Помилка конфігурації API');
+            return;
+        }
+
+        loginInProgress = true;
+        showLoginError('');
+
+        fetch(apiUrl, {
+            method: 'POST',
+            headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+            body: JSON.stringify({
+                action: 'adminTelegramWidgetLogin',
+                widgetUser: user
+            })
+        }).then(function (res) {
+            return res.text().then(function (text) {
+                try {
+                    return JSON.parse(text);
+                } catch (e) {
+                    throw new Error('INVALID_RESPONSE');
+                }
+            });
+        }).then(function (data) {
+            if (!data || !data.success || !data.sessionToken) {
+                handleTelegramAuthError(data, user);
+                return;
+            }
+            finishTelegramSession(data, user);
+        }).catch(function (err) {
+            loginInProgress = false;
+            console.error('Telegram widget login error:', err);
+            showLoginError('Не вдалося увійти через Telegram. Спробуйте ще раз.');
+        });
     }
 
     function renderGoogleButton() {
@@ -192,6 +287,8 @@
             updateSignInUi();
             return false;
         }
+
+        renderTelegramWidget();
 
         var container = document.getElementById('googleSignInBtn');
         if (!container || !global.google || !global.google.accounts || !global.google.accounts.id) {
@@ -243,6 +340,7 @@
         }
         if (!isAuthenticated() && !isTelegramWebApp()) {
             initGsi();
+            renderTelegramWidget();
         }
     }
 
@@ -328,32 +426,11 @@
             var unsafe = window.Telegram.WebApp.initDataUnsafe || {};
 
             if (!data || !data.success || !data.sessionToken) {
-                var msg = (data && data.message) || 'Немає доступу. Ви не адмін.';
-                if (msg.indexOf('списку доступу') !== -1) {
-                    var uname = (unsafe.user && unsafe.user.username) ? '@' + unsafe.user.username : 'немає @username';
-                    msg = 'Доступ заборонено для ' + uname + '. Зверніться до адміністратора.';
-                }
-                showLoginError(msg);
-                loginInProgress = false;
+                handleTelegramAuthError(data, unsafe.user || {});
                 return;
             }
 
-            var user = unsafe.user || {};
-            var name = user.first_name || 'Telegram User';
-            if (user.last_name) name += ' ' + user.last_name;
-
-            saveSession({
-                email: data.email,
-                sessionToken: data.sessionToken,
-                name: name,
-                picture: user.photo_url || ''
-            });
-            loginInProgress = false;
-            showAdminApp();
-
-            if (typeof onReadyCallback === 'function') {
-                onReadyCallback();
-            }
+            finishTelegramSession(data, unsafe.user || {});
         }).catch(function (err) {
             loginInProgress = false;
             resetTelegramLoginButton();
@@ -420,6 +497,7 @@
             } else {
                 updateSignInUi();
             }
+            renderTelegramWidget();
         });
     }
 
@@ -528,10 +606,15 @@
                 if (!isAuthenticated()) {
                     if (gsiReady) renderGoogleButton();
                     else updateSignInUi();
+                    renderTelegramWidget();
                 }
             });
         }
     }
+
+    global.onTelegramWidgetAuth = function (user) {
+        exchangeTelegramWidgetForSession(user);
+    };
 
     global.__bosoGsiOnLoad = onGsiScriptLoad;
     if (global.__bosoGsiLoaded) onGsiScriptLoad();
