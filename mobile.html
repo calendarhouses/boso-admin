@@ -4097,6 +4097,7 @@ function setHalfPrepayment() {
         function buildBookingNotifyPayload(booking) {
             return {
                 action: 'sendSuccessScreenshot',
+                forceResend: true,
                 orderId: booking.id,
                 id: booking.id,
                 cottage: booking.cottage,
