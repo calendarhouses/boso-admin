@@ -760,6 +760,7 @@
 .pay-chip.active[data-method="Картка"] { background: #F5F3FF; border-color: #C4B5FD; color: #6D28D9; }
 .pay-chip.active[data-method="ФОП"] { background: #F0FDF4; border-color: #86EFAC; color: #059669; }
 .pay-chip.active[data-method="WayForPay"] { background: #E0F2FE; border-color: #7DD3FC; color: #0369A1; }
+.it-pay-methods .pay-chip { flex: 1 1 calc(50% - 4px); min-width: calc(50% - 4px); font-size: 10px; }
 
 .payment-block { background: #FAFAFA; border: 1px solid #E5E7EB; border-radius: 12px; padding: 16px; margin-bottom: 16px; }
 .pay-rows-stack { display: flex; flex-direction: column; gap: 20px; margin-bottom: 20px; }
@@ -1150,7 +1151,7 @@
     <div class="metric-card" onclick="openUniversalDetails('wayforpay', 'Оплати WayForPay', '#0369A1', '#E0F2FE', 'Сума')">
         <div class="mc-header">
             <div class="metric-icon" style="background:#E0F2FE; color:#0369A1;">
-                <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9"></path></svg>
+                <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path stroke-linecap="round" d="M3 12h18"/><path stroke-linecap="round" stroke-linejoin="round" d="M12 3c2.5 2.4 3.8 5.7 3.8 9s-1.3 6.6-3.8 9c-2.5-2.4-3.8-5.7-3.8-9S9.5 5.4 12 3z"/></svg>
             </div>
         </div>
         <div class="mc-body">
@@ -5395,7 +5396,11 @@ function setHalfPrepayment() {
                 const sub = t.comment ? String(t.comment).trim() : '';
                 if (t.type === 'income') {
                     manualIncomeTotal += amt;
-                    incomeLines.push({ title, amount: amt, sub });
+                    const payMethod = t.paymentMethod || 'Готівка';
+                    const subParts = [sub, payMethod].filter(Boolean);
+                    incomeLines.push({ title, amount: amt, sub: subParts.join(' · ') });
+                    cashInflow += amt;
+                    bosoAddPaymentMethodBucket(payments, amt, payMethod, '');
                 } else if (t.type === 'expense') {
                     totalExpense += amt;
                     expenseLines.push({ title, amount: amt, sub });
@@ -5686,8 +5691,10 @@ let                 fOut = outD.toLocaleDateString('uk-UA', { day: 'numeric', mo
                 const tDate = new Date(tDateStr);
                 if (t.type === 'income') {
                     totalIncome += t.amount;
-                    // Було short, ставимо long
                     let tObj = { name: t.comment || "Додано вручну", phone: "", date: tDate.toLocaleDateString('uk-UA', { day: 'numeric', month: 'long' }), row: null, amount: t.amount, isTrans: true, id: t.id, rawDate: tDate.getTime() };
+                    const manualBase = { name: t.comment || t.category || 'Додано вручну', phone: '', date: tDate.toLocaleDateString('uk-UA', { day: 'numeric', month: 'long' }), row: null, isTrans: true, rawDate: tDate.getTime() };
+                    const manualAmt = Math.round(Number(t.amount) || 0);
+                    if (manualAmt > 0) bosoPushPaymentStat(payStats, t.paymentMethod || 'Готівка', '', manualAmt, manualBase, '');
                     if (t.category === "Плата за раннє заселення/пізнє виселення") { currEarlyLate += t.amount; window.bosoDetails.earlyLate.push(tObj); }
                     else if (t.category === "Чан") { currVat += t.amount; window.bosoDetails.vat.push(tObj); }
                     else if (t.category === "Оренда велосипедів") { currBikes += t.amount; window.bosoDetails.bikes.push(tObj); }
@@ -5803,6 +5810,7 @@ let                 fOut = outD.toLocaleDateString('uk-UA', { day: 'numeric', mo
                                         <input type="text" id="editDate-${id}" class="it-date-picker" value="${t.date}" style="background:#FFF;">
                                     </div>
                                 </div>
+                                ${t.type === 'income' ? bosoRenderIncomePayMethodBlock('editPay-' + id, t.paymentMethod || 'Готівка') : ''}
                                 <div class="form-group"><label>Коментар</label><input type="text" id="editComm-${id}" value="${t.comment || ''}" style="background:#FFF; width:100%;"></div>
                                 <div style="display:flex; gap:8px;">
                                     <button class="btn-secondary" style="flex:1; justify-content:center;" onclick="event.stopPropagation(); toggleEditFinRow(${id})">Скасувати</button>
@@ -5822,7 +5830,9 @@ let                 fOut = outD.toLocaleDateString('uk-UA', { day: 'numeric', mo
                 filteredTrans.forEach(t => {
                     let dStr = t.date.includes('.') ? t.date.split('.').reverse().join('-') : t.date;
                     const dateStr = new Date(dStr).toLocaleDateString('uk-UA', {day: 'numeric', month: 'long'});
-                    tbodyFinance.innerHTML += renderFinRow(t.category, t.comment || dateStr, t.amount, t.type, false, t.id);
+                    const descParts = [t.comment || dateStr];
+                    if (t.type === 'income') descParts.push(t.paymentMethod || 'Готівка');
+                    tbodyFinance.innerHTML += renderFinRow(t.category, descParts.join(' · '), t.amount, t.type, false, t.id);
                 });
 
                 if (totalIncome === 0 && filteredTrans.length === 0) {
@@ -5847,6 +5857,30 @@ let                 fOut = outD.toLocaleDateString('uk-UA', { day: 'numeric', mo
         }
 
         // 🚀 КАРТКИ ВВОДУ ТРАНЗАКЦІЙ
+        const BOSO_SVG_WAYFORPAY = '<circle cx="12" cy="12" r="9"/><path stroke-linecap="round" d="M3 12h18"/><path stroke-linecap="round" stroke-linejoin="round" d="M12 3c2.5 2.4 3.8 5.7 3.8 9s-1.3 6.6-3.8 9c-2.5-2.4-3.8-5.7-3.8-9S9.5 5.4 12 3z"/>';
+
+        function bosoRenderIncomePayMethodBlock(containerId, defaultMethod) {
+            const m = defaultMethod || 'Готівка';
+            const chip = (method, label) => `<div class="pay-chip${m === method ? ' active' : ''}" data-method="${method}" onclick="bosoSelectIncomePayMethod('${containerId}', '${method}', this)">${label}</div>`;
+            return `<div class="form-group" style="margin-bottom: 12px;">
+                <label>Спосіб оплати</label>
+                <div class="pay-methods it-pay-methods" id="${containerId}">
+                    ${chip('ФОП', 'ФОП')}${chip('WayForPay', 'WayForPay')}${chip('Картка', 'Картка')}${chip('Готівка', 'Готівка')}
+                </div>
+                <input type="hidden" id="${containerId}-val" value="${m}">
+            </div>`;
+        }
+        window.bosoSelectIncomePayMethod = function(containerId, method, el) {
+            const wrap = document.getElementById(containerId);
+            if (!wrap) return;
+            wrap.querySelectorAll('.pay-chip').forEach(chip => chip.classList.toggle('active', chip === el));
+            const hidden = document.getElementById(containerId + '-val');
+            if (hidden) hidden.value = method;
+        };
+        function bosoGetIncomePayMethod(containerId) {
+            return document.getElementById(containerId + '-val')?.value || 'Готівка';
+        }
+
         const incomeCategories = ["Плата за раннє заселення/пізнє виселення", "Додаткові гості", "Домашні тварини", "Міні-бар", "Чан", "Оренда велосипедів", "Інший дохід"];
         const expenseCategories = ["Прибирання", "Прасування", "Користування електроенергією", "Утримання прилеглої території", "Розхідні матеріали", "Реклама", "Адміністрування та SMM", "Податки", "Інші витрати"];
         let transactions = [];
@@ -5901,6 +5935,7 @@ let                 fOut = outD.toLocaleDateString('uk-UA', { day: 'numeric', mo
                                 <input type="text" id="itDate-${idx}" class="it-date-picker" value="${new Date().toISOString().split('T')[0]}">
                             </div>
                         </div>
+                        ${isIncome ? bosoRenderIncomePayMethodBlock('itPay-' + idx, 'Готівка') : ''}
                         <div class="form-group"><label>Коментар (необов'язково)</label><input type="text" id="itComm-${idx}" placeholder="Деталі..." style="width: 100%;"></div>
                         <div style="display: flex; gap: 8px;">
                             <button class="btn-secondary" style="flex:1; justify-content:center;" onclick="toggleInlineCard(${idx}); event.stopPropagation();">Скасувати</button>
@@ -5970,7 +6005,7 @@ let                 fOut = outD.toLocaleDateString('uk-UA', { day: 'numeric', mo
             const comment = document.getElementById('itComm-' + idx).value.trim();
             if (amount <= 0) { showToast("Сума має бути більше нуля!"); return; }
 
-            transactions.push({ id: Date.now(), type: type, category: category, amount: amount, date: dateInput, comment: comment });
+            transactions.push({ id: Date.now(), type: type, category: category, amount: amount, date: dateInput, comment: comment, ...(type === 'income' ? { paymentMethod: bosoGetIncomePayMethod('itPay-' + idx) } : {}) });
             saveSettingsToCloud(); 
             calculateAnalytics();  
             showToast("Запис успішно додано!");
@@ -6012,6 +6047,7 @@ let                 fOut = outD.toLocaleDateString('uk-UA', { day: 'numeric', mo
             const newComm = document.getElementById(`editComm-${id}`).value.trim();
             if (newAmt <= 0) { showToast("Сума має бути більше нуля!"); return; }
             t.amount = newAmt; t.date = newDate; t.comment = newComm;
+            if (t.type === 'income') t.paymentMethod = bosoGetIncomePayMethod('editPay-' + id);
             saveSettingsToCloud(); calculateAnalytics(); 
             showToast("Зміни успішно збережено!");
         }
@@ -7055,7 +7091,7 @@ async function captureFinanceReportCard(report) {
             ${payCard('Готівка', report.payments.cash, '#EFF6FF', '#93C5FD', '#1D4ED8', iconCash)}
             ${payCard('Картка', report.payments.card, '#F5F3FF', '#C4B5FD', '#6D28D9', iconCard)}
             ${payCard('ФОП', report.payments.fop, '#F0FDF4', '#86EFAC', '#059669', iconFop)}
-            ${payCard('WayForPay', report.payments.wayforpay || 0, '#E0F2FE', '#7DD3FC', '#0369A1', iconFop)}
+            ${payCard('WayForPay', report.payments.wayforpay || 0, '#E0F2FE', '#7DD3FC', '#0369A1', `<svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">${BOSO_SVG_WAYFORPAY}</svg>`)}
         </div>
 
         <div style="margin-bottom:20px;">
