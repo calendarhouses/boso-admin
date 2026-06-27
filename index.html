@@ -7728,8 +7728,9 @@ async function capturePremiumCard(b) {
     // 🟢 Вираховуємо базову вартість, якщо вона раптом не передалася
     let discAmt = Number(b.discountAmount) || 0;
     let basePrice = Number(b.basePrice);
-    if (!basePrice && basePrice !== 0) {
-        basePrice = total + discAmt - ((Number(b.extraGuestFee)||0) + (Number(b.petFee)||0) + (Number(b.dayGuestFee)||0) + (Number(b.earlyFee)||0) + (Number(b.lateFee)||0));
+    const feeSum = (Number(b.extraGuestFee) || 0) + (Number(b.petFee) || 0) + (Number(b.dayGuestFee) || 0) + (Number(b.earlyFee) || 0) + (Number(b.lateFee) || 0);
+    if (!Number.isFinite(basePrice) || (basePrice <= 0 && total > 0)) {
+        basePrice = Math.max(0, total + discAmt - feeSum);
     }
 
     // Очищаємо коментар
