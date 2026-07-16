@@ -6190,6 +6190,10 @@ function bosoLeave() {
 
                     let amountHtml = item.amount > 0 ? `${item.amount.toLocaleString('uk-UA')} грн` : '—';
                     let labelHtml = valLabel ? `<div style="font-size: 10px; color: ${colorHex}; text-transform: uppercase; font-weight: 700; letter-spacing: 0.5px; opacity: 0.8;">${valLabel}</div>` : '';
+                    const dateLabel = item.isCleaning ? 'Виїзд' : 'Дати';
+                    const subLine = item.isCleaning && item.guestName
+                        ? `${dateLabel}: <strong style="color: #4B5563;">${item.date}</strong> · ${item.guestName}`
+                        : `${dateLabel}: <strong style="color: #4B5563;">${item.date}</strong>`;
 
                     let actionBtn = item.isTrans 
                         ? `<button onclick="jumpToFinanceAndEdit(${item.id})" style="flex: 1; background: #FFFFFF; color: #374151; border: 1px solid #D1D5DB; padding: 8px; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer; transition: 0.2s;" onmouseover="this.style.background='#F9FAFB'" onmouseout="this.style.background='#FFFFFF'">Редагувати запис</button>`
@@ -6208,7 +6212,7 @@ function bosoLeave() {
                                 </div>
                                 <div>
                                     <div style="font-weight: 700; color: #111827; font-size: 15px; margin-bottom: 2px;">${item.name}</div>
-                                    <div style="font-size: 12px; color: #6B7280;">Дати: <strong style="color: #4B5563;">${item.date}</strong></div>
+                                    <div style="font-size: 12px; color: #6B7280;">${subLine}</div>
                                 </div>
                             </div>
                             <div style="text-align: right; background: ${bgHex}; padding: 6px 10px; border-radius: 8px;">
@@ -6234,6 +6238,14 @@ function bosoLeave() {
         function bosoCalcFopWfpTax(net) {
             return Math.round((Number(net) || 0) * 0.06);
         }
+        /** "2026-07" → "Липень 2026" */
+        function bosoFormatYmUk(ym) {
+            const months = ['Січень','Лютий','Березень','Квітень','Травень','Червень','Липень','Серпень','Вересень','Жовтень','Листопад','Грудень'];
+            const m = /^(\d{4})-(\d{2})$/.exec(String(ym || ''));
+            if (!m) return String(ym || '');
+            const mi = Number(m[2]) - 1;
+            return `${months[mi] || m[2]} ${m[1]}`;
+        }
         /** Junior 1000 / Family 1200 — за назвою котеджу. */
         function bosoCleaningAmountForCottage(cottageName) {
             const n = String(cottageName || '').toLowerCase().replace(/№/g, '').replace(/\s+/g, '');
@@ -6258,14 +6270,18 @@ function bosoLeave() {
                 if (amt <= 0) return;
                 total += amt;
                 count++;
-                const name = String(b.name || '').replace(' (Ручна бронь)', '').trim() || 'Клієнт';
+                const guest = String(b.name || '').replace(' (Ручна бронь)', '').trim() || 'Клієнт';
+                const cottage = String(b.cottage || '').trim() || 'Котедж';
                 items.push({
-                    name,
+                    name: cottage,
                     phone: typeof formatPhone === 'function' ? formatPhone(b.phone) : (b.phone || ''),
-                    date: outD.toLocaleDateString('uk-UA', { day: 'numeric', month: 'long' }),
+                    date: outD.toLocaleDateString('uk-UA', { day: 'numeric', month: 'long', year: 'numeric' }),
                     amount: amt,
                     row: b.row,
-                    cottage: b.cottage || ''
+                    cottage,
+                    guestName: guest,
+                    rawDate: outD.getTime(),
+                    isCleaning: true
                 });
             });
             return { total, count, items };
@@ -6330,11 +6346,11 @@ function bosoLeave() {
                     category: 'Податки',
                     amount: tax,
                     date: bosoFormatDateIso(lastDay),
-                    comment: `6% від ФОП+WFP−2% (${ym})`,
+                    comment: `6% від ФОП+WFP−2% (${bosoFormatYmUk(ym)})`,
                     auto: true
                 };
                 if (idx === -1) { transactions.push(entry); changed = true; }
-                else if (Number(transactions[idx].amount) !== tax) {
+                else if (Number(transactions[idx].amount) !== tax || String(transactions[idx].comment || '') !== entry.comment) {
                     transactions[idx] = Object.assign({}, transactions[idx], entry);
                     changed = true;
                 }
@@ -7444,7 +7460,7 @@ function bosoLeave() {
             if(tbodyFinance) {
                 tbodyFinance.innerHTML = '';
 
-                function renderFinRow(title, desc, amount, type, isSystem, id = null) {
+                function renderFinRow(title, desc, amount, type, isSystem, id = null, systemClick = null) {
                     if (Math.round(amount) <= 0) return '';
                     const isInc = type === 'income';
                     const badge = isInc ? `<span class="badge confirmed" style="background:#D1FAE5; color:#059669;">Дохід</span>` : `<span class="badge cancelled" style="background:#FEE2E2; color:#DC2626;">Витрата</span>`;
@@ -7458,9 +7474,12 @@ function bosoLeave() {
                         </div>`;
 
                    // --- ПРЕМІУМ ДИЗАЙН РЯДКА ФІНАНСІВ З ІКОНКАМИ ---
-                    const rowAttrs = (!isSystem && id) 
-                        ? `id="mainRow-${id}" onclick="toggleEditFinRow(${id})" style="cursor: pointer; transition: 0.2s;" onmouseover="this.style.background='#F9FAFB'" onmouseout="this.style.background='transparent'"` 
-                        : `id="mainRow-${id || Date.now()}"`;
+                    let rowAttrs = `id="mainRow-${id || Date.now()}"`;
+                    if (systemClick) {
+                        rowAttrs = `id="mainRow-cleaning" onclick="${systemClick}" style="cursor: pointer; transition: 0.2s;" onmouseover="this.style.background='#FEF2F2'" onmouseout="this.style.background='transparent'"`;
+                    } else if (!isSystem && id) {
+                        rowAttrs = `id="mainRow-${id}" onclick="toggleEditFinRow(${id})" style="cursor: pointer; transition: 0.2s;" onmouseover="this.style.background='#F9FAFB'" onmouseout="this.style.background='transparent'"`;
+                    }
 
                     // Дістаємо іконку або ставимо дефолтну
                     const defaultIcon = '<path stroke-linecap="round" stroke-linejoin="round" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />';
@@ -7478,7 +7497,7 @@ function bosoLeave() {
                                 </div>
                                 <div style="display: flex; flex-direction: column; gap: 4px;">
                                     <strong style="font-size: 15px; color: var(--text-main);">${title}</strong>
-                                    <span style="font-size: 13px; color: #6B7280; line-height: 1.2;">${desc}</span>
+                                    <span style="font-size: 13px; color: #6B7280; line-height: 1.2;">${desc}${systemClick ? ' · натисніть для деталей' : ''}</span>
                                 </div>
                             </div>
                         </td>
@@ -7530,7 +7549,15 @@ function bosoLeave() {
                 tbodyFinance.innerHTML += renderFinRow("Тварини", "Оплати за розміщення улюбленців", incomeBreakdown.pets, 'income', true);
                 tbodyFinance.innerHTML += renderFinRow("Гнучкий графік", "Ранні заїзди та пізні виїзди", incomeBreakdown.earlyLate, 'income', true);
                 if (cleaning.total > 0) {
-                    tbodyFinance.innerHTML += renderFinRow("Прибирання", `Виїзди періоду (${cleaning.count})`, cleaning.total, 'expense', true);
+                    tbodyFinance.innerHTML += renderFinRow(
+                        "Прибирання",
+                        `Виїзди періоду (${cleaning.count})`,
+                        cleaning.total,
+                        'expense',
+                        true,
+                        null,
+                        "openUniversalDetails('cleaning', 'Прибирання за виїздами', '#DC2626', '#FEF2F2', 'Сума')"
+                    );
                 }
 
                 filteredTrans.forEach(t => {
