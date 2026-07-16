@@ -6234,6 +6234,42 @@ function bosoLeave() {
         function bosoCalcFopWfpTax(net) {
             return Math.round((Number(net) || 0) * 0.06);
         }
+        /** Junior 1000 / Family 1200 — за назвою котеджу. */
+        function bosoCleaningAmountForCottage(cottageName) {
+            const n = String(cottageName || '').toLowerCase().replace(/№/g, '').replace(/\s+/g, '');
+            if (n.includes('junior') || n.includes('джун')) return 1000;
+            if (n.includes('family') || n.includes('феміл') || n.includes('сімейн')) return 1200;
+            return 0;
+        }
+        function bosoIsAutoCleanTx(t) {
+            return String(t && t.id || '').indexOf('auto-clean-') === 0;
+        }
+        /** Прибирання у звітах: сума по виїздах у періоді (без окремих auto-clean записів). */
+        function bosoCalcCleaningFromCheckouts(bookings, startDate, endDate) {
+            let total = 0;
+            let count = 0;
+            const items = [];
+            (bookings || []).forEach(b => {
+                const status = String(b.status || '').toLowerCase();
+                if (status.includes('скас') || status.includes('нов')) return;
+                const outD = parseSafeDate(b.checkOut);
+                if (!outD || isNaN(outD.getTime()) || outD < startDate || outD > endDate) return;
+                const amt = bosoCleaningAmountForCottage(b.cottage);
+                if (amt <= 0) return;
+                total += amt;
+                count++;
+                const name = String(b.name || '').replace(' (Ручна бронь)', '').trim() || 'Клієнт';
+                items.push({
+                    name,
+                    phone: typeof formatPhone === 'function' ? formatPhone(b.phone) : (b.phone || ''),
+                    date: outD.toLocaleDateString('uk-UA', { day: 'numeric', month: 'long' }),
+                    amount: amt,
+                    row: b.row,
+                    cottage: b.cottage || ''
+                });
+            });
+            return { total, count, items };
+        }
 
         /** Синхронізує авто-витрати «Податки» 6% від ФОП+WFP−2% за повні календарні місяці, що перетинають період. */
         function syncFopWfpTaxTransactions(startDate, endDate) {
@@ -6953,6 +6989,7 @@ function bosoLeave() {
             (transactions || []).forEach(t => {
                 const tDate = parseSafeDate(t.date);
                 if (tDate < startDate || tDate > endDate) return;
+                if (bosoIsAutoCleanTx(t)) return; // прибирання рахуємо по виїздах, не з auto-clean
                 const amt = Math.round(Number(t.amount) || 0);
                 if (amt <= 0) return;
                 const title = t.category || (t.type === 'income' ? 'Дохід' : 'Витрата');
@@ -6970,6 +7007,16 @@ function bosoLeave() {
                 }
             });
 
+            const cleaning = bosoCalcCleaningFromCheckouts(allBookings || [], startDate, endDate);
+            if (cleaning.total > 0) {
+                totalExpense += cleaning.total;
+                expenseLines.unshift({
+                    title: 'Прибирання',
+                    amount: cleaning.total,
+                    sub: `Виїзди періоду (${cleaning.count})`
+                });
+            }
+
             const totalIncome = bookingIncome + manualIncomeTotal;
             const accrual = calculateAccrualBalances(allBookings || [], endDate, startDate);
             payments.fopWfpNet = bosoCalcFopWfpNet(payments.fop, payments.wayforpay);
@@ -6986,7 +7033,8 @@ function bosoLeave() {
                 payments,
                 incomeLines,
                 expenseLines,
-                accrual
+                accrual,
+                cleaning
             };
         }
         window.getReportPeriodDates = getReportPeriodDates;
@@ -7148,7 +7196,7 @@ function bosoLeave() {
             let incomeBreakdown = { base: 0, guests: 0, pets: 0, earlyLate: 0 };
 
            // Очищаємо деталі перед підрахунком
-           window.bosoDetails = { sum: [], paid: [], debt: [], creditor: [], accrualDebtor: [], creditorStart: [], accrualDebtorStart: [], count: [], pets: [], guests: [], vat: [], bikes: [], earlyLate: [], other: [], fop: [], wayforpay: [], card: [], cash: [], fopWfpNet: [] };
+           window.bosoDetails = { sum: [], paid: [], debt: [], creditor: [], accrualDebtor: [], creditorStart: [], accrualDebtorStart: [], count: [], pets: [], guests: [], vat: [], bikes: [], earlyLate: [], other: [], fop: [], wayforpay: [], card: [], cash: [], fopWfpNet: [], cleaning: [] };
             const payStats = { fop: 0, card: 0, cash: 0, wayforpay: 0 };
 
             // 1. Аналіз бронювань
@@ -7266,6 +7314,7 @@ function bosoLeave() {
 
             // 2. Аналіз ручних транзакцій
             let filteredTrans = transactions.filter(t => {
+                if (bosoIsAutoCleanTx(t)) return false;
                 const tDate = parseSafeDate(t.date);
                 return tDate >= startDate && tDate <= endDate;
             }).sort((a, b) => new Date(b.date) - new Date(a.date));
@@ -7287,6 +7336,10 @@ function bosoLeave() {
                     totalExpense += t.amount;
                 }
             });
+
+            const cleaning = bosoCalcCleaningFromCheckouts(allBookings, startDate, endDate);
+            if (cleaning.total > 0) totalExpense += cleaning.total;
+            window.bosoDetails.cleaning = cleaning.items || [];
 
             const currDebt = Math.max(0, currSum - currPaid);
 
@@ -7476,6 +7529,9 @@ function bosoLeave() {
                 tbodyFinance.innerHTML += renderFinRow("Додаткові гості", "Оплати за додаткові місця", incomeBreakdown.guests, 'income', true);
                 tbodyFinance.innerHTML += renderFinRow("Тварини", "Оплати за розміщення улюбленців", incomeBreakdown.pets, 'income', true);
                 tbodyFinance.innerHTML += renderFinRow("Гнучкий графік", "Ранні заїзди та пізні виїзди", incomeBreakdown.earlyLate, 'income', true);
+                if (cleaning.total > 0) {
+                    tbodyFinance.innerHTML += renderFinRow("Прибирання", `Виїзди періоду (${cleaning.count})`, cleaning.total, 'expense', true);
+                }
 
                 filteredTrans.forEach(t => {
                     const dateStr = parseSafeDate(t.date).toLocaleDateString('uk-UA', {day: 'numeric', month: 'long'});
@@ -7485,7 +7541,7 @@ function bosoLeave() {
                     tbodyFinance.innerHTML += renderFinRow(t.category, descParts.join(' · '), t.amount, t.type, isAuto, t.id);
                 });
 
-                if (totalIncome === 0 && filteredTrans.length === 0) {
+                if (totalIncome === 0 && filteredTrans.length === 0 && cleaning.total === 0) {
                     tbodyFinance.innerHTML = '<tr><td colspan="4" style="text-align: center; color: #9CA3AF; padding: 40px;">Немає фінансових операцій за цей період</td></tr>';
                 }
             }

@@ -4891,6 +4891,40 @@ function setHalfPrepayment() {
         function bosoCalcFopWfpTax(net) {
             return Math.round((Number(net) || 0) * 0.06);
         }
+        function bosoCleaningAmountForCottage(cottageName) {
+            const n = String(cottageName || '').toLowerCase().replace(/№/g, '').replace(/\s+/g, '');
+            if (n.includes('junior') || n.includes('джун')) return 1000;
+            if (n.includes('family') || n.includes('феміл') || n.includes('сімейн')) return 1200;
+            return 0;
+        }
+        function bosoIsAutoCleanTx(t) {
+            return String(t && t.id || '').indexOf('auto-clean-') === 0;
+        }
+        function bosoCalcCleaningFromCheckouts(bookings, startDate, endDate) {
+            let total = 0;
+            let count = 0;
+            const items = [];
+            (bookings || []).forEach(b => {
+                const status = String(b.status || '').toLowerCase();
+                if (status.includes('скас') || status.includes('нов')) return;
+                const outD = parseSafeDate(b.checkOut);
+                if (!outD || isNaN(outD.getTime()) || outD < startDate || outD > endDate) return;
+                const amt = bosoCleaningAmountForCottage(b.cottage);
+                if (amt <= 0) return;
+                total += amt;
+                count++;
+                const name = String(b.name || '').replace(' (Ручна бронь)', '').trim() || 'Клієнт';
+                items.push({
+                    name,
+                    phone: typeof formatPhone === 'function' ? formatPhone(b.phone) : (b.phone || ''),
+                    date: outD.toLocaleDateString('uk-UA', { day: 'numeric', month: 'long' }),
+                    amount: amt,
+                    row: b.row,
+                    cottage: b.cottage || ''
+                });
+            });
+            return { total, count, items };
+        }
         function syncFopWfpTaxTransactions(startDate, endDate) {
             if (typeof transactions === 'undefined' || !Array.isArray(transactions)) return false;
             if (!startDate || !endDate || isNaN(startDate.getTime()) || isNaN(endDate.getTime())) return false;
@@ -5512,6 +5546,7 @@ function setHalfPrepayment() {
             (transactions || []).forEach(t => {
                 const tDate = parseSafeDate(t.date);
                 if (tDate < startDate || tDate > endDate) return;
+                if (bosoIsAutoCleanTx(t)) return;
                 const amt = Math.round(Number(t.amount) || 0);
                 if (amt <= 0) return;
                 const title = t.category || (t.type === 'income' ? 'Дохід' : 'Витрата');
@@ -5529,6 +5564,16 @@ function setHalfPrepayment() {
                 }
             });
 
+            const cleaning = bosoCalcCleaningFromCheckouts(allBookings || [], startDate, endDate);
+            if (cleaning.total > 0) {
+                totalExpense += cleaning.total;
+                expenseLines.unshift({
+                    title: 'Прибирання',
+                    amount: cleaning.total,
+                    sub: `Виїзди періоду (${cleaning.count})`
+                });
+            }
+
             const accrual = calculateAccrualBalances(allBookings || [], endDate, startDate);
             payments.fopWfpNet = bosoCalcFopWfpNet(payments.fop, payments.wayforpay);
             return {
@@ -5544,7 +5589,8 @@ function setHalfPrepayment() {
                 payments,
                 incomeLines,
                 expenseLines,
-                accrual
+                accrual,
+                cleaning
             };
         }
         window.getReportPeriodDates = getReportPeriodDates;
@@ -5687,7 +5733,7 @@ function setHalfPrepayment() {
             let totalIncome = 0, totalExpense = 0;
             let incomeBreakdown = { base: 0, guests: 0, pets: 0, earlyLate: 0 };
 
-            window.bosoDetails = { sum: [], paid: [], debt: [], creditor: [], accrualDebtor: [], creditorStart: [], accrualDebtorStart: [], count: [], pets: [], guests: [], vat: [], bikes: [], earlyLate: [], other: [], fop: [], wayforpay: [], card: [], cash: [], fopWfpNet: [] };
+            window.bosoDetails = { sum: [], paid: [], debt: [], creditor: [], accrualDebtor: [], creditorStart: [], accrualDebtorStart: [], count: [], pets: [], guests: [], vat: [], bikes: [], earlyLate: [], other: [], fop: [], wayforpay: [], card: [], cash: [], fopWfpNet: [], cleaning: [] };
             const payStats = { fop: 0, card: 0, cash: 0, wayforpay: 0 };
 
             allBookings.forEach(b => {
@@ -5805,6 +5851,7 @@ let                 fOut = outD.toLocaleDateString('uk-UA', { day: 'numeric', mo
                 if (typeof saveSettingsToCloud === 'function') saveSettingsToCloud();
             }
             let filteredTrans = (typeof transactions !== 'undefined' ? transactions : []).filter(t => {
+                if (bosoIsAutoCleanTx(t)) return false;
                 let tDateStr = t.date;
                 if (tDateStr.includes('.')) tDateStr = tDateStr.split('.').reverse().join('-');
                 const tDate = new Date(tDateStr);
@@ -5829,6 +5876,10 @@ let                 fOut = outD.toLocaleDateString('uk-UA', { day: 'numeric', mo
                     totalExpense += t.amount;
                 }
             });
+
+            const cleaning = bosoCalcCleaningFromCheckouts(allBookings, startDate, endDate);
+            if (cleaning.total > 0) totalExpense += cleaning.total;
+            window.bosoDetails.cleaning = cleaning.items || [];
 
             const accrual = calculateAccrualBalances(allBookings, endDate, startDate);
             window.bosoDetails.creditor = (accrual.end || accrual).creditorItems;
@@ -5959,6 +6010,9 @@ let                 fOut = outD.toLocaleDateString('uk-UA', { day: 'numeric', mo
                 tbodyFinance.innerHTML += renderFinRow("Додаткові гості", "Оплати за додаткові місця", incomeBreakdown.guests, 'income', true);
                 tbodyFinance.innerHTML += renderFinRow("Тварини", "Оплати за улюбленців", incomeBreakdown.pets, 'income', true);
                 tbodyFinance.innerHTML += renderFinRow("Гнучкий графік", "Ранні/пізні заїзди", incomeBreakdown.earlyLate, 'income', true);
+                if (cleaning.total > 0) {
+                    tbodyFinance.innerHTML += renderFinRow("Прибирання", `Виїзди періоду (${cleaning.count})`, cleaning.total, 'expense', true);
+                }
 
                 filteredTrans.forEach(t => {
                     let dStr = t.date.includes('.') ? t.date.split('.').reverse().join('-') : t.date;
@@ -5969,7 +6023,7 @@ let                 fOut = outD.toLocaleDateString('uk-UA', { day: 'numeric', mo
                     tbodyFinance.innerHTML += renderFinRow(t.category, descParts.join(' · '), t.amount, t.type, isAuto, t.id);
                 });
 
-                if (totalIncome === 0 && filteredTrans.length === 0) {
+                if (totalIncome === 0 && filteredTrans.length === 0 && cleaning.total === 0) {
                     tbodyFinance.innerHTML = '<div style="text-align:center; padding:30px; color:#9CA3AF; font-size:13px;">Немає фінансових операцій</div>';
                 }
             }
