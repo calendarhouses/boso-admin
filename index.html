@@ -984,6 +984,10 @@ input[type="number"] {
         .fin-box.profit span { color: var(--accent); } .fin-box.profit h3 { color: var(--text-main); }
 
         .finance-accrual-row { grid-template-columns: 1fr 1fr; margin-bottom: 16px; margin-top: 0; }
+        .finance-accrual-row.finance-accrual-4 { grid-template-columns: 1fr 1fr; gap: 12px; }
+        @media (min-width: 900px) {
+            .finance-accrual-row.finance-accrual-4 { grid-template-columns: 1fr 1fr 1fr 1fr; }
+        }
         .fin-box.fin-accrual-creditor { background: #FFFBEB; border-color: #FDE68A; cursor: pointer; }
         .fin-box.fin-accrual-creditor span, .fin-box.fin-accrual-creditor h3 { color: #B45309; }
         .fin-box.fin-accrual-debtor { background: #EFF6FF; border-color: #BFDBFE; cursor: pointer; }
@@ -1424,12 +1428,30 @@ input[type="number"] {
                             <span class="metric-val" id="metDebt" style="color: #DC2626;">0 грн</span>
                         </div>
                     </div>
+                    <div class="metric-card" onclick="openUniversalDetails('creditorStart', 'Кредиторка на початок періоду', '#B45309', '#FFFBEB', 'Сума')">
+                        <div class="mc-header">
+                            <div class="metric-icon" style="background:#FFFBEB; color:#B45309;"><svg width="22" height="22" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg></div>
+                        </div>
+                        <div class="mc-body">
+                            <span class="metric-title" style="color:#B45309;">Кредиторка (початок)</span>
+                            <span class="metric-val" id="metCreditorStart" style="color:#B45309;">0 грн</span>
+                        </div>
+                    </div>
+                    <div class="metric-card" onclick="openUniversalDetails('accrualDebtorStart', 'Дебіторка на початок періоду', '#2563EB', '#EFF6FF', 'Сума')">
+                        <div class="mc-header">
+                            <div class="metric-icon" style="background:#EFF6FF; color:#2563EB;"><svg width="22" height="22" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg></div>
+                        </div>
+                        <div class="mc-body">
+                            <span class="metric-title" style="color:#2563EB;">Дебіторка (початок)</span>
+                            <span class="metric-val" id="metAccrualDebtorStart" style="color:#2563EB;">0 грн</span>
+                        </div>
+                    </div>
                     <div class="metric-card" onclick="openUniversalDetails('creditor', 'Кредиторка на кінець періоду', '#B45309', '#FFFBEB', 'Сума')">
                         <div class="mc-header">
                             <div class="metric-icon" style="background:#FFFBEB; color:#B45309;"><svg width="22" height="22" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg></div>
                         </div>
                         <div class="mc-body">
-                            <span class="metric-title" style="color:#B45309;">Кредиторка</span>
+                            <span class="metric-title" style="color:#B45309;">Кредиторка (кінець)</span>
                             <span class="metric-val" id="metCreditor" style="color:#B45309;">0 грн</span>
                         </div>
                     </div>
@@ -1438,7 +1460,7 @@ input[type="number"] {
                             <div class="metric-icon" style="background:#FEE2E2; color:#DC2626;"><svg width="22" height="22" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg></div>
                         </div>
                         <div class="mc-body">
-                            <span class="metric-title" style="color:#DC2626;">Дебіторка</span>
+                            <span class="metric-title" style="color:#DC2626;">Дебіторка (кінець)</span>
                             <span class="metric-val" id="metAccrualDebtor" style="color:#DC2626;">0 грн</span>
                         </div>
                     </div>
@@ -1478,6 +1500,18 @@ input[type="number"] {
         <div class="mc-body">
             <span class="metric-title">WayForPay</span>
             <span class="metric-val" id="statWayForPayLabel">0 грн</span>
+        </div>
+    </div>
+
+    <div class="metric-card" onclick="openUniversalDetails('fopWfpNet', 'ФОП + WayForPay − 2%', '#047857', '#ECFDF5', 'Сума')">
+        <div class="mc-header">
+            <div class="metric-icon" style="background:#D1FAE5; color:#047857;">
+                <svg width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 7h6m-6 4h6m-7 8h8a2 2 0 002-2V7a2 2 0 00-2-2H8a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
+            </div>
+        </div>
+        <div class="mc-body">
+            <span class="metric-title">ФОП + WFP − 2%</span>
+            <span class="metric-val" id="statFopWfpNetLabel">0 грн</span>
         </div>
     </div>
 
@@ -1615,7 +1649,17 @@ input[type="number"] {
                     </div>
                 </div>
 
-                <div class="finance-summary finance-accrual-row" id="accrualSummaryPanel">
+                <div class="finance-summary finance-accrual-row finance-accrual-4" id="accrualSummaryPanel">
+                    <div class="fin-box fin-accrual-creditor" onclick="openUniversalDetails('creditorStart', 'Кредиторка на початок періоду', '#B45309', '#FFFBEB', 'Сума')">
+                        <span>Кредиторка</span>
+                        <h3 id="finCreditorStart">0 грн</h3>
+                        <span class="fin-accrual-note">на початок періоду</span>
+                    </div>
+                    <div class="fin-box fin-accrual-debtor" onclick="openUniversalDetails('accrualDebtorStart', 'Дебіторка на початок періоду', '#2563EB', '#EFF6FF', 'Сума')">
+                        <span>Дебіторка</span>
+                        <h3 id="finDebtorStart">0 грн</h3>
+                        <span class="fin-accrual-note">на початок періоду</span>
+                    </div>
                     <div class="fin-box fin-accrual-creditor" onclick="openUniversalDetails('creditor', 'Кредиторка на кінець періоду', '#B45309', '#FFFBEB', 'Сума')">
                         <span>Кредиторка</span>
                         <h3 id="finCreditor">0 грн</h3>
@@ -1627,7 +1671,7 @@ input[type="number"] {
                         <span class="fin-accrual-note">на кінець періоду</span>
                     </div>
                 </div>
-                <p id="accrualHintText" style="font-size:12px;color:#6B7280;margin:0 0 12px;line-height:1.45;">Кредиторка — гроші в касі, послуга ще попереду. Дебіторка — послуга надана, гроші ще не закриті. Стан на останній день обраного періоду (журнал платежів).</p>
+                <p id="accrualHintText" style="font-size:12px;color:#6B7280;margin:0 0 12px;line-height:1.45;">Кредиторка — гроші в касі, послуга ще попереду. Дебіторка — послуга надана, гроші ще не закриті. Показано стан на початок і на кінець обраного періоду.</p>
 
                 <div style="position: relative; margin-top: 10px;">
                     <!-- ТАБЛИЦЯ (Видима за замовчуванням) -->
@@ -2175,6 +2219,8 @@ function getVisitWord(count) {
 
         const expenseCategories = [
             "Прибирання",
+            "Прання",
+            "Миючі засоби",
             "Прасування",
             "Користування електроенергією",
             "Утримання прилеглої території",
@@ -2194,6 +2240,8 @@ const globalCatIcons = {
     "Чан": '<path stroke-linecap="round" stroke-linejoin="round" d="M17.657 18.657A8 8 0 016.343 7.343S7 9 9 10c0-2 .5-5 2.986-7C14 5 16.09 5.777 17.656 7.343A7.975 7.975 0 01-2.343 5.657z" />',
     "Оренда велосипедів": '<path stroke-linecap="round" stroke-linejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" />',
     "Прибирання": '<path stroke-linecap="round" stroke-linejoin="round" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" />',
+    "Прання": '<path stroke-linecap="round" stroke-linejoin="round" d="M4 4h16v16H4V4zm4 4h8M8 12h8m-8 4h5" />',
+    "Миючі засоби": '<path stroke-linecap="round" stroke-linejoin="round" d="M9 3h6l1 4H8L9 3zm-1 4h8l1 14H7L8 7zm4 4v6m-2-4h4" />',
     "Прасування": '<path stroke-linecap="round" stroke-linejoin="round" d="M3 10h18M5 10V8a2 2 0 012-2h10a2 2 0 012 2v2M7 10v10a2 2 0 002 2h6a2 2 0 002-2V10" />',
     "Користування електроенергією": '<path stroke-linecap="round" stroke-linejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" />',
     "Утримання прилеглої території": '<path stroke-linecap="round" stroke-linejoin="round" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />',
@@ -2260,6 +2308,8 @@ function openFinanceInlineCards(type) {
         "Чан": '<path stroke-linecap="round" stroke-linejoin="round" d="M17.657 18.657A8 8 0 016.343 7.343S7 9 9 10c0-2 .5-5 2.986-7C14 5 16.09 5.777 17.656 7.343A7.975 7.975 0 01-2.343 5.657z" />',
         "Оренда велосипедів": '<path stroke-linecap="round" stroke-linejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" />',
         "Прибирання": '<path stroke-linecap="round" stroke-linejoin="round" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" />',
+        "Прання": '<path stroke-linecap="round" stroke-linejoin="round" d="M4 4h16v16H4V4zm4 4h8M8 12h8m-8 4h5" />',
+        "Миючі засоби": '<path stroke-linecap="round" stroke-linejoin="round" d="M9 3h6l1 4H8L9 3zm-1 4h8l1 14H7L8 7zm4 4v6m-2-4h4" />',
         "Прасування": '<path stroke-linecap="round" stroke-linejoin="round" d="M3 10h18M5 10V8a2 2 0 012-2h10a2 2 0 012 2v2M7 10v10a2 2 0 002 2h6a2 2 0 002-2V10" />',
         "Користування електроенергією": '<path stroke-linecap="round" stroke-linejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" />',
         "Утримання прилеглої території": '<path stroke-linecap="round" stroke-linejoin="round" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />',
@@ -6178,6 +6228,84 @@ function bosoLeave() {
             modal.classList.add('active');
         }
 
+        function bosoCalcFopWfpNet(fop, wayforpay) {
+            return Math.round(Number(fop) || 0) + Math.round((Number(wayforpay) || 0) * 0.98);
+        }
+        function bosoCalcFopWfpTax(net) {
+            return Math.round((Number(net) || 0) * 0.06);
+        }
+
+        /** Синхронізує авто-витрати «Податки» 6% від ФОП+WFP−2% за повні календарні місяці, що перетинають період. */
+        function syncFopWfpTaxTransactions(startDate, endDate) {
+            if (typeof transactions === 'undefined' || !Array.isArray(transactions)) return false;
+            if (!startDate || !endDate || isNaN(startDate.getTime()) || isNaN(endDate.getTime())) return false;
+
+            const monthKeys = [];
+            const cur = new Date(startDate.getFullYear(), startDate.getMonth(), 1);
+            const endM = new Date(endDate.getFullYear(), endDate.getMonth(), 1);
+            while (cur <= endM) {
+                monthKeys.push(`${cur.getFullYear()}-${String(cur.getMonth() + 1).padStart(2, '0')}`);
+                cur.setMonth(cur.getMonth() + 1);
+            }
+
+            const sumMonth = (ym) => {
+                const y = Number(ym.slice(0, 4));
+                const m = Number(ym.slice(5, 7));
+                const mStart = new Date(y, m - 1, 1);
+                const mEnd = new Date(y, m, 0, 23, 59, 59, 999);
+                let fop = 0, wayforpay = 0;
+                const add = (dateVal, method, note, amt) => {
+                    if (amt <= 0) return;
+                    const d = parseSafeDate(dateVal);
+                    if (!d || isNaN(d.getTime()) || d < mStart || d > mEnd) return;
+                    const pm = bosoNormalizePaymentMethod(method, note);
+                    if (pm === 'WayForPay') wayforpay += amt;
+                    else if (pm === 'ФОП') fop += amt;
+                };
+                (allBookings || []).forEach(b => {
+                    if (String(b.status || '').toLowerCase().includes('скас')) return;
+                    bosoPaymentsInPeriod(b, mStart, mEnd).forEach(p => {
+                        add(p.date, p.method, p.note, Math.round(Number(p.amount) || 0));
+                    });
+                });
+                (transactions || []).forEach(t => {
+                    if (t.type !== 'income') return;
+                    if (String(t.id || '').indexOf('auto-') === 0) return;
+                    add(t.date, t.paymentMethod || 'Готівка', '', Math.round(Number(t.amount) || 0));
+                });
+                return { fop, wayforpay };
+            };
+
+            let changed = false;
+            monthKeys.forEach(ym => {
+                const sums = sumMonth(ym);
+                const net = bosoCalcFopWfpNet(sums.fop, sums.wayforpay);
+                const tax = bosoCalcFopWfpTax(net);
+                const id = 'auto-tax-' + ym;
+                const idx = transactions.findIndex(t => String(t.id) === id);
+                if (tax <= 0) {
+                    if (idx !== -1) { transactions.splice(idx, 1); changed = true; }
+                    return;
+                }
+                const lastDay = new Date(Number(ym.slice(0, 4)), Number(ym.slice(5, 7)), 0);
+                const entry = {
+                    id,
+                    type: 'expense',
+                    category: 'Податки',
+                    amount: tax,
+                    date: bosoFormatDateIso(lastDay),
+                    comment: `6% від ФОП+WFP−2% (${ym})`,
+                    auto: true
+                };
+                if (idx === -1) { transactions.push(entry); changed = true; }
+                else if (Number(transactions[idx].amount) !== tax) {
+                    transactions[idx] = Object.assign({}, transactions[idx], entry);
+                    changed = true;
+                }
+            });
+            return changed;
+        }
+
         function bosoDateOnly(d) {
             const x = d instanceof Date ? new Date(d.getTime()) : parseSafeDate(d);
             x.setHours(0, 0, 0, 0);
@@ -6608,12 +6736,11 @@ function bosoLeave() {
             };
         }
 
-        function calculateAccrualBalances(bookings, endDate, startDate) {
-            const snapEnd = new Date(endDate);
+        function calculateAccrualBalancesAtDate(bookings, snapDate) {
+            const snapEnd = new Date(snapDate);
             snapEnd.setHours(23, 59, 59, 999);
             let creditorTotal = 0;
             let debtorTotal = 0;
-            let earnedInPeriod = 0;
             const creditorItems = [];
             const debtorItems = [];
 
@@ -6624,10 +6751,6 @@ function bosoLeave() {
                 if (price <= 0 && paid <= 0) return;
 
                 const earnedSnap = bosoEarnedAtDate(b.checkIn, b.checkOut, price, snapEnd);
-                if (startDate && endDate) {
-                    earnedInPeriod += bosoEarnedInPeriod(b.checkIn, b.checkOut, price, startDate, endDate);
-                }
-
                 const advance = Math.max(0, paid - earnedSnap);
                 const debt = Math.max(0, earnedSnap - paid);
                 if (advance > 0) {
@@ -6649,26 +6772,61 @@ function bosoLeave() {
             return {
                 creditorTotal,
                 debtorTotal,
-                earnedInPeriod,
                 creditorItems,
                 debtorItems,
                 snapshotLabel: snapLabel
             };
         }
 
+        function calculateAccrualBalances(bookings, endDate, startDate) {
+            const endSnap = calculateAccrualBalancesAtDate(bookings, endDate);
+            let startSnap = { creditorTotal: 0, debtorTotal: 0, creditorItems: [], debtorItems: [], snapshotLabel: '' };
+            if (startDate) {
+                const dayBeforeStart = new Date(startDate);
+                dayBeforeStart.setDate(dayBeforeStart.getDate() - 1);
+                startSnap = calculateAccrualBalancesAtDate(bookings, dayBeforeStart);
+            }
+            let earnedInPeriod = 0;
+            if (startDate && endDate) {
+                (bookings || []).forEach(b => {
+                    if (String(b.status || '').toLowerCase().includes('скас')) return;
+                    const price = Number(b.totalPrice) || 0;
+                    if (price <= 0) return;
+                    earnedInPeriod += bosoEarnedInPeriod(b.checkIn, b.checkOut, price, startDate, endDate);
+                });
+            }
+            return {
+                start: startSnap,
+                end: endSnap,
+                earnedInPeriod,
+                // backward-compat aliases → кінець періоду
+                creditorTotal: endSnap.creditorTotal,
+                debtorTotal: endSnap.debtorTotal,
+                creditorItems: endSnap.creditorItems,
+                debtorItems: endSnap.debtorItems,
+                snapshotLabel: endSnap.snapshotLabel
+            };
+        }
+
         function updateAccrualPanel(accrual) {
             const fmt = (n) => Math.round(Number(n) || 0).toLocaleString('uk-UA') + ' грн';
+            const start = accrual.start || accrual;
+            const end = accrual.end || accrual;
             const ids = [
-                ['finCreditor', 'metCreditor', accrual.creditorTotal],
-                ['finDebtor', 'metAccrualDebtor', accrual.debtorTotal]
+                ['finCreditorStart', 'metCreditorStart', start.creditorTotal],
+                ['finDebtorStart', 'metAccrualDebtorStart', start.debtorTotal],
+                ['finCreditor', 'metCreditor', end.creditorTotal],
+                ['finDebtor', 'metAccrualDebtor', end.debtorTotal]
             ];
             ids.forEach(([a, b, val]) => {
                 if (a) { const el = document.getElementById(a); if (el) el.innerText = fmt(val); }
                 if (b) { const el = document.getElementById(b); if (el) el.innerText = fmt(val); }
             });
             const hint = document.getElementById('accrualHintText');
-            if (hint && accrual.snapshotLabel) {
-                hint.innerText = `Стан на ${accrual.snapshotLabel}: кредиторка та дебіторка за журналом платежів і нарахуванням по ночах.`;
+            if (hint) {
+                const s = start.snapshotLabel || 'початок';
+                const e = end.snapshotLabel || 'кінець';
+                hint.innerText = `Кредиторка/дебіторка на початок (${s}) і кінець (${e}) періоду — за журналом платежів і нарахуванням по ночах.`;
             }
         }
         window.calculateAccrualBalances = calculateAccrualBalances;
@@ -6784,6 +6942,10 @@ function bosoLeave() {
             if (breakdown.pets > 0) incomeLines.push({ title: 'Тварини', amount: breakdown.pets, sub: '' });
             if (breakdown.earlyLate > 0) incomeLines.push({ title: 'Гнучкий графік', amount: breakdown.earlyLate, sub: '' });
 
+            if (syncFopWfpTaxTransactions(startDate, endDate)) {
+                if (typeof saveSettingsToCloud === 'function') saveSettingsToCloud();
+            }
+
             const expenseLines = [];
             let manualIncomeTotal = 0;
             let totalExpense = 0;
@@ -6810,6 +6972,7 @@ function bosoLeave() {
 
             const totalIncome = bookingIncome + manualIncomeTotal;
             const accrual = calculateAccrualBalances(allBookings || [], endDate, startDate);
+            payments.fopWfpNet = bosoCalcFopWfpNet(payments.fop, payments.wayforpay);
             return {
                 periodLabel,
                 periodDisplay,
@@ -6985,7 +7148,7 @@ function bosoLeave() {
             let incomeBreakdown = { base: 0, guests: 0, pets: 0, earlyLate: 0 };
 
            // Очищаємо деталі перед підрахунком
-           window.bosoDetails = { sum: [], paid: [], debt: [], creditor: [], accrualDebtor: [], count: [], pets: [], guests: [], vat: [], bikes: [], earlyLate: [], other: [], fop: [], wayforpay: [], card: [], cash: [] };
+           window.bosoDetails = { sum: [], paid: [], debt: [], creditor: [], accrualDebtor: [], creditorStart: [], accrualDebtorStart: [], count: [], pets: [], guests: [], vat: [], bikes: [], earlyLate: [], other: [], fop: [], wayforpay: [], card: [], cash: [], fopWfpNet: [] };
             const payStats = { fop: 0, card: 0, cash: 0, wayforpay: 0 };
 
             // 1. Аналіз бронювань
@@ -7096,6 +7259,11 @@ function bosoLeave() {
                 }
             });
 
+            // Авто-податок 6% від ФОП+WFP−2% (по місяцях у періоді) — ДО підрахунку витрат
+            if (syncFopWfpTaxTransactions(startDate, endDate)) {
+                if (typeof saveSettingsToCloud === 'function') saveSettingsToCloud();
+            }
+
             // 2. Аналіз ручних транзакцій
             let filteredTrans = transactions.filter(t => {
                 const tDate = parseSafeDate(t.date);
@@ -7123,8 +7291,10 @@ function bosoLeave() {
             const currDebt = Math.max(0, currSum - currPaid);
 
             const accrual = calculateAccrualBalances(allBookings, endDate, startDate);
-            window.bosoDetails.creditor = accrual.creditorItems;
-            window.bosoDetails.accrualDebtor = accrual.debtorItems;
+            window.bosoDetails.creditor = (accrual.end || accrual).creditorItems;
+            window.bosoDetails.accrualDebtor = (accrual.end || accrual).debtorItems;
+            window.bosoDetails.creditorStart = (accrual.start || {}).creditorItems || [];
+            window.bosoDetails.accrualDebtorStart = (accrual.start || {}).debtorItems || [];
             updateAccrualPanel(accrual);
 
             // Оновлення Трендів
@@ -7151,8 +7321,10 @@ function bosoLeave() {
             animateValue('metTotalSum', 0, currSum, 800);
             animateValue('metPaid', 0, currPaid, 800);
             animateValue('metDebt', 0, currDebt, 800);
-            animateValue('metCreditor', 0, accrual.creditorTotal, 800);
-            animateValue('metAccrualDebtor', 0, accrual.debtorTotal, 800);
+            animateValue('metCreditorStart', 0, (accrual.start || {}).creditorTotal || 0, 800);
+            animateValue('metAccrualDebtorStart', 0, (accrual.start || {}).debtorTotal || 0, 800);
+            animateValue('metCreditor', 0, (accrual.end || accrual).creditorTotal, 800);
+            animateValue('metAccrualDebtor', 0, (accrual.end || accrual).debtorTotal, 800);
             animateValue('metCount', 0, currCount, 800);
 
             animateValue('metPets', 0, currPets, 800);
@@ -7163,6 +7335,9 @@ function bosoLeave() {
             animateValue('metOther', 0, currOther, 800);
             animateValue('statFOPLabel', 0, statFOP, 800);
             animateValue('statWayForPayLabel', 0, statWayForPay, 800);
+            const fopWfpNet = bosoCalcFopWfpNet(statFOP, statWayForPay);
+            animateValue('statFopWfpNetLabel', 0, fopWfpNet, 800);
+            window.bosoDetails.fopWfpNet = [{ name: 'ФОП + WayForPay − 2%', phone: '', date: '', amount: fopWfpNet, row: null }];
             animateValue('statCardLabel', 0, statCard, 800);
             animateValue('statCashLabel', 0, statCash, 800);
             
@@ -7306,7 +7481,8 @@ function bosoLeave() {
                     const dateStr = parseSafeDate(t.date).toLocaleDateString('uk-UA', {day: 'numeric', month: 'long'});
                     const descParts = [t.comment || dateStr];
                     if (t.type === 'income') descParts.push(t.paymentMethod || 'Готівка');
-                    tbodyFinance.innerHTML += renderFinRow(t.category, descParts.join(' · '), t.amount, t.type, false, t.id);
+                    const isAuto = !!(t.auto || String(t.id || '').indexOf('auto-') === 0);
+                    tbodyFinance.innerHTML += renderFinRow(t.category, descParts.join(' · '), t.amount, t.type, isAuto, t.id);
                 });
 
                 if (totalIncome === 0 && filteredTrans.length === 0) {
@@ -8026,25 +8202,44 @@ async function captureFinanceReportCard(report) {
         </div>
 
         ${report.accrual ? `
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px;">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px;">
             <div style="background:#FFFBEB;border:1px solid #FCD34D;border-radius:12px;padding:12px;text-align:center;">
-                <div style="font-size:10px;font-weight:800;color:#B45309;text-transform:uppercase;margin-bottom:4px;">Кредиторка</div>
-                <div style="font-size:16px;font-weight:900;color:#B45309;">${formatMoneyUa(report.accrual.creditorTotal)}</div>
-                <div style="font-size:10px;color:#92400E;margin-top:4px;">на ${esc(report.accrual.snapshotLabel || 'кінець періоду')}</div>
+                <div style="font-size:10px;font-weight:800;color:#B45309;text-transform:uppercase;margin-bottom:4px;">Кредиторка (початок)</div>
+                <div style="font-size:16px;font-weight:900;color:#B45309;">${formatMoneyUa((report.accrual.start || report.accrual).creditorTotal)}</div>
+                <div style="font-size:10px;color:#92400E;margin-top:4px;">на ${esc((report.accrual.start || {}).snapshotLabel || 'початок')}</div>
             </div>
             <div style="background:#EFF6FF;border:1px solid #BFDBFE;border-radius:12px;padding:12px;text-align:center;">
-                <div style="font-size:10px;font-weight:800;color:#2563EB;text-transform:uppercase;margin-bottom:4px;">Дебіторка</div>
-                <div style="font-size:16px;font-weight:900;color:#2563EB;">${formatMoneyUa(report.accrual.debtorTotal)}</div>
-                <div style="font-size:10px;color:#3B82F6;margin-top:4px;">на ${esc(report.accrual.snapshotLabel || 'кінець періоду')}</div>
+                <div style="font-size:10px;font-weight:800;color:#2563EB;text-transform:uppercase;margin-bottom:4px;">Дебіторка (початок)</div>
+                <div style="font-size:16px;font-weight:900;color:#2563EB;">${formatMoneyUa((report.accrual.start || report.accrual).debtorTotal)}</div>
+                <div style="font-size:10px;color:#3B82F6;margin-top:4px;">на ${esc((report.accrual.start || {}).snapshotLabel || 'початок')}</div>
+            </div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px;">
+            <div style="background:#FFFBEB;border:1px solid #FCD34D;border-radius:12px;padding:12px;text-align:center;">
+                <div style="font-size:10px;font-weight:800;color:#B45309;text-transform:uppercase;margin-bottom:4px;">Кредиторка (кінець)</div>
+                <div style="font-size:16px;font-weight:900;color:#B45309;">${formatMoneyUa((report.accrual.end || report.accrual).creditorTotal)}</div>
+                <div style="font-size:10px;color:#92400E;margin-top:4px;">на ${esc((report.accrual.end || report.accrual).snapshotLabel || 'кінець періоду')}</div>
+            </div>
+            <div style="background:#EFF6FF;border:1px solid #BFDBFE;border-radius:12px;padding:12px;text-align:center;">
+                <div style="font-size:10px;font-weight:800;color:#2563EB;text-transform:uppercase;margin-bottom:4px;">Дебіторка (кінець)</div>
+                <div style="font-size:16px;font-weight:900;color:#2563EB;">${formatMoneyUa((report.accrual.end || report.accrual).debtorTotal)}</div>
+                <div style="font-size:10px;color:#3B82F6;margin-top:4px;">на ${esc((report.accrual.end || report.accrual).snapshotLabel || 'кінець періоду')}</div>
             </div>
         </div>` : ''}
 
         <div style="margin-bottom:8px;font-size:10px;font-weight:700;color:#9CA3AF;text-transform:uppercase;letter-spacing:0.04em;">Розбивка надходжень у касу</div>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:22px;">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px;">
             ${payCard('Готівка', report.payments.cash, '#EFF6FF', '#93C5FD', '#1D4ED8', iconCash)}
             ${payCard('Картка', report.payments.card, '#F5F3FF', '#C4B5FD', '#6D28D9', iconCard)}
             ${payCard('ФОП', report.payments.fop, '#F0FDF4', '#86EFAC', '#059669', iconFop)}
             ${payCard('WayForPay', report.payments.wayforpay || 0, '#E0F2FE', '#7DD3FC', '#0369A1', `<svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">${BOSO_SVG_WAYFORPAY}</svg>`)}
+        </div>
+        <div style="margin-bottom:22px;background:#ECFDF5;border:1px solid #A7F3D0;border-radius:12px;padding:14px 16px;display:flex;justify-content:space-between;align-items:center;gap:12px;">
+            <div>
+                <div style="font-size:11px;font-weight:800;color:#047857;text-transform:uppercase;letter-spacing:0.4px;">ФОП + WayForPay − 2%</div>
+                <div style="font-size:10px;color:#6B7280;font-weight:600;margin-top:4px;">чисті на ФОП після комісії WFP</div>
+            </div>
+            <div style="font-size:20px;font-weight:900;color:#047857;white-space:nowrap;">${formatMoneyUa(report.payments.fopWfpNet != null ? report.payments.fopWfpNet : (Math.round(Number(report.payments.fop)||0) + Math.round((Number(report.payments.wayforpay)||0)*0.98)))}</div>
         </div>
 
         <div style="margin-bottom:20px;">
