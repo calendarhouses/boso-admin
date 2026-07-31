@@ -454,9 +454,9 @@
         .chip-btn { padding: 10px 16px; background: #FFFFFF; border: 1px solid #D1D5DB; border-radius: 12px; font-size: 13px; font-weight: 600; color: #6B7280; display: inline-flex; align-items: center; justify-content: center; }
         .chip-btn.active { background: #F0FDF4; border-color: var(--success); color: #059669; box-shadow: 0 4px 12px rgba(5, 150, 105, 0.15); }
 
-        .pet-btn, .room-status-btn, .vat-btn, .ubd-btn { flex: 1; display: flex !important; align-items: center; justify-content: center; font-size: 14px; font-weight: 600; border-radius: 10px; padding: 10px 4px !important; margin: 0 !important; border: 1px solid transparent; color: #6B7280; }
-        .pet-btn.active[data-val="Ні"], .room-status-btn.active[data-val="false"], .vat-btn.active[data-val="Ні"], .ubd-btn.active[data-val="Ні"] { background: #FEF2F2 !important; color: #DC2626 !important; border-color: #FECACA !important; }
-        .pet-btn.active[data-val="Так"], .room-status-btn.active[data-val="true"], .vat-btn.active[data-val="Так"], .ubd-btn.active[data-val="Так"] { background: #F0FDF4 !important; color: #059669 !important; border-color: #A7F3D0 !important; }
+        .pet-btn, .crib-btn, .room-status-btn, .vat-btn, .ubd-btn { flex: 1; display: flex !important; align-items: center; justify-content: center; font-size: 14px; font-weight: 600; border-radius: 10px; padding: 10px 4px !important; margin: 0 !important; border: 1px solid transparent; color: #6B7280; }
+        .pet-btn.active[data-val="Ні"], .crib-btn.active[data-val="Ні"], .room-status-btn.active[data-val="false"], .vat-btn.active[data-val="Ні"], .ubd-btn.active[data-val="Ні"] { background: #FEF2F2 !important; color: #DC2626 !important; border-color: #FECACA !important; }
+        .pet-btn.active[data-val="Так"], .crib-btn.active[data-val="Так"], .room-status-btn.active[data-val="true"], .vat-btn.active[data-val="Так"], .ubd-btn.active[data-val="Так"] { background: #F0FDF4 !important; color: #059669 !important; border-color: #A7F3D0 !important; }
 
         /* ── ДОДАТКОВІ ПОСЛУГИ (ГНУЧКИЙ ГРАФІК) ── */
         .service-card { border: 1.5px solid #E5E7EB; border-radius: 12px; margin-top: 12px; background: #fff; overflow: hidden; transition: 0.3s ease; }
@@ -1464,6 +1464,17 @@
                                     <div class="vat-btn" data-val="Так" onclick="toggleVat('Так')">Так</div>
                                 </div>
                                 <input type="hidden" id="adminVat" value="Ні">
+                            </div>
+                        </div>
+
+                        <div class="form-grid">
+                            <div class="form-group">
+                                <label>Дитяче ліжечко (+500 грн):</label>
+                                <div style="display: flex; background: #F3F4F6; border-radius: 12px; padding: 4px; height: 48px;">
+                                    <div class="crib-btn active" data-val="Ні" onclick="toggleCrib('Ні')">Ні</div>
+                                    <div class="crib-btn" data-val="Так" onclick="toggleCrib('Так')">Так</div>
+                                </div>
+                                <input type="hidden" id="adminCrib" value="Ні">
                             </div>
                         </div>
 
@@ -3209,6 +3220,11 @@ if (sClass.includes('скас')) {
             document.querySelectorAll('.pet-btn').forEach(btn => { btn.classList.toggle('active', btn.getAttribute('data-val') === val); });
             if (!window._bookingDrawerLoading) updatePricePreview();
         }
+        function toggleCrib(val) {
+            document.getElementById('adminCrib').value = val;
+            document.querySelectorAll('.crib-btn').forEach(btn => { btn.classList.toggle('active', btn.getAttribute('data-val') === val); });
+            if (!window._bookingDrawerLoading) updatePricePreview();
+        }
         function toggleRoomStatus(val) {
             document.getElementById('mRoomStatus').value = val;
             document.querySelectorAll('.room-status-btn').forEach(btn => { btn.classList.toggle('active', btn.getAttribute('data-val') === val); });
@@ -3246,6 +3262,7 @@ if (sClass.includes('скас')) {
             }
         });
 
+        const CRIB_FEE = 500;
         let selectedEarlyTime = null;
         let selectedLateTime = null;
 
@@ -3383,6 +3400,7 @@ if (sClass.includes('скас')) {
             const hasVat = document.getElementById('adminVat') ? document.getElementById('adminVat').value === 'Так' : false;
             const isUBD = document.getElementById('adminUBD') ? document.getElementById('adminUBD').value === 'Так' : false;
             const dayGuests = parseInt(document.getElementById('adminDayGuests') ? document.getElementById('adminDayGuests').value : 0) || 0;
+            const crib = document.getElementById('adminCrib') ? document.getElementById('adminCrib').value : 'Ні';
 
             const cont = document.getElementById('liveCalculatorContainer');
 
@@ -3494,6 +3512,7 @@ if (sClass.includes('скас')) {
     let extraGuestFee = extraGuests * dynamicExtraPrice * nights;
     let petFee = (pets === "Так") ? (500 + 200 * nights) : 0;
     let dayGuestsFee = dayGuests * 500; 
+    let cribFee = crib === 'Так' ? CRIB_FEE : 0;
 
     let earlyFee = 0;
     let lateFee = 0;
@@ -3519,12 +3538,13 @@ if (sClass.includes('скас')) {
     let manExtra = getVal('manualExtraGuest');
     let manPet = getVal('manualPet');
     let manDay = getVal('manualDayGuest');
+    let manCrib = getVal('manualCrib');
     let manEarly = getVal('manualEarly');
     let manLate = getVal('manualLate');
     let manDisc = getVal('manualDiscount');
     let isDiscEdited = document.getElementById('manualDiscountEdited')?.value === "true";
 
-    let currState = { checkIn: checkInStr, checkOut: checkOutStr, cottage: roomName, guests: guests, pets: pets, dayGuests: dayGuests, early: selectedEarlyTime, late: selectedLateTime };
+    let currState = { checkIn: checkInStr, checkOut: checkOutStr, cottage: roomName, guests: guests, pets: pets, dayGuests: dayGuests, crib: crib, early: selectedEarlyTime, late: selectedLateTime };
 
     if (!isInitialLoad) {
         let isDatesChanged = (prevFormState.checkIn !== currState.checkIn || prevFormState.checkOut !== currState.checkOut || prevFormState.cottage !== currState.cottage);
@@ -3534,6 +3554,7 @@ if (sClass.includes('скас')) {
             if (prevFormState.guests === currState.guests && manExtra !== null) extraGuestFee = manExtra;
             if (prevFormState.pets === currState.pets && manPet !== null) petFee = manPet;
             if (prevFormState.dayGuests === currState.dayGuests && manDay !== null) dayGuestsFee = manDay;
+            if (prevFormState.crib === currState.crib && manCrib !== null) cribFee = manCrib;
             if (prevFormState.early === currState.early && manEarly !== null) earlyFee = manEarly;
             if (prevFormState.late === currState.late && manLate !== null) lateFee = manLate;
         } else {
@@ -3550,6 +3571,7 @@ if (sClass.includes('скас')) {
             if (b.extraGuestFee !== undefined && b.extraGuestFee !== "") extraGuestFee = Number(b.extraGuestFee);
             if (b.petFee !== undefined && b.petFee !== "") petFee = Number(b.petFee);
             if (b.dayGuestFee !== undefined && b.dayGuestFee !== "") dayGuestsFee = Number(b.dayGuestFee);
+            if (b.cribFee !== undefined && b.cribFee !== "") cribFee = Number(b.cribFee);
             if (b.earlyFee !== undefined && b.earlyFee !== "") earlyFee = Number(b.earlyFee);
             if (b.lateFee !== undefined && b.lateFee !== "") lateFee = Number(b.lateFee);
         }
@@ -3604,14 +3626,14 @@ if (sClass.includes('скас')) {
     }
 
     // 🟢 ПРАВИЛЬНА ПІДСУМКОВА СУМА (згідно з вашою формулою)
-    // (База + Дод.гості — Знижка) + Чан/Тварини/Ранній/Пізній/Денні
-    let totalPrice = (basePriceTotal + extraGuestFee - discountAmount) + petFee + dayGuestsFee + earlyFee + lateFee;
+    // (База + Дод.гості — Знижка) + Чан/Тварини/Ліжечко/Ранній/Пізній/Денні
+    let totalPrice = (basePriceTotal + extraGuestFee - discountAmount) + petFee + dayGuestsFee + cribFee + earlyFee + lateFee;
 
     // 🟢 ВІДНОВЛЮЄМО ЗАГАЛЬНУ ЦІНУ (totalPrice — джерело правди)
     if (isInitialLoad && editingRowNumber) {
         const b = allBookings.find(x => x.row == editingRowNumber);
         if (b) {
-            const componentsSum = basePriceTotal + extraGuestFee + petFee + dayGuestsFee + earlyFee + lateFee;
+            const componentsSum = basePriceTotal + extraGuestFee + petFee + dayGuestsFee + cribFee + earlyFee + lateFee;
             const autoDiscount = Math.round((basePriceTotal + extraGuestFee) * discountPercent);
 
             if (b.totalPrice !== undefined && b.totalPrice !== "") {
@@ -3683,6 +3705,16 @@ if (sClass.includes('скас')) {
                         <span>грн</span>
                     </div>
                 </div>` : `<span id="manualDayGuest" style="display:none;">0</span>`}
+
+                ${cribFee > 0 ? `
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+                    <span style="display:flex; align-items:center; gap:8px;">🛏️ Дитяче ліжечко:</span>
+                    <div class="price-edit-wrapper" style="padding:4px 8px; border-radius:8px; margin-right:-8px; background:rgba(0,0,0,0.03);" onclick="openQuickEdit('manualCrib', 'Дитяче ліжечко', ${cribFee})">
+                        <span>+</span>
+                        <span class="editable-number" id="manualCrib" style="font-weight:700;">${cribFee}</span>
+                        <span>грн</span>
+                    </div>
+                </div>` : `<span id="manualCrib" style="display:none;">0</span>`}
                 
                 ${selectedEarlyTime ? `
                 <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
@@ -3724,6 +3756,7 @@ if (sClass.includes('скас')) {
                 <input type="hidden" id="hiddenExtraGuestFee" value="${extraGuestFee}">
                 <input type="hidden" id="hiddenPetFee" value="${petFee}">
                 <input type="hidden" id="hiddenDayGuestFee" value="${dayGuestsFee}">
+                <input type="hidden" id="hiddenCribFee" value="${cribFee}">
                 <input type="hidden" id="hiddenEarlyFee" value="${earlyFee}">
                 <input type="hidden" id="hiddenLateFee" value="${lateFee}">
                 <input type="hidden" id="hiddenDiscountPercent" value="${discountPercent}">
@@ -3917,7 +3950,7 @@ function setHalfPrepayment() {
 
         function openNewBookingDrawer(prefillRoom = null, prefillDateStart = null, prefillDateEnd = null) {
             editingRowNumber = null;
-            prevFormState = { checkIn: "", checkOut: "", cottage: "", guests: 0, pets: "", dayGuests: 0, early: null, late: null };
+            prevFormState = { checkIn: "", checkOut: "", cottage: "", guests: 0, pets: "", dayGuests: 0, crib: "", early: null, late: null };
             document.getElementById('drawerTitle').innerText = 'Нова бронь'; 
             document.getElementById('adminBookingForm').reset();
             document.getElementById('adminDeleteBtn').style.display = 'none';
@@ -3939,6 +3972,7 @@ function setHalfPrepayment() {
             window._bookingPayments = [];
             window._bookingPaymentMeta = { createdAt: bosoFormatDateIso(new Date()), checkOut: '' };
             if(document.getElementById('adminPets')) togglePet('Ні');
+            if(document.getElementById('adminCrib')) toggleCrib('Ні');
             if(document.getElementById('adminVat')) toggleVat('Ні');
             if(document.getElementById('adminUBD')) toggleUBD('Ні');
             if(document.getElementById('adminDayGuests')) document.getElementById('adminDayGuests').value = 0;
@@ -3989,7 +4023,7 @@ function setHalfPrepayment() {
             const booking = allBookings.find(b => b.row == rowNumber); if (!booking) return;
             window._bookingDrawerLoading = true;
             editingRowNumber = rowNumber;
-            prevFormState = { checkIn: "", checkOut: "", cottage: "", guests: 0, pets: "", dayGuests: 0, early: null, late: null };
+            prevFormState = { checkIn: "", checkOut: "", cottage: "", guests: 0, pets: "", dayGuests: 0, crib: "", early: null, late: null };
 
             let savedPrepayInit = Number(booking.prepayAmount) || 0;
             let savedSurchargeInit = Number(booking.surchargeAmount) || 0;
@@ -4014,6 +4048,7 @@ function setHalfPrepayment() {
             // --- СКИДАЄМО ВСІ НОВІ ПОСЛУГИ ПЕРЕД ЗАПОВНЕННЯМ ---
             if(document.getElementById('adminVat')) toggleVat('Ні');
             if(document.getElementById('adminUBD')) toggleUBD('Ні');
+            if(document.getElementById('adminCrib')) toggleCrib('Ні');
             if(document.getElementById('adminDayGuests')) document.getElementById('adminDayGuests').value = 0;
             selectedEarlyTime = null; selectedLateTime = null;
             document.querySelectorAll('.service-card').forEach(c => c.classList.remove('active'));
@@ -4032,6 +4067,10 @@ function setHalfPrepayment() {
                 parsedDayGuests = parseInt(matchDay[1]);
                 textComment = textComment.replace(/👥 Денні гості[^|]+(\|\s*)?/, '').trim();
             }
+
+            const hasCrib = textComment.includes('🛏️ Дитяче ліжечко: Так') || Number(booking.cribFee) > 0;
+            if(document.getElementById('adminCrib')) toggleCrib(hasCrib ? 'Так' : 'Ні');
+            textComment = textComment.replace(/🛏️ Дитяче ліжечко: Так\s*(\|\s*)?/, '').trim();
             
             // 2. Шукаємо Чан
             if (textComment.includes('♨️ Чан: Так')) {
@@ -4158,6 +4197,7 @@ function setHalfPrepayment() {
                 extraGuestFee: booking.extraGuestFee,
                 petFee: booking.petFee,
                 dayGuestFee: booking.dayGuestFee,
+                cribFee: booking.cribFee,
                 earlyFee: booking.earlyFee,
                 lateFee: booking.lateFee,
                 discountAmount: booking.discountAmount
@@ -4251,6 +4291,7 @@ function setHalfPrepayment() {
             let dayGuests = parseInt(document.getElementById('adminDayGuests').value) || 0;
             let sysComment = [];
             if (dayGuests > 0) sysComment.push(`👥 Денні гості: ${dayGuests}`);
+            if (document.getElementById('adminCrib').value === 'Так') sysComment.push(`🛏️ Дитяче ліжечко: Так`);
             if (document.getElementById('adminVat').value === 'Так') sysComment.push(`♨️ Чан: Так`);
             if (document.getElementById('adminUBD').value === 'Так') sysComment.push(`🇺🇦 УБД: Так`);
             if (selectedEarlyTime) sysComment.push(`🕒 Ранній заїзд: з ${selectedEarlyTime}`);
@@ -4286,6 +4327,7 @@ function setHalfPrepayment() {
                 extraGuestFee: getVal('manualExtraGuest'),
                 petFee: getVal('manualPet'),
                 dayGuestFee: getVal('manualDayGuest'),
+                cribFee: getVal('manualCrib'),
                 earlyFee: getVal('manualEarly'),
                 lateFee: getVal('manualLate'),
                 discountAmount: getVal('manualDiscount')
@@ -4554,6 +4596,11 @@ function setHalfPrepayment() {
                 if (matchDay) {
                     extraRowsHtml += `<div class="tt-row"><span class="tt-label" style="display:flex;align-items:center;">${iconUsers} Денні гості:</span> <span class="tt-value">${matchDay[1]}</span></div>`;
                     cleanComment = cleanComment.replace(/👥 Денні гості[^|]+(\|\s*)?/, '');
+                }
+
+                if (rawComment.includes('🛏️ Дитяче ліжечко: Так') || Number(b.cribFee) > 0) {
+                    extraRowsHtml += `<div class="tt-row"><span class="tt-label" style="display:flex;align-items:center;">🛏️ Дитяче ліжечко:</span> <span class="tt-value" style="color:var(--accent);">Так</span></div>`;
+                    cleanComment = cleanComment.replace(/🛏️ Дитяче ліжечко: Так\s*(\|\s*)?/, '');
                 }
 
                 // Чан
@@ -5824,6 +5871,9 @@ let                 fOut = outD.toLocaleDateString('uk-UA', { day: 'numeric', mo
                     let feeDayGuests = (b.dayGuestFee !== undefined && b.dayGuestFee !== "" && b.dayGuestFee !== null)
                         ? Number(b.dayGuestFee)
                         : (parseInt(b.dayGuests) || 0) * 500;
+                    let feeCrib = (b.cribFee !== undefined && b.cribFee !== "" && b.cribFee !== null)
+                        ? Number(b.cribFee)
+                        : (String(b.comment || '').includes('🛏️ Дитяче ліжечко: Так') ? CRIB_FEE : 0);
 
                     if (feeGuests > 0) { currGuests += feeGuests; window.bosoDetails.guests.push({...baseObj, amount: feeGuests}); }
                     if (feePets > 0) { currPets += feePets; window.bosoDetails.pets.push({...baseObj, amount: feePets}); }
@@ -5832,6 +5882,10 @@ let                 fOut = outD.toLocaleDateString('uk-UA', { day: 'numeric', mo
                     if (feeDayGuests > 0) { 
                         currOther += feeDayGuests; 
                         window.bosoDetails.other.push({...baseObj, amount: feeDayGuests, name: baseObj.name + " (Денні гості)"}); 
+                    }
+                    if (feeCrib > 0) {
+                        currOther += feeCrib;
+                        window.bosoDetails.other.push({...baseObj, amount: feeCrib, name: baseObj.name + " (Дитяче ліжечко)"});
                     }
 
                     // 4. Гнучкий графік
@@ -5855,8 +5909,8 @@ let                 fOut = outD.toLocaleDateString('uk-UA', { day: 'numeric', mo
                         incomeBreakdown.pets += (feePets * ratio);
                         incomeBreakdown.guests += (feeGuests * ratio);
                         incomeBreakdown.earlyLate += (feeEarlyLate * ratio);
-                        // Віднімаємо також і денних гостей від бази, щоб все зійшлося
-                        incomeBreakdown.base += (paid - (feePets * ratio) - (feeGuests * ratio) - (feeEarlyLate * ratio) - (feeDayGuests * ratio));
+                        // Віднімаємо додаткові послуги від бази, щоб все зійшлося
+                        incomeBreakdown.base += (paid - (feePets * ratio) - (feeGuests * ratio) - (feeEarlyLate * ratio) - (feeDayGuests * ratio) - (feeCrib * ratio));
                     }
                 }
             });
@@ -6457,7 +6511,7 @@ let                 fOut = outD.toLocaleDateString('uk-UA', { day: 'numeric', mo
             let now = (new Date()).getTime();
             if (now - lastTouchEnd <= 300) {
                 // 🟢 МАГІЯ ТУТ: Якщо тицяємо по кнопках, інпутах або перемикачах — НЕ блокуємо клік!
-                if (!event.target.closest('button, input, .mode-btn, .pet-btn, .vat-btn, .ubd-btn, .status-btn, .t-chip, .custom-option')) {
+                if (!event.target.closest('button, input, .mode-btn, .pet-btn, .crib-btn, .vat-btn, .ubd-btn, .status-btn, .t-chip, .custom-option')) {
                     if (event.cancelable) event.preventDefault(); 
                 }
             }
@@ -6981,6 +7035,8 @@ async function capturePremiumCard(b) {
     let rawComment = b.comment ? String(b.comment) : "";
     let hasVat = rawComment.includes('♨️ Чан: Так');
     let hasUBD = rawComment.includes('🇺🇦 УБД: Так');
+    let hasCrib = rawComment.includes('🛏️ Дитяче ліжечко: Так') || Number(b.cribFee) > 0;
+    let cribFee = Number(b.cribFee) > 0 ? Number(b.cribFee) : (hasCrib ? CRIB_FEE : 0);
 
     let matchDay = rawComment.match(/👥 Денні гості[^:]*:\s*(\d+)/);
     let dayGuestsCount = matchDay ? matchDay[1] : 0;
@@ -7001,13 +7057,14 @@ async function capturePremiumCard(b) {
     // 🟢 Вираховуємо базову вартість, якщо вона раптом не передалася
     let discAmt = Number(b.discountAmount) || 0;
     let basePrice = Number(b.basePrice);
-    const feeSum = (Number(b.extraGuestFee) || 0) + (Number(b.petFee) || 0) + (Number(b.dayGuestFee) || 0) + (Number(b.earlyFee) || 0) + (Number(b.lateFee) || 0);
+    const feeSum = (Number(b.extraGuestFee) || 0) + (Number(b.petFee) || 0) + (Number(b.dayGuestFee) || 0) + cribFee + (Number(b.earlyFee) || 0) + (Number(b.lateFee) || 0);
     if (!Number.isFinite(basePrice) || (basePrice <= 0 && total > 0)) {
         basePrice = Math.max(0, total + discAmt - feeSum);
     }
 
     // Очищаємо коментар
     let cleanComment = rawComment.replace(/👥 Денні гості[^|]+(\|\s*)?/g, '')
+                                 .replace(/🛏️ Дитяче ліжечко: Так\s*(\|\s*)?/g, '')
                                  .replace(/♨️ Чан: Так\s*(\|\s*)?/g, '')
                                  .replace(/🇺🇦 УБД: Так\s*(\|\s*)?/g, '')
                                  .replace(/🕒 Ранній заїзд: з \d{2}:\d{2}(\s*\|\s*)?/g, '')
@@ -7036,6 +7093,9 @@ async function capturePremiumCard(b) {
     if (b.dayGuestFee > 0) {
         let label = dayGuestsCount > 0 ? `Денні гості (${dayGuestsCount}):` : `Денні гості:`;
         extraHtml += `<div style="${rowStyle}"><span style="${labelStyle}">${iconUsers} ${label}</span> <span style="${valStyle}">+${b.dayGuestFee} ₴</span></div>`;
+    }
+    if (cribFee > 0) {
+        extraHtml += `<div style="${rowStyle}"><span style="${labelStyle}">🛏️ Дитяче ліжечко:</span> <span style="${valStyle}">+${cribFee} ₴</span></div>`;
     }
     if (b.earlyFee > 0) {
         let label = earlyTime ? `Ранній заїзд (з ${earlyTime}):` : `Ранній заїзд:`;
@@ -7566,6 +7626,7 @@ async function captureCleaningCard(b) {
 
     let rawComment = b.comment ? String(b.comment) : "";
     let hasVat = rawComment.includes('♨️ Чан: Так');
+    let hasCrib = rawComment.includes('🛏️ Дитяче ліжечко: Так') || Number(b.cribFee) > 0;
     let matchDay = rawComment.match(/👥 Денні гості[^:]*:\s*(\d+)/);
     let dayGuestsCount = matchDay ? matchDay[1] : 0;
     let matchEarly = rawComment.match(/🕒 Ранній заїзд: з (\d{2}:\d{2})/);
@@ -7574,6 +7635,7 @@ async function captureCleaningCard(b) {
     let lateTime = matchLate ? matchLate[1] : null;
 
     let cleanComment = rawComment.replace(/👥 Денні гості[^|]+(\|\s*)?/g, '')
+                                 .replace(/🛏️ Дитяче ліжечко: Так\s*(\|\s*)?/g, '')
                                  .replace(/♨️ Чан: Так\s*(\|\s*)?/g, '')
                                  .replace(/🇺🇦 УБД: Так\s*(\|\s*)?/g, '')
                                  .replace(/🕒 Ранній заїзд: з \d{2}:\d{2}(\s*\|\s*)?/g, '')
@@ -7592,6 +7654,9 @@ async function captureCleaningCard(b) {
     }
     if (dayGuestsCount > 0) {
         extraHtml += `<div style="${rowStyle}"><span style="${labelStyle}">${iconUsers} Денні гості:</span> <span style="${valStyle}">${dayGuestsCount} осіб</span></div>`;
+    }
+    if (hasCrib) {
+        extraHtml += `<div style="${rowStyle}"><span style="${labelStyle}">🛏️ Дитяче ліжечко:</span> <span style="${valStyle}">Так</span></div>`;
     }
     if (earlyTime) {
         extraHtml += `<div style="${rowStyle}"><span style="${labelStyle}">${iconClock} Ранній заїзд:</span> <span style="${valStyle}">з ${earlyTime}</span></div>`;

@@ -1996,6 +1996,15 @@ input[type="number"] {
                                     <button type="button" onclick="changeAdminDayGuests(1)" style="width: 50px; height: 100%; background: #F0FDF4; color: #059669; border: none; border-left: 1px solid #A7F3D0; font-size: 22px; font-weight: 600; cursor: pointer; outline: none;">+</button>
                                 </div>
                             </div>
+
+                            <div class="form-group">
+                                <label>Дитяче ліжечко (+500 грн):</label>
+                                <div class="mode-toggle" style="margin: 0; width: 100%; display: flex; padding: 4px; background: #F3F4F6; border-radius: 12px; height: 48px;">
+                                    <div class="mode-btn crib-btn active" data-val="Ні" onclick="toggleCrib('Ні')" style="display: flex; align-items: center; justify-content: center; height: 100%; margin: 0; padding: 0;">Ні</div>
+                                    <div class="mode-btn crib-btn" data-val="Так" onclick="toggleCrib('Так')" style="display: flex; align-items: center; justify-content: center; height: 100%; margin: 0; padding: 0;">Так</div>
+                                </div>
+                                <input type="hidden" id="adminCrib" value="Ні">
+                            </div>
                             
                             <div class="form-group">
                                 <label>Чан:</label>
@@ -2015,6 +2024,7 @@ input[type="number"] {
                                 <input type="hidden" id="adminUBD" value="Ні">
                             </div>
 
+                            <div></div>
                             <div></div>
                         </div>
 
@@ -4370,6 +4380,14 @@ else if (total === 0) { finText = "Немає ціни"; badgeBg = "rgba(255,255
             if (!window._bookingDrawerLoading) updatePricePreview();
         }
 
+        function toggleCrib(val) {
+            document.getElementById('adminCrib').value = val;
+            document.querySelectorAll('.crib-btn').forEach(btn => {
+                btn.classList.toggle('active', btn.getAttribute('data-val') === val);
+            });
+            if (!window._bookingDrawerLoading) updatePricePreview();
+        }
+
         function toggleVat(val) {
     document.getElementById('adminVat').value = val;
     document.querySelectorAll('.vat-btn').forEach(btn => {
@@ -4618,6 +4636,8 @@ if (guests > maxCap) {
     let petFee = (pets === "Так") ? (500 + 200 * nights) : 0;
     const adminDayGuests = parseInt(document.getElementById('adminDayGuests').value) || 0;
     let dayGuestFee = adminDayGuests * 500;
+    const adminCrib = document.getElementById('adminCrib') ? document.getElementById('adminCrib').value : "Ні";
+    let cribFee = (adminCrib === "Так") ? 500 : 0;
     
     let earlyFee = 0;
     let lateFee = 0;
@@ -4645,12 +4665,13 @@ if (guests > maxCap) {
     let manExtra = getVal('manualExtraGuest');
     let manPet = getVal('manualPet');
     let manDay = getVal('manualDayGuest');
+    let manCrib = getVal('manualCrib');
     let manEarly = getVal('manualEarly');
     let manLate = getVal('manualLate');
     let manDisc = getVal('manualDiscount');
     let isDiscEdited = document.getElementById('manualDiscountEdited')?.value === "true";
 
-    let currState = { checkIn: checkInStr, checkOut: checkOutStr, cottage: roomName, guests: guests, pets: pets, dayGuests: adminDayGuests, early: selectedEarlyTime, late: selectedLateTime };
+    let currState = { checkIn: checkInStr, checkOut: checkOutStr, cottage: roomName, guests: guests, pets: pets, dayGuests: adminDayGuests, crib: adminCrib, early: selectedEarlyTime, late: selectedLateTime };
 
     if (!isInitialLoad) {
         // Перевіряємо, чи змінились фундаментальні речі (дати або номер)
@@ -4664,6 +4685,7 @@ if (guests > maxCap) {
             if (prevFormState.guests === currState.guests && manExtra !== null) extraGuestFee = manExtra;
             if (prevFormState.pets === currState.pets && manPet !== null) petFee = manPet;
             if (prevFormState.dayGuests === currState.dayGuests && manDay !== null) dayGuestFee = manDay;
+            if (prevFormState.crib === currState.crib && manCrib !== null) cribFee = manCrib;
             if (prevFormState.early === currState.early && manEarly !== null) earlyFee = manEarly;
             if (prevFormState.late === currState.late && manLate !== null) lateFee = manLate;
         } else {
@@ -4682,6 +4704,7 @@ if (guests > maxCap) {
             if (b.extraGuestFee !== undefined && b.extraGuestFee !== "") extraGuestFee = Number(b.extraGuestFee);
             if (b.petFee !== undefined && b.petFee !== "") petFee = Number(b.petFee);
             if (b.dayGuestFee !== undefined && b.dayGuestFee !== "") dayGuestFee = Number(b.dayGuestFee);
+            if (b.cribFee !== undefined && b.cribFee !== "") cribFee = Number(b.cribFee);
             if (b.earlyFee !== undefined && b.earlyFee !== "") earlyFee = Number(b.earlyFee);
             if (b.lateFee !== undefined && b.lateFee !== "") lateFee = Number(b.lateFee);
         }
@@ -4755,13 +4778,13 @@ const appliesToRoom =
         discountAmount = Math.round(amountToDiscount * discountPercent);
     }
 
-    let totalPrice = amountToDiscount - discountAmount + petFee + dayGuestFee + earlyFee + lateFee;
+    let totalPrice = amountToDiscount - discountAmount + petFee + dayGuestFee + cribFee + earlyFee + lateFee;
 
     // 🟢 ВІДНОВЛЮЄМО ЗНИЖКУ/ЗАГАЛЬНУ ЦІНУ (totalPrice — джерело правди, не застарілий discountAmount)
     if (isInitialLoad && editingRowNumber) {
         const b = allBookings.find(x => x.row == editingRowNumber);
         if (b) {
-            const componentsSum = basePriceTotal + extraGuestFee + petFee + dayGuestFee + earlyFee + lateFee;
+            const componentsSum = basePriceTotal + extraGuestFee + petFee + dayGuestFee + cribFee + earlyFee + lateFee;
             const autoDiscount = Math.round((basePriceTotal + extraGuestFee) * discountPercent);
 
             if (b.totalPrice !== undefined && b.totalPrice !== "") {
@@ -4835,6 +4858,16 @@ const appliesToRoom =
                         <span>грн</span>
                     </div>
                 </div>` : `<input type="hidden" id="manualDayGuest" value="0">`}
+
+                ${cribFee > 0 ? `
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+                    <span style="display:flex; align-items:center; gap:8px;">🛏️ Дитяче ліжечко:</span>
+                    <div class="price-edit-wrapper" onclick="document.getElementById('manualCrib').focus()">
+                        <span>+</span>
+                        <span contenteditable="true" class="editable-number" id="manualCrib" oninput="recalculateFromManual()" onkeypress="return event.charCode >= 48 && event.charCode <= 57">${cribFee}</span>
+                        <span>грн</span>
+                    </div>
+                </div>` : `<input type="hidden" id="manualCrib" value="0">`}
                 
                 ${selectedEarlyTime ? `
                 <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
@@ -4872,6 +4905,7 @@ const appliesToRoom =
                 <input type="hidden" id="hiddenExtraGuestFee" value="${extraGuestFee}">
                 <input type="hidden" id="hiddenPetFee" value="${petFee}">
                 <input type="hidden" id="hiddenDayGuestFee" value="${dayGuestFee}">
+                <input type="hidden" id="hiddenCribFee" value="${cribFee}">
                 <input type="hidden" id="hiddenEarlyFee" value="${earlyFee}">
                 <input type="hidden" id="hiddenLateFee" value="${lateFee}">
                 <input type="hidden" id="hiddenDiscountPercent" value="${discountPercent}">
@@ -5090,6 +5124,7 @@ function recalculateFromManual(isDiscountEdited = false) {
     let extra = getVal('manualExtraGuest');
     let pet = getVal('manualPet');
     let dayG = getVal('manualDayGuest');
+    let crib = getVal('manualCrib');
     let early = getVal('manualEarly');
     let late = getVal('manualLate');
     
@@ -5116,7 +5151,7 @@ function recalculateFromManual(isDiscountEdited = false) {
     }
     
     // Нова загальна сума (віднімаємо вже правильну знижку)
-    let total = base + extra + pet + dayG + early + late - discount;
+    let total = base + extra + pet + dayG + crib + early + late - discount;
     if (total < 0) total = 0;
     
     let totalInp = document.getElementById('adminTotalPrice');
@@ -5264,6 +5299,7 @@ document.getElementById('adminGuests').addEventListener('change', updatePricePre
             if(document.getElementById('adminDayGuests')) document.getElementById('adminDayGuests').value = 0; // 🟢 Очищаємо денних гостей 
             if(document.getElementById('adminVat')) toggleVat('Ні');
             if(document.getElementById('adminUBD')) toggleUBD('Ні');
+            if(document.getElementById('adminCrib')) toggleCrib('Ні');
             
             // 🟢 ОБНУЛЕННЯ ГНУЧКОГО ГРАФІКА
             selectedEarlyTime = null;
@@ -5366,6 +5402,7 @@ document.getElementById('adminGuests').addEventListener('change', updatePricePre
             // 🟢 СКИДАЄМО ВСІ СТАРІ СТАНИ ПЕРЕД ЗАПОВНЕННЯМ (як у мобільній версії)
             if(document.getElementById('adminVat')) toggleVat('Ні');
             if(document.getElementById('adminUBD')) toggleUBD('Ні');
+            if(document.getElementById('adminCrib')) toggleCrib('Ні');
             if(document.getElementById('adminDayGuests')) document.getElementById('adminDayGuests').value = 0;
             
             selectedEarlyTime = null;
@@ -5399,6 +5436,11 @@ document.getElementById('adminGuests').addEventListener('change', updatePricePre
             } else {
                 toggleVat('Ні');
             }
+
+            // 2b. Дитяче ліжечко
+            const hasCrib = textComment.includes('🛏️ Дитяче ліжечко: Так') || Number(booking.cribFee) > 0;
+            if (document.getElementById('adminCrib')) toggleCrib(hasCrib ? 'Так' : 'Ні');
+            textComment = textComment.replace(/🛏️ Дитяче ліжечко: Так\s*(\|\s*)?/, '').trim();
             
             // 3. Шукаємо УБД
             if (textComment.includes('🇺🇦 УБД: Так')) {
@@ -5540,6 +5582,7 @@ document.getElementById('adminGuests').addEventListener('change', updatePricePre
                 extraGuestFee: booking.extraGuestFee,
                 petFee: booking.petFee,
                 dayGuestFee: booking.dayGuestFee,
+                cribFee: booking.cribFee,
                 earlyFee: booking.earlyFee,
                 lateFee: booking.lateFee,
                 discountAmount: booking.discountAmount
@@ -5626,6 +5669,7 @@ document.getElementById('adminGuests').addEventListener('change', updatePricePre
             let dayGuests = parseInt(document.getElementById('adminDayGuests').value) || 0;
             let sysComment = [];
             if (dayGuests > 0) sysComment.push(`👥 Денні гості: ${dayGuests}`);
+            if (document.getElementById('adminCrib') && document.getElementById('adminCrib').value === 'Так') sysComment.push(`🛏️ Дитяче ліжечко: Так`);
             if (document.getElementById('adminVat').value === 'Так') sysComment.push(`♨️ Чан: Так`);
             if (document.getElementById('adminUBD').value === 'Так') sysComment.push(`🇺🇦 УБД: Так`);
             if (typeof selectedEarlyTime !== 'undefined' && selectedEarlyTime) sysComment.push(`🕒 Ранній заїзд: з ${selectedEarlyTime}`);
@@ -5662,6 +5706,7 @@ document.getElementById('adminGuests').addEventListener('change', updatePricePre
                 extraGuestFee: getVal('manualExtraGuest'),
                 petFee: getVal('manualPet'),
                 dayGuestFee: getVal('manualDayGuest'),
+                cribFee: getVal('manualCrib'),
                 earlyFee: getVal('manualEarly'),
                 lateFee: getVal('manualLate'),
                 discountAmount: getVal('manualDiscount')
@@ -6018,6 +6063,12 @@ document.addEventListener('click', function(e) {
                 if (matchDay) {
                     extraRowsHtml += `<div class="bt-row"><span class="bt-label" style="display:flex;align-items:center;">${iconUsers} Денні гості:</span> <span class="bt-val">${matchDay[1]}</span></div>`;
                     cleanComment = cleanComment.replace(/👥 Денні гості[^|]+(\|\s*)?/, '');
+                }
+
+                // Дитяче ліжечко
+                if (rawComment.includes('🛏️ Дитяче ліжечко: Так') || Number(b.cribFee) > 0) {
+                    extraRowsHtml += `<div class="bt-row"><span class="bt-label" style="display:flex;align-items:center;">🛏️ Дитяче ліжечко:</span> <span class="bt-val" style="color:var(--accent);">Так</span></div>`;
+                    cleanComment = cleanComment.replace(/🛏️ Дитяче ліжечко: Так\s*(\|\s*)?/, '');
                 }
 
                 // Чан
@@ -7287,11 +7338,13 @@ function bosoLeave() {
                     let feeGuests = b.extraGuestFee !== undefined && b.extraGuestFee !== "" ? Number(b.extraGuestFee) : (extraGuests * extraPrice * nights);
                     let feePets = b.petFee !== undefined && b.petFee !== "" ? Number(b.petFee) : ((b.pets === "Так" || b.pets === true) ? (500 + 200 * nights) : 0);
                     let feeDayGuests = b.dayGuestFee !== undefined && b.dayGuestFee !== "" ? Number(b.dayGuestFee) : 0;
+                    let feeCrib = b.cribFee !== undefined && b.cribFee !== "" ? Number(b.cribFee) : (String(b.comment || '').includes('🛏️ Дитяче ліжечко: Так') ? 500 : 0);
 
                     if (feeGuests > 0) { currGuests += feeGuests; window.bosoDetails.guests.push({...baseObj, amount: feeGuests}); }
                     if (feePets > 0) { currPets += feePets; window.bosoDetails.pets.push({...baseObj, amount: feePets}); }
                     // Денних гостей кидаємо в "Інший дохід"
                     if (feeDayGuests > 0) { currOther += feeDayGuests; window.bosoDetails.other.push({...baseObj, amount: feeDayGuests, name: baseObj.name + " (Денні гості)"}); }
+                    if (feeCrib > 0) { currOther += feeCrib; window.bosoDetails.other.push({...baseObj, amount: feeCrib, name: baseObj.name + " (Дитяче ліжечко)"}); }
 
                     let feeEarlyLate = 0;
                     if ((b.earlyFee !== undefined && b.earlyFee !== "") || (b.lateFee !== undefined && b.lateFee !== "")) {
@@ -7967,6 +8020,9 @@ async function capturePremiumCard(b) {
     let rawComment = b.comment ? String(b.comment) : "";
     let hasVat = rawComment.includes('♨️ Чан: Так');
     let hasUBD = rawComment.includes('🇺🇦 УБД: Так');
+    let hasCribFlag = rawComment.includes('🛏️ Дитяче ліжечко');
+    let cribFeeAmt = Number(b.cribFee);
+    if (!Number.isFinite(cribFeeAmt) || cribFeeAmt < 0) cribFeeAmt = hasCribFlag ? 500 : 0;
 
     let matchDay = rawComment.match(/👥 Денні гості[^:]*:\s*(\d+)/);
     let dayGuestsCount = matchDay ? matchDay[1] : 0;
@@ -7987,13 +8043,14 @@ async function capturePremiumCard(b) {
     // 🟢 Вираховуємо базову вартість, якщо вона раптом не передалася
     let discAmt = Number(b.discountAmount) || 0;
     let basePrice = Number(b.basePrice);
-    const feeSum = (Number(b.extraGuestFee) || 0) + (Number(b.petFee) || 0) + (Number(b.dayGuestFee) || 0) + (Number(b.earlyFee) || 0) + (Number(b.lateFee) || 0);
+    const feeSum = (Number(b.extraGuestFee) || 0) + (Number(b.petFee) || 0) + (Number(b.dayGuestFee) || 0) + (cribFeeAmt || 0) + (Number(b.earlyFee) || 0) + (Number(b.lateFee) || 0);
     if (!Number.isFinite(basePrice) || (basePrice <= 0 && total > 0)) {
         basePrice = Math.max(0, total + discAmt - feeSum);
     }
 
     // Очищаємо коментар
     let cleanComment = rawComment.replace(/👥 Денні гості[^|]+(\|\s*)?/g, '')
+                                 .replace(/🛏️ Дитяче ліжечко: Так\s*(\|\s*)?/g, '')
                                  .replace(/♨️ Чан: Так\s*(\|\s*)?/g, '')
                                  .replace(/🇺🇦 УБД: Так\s*(\|\s*)?/g, '')
                                  .replace(/🕒 Ранній заїзд: з \d{2}:\d{2}(\s*\|\s*)?/g, '')
@@ -8022,6 +8079,9 @@ async function capturePremiumCard(b) {
     if (b.dayGuestFee > 0) {
         let label = dayGuestsCount > 0 ? `Денні гості (${dayGuestsCount}):` : `Денні гості:`;
         extraHtml += `<div style="${rowStyle}"><span style="${labelStyle}">${iconUsers} ${label}</span> <span style="${valStyle}">+${b.dayGuestFee} ₴</span></div>`;
+    }
+    if (cribFeeAmt > 0) {
+        extraHtml += `<div style="${rowStyle}"><span style="${labelStyle}">🛏️ Дитяче ліжечко:</span> <span style="${valStyle}">+${cribFeeAmt} ₴</span></div>`;
     }
     if (b.earlyFee > 0) {
         let label = earlyTime ? `Ранній заїзд (з ${earlyTime}):` : `Ранній заїзд:`;
@@ -8563,12 +8623,14 @@ async function captureCleaningCard(b) {
     let hasVat = rawComment.includes('♨️ Чан: Так');
     let matchDay = rawComment.match(/👥 Денні гості[^:]*:\s*(\d+)/);
     let dayGuestsCount = matchDay ? matchDay[1] : 0;
+    let hasCrib = rawComment.includes('🛏️ Дитяче ліжечко: Так') || Number(b.cribFee) > 0;
     let matchEarly = rawComment.match(/🕒 Ранній заїзд: з (\d{2}:\d{2})/);
     let earlyTime = matchEarly ? matchEarly[1] : null;
     let matchLate = rawComment.match(/🕒 Пізній виїзд: до (\d{2}:\d{2})/);
     let lateTime = matchLate ? matchLate[1] : null;
 
     let cleanComment = rawComment.replace(/👥 Денні гості[^|]+(\|\s*)?/g, '')
+                                 .replace(/🛏️ Дитяче ліжечко: Так\s*(\|\s*)?/g, '')
                                  .replace(/♨️ Чан: Так\s*(\|\s*)?/g, '')
                                  .replace(/🇺🇦 УБД: Так\s*(\|\s*)?/g, '')
                                  .replace(/🕒 Ранній заїзд: з \d{2}:\d{2}(\s*\|\s*)?/g, '')
@@ -8587,6 +8649,9 @@ async function captureCleaningCard(b) {
     }
     if (dayGuestsCount > 0) {
         extraHtml += `<div style="${rowStyle}"><span style="${labelStyle}">${iconUsers} Денні гості:</span> <span style="${valStyle}">${dayGuestsCount} осіб</span></div>`;
+    }
+    if (hasCrib) {
+        extraHtml += `<div style="${rowStyle}"><span style="${labelStyle}">🛏️ Дитяче ліжечко:</span> <span style="${valStyle}">Так</span></div>`;
     }
     if (earlyTime) {
         extraHtml += `<div style="${rowStyle}"><span style="${labelStyle}">${iconClock} Ранній заїзд:</span> <span style="${valStyle}">з ${earlyTime}</span></div>`;
