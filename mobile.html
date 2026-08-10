@@ -2057,9 +2057,14 @@
                     </div>
                     <div class="form-group" style="margin-bottom: 0;"><label>Оберіть дні тижня:</label>
                         <div class="chips-container" id="daysChipsContainer">
-                            <div class="chip-btn active day-chip" data-val="all" onclick="selectDayChip(this)">Усі дні</div>
-                            <div class="chip-btn day-chip" data-val="weekdays" onclick="selectDayChip(this)">Будні</div>
-                            <div class="chip-btn day-chip" data-val="weekends" onclick="selectDayChip(this)">Вихідні</div>
+                            <div class="chip-btn active" id="chip-day-all" onclick="toggleAllDaysChip()">Усі дні</div>
+                            <div class="chip-btn active day-chip" data-val="1" onclick="toggleSingleDayChip(this)">Пн</div>
+                            <div class="chip-btn active day-chip" data-val="2" onclick="toggleSingleDayChip(this)">Вт</div>
+                            <div class="chip-btn active day-chip" data-val="3" onclick="toggleSingleDayChip(this)">Ср</div>
+                            <div class="chip-btn active day-chip" data-val="4" onclick="toggleSingleDayChip(this)">Чт</div>
+                            <div class="chip-btn active day-chip" data-val="5" onclick="toggleSingleDayChip(this)">Пт</div>
+                            <div class="chip-btn active day-chip" data-val="6" onclick="toggleSingleDayChip(this)">Сб</div>
+                            <div class="chip-btn active day-chip" data-val="0" onclick="toggleSingleDayChip(this)">Нд</div>
                         </div><input type="hidden" id="mPriceDays" value="all">
                     </div>
                 `;
@@ -2269,15 +2274,21 @@
                 renderSettingsServices();
             } else if (currentEditType === 'price') {
                 const selectedRooms = Array.from(document.querySelectorAll('.room-chip.active')).map(chip => chip.getAttribute('data-id'));
-                const amount = parseInt(document.getElementById('mPriceAmount').value) || 0; const periodMonths = parseInt(document.getElementById('mPricePeriod').value) || 1; const dayType = document.getElementById('mPriceDays').value; 
+                const amount = parseInt(document.getElementById('mPriceAmount').value) || 0;
+                const periodMonths = parseInt(document.getElementById('mPricePeriod').value) || 1;
+                const daysVal = document.getElementById('mPriceDays').value;
+                const selectedDays = daysVal === 'all'
+                    ? [0, 1, 2, 3, 4, 5, 6]
+                    : daysVal.split(',').map(Number).filter(n => !isNaN(n));
+                if (selectedDays.length === 0) { showToast("Оберіть хоча б один день тижня"); return; }
                 if (amount > 0 && selectedRooms.length > 0) {
                     const startDate = new Date(priceTimelineBaseDate); const endDate = new Date(startDate); endDate.setMonth(endDate.getMonth() + periodMonths); const daysCount = Math.round((endDate - startDate) / (1000 * 60 * 60 * 24));
                     roomsList.forEach(r => {
                         if (selectedRooms.includes(String(r.id))) {
                             if (!customPrices[r.id]) customPrices[r.id] = {};
                             for (let i = 0; i < daysCount; i++) {
-                                let d = new Date(startDate); d.setDate(startDate.getDate() + i); let isWeekend = (d.getDay() === 0 || d.getDay() === 6);
-                                if (dayType === 'weekdays' && isWeekend) continue; if (dayType === 'weekends' && !isWeekend) continue; 
+                                let d = new Date(startDate); d.setDate(startDate.getDate() + i);
+                                if (!selectedDays.includes(d.getDay())) continue;
                                 let dateStr = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
                                 customPrices[r.id][dateStr] = amount;
                             }
@@ -4498,7 +4509,33 @@ function setHalfPrepayment() {
             el.classList.toggle('active'); const allChips = document.querySelectorAll('.room-chip'); const activeChips = document.querySelectorAll('.room-chip.active');
             const allBtn = document.getElementById('chip-room-all'); if (allChips.length === activeChips.length) { allBtn.classList.add('active'); } else { allBtn.classList.remove('active'); }
         }
-        function selectDayChip(el) { document.querySelectorAll('.day-chip').forEach(c => c.classList.remove('active')); el.classList.add('active'); document.getElementById('mPriceDays').value = el.getAttribute('data-val'); }
+        function syncPriceDaysValue() {
+            const activeDays = Array.from(document.querySelectorAll('.day-chip.active')).map(c => c.getAttribute('data-val'));
+            const allBtn = document.getElementById('chip-day-all');
+            if (activeDays.length === 7) {
+                if (allBtn) allBtn.classList.add('active');
+                document.getElementById('mPriceDays').value = 'all';
+            } else {
+                if (allBtn) allBtn.classList.remove('active');
+                document.getElementById('mPriceDays').value = activeDays.join(',');
+            }
+        }
+        function toggleAllDaysChip() {
+            const allBtn = document.getElementById('chip-day-all');
+            const isActive = !allBtn.classList.contains('active');
+            if (isActive) {
+                allBtn.classList.add('active');
+                document.querySelectorAll('.day-chip').forEach(c => c.classList.add('active'));
+            } else {
+                allBtn.classList.remove('active');
+                document.querySelectorAll('.day-chip').forEach(c => c.classList.remove('active'));
+            }
+            syncPriceDaysValue();
+        }
+        function toggleSingleDayChip(el) {
+            el.classList.toggle('active');
+            syncPriceDaysValue();
+        }
         function selectPeriodChip(el) { document.querySelectorAll('.period-chip').forEach(c => c.classList.remove('active')); el.classList.add('active'); document.getElementById('mPricePeriod').value = el.getAttribute('data-val'); }
         
         function toggleAllDiscRooms() {
