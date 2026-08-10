@@ -2995,9 +2995,14 @@ function saveInlineTransaction(type, category, idx) {
                     <div class="form-group" style="margin-bottom: 0;" id="restrDaysGroup">
                         <label>Оберіть дні тижня:</label>
                         <div class="chips-container">
-                            <div class="chip-btn active restr-day-chip" data-val="all" onclick="selectRestrDayChip(this)">Усі дні</div>
-                            <div class="chip-btn restr-day-chip" data-val="weekdays" onclick="selectRestrDayChip(this)">Будні</div>
-                            <div class="chip-btn restr-day-chip" data-val="weekends" onclick="selectRestrDayChip(this)">Вихідні</div>
+                            <div class="chip-btn active" id="chip-restr-day-all" onclick="toggleAllRestrDaysChip()">Усі дні</div>
+                            <div class="chip-btn active restr-day-chip" data-val="1" onclick="toggleSingleRestrDayChip(this)">Пн</div>
+                            <div class="chip-btn active restr-day-chip" data-val="2" onclick="toggleSingleRestrDayChip(this)">Вт</div>
+                            <div class="chip-btn active restr-day-chip" data-val="3" onclick="toggleSingleRestrDayChip(this)">Ср</div>
+                            <div class="chip-btn active restr-day-chip" data-val="4" onclick="toggleSingleRestrDayChip(this)">Чт</div>
+                            <div class="chip-btn active restr-day-chip" data-val="5" onclick="toggleSingleRestrDayChip(this)">Пт</div>
+                            <div class="chip-btn active restr-day-chip" data-val="6" onclick="toggleSingleRestrDayChip(this)">Сб</div>
+                            <div class="chip-btn active restr-day-chip" data-val="0" onclick="toggleSingleRestrDayChip(this)">Нд</div>
                         </div>
                         <input type="hidden" id="mRestrDays" value="all">
                     </div>
@@ -3331,19 +3336,21 @@ function saveInlineTransaction(type, category, idx) {
                     .map(chip => chip.getAttribute('data-id'));
                 const minNights = parseInt(document.getElementById('mRestrMinNights').value) || 0;
                 const useCustom = document.getElementById('mRestrUseCustomRange').value === 'true';
-                const dayType = document.getElementById('mRestrDays').value;
+                const daysVal = document.getElementById('mRestrDays').value;
+                const selectedDays = daysVal === 'all'
+                    ? [0, 1, 2, 3, 4, 5, 6]
+                    : daysVal.split(',').map(Number).filter(n => !isNaN(n));
 
                 if (minNights < 1) { showToast("Вкажіть мінімум 1 добу"); return; }
                 if (selectedRooms.length === 0) { showToast("Оберіть хоча б один котедж"); return; }
+                if (selectedDays.length === 0) { showToast("Оберіть хоча б один день тижня"); return; }
 
                 const applyToDates = (roomId, startDate, endDateInclusive) => {
                     if (!restrictions[roomId]) restrictions[roomId] = {};
                     let d = new Date(startDate);
                     const end = new Date(endDateInclusive);
                     while (d <= end) {
-                        const isWeekend = (d.getDay() === 0 || d.getDay() === 5 || d.getDay() === 6);
-                        if (dayType === 'weekdays' && isWeekend) { d.setDate(d.getDate() + 1); continue; }
-                        if (dayType === 'weekends' && !isWeekend) { d.setDate(d.getDate() + 1); continue; }
+                        if (!selectedDays.includes(d.getDay())) { d.setDate(d.getDate() + 1); continue; }
                         const dateStr = formatDateKey(d);
                         restrictions[roomId][dateStr] = minNights;
                         d.setDate(d.getDate() + 1);
@@ -4364,10 +4371,35 @@ else if (total === 0) { finText = "Немає ціни"; badgeBg = "rgba(255,255
             else allBtn.classList.remove('active');
         }
 
-        function selectRestrDayChip(el) {
-            document.querySelectorAll('.restr-day-chip').forEach(c => c.classList.remove('active'));
-            el.classList.add('active');
-            document.getElementById('mRestrDays').value = el.getAttribute('data-val');
+        function syncRestrDaysValue() {
+            const activeDays = Array.from(document.querySelectorAll('.restr-day-chip.active'))
+                .map(c => c.getAttribute('data-val'));
+            const allBtn = document.getElementById('chip-restr-day-all');
+            if (activeDays.length === 7) {
+                if (allBtn) allBtn.classList.add('active');
+                document.getElementById('mRestrDays').value = 'all';
+            } else {
+                if (allBtn) allBtn.classList.remove('active');
+                document.getElementById('mRestrDays').value = activeDays.join(',');
+            }
+        }
+
+        function toggleAllRestrDaysChip() {
+            const allBtn = document.getElementById('chip-restr-day-all');
+            const isActive = !allBtn.classList.contains('active');
+            if (isActive) {
+                allBtn.classList.add('active');
+                document.querySelectorAll('.restr-day-chip').forEach(c => c.classList.add('active'));
+            } else {
+                allBtn.classList.remove('active');
+                document.querySelectorAll('.restr-day-chip').forEach(c => c.classList.remove('active'));
+            }
+            syncRestrDaysValue();
+        }
+
+        function toggleSingleRestrDayChip(el) {
+            el.classList.toggle('active');
+            syncRestrDaysValue();
         }
 
         function selectRestrPeriodChip(el) {
