@@ -908,6 +908,77 @@ input[type="number"] {
         .r-tab { padding: 10px 24px; font-size: 15px; font-weight: 600; color: #6B7280; cursor: pointer; border-radius: 8px; transition: all 0.2s ease; display: flex; align-items: center; gap: 8px; }
         .r-tab:hover { color: var(--text-main); }
         .r-tab.active { background: #FFFFFF; color: var(--success); box-shadow: 0 2px 6px rgba(0,0,0,0.08); }
+
+        .sms-subtabs { margin: 0 0 20px; }
+        .sms-subtabs .r-tab { font-size: 14px; padding: 8px 18px; }
+        .sms-subtabs__count {
+            background: #E5E7EB; color: #374151; border-radius: 999px;
+            font-size: 11px; padding: 1px 7px; font-weight: 700;
+        }
+        .r-tab.active .sms-subtabs__count { background: #D1FAE5; color: #065F46; }
+        .sms-delivery-badge {
+            display: inline-flex; align-items: center; gap: 6px;
+            border-radius: 999px; padding: 4px 10px; font-size: 12px; font-weight: 600;
+        }
+        .sms-delivery-badge--delivered, .sms-delivery-badge--local_ok { background: #D1FAE5; color: #065F46; }
+        .sms-delivery-badge--sent, .sms-delivery-badge--pending, .sms-delivery-badge--queued { background: #DBEAFE; color: #1E40AF; }
+        .sms-delivery-badge--failed, .sms-delivery-badge--local_fail { background: #FEE2E2; color: #991B1B; }
+        .sms-journal-card {
+            border: 1px solid #E5E7EB; border-radius: 12px; padding: 14px 16px; margin-bottom: 10px; background: #fff;
+        }
+        .sms-journal-card__top { display: flex; justify-content: space-between; gap: 12px; align-items: flex-start; margin-bottom: 8px; }
+        .sms-journal-card__meta { font-size: 12px; color: #6B7280; margin-top: 8px; }
+        .sms-journal-card__text { font-size: 13px; color: #374151; line-height: 1.45; }
+        .sms-journal-stats { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 14px; }
+        .sms-journal-stat {
+            background: #F9FAFB; border: 1px solid #E5E7EB; border-radius: 10px;
+            padding: 10px 14px; min-width: 110px;
+        }
+        .sms-journal-stat span { display: block; font-size: 11px; color: #6B7280; }
+        .sms-journal-stat strong { font-size: 18px; color: #111827; }
+
+        .sms-template-card {
+            border: 1px solid #E5E7EB; border-radius: 14px; background: #fff; overflow: hidden; margin-bottom: 18px;
+        }
+        .sms-template-card__head {
+            display: flex; align-items: center; gap: 12px; padding: 14px 16px; border-bottom: 1px solid #F3F4F6;
+        }
+        .sms-template-card__icon {
+            width: 40px; height: 40px; border-radius: 10px; background: #F0FDF4;
+            display: flex; align-items: center; justify-content: center; color: #166534; flex-shrink: 0;
+        }
+        .sms-template-card__titles { flex: 1; min-width: 0; }
+        .sms-template-card__titles strong { display: block; font-size: 15px; color: #111827; }
+        .sms-template-card__titles span { display: block; font-size: 12px; color: #6B7280; margin-top: 2px; }
+        .sms-template-card__body { padding: 16px; }
+        .sms-template-card__toolbar {
+            display: flex; justify-content: space-between; align-items: center; gap: 10px; margin-bottom: 12px; flex-wrap: wrap;
+        }
+        .sms-preview {
+            margin-top: 12px; background: #F8FAFC; border: 1px solid #E5E7EB; border-radius: 12px; padding: 12px;
+        }
+        .sms-preview__label { font-size: 12px; color: #6B7280; margin-bottom: 8px; font-weight: 600; }
+        .sms-preview__bubble {
+            background: #fff; border: 1px solid #E5E7EB; border-radius: 14px 14px 14px 4px;
+            padding: 12px 14px; font-size: 14px; line-height: 1.5; white-space: pre-wrap; color: #111827;
+        }
+        .sms-template__stats {
+            display: flex; flex-wrap: wrap; gap: 12px 16px; margin-top: 10px; font-size: 12px; color: #6B7280;
+        }
+        .sms-template__stats strong { color: #111827; }
+        .sms-vars-section { margin-top: 14px; }
+        .sms-vars-section__label {
+            display: block; font-size: 12px; color: #6B7280; font-weight: 600; margin-bottom: 8px;
+        }
+        .sms-vars { display: flex; flex-wrap: wrap; gap: 8px; }
+        .sms-var {
+            display: inline-flex; flex-direction: column; align-items: flex-start; gap: 1px;
+            padding: 7px 10px; border: 1px dashed #A7C4A0; border-radius: 10px;
+            background: #F3F7F0; color: #3F6212; font-size: 12px; font-weight: 650;
+            cursor: pointer; transition: background 0.15s ease, border-color 0.15s ease;
+        }
+        .sms-var span { font-size: 10px; font-weight: 500; color: #6B7280; }
+        .sms-var:hover { background: #E9EFDF; border-color: #4D7C0F; }
         /* Робимо іконку в активній вкладці зеленою */
         .r-tab.active svg { stroke: var(--success); }
         
@@ -1838,88 +1909,99 @@ input[type="number"] {
                 </div>
 
                 <div id="set-sms" class="settings-tab-content" style="display: none;">
-                    <div class="settings-title" style="display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap;">
-                        <span>SMS відгуки (SendPulse)</span>
-                        <div style="display: flex; gap: 8px; align-items: center;">
-                            <button type="button" class="btn-secondary" style="padding: 8px 14px; font-size: 13px; height: auto;" onclick="refreshSmsBalance()">Оновити баланс</button>
-                            <button type="button" class="btn-primary" style="padding: 8px 14px; font-size: 13px; height: auto;" onclick="saveSmsSettingsFromUi()">Зберегти</button>
-                        </div>
-                    </div>
-                    <p style="color: #6B7280; font-size: 14px; margin: -8px 0 20px;">У день виїзду о 13:00 гість отримує SMS з посиланням на Google Maps. Відправник: <strong>BOSO</strong>.</p>
+                    <div class="settings-title" style="margin-bottom: 8px;">SMS відгуки (SendPulse)</div>
+                    <p style="color: #6B7280; font-size: 14px; margin: 0 0 16px;">У день виїзду о 13:00 гість отримує SMS з посиланням на Google Maps. Відправник: <strong>BOSO</strong>.</p>
 
-                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 24px;">
-                        <div style="border: 1px solid #E5E7EB; border-radius: 12px; padding: 16px;">
-                            <div style="font-size: 12px; color: #6B7280; margin-bottom: 6px;">Баланс SendPulse</div>
-                            <div id="smsBalanceValue" style="font-size: 28px; font-weight: 700; color: var(--text-main);">—</div>
-                            <div id="smsBalanceHint" style="font-size: 12px; color: #6B7280; margin-top: 4px;">Натисніть «Оновити баланс»</div>
-                        </div>
-                        <div style="border: 1px solid #E5E7EB; border-radius: 12px; padding: 16px;">
-                            <div style="font-size: 12px; color: #6B7280; margin-bottom: 6px;">Орієнтовна вартість</div>
-                            <div id="smsCostPreview" style="font-size: 28px; font-weight: 700; color: var(--text-main);">—</div>
-                            <div id="smsSegmentsPreview" style="font-size: 12px; color: #6B7280; margin-top: 4px;">сегменти шаблону</div>
-                        </div>
+                    <div class="reports-tabs sms-subtabs">
+                        <div class="r-tab active" id="smsTabSettings" onclick="switchSmsSubView('settings', this)">Налаштування</div>
+                        <div class="r-tab" id="smsTabJournal" onclick="switchSmsSubView('journal', this)">Журнал <span class="sms-subtabs__count" id="smsJournalCount">0</span></div>
                     </div>
 
-                    <div class="form-group" style="margin-bottom: 16px;">
-                        <label style="display: flex; align-items: center; gap: 10px; cursor: pointer;">
-                            <input type="checkbox" id="smsEnabled" checked style="width: 18px; height: 18px;">
-                            <span>Увімкнути автоматичну відправку SMS після виїзду</span>
-                        </label>
-                    </div>
-                    <div class="form-group" style="margin-bottom: 16px;">
-                        <label style="display: flex; align-items: center; gap: 10px; cursor: pointer;">
-                            <input type="checkbox" id="smsReviewEnabled" checked style="width: 18px; height: 18px;">
-                            <span>Шаблон «Відгук» активний</span>
-                        </label>
-                    </div>
-                    <div class="form-group">
-                        <label>Посилання на Google Maps</label>
-                        <input type="text" id="smsReviewUrl" placeholder="https://maps.app.goo.gl/...">
-                    </div>
-                    <div class="form-group">
-                        <label>Текст SMS <span style="color:#9CA3AF; font-weight:400;">({name}, {cottage}, {review_url}, {check_in}, {check_out})</span></label>
-                        <textarea id="smsReviewText" rows="4" style="width:100%; padding:12px 14px; border:1px solid #D1D5DB; border-radius:10px; font-size:14px; resize:vertical; font-family:inherit;" oninput="updateSmsTemplatePreview()"></textarea>
-                    </div>
-                    <div class="form-group">
-                        <label>Попередній перегляд</label>
-                        <div id="smsReviewPreview" style="background:#F9FAFB; border:1px solid #E5E7EB; border-radius:10px; padding:14px; font-size:14px; line-height:1.5; white-space:pre-wrap; color:#111827;"></div>
-                    </div>
-                    <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px;">
+                    <div id="smsViewSettings">
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 24px;">
+                            <div style="border: 1px solid #E5E7EB; border-radius: 12px; padding: 16px;">
+                                <div style="font-size: 12px; color: #6B7280; margin-bottom: 6px;">Баланс SendPulse</div>
+                                <div id="smsBalanceValue" style="font-size: 28px; font-weight: 700; color: var(--text-main);">—</div>
+                                <div id="smsBalanceHint" style="font-size: 12px; color: #6B7280; margin-top: 4px;">Натисніть «Оновити баланс»</div>
+                                <div style="display:flex; gap:8px; margin-top:12px; flex-wrap:wrap;">
+                                    <button type="button" class="btn-secondary" style="padding: 8px 14px; font-size: 13px; height: auto;" onclick="refreshSmsBalance()">Оновити</button>
+                                    <button type="button" class="btn-primary" style="padding: 8px 14px; font-size: 13px; height: auto;" onclick="openSendPulseTopUp()">Поповнити</button>
+                                </div>
+                            </div>
+                            <div style="border: 1px solid #E5E7EB; border-radius: 12px; padding: 16px;">
+                                <div style="font-size: 12px; color: #6B7280; margin-bottom: 6px;">Орієнтовна вартість SMS</div>
+                                <div id="smsCostPreview" style="font-size: 28px; font-weight: 700; color: var(--text-main);">—</div>
+                                <div id="smsSegmentsPreview" style="font-size: 12px; color: #6B7280; margin-top: 4px;">сегменти шаблону</div>
+                            </div>
+                        </div>
+
+                        <div class="form-group" style="margin-bottom: 16px;">
+                            <label style="display: flex; align-items: center; gap: 10px; cursor: pointer;">
+                                <input type="checkbox" id="smsEnabled" checked style="width: 18px; height: 18px;">
+                                <span>Увімкнути автоматичну відправку SMS після виїзду</span>
+                            </label>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Посилання на Google Maps</label>
+                            <input type="text" id="smsReviewUrl" placeholder="https://maps.app.goo.gl/..." oninput="updateSmsTemplatePreview()">
+                        </div>
+
+                        <article class="sms-template-card">
+                            <div class="sms-template-card__head">
+                                <div class="sms-template-card__icon" aria-hidden="true">
+                                    <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"/></svg>
+                                </div>
+                                <div class="sms-template-card__titles">
+                                    <strong>Відгук після виїзду</strong>
+                                    <span>Автоматично о 13:00 в день виїзду</span>
+                                </div>
+                                <span class="badge confirmed" id="smsReviewStatusPill">Увімкнено</span>
+                            </div>
+                            <div class="sms-template-card__body">
+                                <div class="sms-template-card__toolbar">
+                                    <label style="display:flex; align-items:center; gap:8px; cursor:pointer; font-size:14px;">
+                                        <input type="checkbox" id="smsReviewEnabled" checked style="width:16px;height:16px;" onchange="syncSmsReviewStatusPill()">
+                                        Надсилати автоматично
+                                    </label>
+                                    <button type="button" class="btn-secondary" style="padding:7px 12px; font-size:12px; height:auto;" onclick="resetSmsReviewTemplate()">Скинути текст</button>
+                                </div>
+                                <div class="form-group" style="margin-bottom:0;">
+                                    <label>Текст SMS</label>
+                                    <textarea id="smsReviewText" rows="4" style="width:100%; padding:12px 14px; border:1px solid #D1D5DB; border-radius:10px; font-size:14px; resize:vertical; font-family:inherit;" oninput="updateSmsTemplatePreview()"></textarea>
+                                </div>
+                                <div class="sms-vars-section">
+                                    <span class="sms-vars-section__label">Змінні — натисніть, щоб вставити в текст</span>
+                                    <div class="sms-vars" id="smsVarsDesktop"></div>
+                                </div>
+                                <div class="sms-preview">
+                                    <div class="sms-preview__label">Як побачить гість</div>
+                                    <div class="sms-preview__bubble" id="smsReviewPreview"></div>
+                                </div>
+                                <div class="sms-template__stats" id="smsTemplateStats"></div>
+                            </div>
+                        </article>
+
                         <div class="form-group">
                             <label>Тестовий номер</label>
                             <input type="tel" id="smsTestPhone" placeholder="0960262838">
+                            <p style="font-size:12px; color:#6B7280; margin:6px 0 0;">SMS піде саме на цей номер (можна змінити).</p>
                         </div>
-                        <div class="form-group">
-                            <label>Поріг низького балансу (грн)</label>
-                            <input type="number" id="smsLowBalance" min="0" step="1" value="50">
+                        <div style="display: flex; gap: 10px; flex-wrap: wrap; margin: 8px 0 20px;">
+                            <button type="button" class="btn-secondary" onclick="sendSmsTestFromUi()">Надіслати тест</button>
                         </div>
-                        <div class="form-group">
-                            <label>Ціна сегмента (грн)</label>
-                            <input type="number" id="smsPricePerSegment" min="0" step="0.01" value="1.28" oninput="updateSmsTemplatePreview()">
+                        <div style="display:flex; justify-content:flex-end; padding-top: 8px; border-top: 1px solid #E5E7EB;">
+                            <button type="button" class="btn-primary" onclick="saveSmsSettingsFromUi()">Зберегти</button>
                         </div>
-                    </div>
-                    <div style="display: flex; gap: 10px; flex-wrap: wrap; margin: 8px 0 28px;">
-                        <button type="button" class="btn-primary" onclick="sendSmsTestFromUi()">Надіслати тест</button>
-                        <button type="button" class="btn-secondary" onclick="clearSmsJournalFromUi()">Очистити журнал</button>
                     </div>
 
-                    <div class="settings-title" style="margin-bottom: 12px;">Журнал відправок</div>
-                    <div style="overflow-x: auto;">
-                        <table>
-                            <thead>
-                                <tr>
-                                    <th>Час</th>
-                                    <th>Тип</th>
-                                    <th>Телефон</th>
-                                    <th>Статус</th>
-                                    <th>Сегм.</th>
-                                    <th>Текст</th>
-                                </tr>
-                            </thead>
-                            <tbody id="smsJournalBody">
-                                <tr><td colspan="6" style="color:#9CA3AF;">Поки немає відправок</td></tr>
-                            </tbody>
-                        </table>
+                    <div id="smsViewJournal" style="display:none;">
+                        <div class="sms-journal-stats" id="smsJournalStats"></div>
+                        <div style="display:flex; gap:8px; flex-wrap:wrap; margin-bottom:14px;">
+                            <button type="button" class="btn-secondary" style="padding:8px 14px; font-size:13px; height:auto;" onclick="refreshSmsJournalFromUi(true)">Оновити статуси</button>
+                            <button type="button" class="btn-secondary" style="padding:8px 14px; font-size:13px; height:auto;" onclick="clearSmsJournalFromUi()">Очистити журнал</button>
+                        </div>
+                        <div id="smsJournalBody"></div>
                     </div>
                 </div>
 
@@ -2913,6 +2995,16 @@ function saveInlineTransaction(type, category, idx) {
         }
 
         // --- SMS (SendPulse) ---
+        const SMS_TEMPLATE_VARIABLES = [
+            { key: 'name', label: "Ім'я гостя" },
+            { key: 'cottage', label: 'Котедж' },
+            { key: 'check_in', label: 'Дата заїзду' },
+            { key: 'check_out', label: 'Дата виїзду' },
+            { key: 'review_url', label: 'Посилання на відгук' },
+            { key: 'order_id', label: 'Номер броні' }
+        ];
+        const DEFAULT_SMS_REVIEW_TEXT = 'Дякуємо Вам за відвідування нашого комплексу! Чи все сподобалось? Залиште, будь ласка, відгук: {review_url}. Будемо вдячні та раді Вас бачити знову!';
+
         function countSmsSegmentsUi(text) {
             const s = String(text || '');
             if (!s.length) return 0;
@@ -2921,6 +3013,46 @@ function saveInlineTransaction(type, category, idx) {
             const concatLimit = hasUnicode ? 67 : 153;
             if (s.length <= limit) return 1;
             return Math.ceil(s.length / concatLimit);
+        }
+
+        function insertSmsVarAtCursor(snippet) {
+            const ta = document.getElementById('smsReviewText');
+            if (!ta) return;
+            const start = ta.selectionStart != null ? ta.selectionStart : ta.value.length;
+            const end = ta.selectionEnd != null ? ta.selectionEnd : ta.value.length;
+            ta.value = ta.value.slice(0, start) + snippet + ta.value.slice(end);
+            const pos = start + snippet.length;
+            ta.focus();
+            ta.setSelectionRange(pos, pos);
+            updateSmsTemplatePreview();
+        }
+
+        function renderSmsVarsButtons(containerId) {
+            const el = document.getElementById(containerId);
+            if (!el) return;
+            el.innerHTML = SMS_TEMPLATE_VARIABLES.map(function(v) {
+                return '<button type="button" class="sms-var" onclick="insertSmsVarAtCursor(\'{' + v.key + '}\')">{' + v.key + '}<span>' + v.label + '</span></button>';
+            }).join('');
+        }
+
+        function syncSmsReviewStatusPill() {
+            const pill = document.getElementById('smsReviewStatusPill');
+            const enabled = document.getElementById('smsReviewEnabled');
+            if (!pill || !enabled) return;
+            if (enabled.checked) {
+                pill.textContent = 'Увімкнено';
+                pill.className = 'badge confirmed';
+            } else {
+                pill.textContent = 'Вимкнено';
+                pill.className = 'badge cancelled';
+            }
+        }
+
+        function resetSmsReviewTemplate() {
+            const ta = document.getElementById('smsReviewText');
+            if (!ta) return;
+            ta.value = DEFAULT_SMS_REVIEW_TEXT;
+            updateSmsTemplatePreview();
         }
 
         function renderSmsTemplatePreviewText(text, reviewUrl) {
@@ -2939,40 +3071,102 @@ function saveInlineTransaction(type, category, idx) {
             const previewEl = document.getElementById('smsReviewPreview');
             const costEl = document.getElementById('smsCostPreview');
             const segEl = document.getElementById('smsSegmentsPreview');
-            const priceEl = document.getElementById('smsPricePerSegment');
+            const statsEl = document.getElementById('smsTemplateStats');
             if (!textEl || !previewEl) return;
-            const text = textEl.value;
-            const url = urlEl ? urlEl.value : '';
-            const rendered = renderSmsTemplatePreviewText(text, url);
+            const rendered = renderSmsTemplatePreviewText(textEl.value, urlEl ? urlEl.value : '');
             previewEl.textContent = rendered;
             const segments = countSmsSegmentsUi(rendered);
-            const price = parseFloat(priceEl && priceEl.value) || 1.28;
+            const price = (smsSettings && smsSettings.pricePerSegment) || 1.28;
+            const hasUnicode = /[^\x00-\x7F]/.test(rendered);
+            const limit = hasUnicode ? 70 : 160;
+            const concatLimit = hasUnicode ? 67 : 153;
+            const usedInSeg = segments <= 1 ? rendered.length : (rendered.length % concatLimit || concatLimit);
+            const remaining = (segments <= 1 ? limit : concatLimit) - usedInSeg;
             if (costEl) costEl.textContent = (Math.round(segments * price * 100) / 100).toFixed(2) + ' грн';
             if (segEl) segEl.textContent = segments + ' сегм. · ' + rendered.length + ' символів';
+            if (statsEl) {
+                statsEl.innerHTML =
+                    '<span>Символів: <strong>' + rendered.length + '</strong></span>' +
+                    '<span>Кодування: <strong>' + (hasUnicode ? 'кирилиця' : 'латиниця') + '</strong></span>' +
+                    '<span>Сегментів: <strong>' + segments + '</strong></span>' +
+                    '<span>Залишок: <strong>' + remaining + '</strong></span>' +
+                    '<span>~<strong>' + (Math.round(segments * price * 100) / 100).toFixed(2) + ' грн</strong></span>';
+            }
+        }
+
+        function resolveSmsDeliveryBadge(entry) {
+            const code = Number(entry.deliveryStatusCode);
+            const labelRaw = String(entry.deliveryStatus || '').toLowerCase();
+            if (!entry.ok || code === 12 || labelRaw.indexOf('not delivered') !== -1 || labelRaw.indexOf('fail') !== -1) {
+                return { variant: 'failed', label: entry.error ? String(entry.error).substring(0, 48) : (entry.deliveryStatus || 'Не доставлено') };
+            }
+            if (code === 2 || labelRaw.indexOf('deliver') !== -1) {
+                return { variant: 'delivered', label: 'Доставлено' };
+            }
+            if (code === 1 || labelRaw.indexOf('sent') !== -1) {
+                return { variant: 'sent', label: 'Надіслано' };
+            }
+            if (code === 0 || labelRaw.indexOf('queue') !== -1 || labelRaw.indexOf('ready') !== -1) {
+                return { variant: 'queued', label: 'В черзі' };
+            }
+            return entry.ok
+                ? { variant: 'pending', label: entry.deliveryStatus || 'Очікує статус' }
+                : { variant: 'local_fail', label: entry.error || 'Помилка' };
+        }
+
+        function switchSmsSubView(view, el) {
+            document.querySelectorAll('#set-sms .sms-subtabs .r-tab').forEach(function(t) { t.classList.remove('active'); });
+            if (el) el.classList.add('active');
+            const settingsView = document.getElementById('smsViewSettings');
+            const journalView = document.getElementById('smsViewJournal');
+            if (settingsView) settingsView.style.display = view === 'settings' ? 'block' : 'none';
+            if (journalView) journalView.style.display = view === 'journal' ? 'block' : 'none';
+            if (view === 'journal') {
+                renderSmsJournal();
+                refreshSmsJournalFromUi(true);
+            }
         }
 
         function renderSmsJournal() {
-            const tbody = document.getElementById('smsJournalBody');
-            if (!tbody) return;
+            const body = document.getElementById('smsJournalBody');
+            const countEl = document.getElementById('smsJournalCount');
+            const statsEl = document.getElementById('smsJournalStats');
+            if (!body) return;
             const journal = (smsSettings && Array.isArray(smsSettings.journal)) ? smsSettings.journal : [];
+            if (countEl) countEl.textContent = String(journal.length);
+            if (statsEl) {
+                const ok = journal.filter(function(e) { return e.ok; }).length;
+                const fail = journal.length - ok;
+                const cost = journal.reduce(function(s, e) { return s + (Number(e.costEstimate) || 0); }, 0);
+                statsEl.innerHTML =
+                    '<div class="sms-journal-stat"><span>Всього</span><strong>' + journal.length + '</strong></div>' +
+                    '<div class="sms-journal-stat"><span>Успішні</span><strong style="color:#065F46">' + ok + '</strong></div>' +
+                    '<div class="sms-journal-stat"><span>Помилки</span><strong style="color:#991B1B">' + fail + '</strong></div>' +
+                    '<div class="sms-journal-stat"><span>Витрати ≈</span><strong>' + cost.toFixed(2) + ' грн</strong></div>';
+            }
             if (!journal.length) {
-                tbody.innerHTML = '<tr><td colspan="6" style="color:#9CA3AF;">Поки немає відправок</td></tr>';
+                body.innerHTML = '<div style="color:#9CA3AF; padding:20px 0;">Поки немає відправок</div>';
                 return;
             }
             const typeLabels = { review: 'Відгук', test: 'Тест' };
-            tbody.innerHTML = journal.map(function(e) {
-                const status = e.ok
-                    ? '<span class="badge confirmed">OK</span>'
-                    : '<span class="badge cancelled">' + (e.error ? String(e.error).substring(0, 40) : 'Помилка') + '</span>';
-                const textShort = String(e.text || '').length > 80 ? String(e.text).substring(0, 80) + '…' : (e.text || '');
-                return '<tr>' +
-                    '<td style="white-space:nowrap;font-size:12px;">' + (e.at || '') + '</td>' +
-                    '<td>' + (typeLabels[e.type] || e.type || '') + '</td>' +
-                    '<td>' + (e.phone || '') + '</td>' +
-                    '<td>' + status + '</td>' +
-                    '<td>' + (e.segments || '—') + '</td>' +
-                    '<td style="font-size:12px;max-width:280px;">' + textShort.replace(/</g, '&lt;') + '</td>' +
-                    '</tr>';
+            body.innerHTML = journal.map(function(e) {
+                const badge = resolveSmsDeliveryBadge(e);
+                const textShort = String(e.text || '').length > 140 ? String(e.text).substring(0, 140) + '…' : (e.text || '');
+                const meta = [
+                    e.segments ? (e.segments + ' сегм.') : null,
+                    e.costEstimate != null ? ('≈ ' + Number(e.costEstimate).toFixed(2) + ' грн') : null,
+                    e.bookingId ? ('бронь ' + e.bookingId) : null,
+                    e.deliveryTime ? ('оновлено ' + e.deliveryTime) : null
+                ].filter(Boolean).join(' · ');
+                return '<div class="sms-journal-card">' +
+                    '<div class="sms-journal-card__top">' +
+                        '<div><strong>' + (typeLabels[e.type] || e.type || '') + '</strong>' +
+                        '<div style="font-size:12px;color:#6B7280;margin-top:2px;">' + (e.at || '') + ' · ' + (e.phone || '') + '</div></div>' +
+                        '<span class="sms-delivery-badge sms-delivery-badge--' + badge.variant + '">' + badge.label + '</span>' +
+                    '</div>' +
+                    '<div class="sms-journal-card__text">' + textShort.replace(/</g, '&lt;') + '</div>' +
+                    (meta ? '<div class="sms-journal-card__meta">' + meta + '</div>' : '') +
+                    '</div>';
             }).join('');
         }
 
@@ -2981,10 +3175,10 @@ function saveInlineTransaction(type, category, idx) {
             document.getElementById('smsEnabled').checked = smsSettings.enabled !== false;
             document.getElementById('smsReviewEnabled').checked = !(smsSettings.templates && smsSettings.templates.review && smsSettings.templates.review.enabled === false);
             document.getElementById('smsReviewUrl').value = smsSettings.reviewUrl || '';
-            document.getElementById('smsReviewText').value = (smsSettings.templates && smsSettings.templates.review && smsSettings.templates.review.text) || '';
+            document.getElementById('smsReviewText').value = (smsSettings.templates && smsSettings.templates.review && smsSettings.templates.review.text) || DEFAULT_SMS_REVIEW_TEXT;
             document.getElementById('smsTestPhone').value = smsSettings.testPhone || '';
-            document.getElementById('smsLowBalance').value = smsSettings.lowBalanceThreshold != null ? smsSettings.lowBalanceThreshold : 50;
-            document.getElementById('smsPricePerSegment').value = smsSettings.pricePerSegment != null ? smsSettings.pricePerSegment : 1.28;
+            renderSmsVarsButtons('smsVarsDesktop');
+            syncSmsReviewStatusPill();
             updateSmsTemplatePreview();
             renderSmsJournal();
         }
@@ -2995,8 +3189,8 @@ function saveInlineTransaction(type, category, idx) {
                 sender: 'BOSO',
                 reviewUrl: document.getElementById('smsReviewUrl').value.trim(),
                 sendHour: 13,
-                pricePerSegment: parseFloat(document.getElementById('smsPricePerSegment').value) || 1.28,
-                lowBalanceThreshold: parseFloat(document.getElementById('smsLowBalance').value) || 0,
+                pricePerSegment: (smsSettings && smsSettings.pricePerSegment) || 1.28,
+                lowBalanceThreshold: (smsSettings && smsSettings.lowBalanceThreshold) || 50,
                 testPhone: document.getElementById('smsTestPhone').value.trim(),
                 templates: {
                     review: {
@@ -3040,10 +3234,18 @@ function saveInlineTransaction(type, category, idx) {
                 if (data && data.success) {
                     const bal = data.balance;
                     valueEl.textContent = (bal == null ? '—' : Number(bal).toFixed(2)) + ' ' + (data.currency || 'UAH');
-                    const threshold = parseFloat(document.getElementById('smsLowBalance') && document.getElementById('smsLowBalance').value) || smsSettings.lowBalanceThreshold || 50;
+                    const threshold = (smsSettings && smsSettings.lowBalanceThreshold) || 50;
                     if (hintEl) {
-                        if (bal != null && bal < threshold) hintEl.textContent = 'Низький баланс — поповніть у кабінеті SendPulse';
-                        else hintEl.textContent = 'Актуально';
+                        if (bal != null && bal <= 0) {
+                            hintEl.textContent = 'Баланс 0 грн — SMS не відправляються. Поповніть SendPulse.';
+                            hintEl.style.color = '#DC2626';
+                        } else if (bal != null && bal < threshold) {
+                            hintEl.textContent = 'Низький баланс — поповніть у кабінеті SendPulse';
+                            hintEl.style.color = '#D97706';
+                        } else {
+                            hintEl.textContent = 'Актуально';
+                            hintEl.style.color = '#6B7280';
+                        }
                     }
                 } else {
                     valueEl.textContent = '—';
@@ -3055,25 +3257,58 @@ function saveInlineTransaction(type, category, idx) {
             }
         }
 
+        function openSendPulseTopUp() {
+            window.open('https://login.sendpulse.com/billing/funds/', '_blank', 'noopener,noreferrer');
+        }
+
+        async function refreshSmsJournalFromUi(withStatuses) {
+            try {
+                const q = withStatuses ? '&refresh=true' : '';
+                const res = await BosoAuth.apiFetch(API_URL + '?action=smsJournal&t=' + Date.now() + q);
+                const data = await BosoAuth.parseApiJson(res);
+                if (BosoAuth.handleApiAuthError(data)) return;
+                if (data && data.smsSettings) smsSettings = data.smsSettings;
+                else if (data && Array.isArray(data.journal)) {
+                    smsSettings = Object.assign({}, smsSettings, { journal: data.journal });
+                }
+                renderSmsJournal();
+            } catch (e) {
+                if (e && e.message === 'UNAUTHORIZED') return;
+            }
+        }
+
+        let _smsTestInFlight = false;
         async function sendSmsTestFromUi() {
+            if (_smsTestInFlight) return;
             const phone = document.getElementById('smsTestPhone').value.trim();
             if (!phone) { showToast('Вкажіть тестовий номер'); return; }
-            await saveSmsSettingsFromUi();
+            const text = renderSmsTemplatePreviewText(
+                document.getElementById('smsReviewText').value,
+                document.getElementById('smsReviewUrl').value.trim()
+            );
+            _smsTestInFlight = true;
             try {
                 const res = await BosoAuth.apiFetch(API_URL, {
                     method: 'POST',
                     headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-                    body: JSON.stringify({ action: 'sendSmsTest', phone: phone, type: 'test' })
+                    body: JSON.stringify({ action: 'sendSmsTest', phone: phone, text: text, type: 'test' })
                 });
                 const data = await BosoAuth.parseApiJson(res);
                 if (BosoAuth.handleApiAuthError(data)) return;
                 if (data && data.smsSettings) smsSettings = data.smsSettings;
                 renderSmsJournal();
-                if (data && data.success) showToast('Тестову SMS надіслано');
-                else alert('Помилка відправки: ' + ((data && data.error) || 'невідома'));
+                if (data && data.success) {
+                    showToast('Тестову SMS надіслано');
+                    saveSmsSettingsFromUi();
+                    switchSmsSubView('journal', document.getElementById('smsTabJournal'));
+                } else {
+                    alert('Помилка відправки: ' + ((data && data.error) || 'невідома'));
+                }
             } catch (e) {
                 if (e && e.message === 'UNAUTHORIZED') return;
                 alert('Не вдалося надіслати тестову SMS');
+            } finally {
+                _smsTestInFlight = false;
             }
         }
 
