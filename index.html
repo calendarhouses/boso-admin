@@ -372,13 +372,81 @@
         .restriction-cell.has-closed { background: #FEF2F2; }
         .restriction-cell.beyond-horizon { background: repeating-linear-gradient(-45deg, #F9FAFB, #F9FAFB 4px, #E5E7EB 4px, #E5E7EB 8px); }
         .booking-horizon-card {
-            background: linear-gradient(135deg, #F8FAFC 0%, #F1F5F9 100%);
-            border: 1px solid #E2E8F0;
-            border-radius: 14px;
-            padding: 18px 20px;
-            margin-bottom: 18px;
+            border: 1px solid #E5E7EB;
+            border-radius: 16px;
+            background: #fff;
+            overflow: hidden;
+            margin-bottom: 20px;
+            box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04);
         }
-        .booking-horizon-card.is-active { border-color: #CBD5E1; box-shadow: 0 4px 14px rgba(15, 23, 42, 0.06); }
+        .booking-horizon-card.is-active {
+            border-color: #C7D2B0;
+            box-shadow: 0 8px 24px rgba(77, 124, 15, 0.08);
+        }
+        .horizon-card__head {
+            display: flex; align-items: center; gap: 14px; padding: 16px 18px;
+            border-bottom: 1px solid #F3F4F6; flex-wrap: wrap;
+        }
+        .horizon-card__icon {
+            width: 44px; height: 44px; border-radius: 12px; flex-shrink: 0;
+            background: linear-gradient(135deg, #F0FDF4 0%, #E9EFDF 100%);
+            color: #4D7C0F; display: flex; align-items: center; justify-content: center;
+        }
+        .horizon-card__titles { flex: 1; min-width: 200px; }
+        .horizon-card__titles strong { display: block; font-size: 16px; color: #111827; letter-spacing: -0.01em; }
+        .horizon-card__titles span { display: block; font-size: 12px; color: #6B7280; margin-top: 3px; line-height: 1.4; }
+        .horizon-card__toggle { min-width: 200px; }
+        .horizon-card__toggle .mode-toggle { margin: 0; width: 100%; padding: 3px; background: #F3F4F6; border-radius: 12px; height: 44px; }
+        .horizon-card__toggle .mode-btn { flex: 1; text-align: center; display: flex; align-items: center; justify-content: center; height: 100%; font-size: 13px; }
+        .horizon-card__body { padding: 18px; display: none; }
+        .booking-horizon-card.is-active .horizon-card__body { display: block; }
+        .horizon-date-hero {
+            display: flex; align-items: center; gap: 16px; padding: 18px 20px;
+            background: linear-gradient(135deg, #F8FAF5 0%, #F1F5EB 100%);
+            border: 1px solid #E2E8D4; border-radius: 14px; margin-bottom: 16px;
+        }
+        .horizon-date-hero__day {
+            font-size: 48px; font-weight: 800; line-height: 1; color: #3F6212; letter-spacing: -0.03em;
+            min-width: 64px; text-align: center;
+        }
+        .horizon-date-hero__month {
+            display: block; font-size: 22px; font-weight: 700; color: #1A332A; line-height: 1.1;
+            text-transform: lowercase;
+        }
+        .horizon-date-hero__year { display: block; font-size: 14px; font-weight: 600; color: #6B7280; margin-top: 4px; }
+        .horizon-date-hero__badge {
+            margin-left: auto; padding: 6px 10px; border-radius: 999px; font-size: 11px; font-weight: 700;
+            background: rgba(77, 124, 15, 0.12); color: #4D7C0F; white-space: nowrap;
+        }
+        .horizon-quick { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 18px; }
+        .horizon-preset-chip {
+            padding: 10px 16px; border-radius: 999px; border: 1px solid #D1D5DB; background: #fff;
+            font-size: 13px; font-weight: 650; color: #374151; cursor: pointer; transition: 0.15s ease;
+        }
+        .horizon-preset-chip:hover { border-color: #A7C4A0; background: #F7FAF3; color: #3F6212; }
+        .horizon-preset-chip.is-accent { border-color: #4D7C0F; background: #F0FDF4; color: #3F6212; }
+        .horizon-picker__row { margin-bottom: 14px; }
+        .horizon-picker__label {
+            display: block; font-size: 11px; font-weight: 700; letter-spacing: 0.06em;
+            text-transform: uppercase; color: #9CA3AF; margin-bottom: 8px;
+        }
+        .horizon-picker__chips { display: flex; flex-wrap: wrap; gap: 6px; }
+        .horizon-picker__chips--days { max-width: 100%; }
+        .horizon-chip {
+            min-width: 42px; padding: 8px 11px; border-radius: 10px; border: 1px solid #E5E7EB;
+            background: #FAFAFA; font-size: 13px; font-weight: 600; color: #4B5563; cursor: pointer;
+            transition: 0.15s ease; text-align: center; user-select: none;
+        }
+        .horizon-chip:hover { border-color: #CBD5E1; background: #fff; }
+        .horizon-chip.active {
+            background: linear-gradient(135deg, #6B8E23 0%, #4D7C0F 100%);
+            border-color: #4D7C0F; color: #fff; box-shadow: 0 2px 8px rgba(77, 124, 15, 0.25);
+        }
+        .horizon-hint {
+            margin: 16px 0 0; padding: 12px 14px; border-radius: 10px; background: #F8FAFC;
+            border: 1px solid #E5E7EB; font-size: 13px; color: #64748B; line-height: 1.5;
+        }
+        .horizon-hint strong { color: #334155; }
         .booking-block.status-horizon {
             background: linear-gradient(135deg, #9CA3AF 0%, #6B7280 100%);
             color: #FFFFFF;
@@ -1884,34 +1952,53 @@ input[type="number"] {
                         </div>
                     </div>
 
-                    <div class="booking-horizon-card" id="bookingHorizonCard">
-                        <div style="display:flex; align-items:flex-start; justify-content:space-between; gap:16px; flex-wrap:wrap;">
-                            <div style="flex:1; min-width:240px;">
-                                <div style="display:flex; align-items:center; gap:10px; margin-bottom:8px;">
-                                    <svg width="18" height="18" fill="none" stroke="#475569" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 8.25h18M5.25 21h13.5a1.5 1.5 0 0 0 1.5-1.5V7.5a1.5 1.5 0 0 0-1.5-1.5H5.25a1.5 1.5 0 0 0-1.5 1.5v12a1.5 1.5 0 0 0 1.5 1.5Z"/></svg>
-                                    <strong style="font-size:15px;">Горизонт бронювання</strong>
-                                </div>
-                                <p style="margin:0; font-size:13px; color:#64748B; line-height:1.5; max-width:560px;">
-                                    Обмежує, до якої дати гості можуть бронювати через сайт на <strong>всі котеджі</strong>. Після обраної дати календар закритий (наприклад, до 15 грудня).
-                                </p>
+                    <article class="booking-horizon-card" id="bookingHorizonCard">
+                        <div class="horizon-card__head">
+                            <div class="horizon-card__icon" aria-hidden="true">
+                                <svg width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 8.25h18M5.25 21h13.5a1.5 1.5 0 0 0 1.5-1.5V7.5a1.5 1.5 0 0 0-1.5-1.5H5.25a1.5 1.5 0 0 0-1.5 1.5v12a1.5 1.5 0 0 0 1.5 1.5Z"/><path stroke-linecap="round" stroke-linejoin="round" d="M8 12h8M8 16h5"/></svg>
                             </div>
-                            <label style="display:flex; align-items:center; gap:8px; font-size:13px; font-weight:600; color:#334155; cursor:pointer; white-space:nowrap;">
-                                <input type="checkbox" id="bookingHorizonEnabled" onchange="onBookingHorizonFieldChange()">
-                                Увімкнено
-                            </label>
-                        </div>
-                        <div id="bookingHorizonFields" style="display:none; margin-top:16px; padding-top:16px; border-top:1px solid #E2E8F0;">
-                            <div style="display:flex; align-items:end; gap:12px; flex-wrap:wrap;">
-                                <div class="form-group" style="margin:0; min-width:180px;">
-                                    <label style="font-size:12px; color:#64748B; margin-bottom:6px; display:block;">Приймати броні до (включно):</label>
-                                    <input type="date" id="bookingHorizonDate" onchange="onBookingHorizonFieldChange()" style="height:42px;">
-                                </div>
-                                <button type="button" class="btn-secondary" style="height:42px; padding:0 14px; font-size:13px;" onclick="applyBookingHorizonPresetDec15()">До 15 грудня</button>
-                                <button type="button" class="btn-secondary" style="height:42px; padding:0 14px; font-size:13px;" onclick="extendBookingHorizonOneYear()">+1 рік</button>
+                            <div class="horizon-card__titles">
+                                <strong>Горизонт бронювання</strong>
+                                <span>До якої дати сайт приймає броні на всі котеджі одразу</span>
                             </div>
-                            <p id="bookingHorizonHint" style="margin:12px 0 0; font-size:12px; color:#64748B;"></p>
+                            <div class="horizon-card__toggle">
+                                <div class="mode-toggle" id="horizonModeToggle">
+                                    <div class="mode-btn horizon-mode-btn" data-val="false" onclick="setBookingHorizonEnabled(false)">Вимкнено</div>
+                                    <div class="mode-btn horizon-mode-btn" data-val="true" onclick="setBookingHorizonEnabled(true)">Увімкнено</div>
+                                </div>
+                            </div>
                         </div>
-                    </div>
+                        <div class="horizon-card__body" id="bookingHorizonFields">
+                            <div class="horizon-date-hero" id="horizonDateHero">
+                                <div class="horizon-date-hero__day" id="horizonHeroDay">15</div>
+                                <div>
+                                    <span class="horizon-date-hero__month" id="horizonHeroMonth">грудня</span>
+                                    <span class="horizon-date-hero__year" id="horizonHeroYear">2026</span>
+                                </div>
+                                <span class="horizon-date-hero__badge">останній день броні</span>
+                            </div>
+                            <div class="horizon-quick">
+                                <button type="button" class="horizon-preset-chip is-accent" onclick="applyBookingHorizonPresetDec15()">15 грудня</button>
+                                <button type="button" class="horizon-preset-chip" onclick="extendBookingHorizonOneYear()">+1 рік</button>
+                            </div>
+                            <div class="horizon-picker">
+                                <div class="horizon-picker__row">
+                                    <span class="horizon-picker__label">Рік</span>
+                                    <div class="horizon-picker__chips" id="horizonYearChips"></div>
+                                </div>
+                                <div class="horizon-picker__row">
+                                    <span class="horizon-picker__label">Місяць</span>
+                                    <div class="horizon-picker__chips" id="horizonMonthChips"></div>
+                                </div>
+                                <div class="horizon-picker__row">
+                                    <span class="horizon-picker__label">День</span>
+                                    <div class="horizon-picker__chips horizon-picker__chips--days" id="horizonDayChips"></div>
+                                </div>
+                            </div>
+                            <p class="horizon-hint" id="bookingHorizonHint"></p>
+                        </div>
+                        <input type="hidden" id="bookingHorizonDate">
+                    </article>
 
                     <div class="timeline-toolbar" style="margin-top: 10px; justify-content: flex-start; gap: 20px;">
                         <div class="timeline-nav">
@@ -4694,37 +4781,131 @@ else if (total === 0) { finText = "Немає ціни"; badgeBg = "rgba(255,255
             return formatDateKey(new Date(year, 11, 15));
         }
 
+        const HORIZON_MONTHS_UK = ['січня','лютого','березня','квітня','травня','червня','липня','серпня','вересня','жовтня','листопада','грудня'];
+        const HORIZON_MONTHS_SHORT = ['Січ','Лют','Бер','Кві','Тра','Чер','Лип','Сер','Вер','Жов','Лис','Гру'];
+
+        function getHorizonPickerDate() {
+            const hidden = document.getElementById('bookingHorizonDate');
+            const raw = (hidden && hidden.value) || bookingHorizon.lastDate || getDefaultHorizonDec15Date();
+            const d = parseSafeDate(raw);
+            d.setHours(0, 0, 0, 0);
+            return isNaN(d.getTime()) ? parseSafeDate(getDefaultHorizonDec15Date()) : d;
+        }
+
+        function setHorizonPickerDate(dateObj) {
+            const hidden = document.getElementById('bookingHorizonDate');
+            const key = formatDateKey(dateObj);
+            if (hidden) hidden.value = key;
+            bookingHorizon.lastDate = key;
+        }
+
+        function renderHorizonPickerChips() {
+            const d = getHorizonPickerDate();
+            const year = d.getFullYear();
+            const month = d.getMonth();
+            const day = d.getDate();
+
+            const yearEl = document.getElementById('horizonYearChips');
+            if (yearEl) {
+                yearEl.innerHTML = '';
+                for (let y = year - 1; y <= year + 2; y++) {
+                    yearEl.innerHTML += `<button type="button" class="horizon-chip ${y === year ? 'active' : ''}" onclick="pickHorizonYear(${y})">${y}</button>`;
+                }
+            }
+
+            const monthEl = document.getElementById('horizonMonthChips');
+            if (monthEl) {
+                monthEl.innerHTML = HORIZON_MONTHS_SHORT.map((label, idx) =>
+                    `<button type="button" class="horizon-chip ${idx === month ? 'active' : ''}" onclick="pickHorizonMonth(${idx})">${label}</button>`
+                ).join('');
+            }
+
+            const daysInMonth = new Date(year, month + 1, 0).getDate();
+            const dayEl = document.getElementById('horizonDayChips');
+            if (dayEl) {
+                dayEl.innerHTML = '';
+                for (let dd = 1; dd <= daysInMonth; dd++) {
+                    dayEl.innerHTML += `<button type="button" class="horizon-chip ${dd === day ? 'active' : ''}" onclick="pickHorizonDay(${dd})">${dd}</button>`;
+                }
+            }
+        }
+
+        function updateHorizonHeroDisplay() {
+            const d = getHorizonPickerDate();
+            const dayEl = document.getElementById('horizonHeroDay');
+            const monthEl = document.getElementById('horizonHeroMonth');
+            const yearEl = document.getElementById('horizonHeroYear');
+            if (dayEl) dayEl.textContent = String(d.getDate());
+            if (monthEl) monthEl.textContent = HORIZON_MONTHS_UK[d.getMonth()];
+            if (yearEl) yearEl.textContent = String(d.getFullYear());
+        }
+
+        function pickHorizonYear(y) {
+            const d = getHorizonPickerDate();
+            d.setFullYear(y);
+            const maxDay = new Date(d.getFullYear(), d.getMonth() + 1, 0).getDate();
+            if (d.getDate() > maxDay) d.setDate(maxDay);
+            setHorizonPickerDate(d);
+            onBookingHorizonFieldChange();
+        }
+
+        function pickHorizonMonth(m) {
+            const d = getHorizonPickerDate();
+            d.setMonth(m);
+            const maxDay = new Date(d.getFullYear(), d.getMonth() + 1, 0).getDate();
+            if (d.getDate() > maxDay) d.setDate(maxDay);
+            setHorizonPickerDate(d);
+            onBookingHorizonFieldChange();
+        }
+
+        function pickHorizonDay(day) {
+            const d = getHorizonPickerDate();
+            d.setDate(day);
+            setHorizonPickerDate(d);
+            onBookingHorizonFieldChange();
+        }
+
+        function setBookingHorizonEnabled(enabled) {
+            bookingHorizon.enabled = !!enabled;
+            onBookingHorizonFieldChange();
+        }
+
         function syncBookingHorizonUI() {
-            const enabledEl = document.getElementById('bookingHorizonEnabled');
-            const dateEl = document.getElementById('bookingHorizonDate');
-            const fieldsEl = document.getElementById('bookingHorizonFields');
             const cardEl = document.getElementById('bookingHorizonCard');
             const hintEl = document.getElementById('bookingHorizonHint');
-            if (!enabledEl || !dateEl) return;
+            const hidden = document.getElementById('bookingHorizonDate');
+            if (!cardEl) return;
 
             bookingHorizon = normalizeBookingHorizon(bookingHorizon);
-            enabledEl.checked = !!bookingHorizon.enabled;
-            dateEl.value = bookingHorizon.lastDate || getDefaultHorizonDec15Date();
-            if (fieldsEl) fieldsEl.style.display = bookingHorizon.enabled ? 'block' : 'none';
-            if (cardEl) cardEl.classList.toggle('is-active', !!bookingHorizon.enabled);
+            if (!bookingHorizon.lastDate) bookingHorizon.lastDate = getDefaultHorizonDec15Date();
+            if (hidden) hidden.value = bookingHorizon.lastDate;
+
+            document.querySelectorAll('.horizon-mode-btn').forEach(btn => {
+                btn.classList.toggle('active', btn.getAttribute('data-val') === String(!!bookingHorizon.enabled));
+            });
+            cardEl.classList.toggle('is-active', !!bookingHorizon.enabled);
+
+            if (bookingHorizon.enabled) {
+                renderHorizonPickerChips();
+                updateHorizonHeroDisplay();
+            }
 
             if (hintEl) {
                 if (!bookingHorizon.enabled) {
-                    hintEl.textContent = 'Горизонт вимкнено — сайт показує всі майбутні дати.';
+                    hintEl.innerHTML = 'Горизонт вимкнено — сайт показує всі майбутні дати для бронювання.';
                 } else {
-                    const d = parseSafeDate(dateEl.value || bookingHorizon.lastDate);
+                    const d = getHorizonPickerDate();
                     const label = d.toLocaleDateString('uk-UA', { day: 'numeric', month: 'long', year: 'numeric' });
-                    hintEl.textContent = `Сайт приймає броні до ${label} включно. Після цієї дати — закрито на всі котеджі.`;
+                    hintEl.innerHTML = `Сайт приймає броні до <strong>${label}</strong> включно. Після цієї дати календар закритий на всі котеджі.`;
                 }
             }
         }
 
         function onBookingHorizonFieldChange() {
-            const enabledEl = document.getElementById('bookingHorizonEnabled');
-            const dateEl = document.getElementById('bookingHorizonDate');
+            const hidden = document.getElementById('bookingHorizonDate');
             bookingHorizon = normalizeBookingHorizon({
-                enabled: !!(enabledEl && enabledEl.checked),
-                lastDate: dateEl ? dateEl.value : bookingHorizon.lastDate
+                enabled: !!bookingHorizon.enabled,
+                lastDate: hidden ? hidden.value : bookingHorizon.lastDate
             });
             syncBookingHorizonUI();
             saveSettingsToCloud();
@@ -4737,21 +4918,17 @@ else if (total === 0) { finText = "Немає ціни"; badgeBg = "rgba(255,255
         }
 
         function applyBookingHorizonPresetDec15() {
-            const enabledEl = document.getElementById('bookingHorizonEnabled');
-            const dateEl = document.getElementById('bookingHorizonDate');
-            if (enabledEl) enabledEl.checked = true;
-            if (dateEl) dateEl.value = getDefaultHorizonDec15Date();
+            bookingHorizon.enabled = true;
+            setHorizonPickerDate(parseSafeDate(getDefaultHorizonDec15Date()));
             onBookingHorizonFieldChange();
             showToast('Горизонт: бронювання до 15 грудня');
         }
 
         function extendBookingHorizonOneYear() {
-            const dateEl = document.getElementById('bookingHorizonDate');
-            const enabledEl = document.getElementById('bookingHorizonEnabled');
-            const base = parseSafeDate((dateEl && dateEl.value) || bookingHorizon.lastDate || getDefaultHorizonDec15Date());
+            const base = getHorizonPickerDate();
             base.setFullYear(base.getFullYear() + 1);
-            if (enabledEl) enabledEl.checked = true;
-            if (dateEl) dateEl.value = formatDateKey(base);
+            bookingHorizon.enabled = true;
+            setHorizonPickerDate(base);
             onBookingHorizonFieldChange();
             showToast('Горизонт продовжено на 1 рік');
         }
