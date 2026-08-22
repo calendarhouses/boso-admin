@@ -384,6 +384,10 @@
         .booking-block.status-closed { background: linear-gradient(135deg, #EF4444 0%, #B91C1C 100%); color: #FFFFFF; border-color: rgba(185, 28, 28, 0.3); cursor: default; z-index: 50; }
         .booking-block.closed-date-chip { pointer-events: auto; cursor: pointer; }
         .restriction-cell.has-closed { background: #FEF2F2; }
+        .restriction-cell.beyond-horizon { background: repeating-linear-gradient(-45deg, #F9FAFB, #F9FAFB 4px, #E5E7EB 4px, #E5E7EB 8px); }
+        .booking-horizon-card { background:#F8FAFC; border:1px solid #E2E8F0; border-radius:12px; padding:14px; margin-bottom:14px; }
+        .booking-horizon-card.is-active { border-color:#CBD5E1; }
+        .booking-block.status-horizon { background: linear-gradient(135deg, #9CA3AF 0%, #6B7280 100%); color:#fff; z-index:40; }
         .badge.hutshub { background-color: #C9D6D2; color: #1A332A; }
         
         /* --- ПРЕМІУМ-ІНДИКАТОРИ РАННЬОГО/ПІЗНЬОГО ЗАЇЗДУ --- */
@@ -1061,6 +1065,23 @@
                     <button class="btn-primary" onclick="openRestrictionConstructor()">Конструктор</button>
                     <button class="btn-secondary" onclick="openClosedDateConstructor()" style="border-color:#FCA5A5;color:#B91C1C;">Закрити</button>
                     <button class="btn-outline-danger" onclick="clearRestrictionsAlert()">Видалити</button>
+                </div>
+                <div class="booking-horizon-card" id="bookingHorizonCard">
+                    <div style="display:flex; align-items:center; justify-content:space-between; gap:10px; margin-bottom:10px;">
+                        <strong style="font-size:14px;">Горизонт бронювання</strong>
+                        <label style="display:flex; align-items:center; gap:6px; font-size:12px; font-weight:600;">
+                            <input type="checkbox" id="bookingHorizonEnabled" onchange="onBookingHorizonFieldChange()"> Увімк.
+                        </label>
+                    </div>
+                    <p style="margin:0 0 10px; font-size:12px; color:#64748B; line-height:1.45;">До якої дати сайт приймає броні на всі котеджі.</p>
+                    <div id="bookingHorizonFields" style="display:none;">
+                        <input type="date" id="bookingHorizonDate" onchange="onBookingHorizonFieldChange()" style="width:100%; height:42px; margin-bottom:8px;">
+                        <div class="form-grid" style="gap:8px;">
+                            <button type="button" class="btn-secondary" onclick="applyBookingHorizonPresetDec15()">До 15.12</button>
+                            <button type="button" class="btn-secondary" onclick="extendBookingHorizonOneYear()">+1 рік</button>
+                        </div>
+                        <p id="bookingHorizonHint" style="margin:10px 0 0; font-size:11px; color:#64748B;"></p>
+                    </div>
                 </div>
                 <div class="timeline-nav-row" style="margin-bottom: 12px;">
                     <div class="timeline-nav">
@@ -1804,6 +1825,7 @@
         };
         let restrictions = {};
         let closedDates = {};
+        let bookingHorizon = { enabled: false, lastDate: '' };
         // --- 🚀 ДОПОМІЖНА ФУНКЦІЯ ДЛЯ ЗАСТОСУВАННЯ ДАНИХ ---
         function applyServerData(data, isSilent = false) {
             if (!data || !data.bookings) return;
@@ -1819,6 +1841,7 @@
                 if (settingsData.customPrices) customPrices = settingsData.customPrices;
                 if (settingsData.restrictions) restrictions = settingsData.restrictions;
                 if (settingsData.closedDates) closedDates = settingsData.closedDates;
+                if (settingsData.bookingHorizon) bookingHorizon = normalizeBookingHorizon(settingsData.bookingHorizon);
                 if (settingsData.transactions) transactions = settingsData.transactions;
                 if (settingsData.smsSettings) smsSettings = settingsData.smsSettings;
             }
@@ -1863,6 +1886,7 @@
                     if (settingsData.customPrices) customPrices = settingsData.customPrices;
                     if (settingsData.restrictions) restrictions = settingsData.restrictions;
                 if (settingsData.closedDates) closedDates = settingsData.closedDates;
+                if (settingsData.bookingHorizon) bookingHorizon = normalizeBookingHorizon(settingsData.bookingHorizon);
                     if (settingsData.transactions) transactions = settingsData.transactions;
                     if (settingsData.smsSettings) smsSettings = settingsData.smsSettings;
                 }
@@ -1933,7 +1957,7 @@
         }
         
         async function saveSettingsToCloud() {
-            const settingsToSave = { roomsList, discountsList, customServicesList, sysServicesList, customPrices, restrictions, closedDates, transactions };
+            const settingsToSave = { roomsList, discountsList, customServicesList, sysServicesList, customPrices, restrictions, closedDates, bookingHorizon, transactions };
             try { await BosoAuth.apiFetch(API_URL, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify({ action: 'saveSettings', settings: settingsToSave }) });
             } catch (error) {
                 if (error && error.message === 'UNAUTHORIZED') return;
@@ -2041,6 +2065,7 @@
             if(tabName === 'rooms') renderSettingsRooms();
             if(tabName === 'prices') renderPriceGrid();
             if(tabName === 'restrictions') {
+                syncBookingHorizonUI();
                 renderRestrictionsGrid();
                 scrollToRestrictionsGrid();
             }
@@ -3278,6 +3303,12 @@ if (sClass.includes('скас')) {
                     const blockWidth = seg.length * cellWidth - 4;
                     currentRow.innerHTML += buildMainTimelineClosedHtml(seg, blockLeft, blockWidth);
                 });
+                const horizonSegments = getHorizonSegmentsForTimeline(startDate, daysCount);
+                horizonSegments.forEach(seg => {
+                    const blockLeft = seg.startIndex * cellWidth + 2;
+                    const blockWidth = seg.length * cellWidth - 4;
+                    currentRow.innerHTML += buildMainTimelineHorizonHtml(seg, blockLeft, blockWidth);
+                });
             });
             
             if (!preserveScroll) {
@@ -3359,6 +3390,95 @@ if (sClass.includes('скас')) {
             if (closedDates[roomId] && closedDates[roomId][ds]) return true;
             if (closedDates[rid] && closedDates[rid][ds]) return true;
             return false;
+        }
+
+        function normalizeBookingHorizon(raw) {
+            const input = raw && typeof raw === 'object' ? raw : {};
+            return { enabled: input.enabled === true, lastDate: String(input.lastDate || '').substring(0, 10) };
+        }
+        function getBookingHorizonLastDateObj() {
+            if (!bookingHorizon || !bookingHorizon.enabled || !bookingHorizon.lastDate) return null;
+            const d = parseSafeDate(bookingHorizon.lastDate); d.setHours(0,0,0,0);
+            return isNaN(d.getTime()) ? null : d;
+        }
+        function isDateBeyondBookingHorizon(dateObj) {
+            const last = getBookingHorizonLastDateObj();
+            if (!last) return false;
+            const d = new Date(dateObj); d.setHours(0,0,0,0);
+            return d.getTime() > last.getTime();
+        }
+        function getDefaultHorizonDec15Date() {
+            const now = new Date(); let year = now.getFullYear();
+            const dec15 = new Date(year, 11, 15); dec15.setHours(0,0,0,0);
+            if (now.getTime() > dec15.getTime()) year += 1;
+            return formatDateKey(new Date(year, 11, 15));
+        }
+        function syncBookingHorizonUI() {
+            const enabledEl = document.getElementById('bookingHorizonEnabled');
+            const dateEl = document.getElementById('bookingHorizonDate');
+            const fieldsEl = document.getElementById('bookingHorizonFields');
+            const cardEl = document.getElementById('bookingHorizonCard');
+            const hintEl = document.getElementById('bookingHorizonHint');
+            if (!enabledEl || !dateEl) return;
+            bookingHorizon = normalizeBookingHorizon(bookingHorizon);
+            enabledEl.checked = !!bookingHorizon.enabled;
+            dateEl.value = bookingHorizon.lastDate || getDefaultHorizonDec15Date();
+            if (fieldsEl) fieldsEl.style.display = bookingHorizon.enabled ? 'block' : 'none';
+            if (cardEl) cardEl.classList.toggle('is-active', !!bookingHorizon.enabled);
+            if (hintEl) {
+                if (!bookingHorizon.enabled) hintEl.textContent = 'Горизонт вимкнено.';
+                else {
+                    const d = parseSafeDate(dateEl.value || bookingHorizon.lastDate);
+                    hintEl.textContent = 'До ' + d.toLocaleDateString('uk-UA', { day:'numeric', month:'long', year:'numeric' }) + ' включно.';
+                }
+            }
+        }
+        function onBookingHorizonFieldChange() {
+            const enabledEl = document.getElementById('bookingHorizonEnabled');
+            const dateEl = document.getElementById('bookingHorizonDate');
+            bookingHorizon = normalizeBookingHorizon({
+                enabled: !!(enabledEl && enabledEl.checked),
+                lastDate: dateEl ? dateEl.value : bookingHorizon.lastDate
+            });
+            syncBookingHorizonUI();
+            saveSettingsToCloud();
+            renderRestrictionsGrid();
+            if (document.getElementById('view-grid') && (document.getElementById('view-grid').style.display === 'flex' || document.getElementById('view-grid').style.display === 'block')) renderTimeline(true);
+        }
+        function applyBookingHorizonPresetDec15() {
+            const enabledEl = document.getElementById('bookingHorizonEnabled');
+            const dateEl = document.getElementById('bookingHorizonDate');
+            if (enabledEl) enabledEl.checked = true;
+            if (dateEl) dateEl.value = getDefaultHorizonDec15Date();
+            onBookingHorizonFieldChange();
+            showToast('До 15 грудня');
+        }
+        function extendBookingHorizonOneYear() {
+            const dateEl = document.getElementById('bookingHorizonDate');
+            const enabledEl = document.getElementById('bookingHorizonEnabled');
+            const base = parseSafeDate((dateEl && dateEl.value) || bookingHorizon.lastDate || getDefaultHorizonDec15Date());
+            base.setFullYear(base.getFullYear() + 1);
+            if (enabledEl) enabledEl.checked = true;
+            if (dateEl) dateEl.value = formatDateKey(base);
+            onBookingHorizonFieldChange();
+            showToast('+1 рік');
+        }
+        function getHorizonSegmentsForTimeline(startDate, daysCount) {
+            const last = getBookingHorizonLastDateObj();
+            if (!last) return [];
+            let startIndex = -1;
+            for (let i = 0; i < daysCount; i++) {
+                const d = new Date(startDate); d.setDate(startDate.getDate() + i);
+                if (isDateBeyondBookingHorizon(d)) { startIndex = i; break; }
+            }
+            if (startIndex < 0) return [];
+            return [{ startIndex, length: daysCount - startIndex }];
+        }
+        function buildMainTimelineHorizonHtml(segment, blockLeft, blockWidth) {
+            return `<div class="booking-block status-horizon" style="left:${blockLeft}px;width:${blockWidth}px" title="Горизонт"><div class="booking-inner-content" style="font-size:10px;font-weight:600;">Горизонт</div></div>`;
+        }
+        function buildHorizonSegmentHtml(segment, blockLeft, blockWidth) {
+            return buildMainTimelineHorizonHtml(segment, blockLeft, blockWidth);
         }
 
         function getBookingMinNightsRequired(room, checkIn, checkOut) {
@@ -3687,8 +3807,9 @@ if (sClass.includes('скас')) {
                     const dateStr = formatDateKey(d);
                     const hasR = getRestrictionMinNights(room.id, d) > 0;
                     const hasC = isDateClosed(room.id, d);
+                    const beyondH = isDateBeyondBookingHorizon(d);
                     const selCls = getRestrictionCellSelectionClasses(room.id, dateStr);
-                    rowHtml += `<div class="restriction-cell timeline-cell ${isWeekend ? 'weekend-restr' : ''} ${hasR ? 'has-restriction' : ''} ${hasC ? 'has-closed' : ''} ${selCls}"
+                    rowHtml += `<div class="restriction-cell timeline-cell ${isWeekend ? 'weekend-restr' : ''} ${hasR ? 'has-restriction' : ''} ${hasC ? 'has-closed' : ''} ${beyondH ? 'beyond-horizon' : ''} ${selCls}"
                         data-room="${room.id}" data-date="${dateStr}"
                         onmousedown="startRestrictionCellDrag(event, this)"
                         onmouseenter="enterRestrictionCellDrag(this)"
@@ -3701,6 +3822,12 @@ if (sClass.includes('скас')) {
                     const blockLeft = seg.startIndex * cellWidth + 4;
                     const blockWidth = seg.length * cellWidth - 8;
                     rowHtml += buildClosedDateSegmentHtml(room.id, seg, blockLeft, blockWidth);
+                });
+                const horizonSegments = getHorizonSegmentsForTimeline(startDate, daysCount);
+                horizonSegments.forEach(seg => {
+                    const blockLeft = seg.startIndex * cellWidth + 4;
+                    const blockWidth = seg.length * cellWidth - 8;
+                    rowHtml += buildHorizonSegmentHtml(seg, blockLeft, blockWidth);
                 });
                 const segments = getRestrictionSegmentsForRoom(room.id, startDate, daysCount);
                 segments.forEach(seg => {
@@ -3721,9 +3848,8 @@ if (sClass.includes('скас')) {
             } else {
                 clearRestrictionCellHighlights();
             }
+            syncBookingHorizonUI();
         }
-
-        function startRestrictionCellDrag(e, cell) {
             if (e.button !== undefined && e.button !== 0) return;
             e.preventDefault();
             isRestrictionDragging = true;
