@@ -352,6 +352,24 @@
             color: #1A332A;
             border-color: rgba(26, 51, 42, 0.15);
         }
+
+        /* 5. ЗАКРИТО: червона карта для закритих дат */
+        .booking-block.status-closed {
+            background: linear-gradient(135deg, #EF4444 0%, #B91C1C 100%);
+            color: #FFFFFF;
+            border-color: rgba(185, 28, 28, 0.3);
+            cursor: default;
+            z-index: 50;
+        }
+        .booking-block.status-closed:hover {
+            transform: none;
+            box-shadow: 0 4px 10px rgba(185, 28, 28, 0.25);
+        }
+        .booking-block.closed-date-chip {
+            pointer-events: auto;
+            cursor: pointer;
+        }
+        .restriction-cell.has-closed { background: #FEF2F2; }
         .badge.hutshub { background-color: #C9D6D2; color: #1A332A; }
         
         .booking-block span { 
@@ -1840,6 +1858,9 @@ input[type="number"] {
                         </div>
                         <div style="display: flex; gap: 16px;">
                             <button class="btn-outline-danger" onclick="clearRestrictionsAlert()" style="padding: 10px 16px; font-size: 13px; height: auto;">Видалити</button>
+                            <button class="btn-secondary" onclick="openClosedDateConstructor()" style="padding: 10px 16px; font-size: 13px; height: auto; border-color: #FCA5A5; color: #B91C1C;">
+                                Закрити дати
+                            </button>
                             <button class="btn-primary" onclick="openRestrictionConstructor()" style="padding: 10px 16px; font-size: 13px;">
                                 <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path></svg>
                                 Конструктор обмежень
@@ -2400,6 +2421,7 @@ function getVisitWord(count) {
             journal: []
         };
         let restrictions = {}; // Мін. кількість діб: { roomId: { "YYYY-MM-DD": minNights } }
+        let closedDates = {}; // Закриті дати: { roomId: { "YYYY-MM-DD": true } }
         let transactions = []; // База ручних транзакцій
 
         const incomeCategories = [
@@ -2649,6 +2671,7 @@ function saveInlineTransaction(type, category, idx) {
                 if (settingsData.sysServicesList) sysServicesList = settingsData.sysServicesList;
                 if (settingsData.customPrices) customPrices = settingsData.customPrices;
                 if (settingsData.restrictions) restrictions = settingsData.restrictions;
+                if (settingsData.closedDates) closedDates = settingsData.closedDates;
                 if (settingsData.transactions) transactions = settingsData.transactions;
                 if (settingsData.smsSettings) smsSettings = settingsData.smsSettings;
             }
@@ -2692,6 +2715,7 @@ function saveInlineTransaction(type, category, idx) {
                     if (settingsData.sysServicesList) sysServicesList = settingsData.sysServicesList;
                     if (settingsData.customPrices) customPrices = settingsData.customPrices;
                     if (settingsData.restrictions) restrictions = settingsData.restrictions;
+                if (settingsData.closedDates) closedDates = settingsData.closedDates;
                     if (settingsData.transactions) transactions = settingsData.transactions;
                     if (settingsData.smsSettings) smsSettings = settingsData.smsSettings;
                 }
@@ -2739,6 +2763,7 @@ function saveInlineTransaction(type, category, idx) {
                     if (sd.discountsList) discountsList = sd.discountsList;
                     if (sd.customPrices) customPrices = sd.customPrices;
                     if (sd.restrictions) restrictions = sd.restrictions;
+                    if (sd.closedDates) closedDates = sd.closedDates;
                     if (sd.transactions) transactions = sd.transactions;
                     if (sd.smsSettings) smsSettings = sd.smsSettings;
 
@@ -2769,8 +2794,9 @@ function saveInlineTransaction(type, category, idx) {
                 discountsList: discountsList,
                 customServicesList: customServicesList,
                 sysServicesList: sysServicesList,
-                customPrices: customPrices,
+                customPrices: customPrices,
                 restrictions: restrictions,
+                closedDates: closedDates,
                 transactions: transactions
             };
             
@@ -3373,11 +3399,18 @@ function saveInlineTransaction(type, category, idx) {
                 sel.dates.forEach(ds => { delete restrictions[roomId][ds]; });
                 if (Object.keys(restrictions[roomId]).length === 0) delete restrictions[roomId];
             }
+            if (closedDates[roomId]) {
+                sel.dates.forEach(ds => { delete closedDates[roomId][ds]; });
+                if (Object.keys(closedDates[roomId]).length === 0) delete closedDates[roomId];
+            }
             lastRestrictionSelection = null;
             updateRestrictionSelectionHint();
             renderRestrictionsGrid();
+            if (document.getElementById('view-grid') && (document.getElementById('view-grid').style.display === 'flex' || document.getElementById('view-grid').style.display === 'block')) {
+                renderTimeline(true);
+            }
             saveSettingsToCloud();
-            showToast("Обмеження знято");
+            showToast("Обмеження та закриття знято");
         }
 
         function confirmClearAllRestrictions() {
@@ -3407,6 +3440,24 @@ function saveInlineTransaction(type, category, idx) {
                 pendingRestrictionModal = null;
             }
             openGenericModal('restriction');
+        }
+
+        function openClosedDateConstructor() {
+            if (lastRestrictionSelection && lastRestrictionSelection.dates && lastRestrictionSelection.dates.length > 0) {
+                const sorted = [...lastRestrictionSelection.dates].sort();
+                const d1 = new Date(sorted[0]);
+                const d2 = new Date(sorted[sorted.length - 1]);
+                pendingClosedDateModal = {
+                    roomIds: [String(lastRestrictionSelection.roomId)],
+                    useCustomRange: true,
+                    startDate: sorted[0],
+                    endDate: sorted[sorted.length - 1],
+                    rangeLabel: `${d1.toLocaleDateString('uk-UA', { day: 'numeric', month: 'short' })} — ${d2.toLocaleDateString('uk-UA', { day: 'numeric', month: 'short', year: 'numeric' })} (${sorted.length} ${dayWord(sorted.length)})`
+                };
+            } else {
+                pendingClosedDateModal = null;
+            }
+            openGenericModal('closedDate');
         }
 
         // --- УНІВЕРСАЛЬНА МОДАЛКА (Динамічна генерація полів) ---
@@ -3540,6 +3591,53 @@ function saveInlineTransaction(type, category, idx) {
                     <input type="hidden" id="mRestrEnd" value="${pre.endDate || ''}">
                 `;
                 pendingRestrictionModal = null;
+            } else if (type === 'closedDate') {
+                title.innerText = 'Закрити дати для бронювання';
+                const pre = pendingClosedDateModal || {};
+                let roomsChips = `<div class="chip-btn" id="chip-closed-room-all" onclick="toggleAllClosedRoomsChip()">Усі котеджі</div>`;
+                roomsChips += roomsList.filter(r => r.active).map(r => {
+                    const isPre = pre.roomIds && (pre.roomIds.includes(String(r.id)) || pre.roomIds.includes(r.id));
+                    return `<div class="chip-btn closed-room-chip ${isPre ? 'active' : ''}" data-id="${r.id}" onclick="toggleSingleClosedRoomChip(this)">${r.name}</div>`;
+                }).join('');
+                const useCustom = pre.useCustomRange ? 'true' : 'false';
+                body.innerHTML = `
+                    <p style="font-size: 13px; color: #6B7280; margin: 0 0 16px; line-height: 1.5;">Закриті дати не можна забронювати через сайт. На головній шахматці вони відображаються червоною картою «Закрито».</p>
+                    <div class="form-group">
+                        <label>Оберіть котеджі:</label>
+                        <div class="chips-container">${roomsChips}</div>
+                    </div>
+                    <div class="form-group" id="closedPeriodGroup" style="${useCustom === 'true' ? 'display:none;' : ''}">
+                        <label>Оберіть період:</label>
+                        <div class="chips-container">
+                            <div class="chip-btn active closed-period-chip" data-val="1" onclick="selectClosedPeriodChip(this)">Поточний місяць</div>
+                            <div class="chip-btn closed-period-chip" data-val="3" onclick="selectClosedPeriodChip(this)">Наступні 3 місяці</div>
+                            <div class="chip-btn closed-period-chip" data-val="12" onclick="selectClosedPeriodChip(this)">Наступний рік (12 міс)</div>
+                        </div>
+                        <input type="hidden" id="mClosedPeriod" value="1">
+                    </div>
+                    <div class="form-group" id="closedCustomRangeHint" style="${useCustom === 'true' ? '' : 'display:none;'} margin-bottom: 0;">
+                        <label>Обраний діапазон на шахматці:</label>
+                        <p style="font-size: 13px; color: #4B5563; margin: 8px 0 0; line-height: 1.5;" id="closedCustomRangeText">${pre.rangeLabel || ''}</p>
+                    </div>
+                    <div class="form-group" style="margin-bottom: 0;" id="closedDaysGroup">
+                        <label>Оберіть дні тижня:</label>
+                        <div class="chips-container">
+                            <div class="chip-btn active" id="chip-closed-day-all" onclick="toggleAllClosedDaysChip()">Усі дні</div>
+                            <div class="chip-btn active closed-day-chip" data-val="1" onclick="toggleSingleClosedDayChip(this)">Пн</div>
+                            <div class="chip-btn active closed-day-chip" data-val="2" onclick="toggleSingleClosedDayChip(this)">Вт</div>
+                            <div class="chip-btn active closed-day-chip" data-val="3" onclick="toggleSingleClosedDayChip(this)">Ср</div>
+                            <div class="chip-btn active closed-day-chip" data-val="4" onclick="toggleSingleClosedDayChip(this)">Чт</div>
+                            <div class="chip-btn active closed-day-chip" data-val="5" onclick="toggleSingleClosedDayChip(this)">Пт</div>
+                            <div class="chip-btn active closed-day-chip" data-val="6" onclick="toggleSingleClosedDayChip(this)">Сб</div>
+                            <div class="chip-btn active closed-day-chip" data-val="0" onclick="toggleSingleClosedDayChip(this)">Нд</div>
+                        </div>
+                        <input type="hidden" id="mClosedDays" value="all">
+                    </div>
+                    <input type="hidden" id="mClosedUseCustomRange" value="${useCustom}">
+                    <input type="hidden" id="mClosedStart" value="${pre.startDate || ''}">
+                    <input type="hidden" id="mClosedEnd" value="${pre.endDate || ''}">
+                `;
+                pendingClosedDateModal = null;
             } else if (type === 'discount') {
                 title.innerText = id ? 'Редагувати знижку' : 'Додати знижку';
                 
@@ -3630,7 +3728,7 @@ function saveInlineTransaction(type, category, idx) {
         }
 
         function closeGenericModal() {
-            if (currentEditType === 'restriction') {
+            if (currentEditType === 'restriction' || currentEditType === 'closedDate') {
                 clearRestrictionSelection();
             }
             document.getElementById('genericModal').classList.remove('active');
@@ -3903,6 +4001,53 @@ function saveInlineTransaction(type, category, idx) {
                 lastRestrictionSelection = null;
                 updateRestrictionSelectionHint();
                 renderRestrictionsGrid();
+                if (document.getElementById('view-grid') && (document.getElementById('view-grid').style.display === 'flex' || document.getElementById('view-grid').style.display === 'block')) {
+                    renderTimeline(true);
+                }
+            } else if (currentEditType === 'closedDate') {
+                const selectedRooms = Array.from(document.querySelectorAll('.closed-room-chip.active'))
+                    .map(chip => chip.getAttribute('data-id'));
+                const useCustom = document.getElementById('mClosedUseCustomRange').value === 'true';
+                const daysVal = document.getElementById('mClosedDays').value;
+                const selectedDays = daysVal === 'all'
+                    ? [0, 1, 2, 3, 4, 5, 6]
+                    : daysVal.split(',').map(Number).filter(n => !isNaN(n));
+
+                if (selectedRooms.length === 0) { showToast("Оберіть хоча б один котедж"); return; }
+                if (selectedDays.length === 0) { showToast("Оберіть хоча б один день тижня"); return; }
+
+                const applyClosedToDates = (roomId, startDate, endDateInclusive) => {
+                    if (!closedDates[roomId]) closedDates[roomId] = {};
+                    let d = new Date(startDate);
+                    const end = new Date(endDateInclusive);
+                    while (d <= end) {
+                        if (!selectedDays.includes(d.getDay())) { d.setDate(d.getDate() + 1); continue; }
+                        const dateStr = formatDateKey(d);
+                        closedDates[roomId][dateStr] = true;
+                        d.setDate(d.getDate() + 1);
+                    }
+                };
+
+                if (useCustom) {
+                    const startStr = document.getElementById('mClosedStart').value;
+                    const endStr = document.getElementById('mClosedEnd').value;
+                    if (!startStr || !endStr) { showToast("Немає обраного діапазону"); return; }
+                    selectedRooms.forEach(rid => applyClosedToDates(rid, startStr, endStr));
+                } else {
+                    const periodMonths = parseInt(document.getElementById('mClosedPeriod').value) || 1;
+                    const startDate = new Date(restrictionsTimelineBaseDate);
+                    const endDate = new Date(startDate);
+                    endDate.setMonth(endDate.getMonth() + periodMonths);
+                    endDate.setDate(endDate.getDate() - 1);
+                    selectedRooms.forEach(rid => applyClosedToDates(rid, startDate, endDate));
+                }
+
+                lastRestrictionSelection = null;
+                updateRestrictionSelectionHint();
+                renderRestrictionsGrid();
+                if (document.getElementById('view-grid') && (document.getElementById('view-grid').style.display === 'flex' || document.getElementById('view-grid').style.display === 'block')) {
+                    renderTimeline(true);
+                }
             } else if (currentEditType === 'transaction') {
                 const tType = document.getElementById('mTransType').value;
                 const tCat = document.getElementById('mTransCategory').value;
@@ -4340,6 +4485,13 @@ else if (total === 0) { finText = "Немає ціни"; badgeBg = "rgba(255,255
                     }
                 });
 
+                const closedSegments = getClosedDateSegmentsForRoom(room.id, startDate, daysCount);
+                closedSegments.forEach(seg => {
+                    const blockLeft = seg.startIndex * cellWidth + 2;
+                    const blockWidth = seg.length * cellWidth - 4;
+                    rowHtml += buildMainTimelineClosedHtml(seg, blockLeft, blockWidth);
+                });
+
                 rowHtml += `</div>`; 
                 gridContainer.innerHTML += rowHtml;
             });
@@ -4428,6 +4580,7 @@ else if (total === 0) { finText = "Немає ціни"; badgeBg = "rgba(255,255
         restrictionsTimelineBaseDate.setDate(1);
         let lastRestrictionSelection = null;
         let pendingRestrictionModal = null;
+        let pendingClosedDateModal = null;
         let isRestrictionDragging = false;
         let restrDragRoomId = null;
         let restrDragStartDate = null;
@@ -4441,6 +4594,14 @@ else if (total === 0) { finText = "Немає ціни"; badgeBg = "rgba(255,255
             const ds = formatDateKey(dateObj);
             if (restrictions[roomId] && restrictions[roomId][ds]) return restrictions[roomId][ds];
             return 0;
+        }
+
+        function isDateClosed(roomId, dateObj) {
+            const ds = formatDateKey(dateObj);
+            const rid = String(roomId);
+            if (closedDates[roomId] && closedDates[roomId][ds]) return true;
+            if (closedDates[rid] && closedDates[rid][ds]) return true;
+            return false;
         }
 
         function getBookingMinNightsRequired(room, checkIn, checkOut) {
@@ -4534,6 +4695,79 @@ else if (total === 0) { finText = "Немає ціни"; badgeBg = "rgba(255,255
             return segments;
         }
 
+        function getClosedDateSegmentsForRoom(roomId, startDate, daysCount) {
+            const segments = [];
+            let i = 0;
+            while (i < daysCount) {
+                const d = new Date(startDate);
+                d.setDate(startDate.getDate() + i);
+                if (!isDateClosed(roomId, d)) { i++; continue; }
+                let j = i + 1;
+                while (j < daysCount) {
+                    const dNext = new Date(startDate);
+                    dNext.setDate(startDate.getDate() + j);
+                    if (!isDateClosed(roomId, dNext)) break;
+                    j++;
+                }
+                const dates = [];
+                for (let k = i; k < j; k++) {
+                    const dk = new Date(startDate);
+                    dk.setDate(startDate.getDate() + k);
+                    dates.push(formatDateKey(dk));
+                }
+                segments.push({
+                    startIndex: i,
+                    length: j - i,
+                    dates
+                });
+                i = j;
+            }
+            return segments;
+        }
+
+        function closedBarDataAttrs(roomId, segment) {
+            return `data-room="${roomId}" data-dates="${segment.dates.join(',')}" data-closed="1"
+                onmousedown="onRestrictionBarPointer(event)" onclick="onClosedBarClick(event, this)"`;
+        }
+
+        function buildClosedDateSegmentHtml(roomId, segment, blockLeft, blockWidth) {
+            const { length: spanDays } = segment;
+            const attrs = closedBarDataAttrs(roomId, segment);
+            const title = 'Закрито для бронювання — натисніть для дій';
+            if (blockWidth < 72) {
+                return `<div class="booking-block status-closed closed-date-chip closed-date-chip--single" style="left:${blockLeft}px;width:${blockWidth}px" title="${title}" ${attrs}>
+                    <span class="restriction-chip-single-label">Закрито</span>
+                </div>`;
+            }
+            const rangeHint = spanDays > 1 ? ` · ${spanDays} ${dateWord(spanDays)}` : '';
+            return `<div class="booking-block status-closed closed-date-chip" style="left:${blockLeft}px;width:${blockWidth}px" title="${title}" ${attrs}>
+                <div class="booking-inner-content" style="position:relative;z-index:2;display:flex;flex-direction:column;width:100%;justify-content:center;height:100%;">
+                    <div style="font-size:12px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;line-height:1.2;">Закрито${rangeHint}</div>
+                    <div style="margin-top:4px;display:flex;">
+                        <span style="background:rgba(255,255,255,0.28);color:#fff;font-size:9px;font-weight:700;padding:2px 6px;border-radius:4px;white-space:nowrap;">не для броні</span>
+                    </div>
+                </div>
+            </div>`;
+        }
+
+        function buildMainTimelineClosedHtml(segment, blockLeft, blockWidth) {
+            const { length: spanDays } = segment;
+            if (blockWidth < 56) {
+                return `<div class="booking-block status-closed" style="left:${blockLeft}px;width:${blockWidth}px" title="Закрито">
+                    <span style="font-size:10px;font-weight:700;">Закрито</span>
+                </div>`;
+            }
+            const rangeHint = spanDays > 1 ? ` · ${spanDays} ${dateWord(spanDays)}` : '';
+            return `<div class="booking-block status-closed" style="left:${blockLeft}px;width:${blockWidth}px" title="Закрито для бронювання">
+                <div class="booking-inner-content" style="position:relative;z-index:2;display:flex;flex-direction:column;width:100%;justify-content:center;height:100%;">
+                    <div style="font-size:12px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;line-height:1.2;">Закрито${rangeHint}</div>
+                    <div style="margin-top:4px;display:flex;">
+                        <span style="background:rgba(255,255,255,0.28);color:#fff;font-size:9px;font-weight:700;padding:2px 6px;border-radius:4px;">не для броні</span>
+                    </div>
+                </div>
+            </div>`;
+        }
+
         function restrictionBarDataAttrs(roomId, segment) {
             return `data-room="${roomId}" data-dates="${segment.dates.join(',')}" data-min="${segment.minN}"
                 onmousedown="onRestrictionBarPointer(event)" onclick="onRestrictionBarClick(event, this)"`;
@@ -4615,6 +4849,15 @@ else if (total === 0) { finText = "Немає ціни"; badgeBg = "rgba(255,255
             const dates = (el.getAttribute('data-dates') || '').split(',').filter(Boolean);
             const minN = parseInt(el.getAttribute('data-min'), 10) || 2;
             selectRestrictionSegment(roomId, dates, minN, false);
+            openRestrictionBarMenu(e, el);
+        }
+
+        function onClosedBarClick(e, el) {
+            e.stopPropagation();
+            e.preventDefault();
+            const roomId = el.getAttribute('data-room');
+            const dates = (el.getAttribute('data-dates') || '').split(',').filter(Boolean);
+            selectRestrictionSegment(roomId, dates, 0, false);
             openRestrictionBarMenu(e, el);
         }
 
@@ -4703,7 +4946,7 @@ else if (total === 0) { finText = "Немає ціни"; badgeBg = "rgba(255,255
                 const room = roomsList.find(r => String(r.id) === String(lastRestrictionSelection.roomId));
                 const name = room ? room.name : 'котедж';
                 const n = lastRestrictionSelection.dates.length;
-                hint.innerText = `Обрано ${n} ${dateWord(n)} для «${name}». Натисніть «Конструктор обмежень» або «Видалити».`;
+                hint.innerText = `Обрано ${n} ${dateWord(n)} для «${name}». Натисніть «Конструктор обмежень», «Закрити дати» або «Видалити».`;
                 hint.classList.add('is-visible');
             } else {
                 hint.classList.remove('is-visible');
@@ -4767,13 +5010,21 @@ else if (total === 0) { finText = "Немає ціни"; badgeBg = "rgba(255,255
                     const isWeekend = d.getDay() === 0 || d.getDay() === 5 || d.getDay() === 6;
                     const dateStr = formatDateKey(d);
                     const hasR = getRestrictionMinNights(room.id, d) > 0;
+                    const hasC = isDateClosed(room.id, d);
                     const selCls = getRestrictionCellSelectionClasses(room.id, dateStr);
 
-                    rowHtml += `<div class="restriction-cell timeline-cell ${isWeekend ? 'weekend-restr' : ''} ${hasR ? 'has-restriction' : ''} ${selCls}"
+                    rowHtml += `<div class="restriction-cell timeline-cell ${isWeekend ? 'weekend-restr' : ''} ${hasR ? 'has-restriction' : ''} ${hasC ? 'has-closed' : ''} ${selCls}"
                         data-room="${room.id}" data-date="${dateStr}"
                         onmousedown="startRestrictionCellDrag(event, this)"
                         onmouseenter="enterRestrictionCellDrag(this)"></div>`;
                 }
+
+                const closedSegments = getClosedDateSegmentsForRoom(room.id, startDate, daysCount);
+                closedSegments.forEach(seg => {
+                    const blockLeft = seg.startIndex * cellWidth + 4;
+                    const blockWidth = seg.length * cellWidth - 8;
+                    rowHtml += buildClosedDateSegmentHtml(room.id, seg, blockLeft, blockWidth);
+                });
 
                 const segments = getRestrictionSegmentsForRoom(room.id, startDate, daysCount);
                 segments.forEach(seg => {
@@ -4935,6 +5186,64 @@ else if (total === 0) { finText = "Немає ціни"; badgeBg = "rgba(255,255
             document.querySelectorAll('.restr-period-chip').forEach(c => c.classList.remove('active'));
             el.classList.add('active');
             document.getElementById('mRestrPeriod').value = el.getAttribute('data-val');
+        }
+
+        function toggleAllClosedRoomsChip() {
+            const allBtn = document.getElementById('chip-closed-room-all');
+            const isActive = !allBtn.classList.contains('active');
+            if (isActive) {
+                allBtn.classList.add('active');
+                document.querySelectorAll('.closed-room-chip').forEach(c => c.classList.add('active'));
+            } else {
+                allBtn.classList.remove('active');
+                document.querySelectorAll('.closed-room-chip').forEach(c => c.classList.remove('active'));
+            }
+        }
+
+        function toggleSingleClosedRoomChip(el) {
+            el.classList.toggle('active');
+            const allChips = document.querySelectorAll('.closed-room-chip');
+            const activeChips = document.querySelectorAll('.closed-room-chip.active');
+            const allBtn = document.getElementById('chip-closed-room-all');
+            if (allChips.length === activeChips.length) allBtn.classList.add('active');
+            else allBtn.classList.remove('active');
+        }
+
+        function syncClosedDaysValue() {
+            const activeDays = Array.from(document.querySelectorAll('.closed-day-chip.active'))
+                .map(c => c.getAttribute('data-val'));
+            const allBtn = document.getElementById('chip-closed-day-all');
+            if (activeDays.length === 7) {
+                if (allBtn) allBtn.classList.add('active');
+                document.getElementById('mClosedDays').value = 'all';
+            } else {
+                if (allBtn) allBtn.classList.remove('active');
+                document.getElementById('mClosedDays').value = activeDays.join(',');
+            }
+        }
+
+        function toggleAllClosedDaysChip() {
+            const allBtn = document.getElementById('chip-closed-day-all');
+            const isActive = !allBtn.classList.contains('active');
+            if (isActive) {
+                allBtn.classList.add('active');
+                document.querySelectorAll('.closed-day-chip').forEach(c => c.classList.add('active'));
+            } else {
+                allBtn.classList.remove('active');
+                document.querySelectorAll('.closed-day-chip').forEach(c => c.classList.remove('active'));
+            }
+            syncClosedDaysValue();
+        }
+
+        function toggleSingleClosedDayChip(el) {
+            el.classList.toggle('active');
+            syncClosedDaysValue();
+        }
+
+        function selectClosedPeriodChip(el) {
+            document.querySelectorAll('.closed-period-chip').forEach(c => c.classList.remove('active'));
+            el.classList.add('active');
+            document.getElementById('mClosedPeriod').value = el.getAttribute('data-val');
         }
 
         // --- ПЕРЕМИКАЧ ТВАРИН ---
