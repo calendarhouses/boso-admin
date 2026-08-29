@@ -2261,7 +2261,14 @@
                 body.innerHTML = '<div style="color:#9CA3AF;padding:12px 0;">Поки немає відправок</div>';
                 return;
             }
-            const typeLabels = { review: 'Відгук', test: 'Тест' };
+            const typeLabels = {
+                review: 'Відгук',
+                test: 'Тест',
+                payment: 'Оплата',
+                payment_remainder: 'Оплата',
+                payment_prepay: 'Оплата',
+                payment_full: 'Оплата'
+            };
             body.innerHTML = journal.map(function(e) {
                 const badge = resolveSmsDeliveryBadge(e);
                 const textShort = String(e.text || '').length > 120 ? String(e.text).substring(0, 120) + '…' : (e.text || '');
@@ -4934,6 +4941,7 @@ function setHalfPrepayment() {
 const BOSO_GUEST_PAY_ORIGIN = 'https://boso.com.ua';
 
 function bosoGetCurrentDrawerBookingId() {
+    if (window._editingBookingId) return String(window._editingBookingId);
     if (!editingRowNumber) return '';
     const b = allBookings.find(x => x.row == editingRowNumber);
     return b && b.id ? String(b.id) : '';
@@ -4967,7 +4975,7 @@ async function bosoCopyPaymentLink() {
     const url = bosoBuildGuestPayUrl(bookingId);
     try {
         await navigator.clipboard.writeText(url);
-        showToast('Посилання скопійовано');
+        showToast('Посилання скопійовано: ' + bookingId);
     } catch (e) {
         showToast(url);
     }
@@ -5009,6 +5017,7 @@ async function bosoSendRemainderPaymentSms() {
 
         function openNewBookingDrawer(prefillRoom = null, prefillDateStart = null, prefillDateEnd = null) {
             editingRowNumber = null;
+            window._editingBookingId = '';
             prevFormState = { checkIn: "", checkOut: "", cottage: "", guests: 0, pets: "", dayGuests: 0, crib: "", early: null, late: null };
             document.getElementById('drawerTitle').innerText = 'Нова бронь'; 
             document.getElementById('adminBookingForm').reset();
@@ -5082,6 +5091,7 @@ async function bosoSendRemainderPaymentSms() {
             const booking = allBookings.find(b => b.row == rowNumber); if (!booking) return;
             window._bookingDrawerLoading = true;
             editingRowNumber = rowNumber;
+            window._editingBookingId = booking.id ? String(booking.id) : '';
             prevFormState = { checkIn: "", checkOut: "", cottage: "", guests: 0, pets: "", dayGuests: 0, crib: "", early: null, late: null };
 
             let savedPrepayInit = Number(booking.prepayAmount) || 0;
