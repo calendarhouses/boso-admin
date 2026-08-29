@@ -6205,6 +6205,15 @@ const appliesToRoom =
                         </div>
                     </div>
 
+                    <div id="adminPayLinkActions" style="display:none; margin-top: 12px; gap: 8px; flex-wrap: wrap;">
+                        <button type="button" class="btn-secondary" id="btnSendRemainderSms" onclick="bosoSendRemainderPaymentSms()" style="flex:1; min-width: 160px; font-size: 13px;">
+                            SMS з оплатою решти
+                        </button>
+                        <button type="button" class="btn-secondary" id="btnCopyPayLink" onclick="bosoCopyPaymentLink()" style="flex:1; min-width: 160px; font-size: 13px;">
+                            Скопіювати посилання
+                        </button>
+                    </div>
+
                     <div class="payment-journal">
                         <div class="payment-journal-head">
                             <div>
@@ -6336,6 +6345,10 @@ function calculateBalanceLive() {
         balEl.style.borderColor = "#FECACA";
     }
 
+    if (typeof bosoUpdatePayLinkActionsVisibility === 'function') {
+        bosoUpdatePayLinkActionsVisibility(balance);
+    }
+
     // Авто-статус тільки для НОВИХ броней (не чіпаємо існуючі при глюку UI)
     let activeStatusBtn = document.querySelector('.status-btn.active');
     let currentStatus = activeStatusBtn ? activeStatusBtn.getAttribute('data-status') : '';
@@ -6348,6 +6361,76 @@ function calculateBalanceLive() {
             let newBtn = document.querySelector('.status-btn[data-status="Нова бронь"]');
             if (newBtn) newBtn.classList.add('active');
         }
+    }
+}
+
+const BOSO_GUEST_PAY_ORIGIN = 'https://boso.com.ua';
+
+function bosoGetCurrentDrawerBookingId() {
+    if (!editingRowNumber) return '';
+    const b = allBookings.find(x => x.row == editingRowNumber);
+    return b && b.id ? String(b.id) : '';
+}
+
+function bosoBuildGuestPayUrl(bookingId) {
+    return BOSO_GUEST_PAY_ORIGIN + '/pay.html?id=' + encodeURIComponent(String(bookingId || ''));
+}
+
+function bosoUpdatePayLinkActionsVisibility(balanceOpt) {
+    const wrap = document.getElementById('adminPayLinkActions');
+    if (!wrap) return;
+    const totalEl = document.getElementById('adminTotalPrice');
+    const prepayEl = document.getElementById('adminPrepayAmount');
+    const surchargeEl = document.getElementById('adminSurchargeAmount');
+    const balance = balanceOpt != null
+        ? Number(balanceOpt)
+        : ((Number(totalEl && totalEl.value) || 0)
+            - (Number(prepayEl && prepayEl.value) || 0)
+            - (Number(surchargeEl && surchargeEl.value) || 0));
+    const bookingId = bosoGetCurrentDrawerBookingId();
+    const show = !!bookingId && balance > 0;
+    wrap.style.display = show ? 'flex' : 'none';
+}
+
+async function bosoCopyPaymentLink() {
+    const bookingId = bosoGetCurrentDrawerBookingId();
+    if (!bookingId) {
+        showToast('Спочатку збережіть бронювання');
+        return;
+    }
+    const url = bosoBuildGuestPayUrl(bookingId);
+    try {
+        await navigator.clipboard.writeText(url);
+        showToast('Посилання скопійовано');
+    } catch (e) {
+        showToast(url);
+    }
+}
+
+async function bosoSendRemainderPaymentSms() {
+    const bookingId = bosoGetCurrentDrawerBookingId();
+    if (!bookingId) {
+        showToast('Спочатку збережіть бронювання');
+        return;
+    }
+    const btn = document.getElementById('btnSendRemainderSms');
+    if (btn) { btn.disabled = true; btn.textContent = 'Надсилаємо…'; }
+    try {
+        const res = await BosoAuth.apiFetch(API_URL, {
+            method: 'POST',
+            headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+            body: JSON.stringify({ action: 'sendPaymentSms', bookingId: bookingId, amountKind: 'remainder' })
+        });
+        const json = await res.json();
+        if (json.success) {
+            showToast('SMS з оплатою надіслано (' + (json.amount || '') + ' грн)');
+        } else {
+            showToast(json.error || 'Не вдалося надіслати SMS');
+        }
+    } catch (e) {
+        showToast('Помилка відправки SMS');
+    } finally {
+        if (btn) { btn.disabled = false; btn.textContent = 'SMS з оплатою решти'; }
     }
 }
 
