@@ -1187,7 +1187,7 @@
                         <input type="checkbox" id="smsEnabled" checked style="width:18px;height:18px;"> Увімкнути авто-SMS після виїзду
                     </label>
 
-                    <article class="sms-template-card is-open" data-sms-tpl="review">
+                    <article class="sms-template-card" data-sms-tpl="review">
                         <button type="button" class="sms-template-card__head" onclick="toggleSmsAccordion('review')">
                             <div class="sms-template-card__icon" aria-hidden="true">
                                 <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"/></svg>
@@ -2188,21 +2188,13 @@
             return Math.ceil(s.length / concatLimit);
         }
         function toggleSmsAccordion(tpl) {
-            const cards = document.querySelectorAll('#smsViewSettings .sms-template-card[data-sms-tpl]');
-            cards.forEach(function(card) {
-                const isTarget = card.getAttribute('data-sms-tpl') === tpl;
-                if (isTarget) card.classList.toggle('is-open');
-                else card.classList.remove('is-open');
-            });
             const target = document.querySelector('#smsViewSettings .sms-template-card[data-sms-tpl="' + tpl + '"]');
-            if (target && !document.querySelector('#smsViewSettings .sms-template-card.is-open')) {
-                target.classList.add('is-open');
-            }
+            if (target) target.classList.toggle('is-open');
             updateSmsTemplatePreview();
         }
         function getOpenSmsTemplateKey() {
             const open = document.querySelector('#smsViewSettings .sms-template-card.is-open');
-            return open ? open.getAttribute('data-sms-tpl') : 'review';
+            return open ? open.getAttribute('data-sms-tpl') : null;
         }
         function insertSmsVarAtCursor(snippet, textareaId) {
             const ta = document.getElementById(textareaId || 'smsReviewText');
@@ -2300,14 +2292,23 @@
         }
         function updateSmsTemplatePreview() {
             const urlEl = document.getElementById('smsReviewUrl');
-            const reviewMeta = updateOneSmsPreview('smsReviewText', 'smsReviewPreview', 'smsReviewStats', {
+            updateOneSmsPreview('smsReviewText', 'smsReviewPreview', 'smsReviewStats', {
                 reviewUrl: urlEl ? urlEl.value : ''
             });
-            const paymentMeta = updateOneSmsPreview('smsPaymentText', 'smsPaymentPreview', 'smsPaymentStats', {});
+            updateOneSmsPreview('smsPaymentText', 'smsPaymentPreview', 'smsPaymentStats', {});
             const active = getOpenSmsTemplateKey();
-            const meta = active === 'payment' ? paymentMeta : reviewMeta;
             const costEl = document.getElementById('smsCostPreview');
             const segEl = document.getElementById('smsSegmentsPreview');
+            if (!active) {
+                if (costEl) costEl.textContent = '—';
+                if (segEl) segEl.textContent = 'відкрийте шаблон';
+                return;
+            }
+            const meta = active === 'payment'
+                ? updateOneSmsPreview('smsPaymentText', 'smsPaymentPreview', 'smsPaymentStats', {})
+                : updateOneSmsPreview('smsReviewText', 'smsReviewPreview', 'smsReviewStats', {
+                    reviewUrl: urlEl ? urlEl.value : ''
+                });
             if (meta) {
                 if (costEl) costEl.textContent = (Math.round(meta.segments * meta.price * 100) / 100).toFixed(2) + ' грн';
                 if (segEl) segEl.textContent = meta.segments + ' сегм. · ' + meta.rendered.length + ' символів';
@@ -2507,6 +2508,10 @@
             if (!phone) { showToast('Вкажіть тестовий номер'); return; }
             const active = getOpenSmsTemplateKey();
             let text = '';
+            if (!active) {
+                showToast('Відкрийте шаблон для тесту');
+                return;
+            }
             if (active === 'payment') {
                 text = renderSmsTemplatePreviewText(document.getElementById('smsPaymentText').value, {});
             } else {
