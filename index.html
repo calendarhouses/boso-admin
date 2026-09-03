@@ -7125,6 +7125,10 @@ document.getElementById('adminGuests').addEventListener('change', updatePricePre
        document.getElementById('adminBookingForm').addEventListener('submit', async function(e) {
             e.preventDefault(); 
             const btn = document.getElementById('adminSubmitBtn'); 
+            if (btn.disabled) {
+                showToast("❌ Виправте помилки перед збереженням!");
+                return;
+            }
             const originalText = btn.innerText; 
             btn.innerText = "Збереження..."; 
             btn.disabled = true;
@@ -7155,6 +7159,7 @@ document.getElementById('adminGuests').addEventListener('change', updatePricePre
             }
 
             const paymentsForSave = bosoBuildPaymentsForSave();
+            const isEdit = typeof editingRowNumber !== 'undefined' && editingRowNumber !== null;
 
             // 🟢 ТЕПЕР ЗБИРАЄМО ДАНІ ЧЕРЕЗ getVal()
             const bookingData = { 
@@ -7187,11 +7192,11 @@ document.getElementById('adminGuests').addEventListener('change', updatePricePre
                 discountAmount: getVal('manualDiscount')
             };
             
-            if (typeof editingRowNumber !== 'undefined' && editingRowNumber !== null) bookingData.row = editingRowNumber;
+            if (isEdit) bookingData.row = editingRowNumber;
 
             // 🟢 РОБИМО ЧИСТУ КОПІЮ ДЛЯ GOOGLE
             const payloadForServer = { ...bookingData };
-            if (typeof editingRowNumber !== 'undefined' && editingRowNumber) {
+            if (isEdit) {
                 const openPay = window._bookingOpenPayments || { prepay: 0, surcharge: 0 };
                 const newSurcharge = getVal('adminSurchargeAmount');
                 const surchargeDelta = newSurcharge - (Number(openPay.surcharge) || 0);
@@ -7229,46 +7234,151 @@ document.getElementById('adminGuests').addEventListener('change', updatePricePre
             }
             // ==========================================
 
-            // 🟢 ОПТИМІСТИЧНЕ ОНОВЛЕННЯ (МИТТЄВО)
-            if (typeof editingRowNumber !== 'undefined' && editingRowNumber) {
-                let idx = allBookings.findIndex(b => b.row == editingRowNumber);
-                if (idx !== -1) allBookings[idx] = bookingData;
-            } else {
-                bookingData.row = 'temp_' + Date.now();
-                allBookings.push(bookingData);
+            // Скріншоти для нової броні шлемо ПІСЛЯ успішного save —
+            // інакше важкий base64 + Telegram може таймаутити весь запит.
+            const notifyScreenshots = {
+                screenshot: payloadForServer.screenshot || null,
+                screenshotCleaning: payloadForServer.screenshotCleaning || null,
+                screenshotPayment: payloadForServer.screenshotPayment || null
+            };
+            if (!isEdit) {
+                delete payloadForServer.screenshot;
+                delete payloadForServer.screenshotCleaning;
+                delete payloadForServer.screenshotPayment;
             }
 
-            // ЗАКРИВАЄМО ШТОРКУ ВІДРАЗУ!
-            closeDrawer(); 
-            showToast("Збережено!");
-            
-            // Перемальовуємо те, що зараз бачимо
-            if (document.getElementById('view-grid').style.display === 'flex') renderTimeline(true);
-            if (document.getElementById('view-list').style.display === 'block') {
-                const activeTab = document.querySelector('.m-tab.active') || document.querySelector('.tab.active');
-                if (activeTab) activeTab.click();
-                else renderTable(allBookings);
-            }
+            const findSavedBooking = () => allBookings.find(b =>
+                String(b.name || '') === String(bookingData.name || '') &&
+                String(b.checkIn || '') === String(bookingData.checkIn || '') &&
+                String(b.checkOut || '') === String(bookingData.checkOut || '') &&
+                String(b.cottage || '') === String(bookingData.cottage || '') &&
+                String(b.phone || '').replace(/\D/g, '') === String(bookingData.phone || '').replace(/\D/g, '') &&
+                !String(b.row || '').startsWith('temp_')
+            );
 
-            btn.innerText = originalText; 
-            btn.disabled = false;
+            const sendTelegramCards = (orderId) => {
+                if (!orderId) return;
+                const notifyPayload = {
+                    action: 'sendSuccessScreenshot',
+                    orderId: orderId,
+                    cottage: bookingData.cottage,
+                    name: bookingData.name,
+                    phone: bookingData.phone,
+                    checkIn: bookingData.checkIn,
+                    checkOut: bookingData.checkOut,
+                    guests: bookingData.guests,
+                    pets: bookingData.pets,
+                    totalPrice: bookingData.totalPrice,
+                    paidAmount: bookingData.paidAmount,
+                    source: bookingData.source,
+                    comment: bookingData.comment,
+                    cribFee: bookingData.cribFee,
+                    screenshot: notifyScreenshots.screenshot,
+                    screenshotCleaning: notifyScreenshots.screenshotCleaning,
+                    screenshotPayment: notifyScreenshots.screenshotPayment
+                };
+                BosoAuth.apiFetch(API_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                    body: JSON.stringify(notifyPayload)
+                }).catch(function () { /* fallback-тригер на сервері дошле текст */ });
+            };
 
-            // 🟢 ФОНОВА ВІДПРАВКА В GOOGLE (разом з фоткою)
-            BosoAuth.apiFetch(API_URL, { 
-                method: 'POST', 
-                headers: { 'Content-Type': 'text/plain;charset=utf-8' }, 
-                body: JSON.stringify(payloadForServer) 
-            }).then(res => res.json()).then(json => {
-                if (json.error === "OVERLAP") { 
-                    alert("❌ ПОМИЛКА: Ці дати щойно були зайняті."); 
-                } else if (json.error === "MIN_STAY") {
-                    alert(`❌ Сервер відхилив збереження: мінімум ${json.requiredMin || '?'} ${nightWord(json.requiredMin || 2)}. Задеплойте оновлений Apps Script.`);
+            const finishCreateSuccess = (orderId) => {
+                if (orderId) {
+                    bookingData.id = orderId;
+                    bookingData.row = 'temp_' + Date.now();
+                    if (!allBookings.some(b => String(b.id) === String(orderId))) {
+                        allBookings.push(bookingData);
+                    }
+                    sendTelegramCards(orderId);
                 }
-                silentSync(); // 🟢 ТИХЕ ОНОВЛЕННЯ БЕЗ СТРИБКІВ!
-            }).catch(error => {
+                closeDrawer();
+                showToast("Збережено!");
+                if (document.getElementById('view-grid').style.display === 'flex') renderTimeline(true);
+                if (document.getElementById('view-list').style.display === 'block') {
+                    const activeTab = document.querySelector('.m-tab.active') || document.querySelector('.tab.active');
+                    if (activeTab) activeTab.click();
+                    else renderTable(allBookings);
+                }
+                silentSync();
+            };
+
+            // Чекаємо підтвердження сервера — шторку НЕ закриваємо до успіху
+            try {
+                const res = await BosoAuth.apiFetch(API_URL, { 
+                    method: 'POST', 
+                    headers: { 'Content-Type': 'text/plain;charset=utf-8' }, 
+                    body: JSON.stringify(payloadForServer) 
+                });
+                const json = (typeof BosoAuth.parseApiJson === 'function')
+                    ? await BosoAuth.parseApiJson(res)
+                    : await res.json();
+
+                if (json && json.error === "OVERLAP") { 
+                    alert("❌ ПОМИЛКА: Ці дати щойно були зайняті.");
+                    return;
+                }
+                if (json && json.error === "MIN_STAY") {
+                    alert(`❌ Сервер відхилив збереження: мінімум ${json.requiredMin || '?'} ${nightWord(json.requiredMin || 2)}.`);
+                    return;
+                }
+                if (json && json.error === "BUSY") {
+                    alert("❌ Сервер зайнятий. Зачекайте кілька секунд і спробуйте ще раз — дані у формі збережено.");
+                    return;
+                }
+                if (!json || json.success !== true || json.error) {
+                    try { await silentSync(); } catch (syncErr) {}
+                    const existing = !isEdit ? findSavedBooking() : null;
+                    if (existing) {
+                        finishCreateSuccess(existing.id || existing.orderId);
+                        return;
+                    }
+                    const msg = (json && json.error && json.error !== 'PARSE_ERROR')
+                        ? String(json.error)
+                        : "Не вдалося зберегти бронь. Спробуйте ще раз.";
+                    alert("❌ " + msg);
+                    return;
+                }
+                if (!isEdit && !json.orderId) {
+                    try { await silentSync(); } catch (syncErr) {}
+                    const existing = findSavedBooking();
+                    if (existing) {
+                        finishCreateSuccess(existing.id || existing.orderId);
+                        return;
+                    }
+                    alert("❌ Сервер не підтвердив створення броні. Спробуйте ще раз.");
+                    return;
+                }
+
+                if (isEdit) {
+                    let idx = allBookings.findIndex(b => b.row == editingRowNumber);
+                    if (idx !== -1) allBookings[idx] = { ...bookingData, row: editingRowNumber };
+                    closeDrawer(); 
+                    showToast("Збережено!");
+                    if (document.getElementById('view-grid').style.display === 'flex') renderTimeline(true);
+                    if (document.getElementById('view-list').style.display === 'block') {
+                        const activeTab = document.querySelector('.m-tab.active') || document.querySelector('.tab.active');
+                        if (activeTab) activeTab.click();
+                        else renderTable(allBookings);
+                    }
+                    silentSync();
+                } else {
+                    finishCreateSuccess(json.orderId);
+                }
+            } catch (error) {
                 if (error && error.message === 'UNAUTHORIZED') return;
-                showToast("Помилка синхронізації!");
-            });
+                try { await silentSync(); } catch (syncErr) {}
+                const existing = !isEdit ? findSavedBooking() : null;
+                if (existing) {
+                    finishCreateSuccess(existing.id || existing.orderId);
+                    return;
+                }
+                alert("❌ Не вдалося зберегти бронь. Перевірте інтернет і спробуйте ще раз — дані у формі збережено.");
+            } finally {
+                btn.innerText = originalText; 
+                btn.disabled = false;
+            }
         });
 
 
