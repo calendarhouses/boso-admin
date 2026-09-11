@@ -51,7 +51,7 @@
     })();
     </script>
     <script src="/auth.js?v=8"></script>
-    <script src="/additional-services.js?v=1"></script>
+    <script src="/additional-services.js?v=2"></script>
     <script src="/settings-services-ui.js?v=2"></script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -7763,31 +7763,25 @@ document.addEventListener('click', function(e) {
                 const iconShield = `<svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="margin-right: 6px; color: #9CA3AF;"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path></svg>`;
                 const iconPaw = `<svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="margin-right: 6px; color: #9CA3AF;"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"></path></svg>`;
 
-                let cleanComment = rawComment;
-
                 // Денні гості
                 let matchDay = rawComment.match(/👥 Денні гості[^:]*:\s*(\d+)/);
                 if (matchDay) {
                     extraRowsHtml += `<div class="bt-row"><span class="bt-label" style="display:flex;align-items:center;">${iconUsers} Денні гості:</span> <span class="bt-val">${matchDay[1]}</span></div>`;
-                    cleanComment = cleanComment.replace(/👥 Денні гості[^|]+(\|\s*)?/, '');
                 }
 
                 // Дитяче ліжечко
                 if (rawComment.includes('🛏️ Дитяче ліжечко: Так') || Number(b.cribFee) > 0) {
                     extraRowsHtml += `<div class="bt-row"><span class="bt-label" style="display:flex;align-items:center;">🛏️ Дитяче ліжечко:</span> <span class="bt-val" style="color:var(--accent);">Так</span></div>`;
-                    cleanComment = cleanComment.replace(/🛏️ Дитяче ліжечко: Так\s*(\|\s*)?/, '');
                 }
 
                 // Чан
                 if (rawComment.includes('♨️ Чан: Так')) {
                     extraRowsHtml += `<div class="bt-row"><span class="bt-label" style="display:flex;align-items:center;">${iconVat} Чан:</span> <span class="bt-val" style="color:var(--accent);">Так</span></div>`;
-                    cleanComment = cleanComment.replace(/♨️ Чан: Так\s*(\|\s*)?/, '');
                 }
 
                 // УБД
                 if (rawComment.includes('🇺🇦 УБД: Так')) {
                     extraRowsHtml += `<div class="bt-row"><span class="bt-label" style="display:flex;align-items:center;">${iconShield} УБД:</span> <span class="bt-val" style="color:var(--accent);">Так</span></div>`;
-                    cleanComment = cleanComment.replace(/🇺🇦 УБД: Так\s*(\|\s*)?/, '');
                 }
 
                 // Тварини (читаємо напряму з об'єкта броні)
@@ -7795,20 +7789,10 @@ document.addEventListener('click', function(e) {
                     extraRowsHtml += `<div class="bt-row"><span class="bt-label" style="display:flex;align-items:center;">${iconPaw} Тварини:</span> <span class="bt-val" style="color:var(--accent);">Так</span></div>`;
                 }
 
-                // ВАЖЛИВО: Видаляємо ранній і пізній заїзд з тексту, щоб вони не дублювалися в списку
-                cleanComment = cleanComment.replace(/🕒 Ранній заїзд: з \d{2}:\d{2}(\s*\|\s*)?/g, '');
-                cleanComment = cleanComment.replace(/🕒 Пізній виїзд: до \d{2}:\d{2}(\s*\|\s*)?/g, '');
-
-                // Фінальна чистка коментаря
-                cleanComment = cleanComment.trim();
-                cleanComment = cleanComment.replace(/^\|\s*/, '').replace(/\|\s*$/, '').trim();
-                
-                // Видаляємо фразу "Коментар гостя:" де б вона не була (разом з можливими переносами)
-                cleanComment = cleanComment.replace(/Коментар гостя:/gi, '').trim();
-                
-                if (cleanComment === "undefined" || cleanComment === "null" || cleanComment === "") {
-                    cleanComment = "";
-                }
+                // Лише текст гостя — без системних токенів послуг (🛎️# / A#1001:Tak)
+                let cleanComment = (typeof BosoServices !== 'undefined' && BosoServices.getGuestVisibleComment)
+                    ? BosoServices.getGuestVisibleComment(rawComment)
+                    : '';
 
                 let commentHtml = cleanComment !== "" 
                     ? `<div style="margin-top: 16px; padding: 12px 14px; background: #F9FAFB; border-left: 3px solid var(--accent); border-radius: 4px 8px 8px 4px; font-size: 13px; color: #4B5563; line-height: 1.4; text-align: left;">
@@ -9883,17 +9867,22 @@ async function capturePremiumCard(b) {
         basePrice = Math.max(0, total + discAmt - feeSum);
     }
 
-    // Очищаємо коментар
-    let cleanComment = rawComment.replace(/👥 Денні гості[^|]+(\|\s*)?/g, '')
-                                 .replace(/🛏️ Дитяче ліжечко: Так\s*(\|\s*)?/g, '')
-                                 .replace(/♨️ Чан: Так\s*(\|\s*)?/g, '')
-                                 .replace(/🇺🇦 УБД: Так\s*(\|\s*)?/g, '')
-                                 .replace(/🕒 Ранній заїзд: з \d{2}:\d{2}(\s*\|\s*)?/g, '')
-                                 .replace(/🕒 Пізній виїзд: до \d{2}:\d{2}(\s*\|\s*)?/g, '')
-                                 .replace(/Коментар гостя:/gi, '')
-                                 .replace(/^\|\s*/, '')
-                                 .replace(/\|\s*$/, '')
-                                 .trim();
+    // Очищаємо коментар — лише текст гостя
+    let cleanComment = (typeof BosoServices !== 'undefined' && BosoServices.getGuestVisibleComment)
+        ? BosoServices.getGuestVisibleComment(rawComment)
+        : String(rawComment || '')
+            .replace(/🛎️#\d+(?:⏳)?:\s*[^|\n]+/g, '')
+            .replace(/(?:^|[|\s\n])(?:[A-Za-z])?#\d+(?:⏳)?:\s*[^|\n]+/g, ' ')
+            .replace(/👥 Денні гості[^|]+(\|\s*)?/g, '')
+            .replace(/🛏️ Дитяче ліжечко: Так\s*(\|\s*)?/g, '')
+            .replace(/♨️ Чан: Так\s*(\|\s*)?/g, '')
+            .replace(/🇺🇦 УБД: Так\s*(\|\s*)?/g, '')
+            .replace(/🕒 Ранній заїзд: з \d{2}:\d{2}(\s*\|\s*)?/g, '')
+            .replace(/🕒 Пізній виїзд: до \d{2}:\d{2}(\s*\|\s*)?/g, '')
+            .replace(/Коментар гостя:/gi, '')
+            .replace(/^\|\s*/, '')
+            .replace(/\|\s*$/, '')
+            .trim();
 
     // 🟢 Будуємо розділ послуг
     let extraHtml = '';
@@ -10464,15 +10453,20 @@ async function captureCleaningCard(b) {
     let matchLate = rawComment.match(/🕒 Пізній виїзд: до (\d{2}:\d{2})/);
     let lateTime = matchLate ? matchLate[1] : null;
 
-    let cleanComment = rawComment.replace(/👥 Денні гості[^|]+(\|\s*)?/g, '')
-                                 .replace(/🛏️ Дитяче ліжечко: Так\s*(\|\s*)?/g, '')
-                                 .replace(/♨️ Чан: Так\s*(\|\s*)?/g, '')
-                                 .replace(/🇺🇦 УБД: Так\s*(\|\s*)?/g, '')
-                                 .replace(/🕒 Ранній заїзд: з \d{2}:\d{2}(\s*\|\s*)?/g, '')
-                                 .replace(/🕒 Пізній виїзд: до \d{2}:\d{2}(\s*\|\s*)?/g, '')
-                                 .replace(/Коментар гостя:/gi, '')
-                                 .replace(/^[|\s]+|[|\s]+$/g, '')
-                                 .trim();
+    let cleanComment = (typeof BosoServices !== 'undefined' && BosoServices.getGuestVisibleComment)
+        ? BosoServices.getGuestVisibleComment(rawComment)
+        : String(rawComment || '')
+            .replace(/🛎️#\d+(?:⏳)?:\s*[^|\n]+/g, '')
+            .replace(/(?:^|[|\s\n])(?:[A-Za-z])?#\d+(?:⏳)?:\s*[^|\n]+/g, ' ')
+            .replace(/👥 Денні гості[^|]+(\|\s*)?/g, '')
+            .replace(/🛏️ Дитяче ліжечко: Так\s*(\|\s*)?/g, '')
+            .replace(/♨️ Чан: Так\s*(\|\s*)?/g, '')
+            .replace(/🇺🇦 УБД: Так\s*(\|\s*)?/g, '')
+            .replace(/🕒 Ранній заїзд: з \d{2}:\d{2}(\s*\|\s*)?/g, '')
+            .replace(/🕒 Пізній виїзд: до \d{2}:\d{2}(\s*\|\s*)?/g, '')
+            .replace(/Коментар гостя:/gi, '')
+            .replace(/^[|\s]+|[|\s]+$/g, '')
+            .trim();
 
     let extraHtml = '';
     const rowStyle = `display:flex; justify-content:space-between; align-items:center; margin-bottom: 12px; font-size: 15px; color: #4B5563;`;

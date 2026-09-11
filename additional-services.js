@@ -194,29 +194,29 @@
     return parts.join(' + ') || '0 ₴';
   }
 
+  function ingestServiceTokenMatch(result, id, rawValue) {
+    var value = String(rawValue || '').trim();
+    if (!value || value === 'Ні' || /^ni$/i.test(value) || /^no$/i.test(value)) return;
+    if (value === 'Так' || value.indexOf('Так') === 0 || /^tak$/i.test(value) || /^yes$/i.test(value)) {
+      result[String(id)] = 1;
+      return;
+    }
+    var qty = parseInt(value, 10);
+    if (isFinite(qty) && qty > 0) result[String(id)] = qty;
+  }
+
   function parseSelectedServicesFromComment(raw) {
     var result = {};
     var text = String(raw || '');
     var re1 = new RegExp(SERVICE_TOKEN.source, 'g');
     var re2 = new RegExp(SERVICE_PENDING_TOKEN.source, 'g');
+    var re3 = /(?:^|[|\s\n])(?:[A-Za-z])?#(\d+)(?:⏳)?:\s*([^|\n]+)/g;
     var match;
-    while ((match = re1.exec(text))) {
-      var value = String(match[2] || '').trim();
-      if (value === 'Ні') continue;
-      if (value === 'Так' || value.indexOf('Так') === 0) result[match[1]] = 1;
-      else {
-        var qty = parseInt(value, 10);
-        if (isFinite(qty) && qty > 0) result[match[1]] = qty;
-      }
-    }
-    while ((match = re2.exec(text))) {
-      var value2 = String(match[2] || '').trim();
-      if (value2 === 'Ні') continue;
-      if (value2 === 'Так' || value2.indexOf('Так') === 0) result[match[1]] = 1;
-      else {
-        var qty2 = parseInt(value2, 10);
-        if (isFinite(qty2) && qty2 > 0) result[match[1]] = qty2;
-      }
+    while ((match = re1.exec(text))) ingestServiceTokenMatch(result, match[1], match[2]);
+    while ((match = re2.exec(text))) ingestServiceTokenMatch(result, match[1], match[2]);
+    while ((match = re3.exec(text))) {
+      if (result[match[1]]) continue; // вже з нормального токена
+      ingestServiceTokenMatch(result, match[1], match[2]);
     }
     return result;
   }
@@ -225,10 +225,54 @@
     return String(raw || '')
       .replace(new RegExp(SERVICE_TOKEN.source, 'g'), '')
       .replace(new RegExp(SERVICE_PENDING_TOKEN.source, 'g'), '')
+      // мангелені / без emoji: A#1001:Tak, #1002: 2
+      .replace(/(?:^|[|\s\n])(?:[A-Za-z])?#\d+(?:⏳)?:\s*[^|\n]+/g, ' ')
+      .replace(/\|\s*\|\s*/g, ' | ')
+      .replace(/^\|\s*/, '')
+      .replace(/\|\s*$/, '')
+      .replace(/\s{2,}/g, ' ')
+      .trim();
+  }
+
+  function stripScheduleFlagsFromComment(raw) {
+    return String(raw || '')
+      .replace(/🕒\s*Ранній заїзд:[^|]*/g, '')
+      .replace(/🕒\s*Пізній виїзд:[^|]*/g, '')
+      .replace(/🇺🇦\s*УБД:\s*Так\s*(\|\s*)?/g, '')
       .replace(/\|\s*\|\s*/g, ' | ')
       .replace(/^\|\s*/, '')
       .replace(/\|\s*$/, '')
       .trim();
+  }
+
+  /** Лише видимий текст гостя — без системних токенів послуг/прапорців */
+  function getGuestVisibleComment(raw) {
+    var text = String(raw || '');
+    if (!text || text === 'undefined' || text === 'null') return '';
+
+    var guestMatch = text.match(/Коментар гостя:\s*([\s\S]*)/i);
+    if (guestMatch) {
+      text = String(guestMatch[1] || '').trim();
+    } else {
+      text = stripServiceTokensFromComment(text);
+      text = stripLegacyServiceFlagsFromComment(text);
+      text = stripScheduleFlagsFromComment(text);
+    }
+
+    // на випадок, якщо токени просочились у секцію гостя
+    text = stripServiceTokensFromComment(text);
+    text = stripLegacyServiceFlagsFromComment(text);
+    text = stripScheduleFlagsFromComment(text);
+    text = text
+      .replace(/Коментар гостя:/gi, '')
+      .replace(/\|?\s*\|/g, ' ')
+      .replace(/\s{2,}/g, ' ')
+      .trim();
+
+    if (!text || text === 'undefined' || text === 'null' || text === 'Немає') return '';
+    // якщо лишилось лише сміття на кшталт "#1001" / "A#1001:Tak"
+    if (/^(?:[A-Za-z])?#\d+(?:⏳)?:?\s*(?:Так|Tak|Ні|Ni|\d+)?$/i.test(text)) return '';
+    return text;
   }
 
   function stripLegacyServiceFlagsFromComment(raw) {
@@ -422,6 +466,8 @@
     parseSelectedServicesFromComment: parseSelectedServicesFromComment,
     stripServiceTokensFromComment: stripServiceTokensFromComment,
     stripLegacyServiceFlagsFromComment: stripLegacyServiceFlagsFromComment,
+    stripScheduleFlagsFromComment: stripScheduleFlagsFromComment,
+    getGuestVisibleComment: getGuestVisibleComment,
     buildServiceCommentTokens: buildServiceCommentTokens,
     migrateLegacyServiceSelection: migrateLegacyServiceSelection,
     parseLegacyFlagsFromComment: parseLegacyFlagsFromComment,
