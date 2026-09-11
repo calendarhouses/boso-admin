@@ -7047,11 +7047,15 @@ document.getElementById('adminGuests').addEventListener('change', updatePricePre
                 textComment = textComment.replace(lateRegex, '').trim();
             }
 
-            // 4. Фінальна чистка (прибираємо зайві "Коментар гостя:" та палички "|")
-            textComment = textComment.replace(/^Коментар гостя:\s*/, '')
-                                     .replace(/^\|\s*/, '')
-                                     .replace(/\|\s*$/, '')
-                                     .trim();
+            // 4. Фінальна чистка — лише видимий текст гостя (без 🛎️# / A#1001 токенів)
+            if (typeof BosoServices !== 'undefined' && BosoServices.getGuestVisibleComment) {
+                textComment = BosoServices.getGuestVisibleComment(booking.comment || '');
+            } else {
+                textComment = textComment.replace(/^Коментар гостя:\s*/, '')
+                                         .replace(/^\|\s*/, '')
+                                         .replace(/\|\s*$/, '')
+                                         .trim();
+            }
 
             document.getElementById('adminComment').value = textComment;
         }
