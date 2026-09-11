@@ -51,6 +51,7 @@
     })();
     </script>
     <script src="/auth.js?v=8"></script>
+    <script src="/additional-services.js?v=1"></script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="apple-mobile-web-app-title" content="BOSO">
@@ -2067,7 +2068,7 @@ input[type="number"] {
                     <p style="color: #6B7280; font-size: 14px; margin-bottom: 24px;">Створюйте додаткові послуги, які ви можете додавати до бронювань (наприклад, Чан, Дрова).</p> 
                     
                     <table> 
-                        <thead><tr><th>Назва</th><th>Котеджі</th><th>Ціна (грн)</th><th>Подобова</th><th>За гостя</th><th>Доступність</th><th>Дії</th></tr></thead> 
+                        <thead><tr><th>Назва</th><th>Котеджі</th><th>Ціна</th><th>Правила</th><th>Статус</th><th>Дії</th></tr></thead> 
                         <tbody id="settingsServicesTableBody"> 
                         </tbody> 
                     </table> 
@@ -2349,39 +2350,13 @@ input[type="number"] {
                                 </div>
                             </div>
                             
-                            <div class="form-group">
-                                <label>Тварини:</label>
-                                <div class="mode-toggle" style="margin: 0; width: 100%; display: flex; padding: 4px; background: #F3F4F6; border-radius: 12px; height: 48px;">
-                                    <div class="mode-btn pet-btn active" data-val="Ні" onclick="togglePet('Ні')" style="display: flex; align-items: center; justify-content: center; height: 100%; margin: 0; padding: 0;">Ні</div>
-                                    <div class="mode-btn pet-btn" data-val="Так" onclick="togglePet('Так')" style="display: flex; align-items: center; justify-content: center; height: 100%; margin: 0; padding: 0;">Так</div>
-                                </div>
+                            <div class="form-group" style="grid-column: 1 / -1;">
+                                <label style="font-size: 13px; font-weight: 700; color: #4B5563; text-transform: uppercase; letter-spacing: 0.5px; display: block; margin-bottom: 12px;">Додаткові послуги</label>
+                                <div id="adminCustomServicesMount" style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;"></div>
+                                <!-- Legacy sync fields (заповнюються з selectedServices) -->
                                 <input type="hidden" id="adminPets" value="Ні">
-                            </div>
-
-                            <div class="form-group">
-                                <label>Денні гості (+500 грн):</label>
-                                <div style="display: flex; align-items: center; background: #F9FAFB; border-radius: 12px; border: 1px solid #D1D5DB; height: 48px; overflow: hidden;">
-                                    <button type="button" onclick="changeAdminDayGuests(-1)" style="width: 50px; height: 100%; background: #FEF2F2; color: #DC2626; border: none; border-right: 1px solid #FECACA; font-size: 24px; font-weight: 600; cursor: pointer; outline: none;">-</button>
-                                    <input type="number" id="adminDayGuests" value="0" min="0" style="flex: 1; text-align: center; background: transparent; border: none; font-size: 16px; font-weight: 700; color: #111827; padding: 0; outline: none; pointer-events: none;" readonly>
-                                    <button type="button" onclick="changeAdminDayGuests(1)" style="width: 50px; height: 100%; background: #F0FDF4; color: #059669; border: none; border-left: 1px solid #A7F3D0; font-size: 22px; font-weight: 600; cursor: pointer; outline: none;">+</button>
-                                </div>
-                            </div>
-
-                            <div class="form-group">
-                                <label>Дитяче ліжечко (+500 грн):</label>
-                                <div class="mode-toggle" style="margin: 0; width: 100%; display: flex; padding: 4px; background: #F3F4F6; border-radius: 12px; height: 48px;">
-                                    <div class="mode-btn crib-btn active" data-val="Ні" onclick="toggleCrib('Ні')" style="display: flex; align-items: center; justify-content: center; height: 100%; margin: 0; padding: 0;">Ні</div>
-                                    <div class="mode-btn crib-btn" data-val="Так" onclick="toggleCrib('Так')" style="display: flex; align-items: center; justify-content: center; height: 100%; margin: 0; padding: 0;">Так</div>
-                                </div>
+                                <input type="hidden" id="adminDayGuests" value="0">
                                 <input type="hidden" id="adminCrib" value="Ні">
-                            </div>
-                            
-                            <div class="form-group">
-                                <label>Чан:</label>
-                                <div class="mode-toggle" style="margin: 0; width: 100%; display: flex; padding: 4px; background: #F3F4F6; border-radius: 12px; height: 48px;">
-                                    <div class="mode-btn vat-btn active" data-val="Ні" onclick="toggleVat('Ні')" style="display: flex; align-items: center; justify-content: center; height: 100%; margin: 0; padding: 0;">Ні</div>
-                                    <div class="mode-btn vat-btn" data-val="Так" onclick="toggleVat('Так')" style="display: flex; align-items: center; justify-content: center; height: 100%; margin: 0; padding: 0;">Так</div>
-                                </div>
                                 <input type="hidden" id="adminVat" value="Ні">
                             </div>
 
@@ -2394,7 +2369,6 @@ input[type="number"] {
                                 <input type="hidden" id="adminUBD" value="Ні">
                             </div>
 
-                            <div></div>
                             <div></div>
                         </div>
 
@@ -2574,9 +2548,10 @@ function getVisitWord(count) {
             { id: 2, condition: "Діб в бронюванні: 3", discount: "20%", rooms: "Всі котеджі" }
         ];
 
-        let customServicesList = [
-            { id: 1, name: "Додаткові гості", rooms: "Всі", price: 2000, perDay: "Так", perGuest: "Так", active: true }
-        ];
+        let customServicesList = (typeof BosoServices !== 'undefined')
+            ? BosoServices.ensureDefaultCustomServices([])
+            : [];
+        let selectedServices = {}; // { [serviceId]: qty }
 
         let sysServicesList = [
             { id: 1, name: "Пізній виїзд", rooms: "Всі", price: 0, active: false },
@@ -2849,6 +2824,7 @@ function saveInlineTransaction(type, category, idx) {
                 if (settingsData.roomsList) roomsList = settingsData.roomsList;
                 if (settingsData.discountsList) discountsList = settingsData.discountsList;
                 if (settingsData.customServicesList) customServicesList = settingsData.customServicesList;
+                if (typeof BosoServices !== 'undefined') customServicesList = BosoServices.ensureDefaultCustomServices(customServicesList);
                 if (settingsData.sysServicesList) sysServicesList = settingsData.sysServicesList;
                 if (settingsData.customPrices) customPrices = settingsData.customPrices;
                 if (settingsData.restrictions) restrictions = settingsData.restrictions;
@@ -2894,6 +2870,7 @@ function saveInlineTransaction(type, category, idx) {
                     if (settingsData.roomsList) roomsList = settingsData.roomsList;
                     if (settingsData.discountsList) discountsList = settingsData.discountsList;
                     if (settingsData.customServicesList) customServicesList = settingsData.customServicesList;
+                    if (typeof BosoServices !== 'undefined') customServicesList = BosoServices.ensureDefaultCustomServices(customServicesList);
                     if (settingsData.sysServicesList) sysServicesList = settingsData.sysServicesList;
                     if (settingsData.customPrices) customPrices = settingsData.customPrices;
                     if (settingsData.restrictions) restrictions = settingsData.restrictions;
@@ -3194,16 +3171,40 @@ function saveInlineTransaction(type, category, idx) {
             const custBody = document.getElementById('settingsServicesTableBody');
             custBody.innerHTML = '';
             customServicesList.forEach(s => {
-                let badge = s.active ? `<span class="badge confirmed">Активна</span>` : `<span class="badge cancelled">Не активна</span>`;
+                let badge = s.active !== false ? `<span class="badge confirmed">Активна</span>` : `<span class="badge cancelled">Не активна</span>`;
+                const onSite = (typeof BosoServices !== 'undefined') ? BosoServices.serviceIsOnSite(s) : !!s.onSite;
+                const priceLabel = onSite ? 'На місці' : ((Number(s.baseFee) > 0 ? (s.baseFee + '+') : '') + (s.price || 0) + ' грн');
+                const flags = [
+                    s.perBooking === 'Так' || (s.perBooking !== 'Ні' && s.perDay !== 'Так' && s.perGuest !== 'Так') ? 'бронь' : '',
+                    s.perDay === 'Так' ? 'ніч' : '',
+                    s.perGuest === 'Так' ? 'гість' : '',
+                    s.inputType === 'counter' ? 'лічильник' : ''
+                ].filter(Boolean).join(', ') || '—';
                 custBody.innerHTML += `<tr>
-                    <td><strong>${s.name}</strong></td><td>${s.rooms}</td><td><span style="color: #4B5563; font-size: 13px;">${s.price} грн</span></td>
-                    <td>${s.perDay}</td><td>${s.perGuest}</td><td>${badge}</td>
+                    <td><strong>${s.name}</strong>${s.kind ? ` <span style="color:#9CA3AF;font-size:11px;">(${s.kind})</span>` : ''}</td>
+                    <td>${s.rooms || 'Всі'}</td>
+                    <td><span style="color: #4B5563; font-size: 13px;">${priceLabel}</span></td>
+                    <td>${flags}</td>
+                    <td>${badge}</td>
                     <td><div style="display: flex; gap: 8px;">
                         <button class="btn-icon-only" onclick="openGenericModal('customService', ${s.id})"><svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg></button>
                         <button class="btn-icon-only danger" onclick="deleteItem('service', ${s.id})"><svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg></button>
                     </div></td>
                 </tr>`;
             });
+        }
+
+        function toggleAllServRooms() {
+            const all = document.getElementById('chip-serv-room-all');
+            if (!all) return;
+            all.classList.add('active');
+            document.querySelectorAll('.serv-room-chip').forEach(c => c.classList.remove('active'));
+        }
+        function toggleSingleServRoom(el) {
+            const all = document.getElementById('chip-serv-room-all');
+            if (all) all.classList.remove('active');
+            el.classList.toggle('active');
+            if (!document.querySelectorAll('.serv-room-chip.active').length && all) all.classList.add('active');
         }
 
         // --- SMS (SendPulse) ---
@@ -3952,15 +3953,40 @@ function saveInlineTransaction(type, category, idx) {
                 `;
             } else if (type === 'customService') {
                 title.innerText = id ? 'Редагувати послугу' : 'Додати послугу';
-                let s = id ? customServicesList.find(x => x.id === id) : {name: '', price: 0, perDay: 'Ні', perGuest: 'Ні', active: true};
+                let s = id ? customServicesList.find(x => x.id === id) : {
+                    name: '', price: 0, baseFee: 0, perDay: 'Ні', perGuest: 'Ні', perBooking: 'Так',
+                    active: true, onSite: false, inputType: 'toggle', maxQuantity: 10, description: '', roomIds: []
+                };
+                let selectedIds = (s.roomIds || []).map(String);
+                let isAllSelected = !selectedIds.length;
+                let roomsChips = `<div class="chip-btn ${isAllSelected ? 'active' : ''}" id="chip-serv-room-all" onclick="toggleAllServRooms()">Усі котеджі</div>`;
+                roomsChips += roomsList.map(r => {
+                    let isActive = !isAllSelected && selectedIds.includes(String(r.id));
+                    return `<div class="chip-btn serv-room-chip ${isActive ? 'active' : ''}" data-id="${r.id}" onclick="toggleSingleServRoom(this)">${r.name}</div>`;
+                }).join('');
+                const perBooking = s.perBooking === 'Так' || (s.perBooking !== 'Ні' && s.perDay !== 'Так' && s.perGuest !== 'Так');
                 body.innerHTML = `
-                    <div class="form-group"><label>Назва послуги:</label><input type="text" id="mServName" value="${s.name}" placeholder="Напр. Чан"></div>
-                    <div class="form-group"><label>Ціна (грн):</label><input type="number" id="mServPrice" value="${s.price}" min="0"></div>
+                    <div class="form-group"><label>Назва послуги:</label><input type="text" id="mServName" value="${s.name || ''}" placeholder="Напр. Чан"></div>
                     <div class="form-grid">
-                        <div class="form-group"><label>Подобова:</label><select id="mServDay"><option value="Так" ${s.perDay==='Так'?'selected':''}>Так</option><option value="Ні" ${s.perDay==='Ні'?'selected':''}>Ні</option></select></div>
-                        <div class="form-group"><label>За гостя:</label><select id="mServGuest"><option value="Так" ${s.perGuest==='Так'?'selected':''}>Так</option><option value="Ні" ${s.perGuest==='Ні'?'selected':''}>Ні</option></select></div>
+                        <div class="form-group"><label>Ціна (грн):</label><input type="number" id="mServPrice" value="${s.price || 0}" min="0"></div>
+                        <div class="form-group"><label>Фікс. частина (baseFee):</label><input type="number" id="mServBaseFee" value="${s.baseFee || 0}" min="0" placeholder="для тварин: 500"></div>
                     </div>
-                    <div class="form-group"><label>Статус:</label><select id="mServStatus"><option value="true" ${s.active?'selected':''}>Активна</option><option value="false" ${!s.active?'selected':''}>Не активна</option></select></div>
+                    <div class="form-group"><label>Опис (підказка гостю):</label><input type="text" id="mServDesc" value="${(s.description || '').replace(/"/g, '&quot;')}" placeholder="Опційно"></div>
+                    <div class="form-grid">
+                        <div class="form-group"><label>За бронь:</label><select id="mServBooking"><option value="Так" ${perBooking?'selected':''}>Так</option><option value="Ні" ${!perBooking?'selected':''}>Ні</option></select></div>
+                        <div class="form-group"><label>За ніч:</label><select id="mServDay"><option value="Так" ${s.perDay==='Так'?'selected':''}>Так</option><option value="Ні" ${s.perDay!=='Так'?'selected':''}>Ні</option></select></div>
+                        <div class="form-group"><label>За гостя:</label><select id="mServGuest"><option value="Так" ${s.perGuest==='Так'?'selected':''}>Так</option><option value="Ні" ${s.perGuest!=='Так'?'selected':''}>Ні</option></select></div>
+                        <div class="form-group"><label>Тип вводу:</label><select id="mServInput"><option value="toggle" ${s.inputType!=='counter'?'selected':''}>Так/Ні</option><option value="counter" ${s.inputType==='counter'?'selected':''}>Лічильник</option></select></div>
+                    </div>
+                    <div class="form-grid">
+                        <div class="form-group"><label>Оплата на місці:</label><select id="mServOnSite"><option value="false" ${!s.onSite?'selected':''}>Ні</option><option value="true" ${s.onSite?'selected':''}>Так</option></select></div>
+                        <div class="form-group"><label>Макс. кількість:</label><input type="number" id="mServMaxQty" value="${s.maxQuantity || 10}" min="1"></div>
+                    </div>
+                    <div class="form-group"><label>Статус:</label><select id="mServStatus"><option value="true" ${s.active!==false?'selected':''}>Активна</option><option value="false" ${s.active===false?'selected':''}>Не активна</option></select></div>
+                    <div class="form-group" style="margin-bottom:0;">
+                        <label>Котеджі:</label>
+                        <div class="chips-container">${roomsChips}</div>
+                    </div>
                 `;
             } else if (type === 'sysService') {
                 title.innerText = 'Налаштування системної послуги';
@@ -4185,15 +4211,31 @@ function saveInlineTransaction(type, category, idx) {
 
             } else if (currentEditType === 'customService') {
                 const name = document.getElementById('mServName').value || 'Нова послуга';
-                const price = document.getElementById('mServPrice').value || 0;
+                const price = Number(document.getElementById('mServPrice').value) || 0;
+                const baseFee = Number(document.getElementById('mServBaseFee').value) || 0;
                 const pDay = document.getElementById('mServDay').value;
                 const pGuest = document.getElementById('mServGuest').value;
+                const pBooking = document.getElementById('mServBooking').value;
                 const active = document.getElementById('mServStatus').value === 'true';
+                const onSite = document.getElementById('mServOnSite').value === 'true';
+                const inputType = document.getElementById('mServInput').value || 'toggle';
+                const maxQuantity = Math.max(1, Number(document.getElementById('mServMaxQty').value) || 10);
+                const description = (document.getElementById('mServDesc').value || '').trim();
+                const allChip = document.getElementById('chip-serv-room-all');
+                const isAll = allChip && allChip.classList.contains('active');
+                const roomIds = isAll ? [] : Array.from(document.querySelectorAll('.serv-room-chip.active')).map(c => Number(c.getAttribute('data-id')));
+                const rooms = (typeof BosoServices !== 'undefined')
+                    ? BosoServices.roomsLabelForIds(roomIds, roomsList)
+                    : (isAll ? 'Всі' : roomIds.join(','));
+                const payload = {
+                    name, price, baseFee, perDay: pDay, perGuest: pGuest, perBooking: pBooking,
+                    active, onSite, inputType, maxQuantity, description, rooms, roomIds
+                };
                 if (currentEditId) {
                     let s = customServicesList.find(x => x.id === currentEditId);
-                    s.name = name; s.price = price; s.perDay = pDay; s.perGuest = pGuest; s.active = active;
+                    Object.assign(s, payload);
                 } else {
-                    customServicesList.push({ id: Date.now(), name: name, price: price, perDay: pDay, perGuest: pGuest, rooms: "Всі", active: active });
+                    customServicesList.push({ id: Date.now(), ...payload });
                 }
                 renderSettingsServices();
 
@@ -5756,30 +5798,119 @@ else if (total === 0) { finText = "Немає ціни"; badgeBg = "rgba(255,255
             document.getElementById('mClosedPeriod').value = el.getAttribute('data-val');
         }
 
-        // --- ПЕРЕМИКАЧ ТВАРИН ---
-        function togglePet(val) {
-            document.getElementById('adminPets').value = val;
-            document.querySelectorAll('.pet-btn').forEach(btn => {
-                btn.classList.toggle('active', btn.getAttribute('data-val') === val);
+        // --- ДОДАТКОВІ ПОСЛУГИ (динамічний каталог) ---
+        function syncAdminLegacyServiceFields() {
+            if (typeof BosoServices === 'undefined') return;
+            const legacy = BosoServices.syncLegacyFieldsFromSelection(customServicesList, selectedServices);
+            const petsEl = document.getElementById('adminPets');
+            const cribEl = document.getElementById('adminCrib');
+            const vatEl = document.getElementById('adminVat');
+            const dayEl = document.getElementById('adminDayGuests');
+            if (petsEl) petsEl.value = legacy.pets;
+            if (cribEl) cribEl.value = legacy.crib;
+            if (vatEl) vatEl.value = legacy.vat;
+            if (dayEl) dayEl.value = String(legacy.dayGuests || 0);
+        }
+
+        function setAdminServiceQty(serviceId, qty) {
+            const id = String(serviceId);
+            const n = Math.max(0, Number(qty) || 0);
+            if (n <= 0) delete selectedServices[id];
+            else selectedServices[id] = n;
+            syncAdminLegacyServiceFields();
+            renderAdminCustomServices();
+            if (!window._bookingDrawerLoading && typeof updatePricePreview === 'function') updatePricePreview();
+        }
+
+        function renderAdminCustomServices() {
+            const mount = document.getElementById('adminCustomServicesMount');
+            if (!mount || typeof BosoServices === 'undefined') return;
+
+            const roomName = document.getElementById('adminCottage')?.value || '';
+            const room = roomsList.find(r => r.name === roomName || (r.short && roomName.includes(r.short))) || null;
+            const list = BosoServices.listServicesForRoom(customServicesList, room);
+
+            if (!list.length) {
+                mount.innerHTML = '<div style="grid-column:1/-1;color:#6B7280;font-size:13px;">Немає активних послуг для цього котеджу. Додайте їх у Налаштування → Послуги.</div>';
+                return;
+            }
+
+            mount.innerHTML = list.map(service => {
+                const qty = BosoServices.getServiceQty(selectedServices, service.id);
+                const hint = BosoServices.formatServicePriceHint(service);
+                const isCounter = BosoServices.serviceInputType(service) === 'counter';
+                const maxQ = Math.max(1, Number(service.maxQuantity) || 20);
+                if (isCounter) {
+                    return `<div class="form-group" style="margin:0;">
+                        <label>${service.name}${service.description ? ` <span style="font-weight:500;color:#6B7280;text-transform:none;letter-spacing:0;">(${hint})</span>` : ''}</label>
+                        <div style="display:flex;align-items:center;background:#F9FAFB;border-radius:12px;border:1px solid #D1D5DB;height:48px;overflow:hidden;">
+                            <button type="button" onclick="setAdminServiceQty(${service.id}, ${qty - 1})" style="width:50px;height:100%;background:#FEF2F2;color:#DC2626;border:none;border-right:1px solid #FECACA;font-size:24px;font-weight:600;cursor:pointer;">−</button>
+                            <div style="flex:1;text-align:center;font-size:16px;font-weight:700;color:#111827;">${qty}</div>
+                            <button type="button" onclick="setAdminServiceQty(${service.id}, ${Math.min(maxQ, qty + 1)})" style="width:50px;height:100%;background:#F0FDF4;color:#059669;border:none;border-left:1px solid #A7F3D0;font-size:22px;font-weight:600;cursor:pointer;">+</button>
+                        </div>
+                        <div style="font-size:11px;color:#6B7280;margin-top:4px;">${hint}</div>
+                    </div>`;
+                }
+                return `<div class="form-group" style="margin:0;">
+                    <label>${service.name}</label>
+                    <div class="mode-toggle" style="margin:0;width:100%;display:flex;padding:4px;background:#F3F4F6;border-radius:12px;height:48px;">
+                        <div class="mode-btn ${qty <= 0 ? 'active' : ''}" onclick="setAdminServiceQty(${service.id}, 0)" style="display:flex;align-items:center;justify-content:center;height:100%;margin:0;padding:0;flex:1;cursor:pointer;">Ні</div>
+                        <div class="mode-btn ${qty > 0 ? 'active' : ''}" onclick="setAdminServiceQty(${service.id}, 1)" style="display:flex;align-items:center;justify-content:center;height:100%;margin:0;padding:0;flex:1;cursor:pointer;">Так</div>
+                    </div>
+                    <div style="font-size:11px;color:#6B7280;margin-top:4px;">${hint}</div>
+                </div>`;
+            }).join('');
+        }
+
+        function resetAdminSelectedServices() {
+            selectedServices = {};
+            syncAdminLegacyServiceFields();
+            renderAdminCustomServices();
+        }
+
+        function loadAdminSelectedServicesFromBooking(booking) {
+            if (typeof BosoServices === 'undefined') {
+                selectedServices = {};
+                return;
+            }
+            selectedServices = BosoServices.resolveSelectedServices(customServicesList, booking && booking.comment, {
+                pets: booking && booking.pets,
+                dayGuests: 0,
+                crib: '',
+                vat: ''
             });
-            if (!window._bookingDrawerLoading) updatePricePreview();
+            // Якщо токенів немає — підтягнемо денних з legacy-парсу коментаря (вже в resolve)
+            syncAdminLegacyServiceFields();
+            renderAdminCustomServices();
+        }
+
+        // Сумісність зі старими викликами togglePet/Crib/Vat
+        function togglePet(val) {
+            const svc = typeof BosoServices !== 'undefined' ? BosoServices.findServiceByNameHint(customServicesList, 'pets') : null;
+            if (svc) setAdminServiceQty(svc.id, val === 'Так' ? 1 : 0);
+            else {
+                document.getElementById('adminPets').value = val;
+                if (!window._bookingDrawerLoading) updatePricePreview();
+            }
         }
 
         function toggleCrib(val) {
-            document.getElementById('adminCrib').value = val;
-            document.querySelectorAll('.crib-btn').forEach(btn => {
-                btn.classList.toggle('active', btn.getAttribute('data-val') === val);
-            });
-            if (!window._bookingDrawerLoading) updatePricePreview();
+            const svc = typeof BosoServices !== 'undefined' ? BosoServices.findServiceByNameHint(customServicesList, 'crib') : null;
+            if (svc) setAdminServiceQty(svc.id, val === 'Так' ? 1 : 0);
+            else {
+                document.getElementById('adminCrib').value = val;
+                if (!window._bookingDrawerLoading) updatePricePreview();
+            }
         }
 
         function toggleVat(val) {
-    document.getElementById('adminVat').value = val;
-    document.querySelectorAll('.vat-btn').forEach(btn => {
-        btn.classList.toggle('active', btn.getAttribute('data-val') === val);
-    });
-    if (!window._bookingDrawerLoading) updatePricePreview();
-}
+            const svc = typeof BosoServices !== 'undefined' ? BosoServices.findServiceByNameHint(customServicesList, 'chan') : null;
+            if (svc) setAdminServiceQty(svc.id, val === 'Так' ? 1 : 0);
+            else {
+                document.getElementById('adminVat').value = val;
+                if (!window._bookingDrawerLoading) updatePricePreview();
+            }
+        }
 
 function toggleUBD(val) {
     document.getElementById('adminUBD').value = val;
@@ -6018,12 +6149,32 @@ if (guests > maxCap) {
     let extraGuests = Math.max(0, guests - room.capacity);
     let dynamicExtraPrice = room.extraGuestPrice !== undefined ? room.extraGuestPrice : 2500;
     let extraGuestFee = extraGuests * dynamicExtraPrice * nights;
-    let petFee = (pets === "Так") ? (500 + 200 * nights) : 0;
+
+    // Додаткові послуги з каталогу (тварини / денні / ліжечко / чан / …)
+    syncAdminLegacyServiceFields();
+    const serviceOpts = { nights: nights, adults: guests, children: 0 };
+    const roomServices = (typeof BosoServices !== 'undefined')
+        ? BosoServices.listServicesForRoom(customServicesList, room)
+        : [];
+    const serviceLines = (typeof BosoServices !== 'undefined')
+        ? BosoServices.buildServiceLines(roomServices, selectedServices, serviceOpts)
+        : [];
+    let petFee = 0;
+    let dayGuestFee = 0;
+    let cribFee = 0;
+    let servicesFeePaid = 0;
+    serviceLines.forEach(line => {
+        if (line.onSite) return;
+        servicesFeePaid += line.fee;
+        if (line.kind === 'pets') petFee += line.fee;
+        else if (line.kind === 'crib') cribFee += line.fee;
+        else dayGuestFee += line.fee; // денні + інші кастомні → dayGuestFee
+    });
+    // Агрегат для колонки dayGuestFee (усі paid-послуги крім pets/crib окремо для зворотної сумісності)
     const adminDayGuests = parseInt(document.getElementById('adminDayGuests').value) || 0;
-    let dayGuestFee = adminDayGuests * 500;
     const adminCrib = document.getElementById('adminCrib') ? document.getElementById('adminCrib').value : "Ні";
-    let cribFee = (adminCrib === "Так") ? 500 : 0;
-    
+    const servicesStateKey = JSON.stringify(selectedServices || {});
+ 
     let earlyFee = 0;
     let lateFee = 0;
     let isPromoLateOut = false;
@@ -6056,7 +6207,7 @@ if (guests > maxCap) {
     let manDisc = getVal('manualDiscount');
     let isDiscEdited = document.getElementById('manualDiscountEdited')?.value === "true";
 
-    let currState = { checkIn: checkInStr, checkOut: checkOutStr, cottage: roomName, guests: guests, pets: pets, dayGuests: adminDayGuests, crib: adminCrib, early: selectedEarlyTime, late: selectedLateTime };
+    let currState = { checkIn: checkInStr, checkOut: checkOutStr, cottage: roomName, guests: guests, pets: pets, dayGuests: adminDayGuests, crib: adminCrib, early: selectedEarlyTime, late: selectedLateTime, services: servicesStateKey };
 
     if (!isInitialLoad) {
         // Перевіряємо, чи змінились фундаментальні речі (дати або номер)
@@ -6068,9 +6219,11 @@ if (guests > maxCap) {
 
             // Інші поля перераховуємо ТІЛЬКИ якщо адмін клікнув саме на них. Інакше - тримаємо ручні цифри.
             if (prevFormState.guests === currState.guests && manExtra !== null) extraGuestFee = manExtra;
-            if (prevFormState.pets === currState.pets && manPet !== null) petFee = manPet;
-            if (prevFormState.dayGuests === currState.dayGuests && manDay !== null) dayGuestFee = manDay;
-            if (prevFormState.crib === currState.crib && manCrib !== null) cribFee = manCrib;
+            if (prevFormState.services === currState.services) {
+                if (manPet !== null) petFee = manPet;
+                if (manDay !== null) dayGuestFee = manDay;
+                if (manCrib !== null) cribFee = manCrib;
+            }
             if (prevFormState.early === currState.early && manEarly !== null) earlyFee = manEarly;
             if (prevFormState.late === currState.late && manLate !== null) lateFee = manLate;
         } else {
@@ -6234,15 +6387,12 @@ const appliesToRoom =
                     </div>
                 </div>` : `<input type="hidden" id="manualPet" value="0">`}
                 
-                ${dayGuestFee > 0 ? `
+                ${serviceLines.filter(l => !l.onSite && l.kind !== 'pets' && l.kind !== 'crib').map(line => `
                 <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
-                    <span style="display:flex; align-items:center; gap:8px;">${iconUsers} Денні гості:</span>
-                    <div class="price-edit-wrapper" onclick="document.getElementById('manualDayGuest').focus()">
-                        <span>+</span>
-                        <span contenteditable="true" class="editable-number" id="manualDayGuest" oninput="recalculateFromManual()" onkeypress="return event.charCode >= 48 && event.charCode <= 57">${dayGuestFee}</span>
-                        <span>грн</span>
-                    </div>
-                </div>` : `<input type="hidden" id="manualDayGuest" value="0">`}
+                    <span style="display:flex; align-items:center; gap:8px;">${iconUsers} ${line.name}${line.quantity > 1 ? ` (${line.quantity})` : ''}:</span>
+                    <span style="font-weight:700;">+${line.fee} грн</span>
+                </div>`).join('')}
+                <input type="hidden" id="manualDayGuest" value="${dayGuestFee}">
 
                 ${cribFee > 0 ? `
                 <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
@@ -6253,7 +6403,7 @@ const appliesToRoom =
                         <span>грн</span>
                     </div>
                 </div>` : `<input type="hidden" id="manualCrib" value="0">`}
-                
+ 
                 ${selectedEarlyTime ? `
                 <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
                     <span style="display:flex; align-items:center; gap:8px;">${iconClock} Ранній заїзд <span style="color:#9CA3AF; font-size: 11px;">(з ${selectedEarlyTime})</span>:</span>
@@ -6770,10 +6920,8 @@ document.getElementById('adminGuests').addEventListener('change', updatePricePre
             
            // ОЧИЩЕННЯ ПОЛІВ ПРИ НОВІЙ БРОНІ
             if(document.getElementById('adminComment')) document.getElementById('adminComment').value = ""; 
-            if(document.getElementById('adminDayGuests')) document.getElementById('adminDayGuests').value = 0; // 🟢 Очищаємо денних гостей 
-            if(document.getElementById('adminVat')) toggleVat('Ні');
             if(document.getElementById('adminUBD')) toggleUBD('Ні');
-            if(document.getElementById('adminCrib')) toggleCrib('Ні');
+            resetAdminSelectedServices();
             
             // 🟢 ОБНУЛЕННЯ ГНУЧКОГО ГРАФІКА
             selectedEarlyTime = null;
@@ -6788,11 +6936,10 @@ document.getElementById('adminGuests').addEventListener('change', updatePricePre
             document.getElementById('adminResendTgBtn').style.display = 'none';
             document.getElementById('liveCalculatorContainer').innerHTML = '';
             
-            // Скидаємо статуси та тварин
+            // Скидаємо статуси
             document.querySelectorAll('.status-btn').forEach(b => b.classList.remove('active'));
             document.querySelector('.status-btn[data-status="Нова бронь"]').classList.add('active');
-            if(document.getElementById('adminPets')) togglePet('Ні');
-            
+ 
             // Динамічно формуємо список ТІЛЬКИ АКТИВНИХ номерів
             const activeRooms = roomsList.filter(r => r.active);
             const cottageOptions = document.getElementById('cottageOptions');
@@ -6808,6 +6955,7 @@ document.getElementById('adminGuests').addEventListener('change', updatePricePre
             
             document.getElementById('adminCottage').value = defaultRoom;
             document.getElementById('cottageSelectedText').innerText = defaultRoom ? `${defaultRoom} (${defaultDesc})` : "Оберіть котедж";
+            renderAdminCustomServices();
             
             setBookingSourceDefault();
 
@@ -6874,11 +7022,8 @@ document.getElementById('adminGuests').addEventListener('change', updatePricePre
             document.getElementById('adminPhone').value = booking.phone ? '+' + formatPhone(booking.phone) : '';
             document.getElementById('adminGuests').value = booking.guests || 2;
             
-            // 🟢 СКИДАЄМО ВСІ СТАРІ СТАНИ ПЕРЕД ЗАПОВНЕННЯМ (як у мобільній версії)
-            if(document.getElementById('adminVat')) toggleVat('Ні');
+            // 🟢 СКИДАЄМО ВСІ СТАРІ СТАНИ ПЕРЕД ЗАПОВНЕННЯМ
             if(document.getElementById('adminUBD')) toggleUBD('Ні');
-            if(document.getElementById('adminCrib')) toggleCrib('Ні');
-            if(document.getElementById('adminDayGuests')) document.getElementById('adminDayGuests').value = 0;
             
             selectedEarlyTime = null;
             selectedLateTime = null;
@@ -6890,32 +7035,19 @@ document.getElementById('adminGuests').addEventListener('change', updatePricePre
             if (document.getElementById('adminLabelPriceLate')) document.getElementById('adminLabelPriceLate').innerHTML = 'Оберіть час';
             // 🟢 КІНЕЦЬ ОЧИЩЕННЯ
             
+            // Додаткові послуги з токенів / legacy-коментаря
+            loadAdminSelectedServicesFromBooking(booking);
+
             if(document.getElementById('adminComment')) {
             let textComment = booking.comment || "";
-            let parsedDayGuests = 0;
-            
-            // 1. Шукаємо Денних гостей (Розумна регулярка)
-            // Шукає "👥 Денні гості", пропускає будь-який текст до двокрапки, і бере цифру
-            let dayGuestRegex = /👥 Денні гості[^:]*:\s*(\d+)/;
-            let matchDay = textComment.match(dayGuestRegex);
-            if (matchDay) {
-                parsedDayGuests = parseInt(matchDay[1]);
-                // Вирізаємо цей блок з тексту аж до наступного розділювача "|"
-                textComment = textComment.replace(/👥 Денні гості[^|]+(\|\s*)?/, '').trim();
-            }
-            
-            // 2. Шукаємо Чан
-            if (textComment.includes('♨️ Чан: Так')) {
-                toggleVat('Так');
-                textComment = textComment.replace(/♨️ Чан: Так\s*(\|\s*)?/, '').trim();
+            if (typeof BosoServices !== 'undefined') {
+                textComment = BosoServices.stripServiceTokensFromComment(textComment);
+                textComment = BosoServices.stripLegacyServiceFlagsFromComment(textComment);
             } else {
-                toggleVat('Ні');
+                textComment = textComment.replace(/👥 Денні гості[^|]+(\|\s*)?/g, '')
+                    .replace(/♨️ Чан: Так\s*(\|\s*)?/g, '')
+                    .replace(/🛏️ Дитяче ліжечко: Так\s*(\|\s*)?/g, '');
             }
-
-            // 2b. Дитяче ліжечко
-            const hasCrib = textComment.includes('🛏️ Дитяче ліжечко: Так') || Number(booking.cribFee) > 0;
-            if (document.getElementById('adminCrib')) toggleCrib(hasCrib ? 'Так' : 'Ні');
-            textComment = textComment.replace(/🛏️ Дитяче ліжечко: Так\s*(\|\s*)?/, '').trim();
             
             // 3. Шукаємо УБД
             if (textComment.includes('🇺🇦 УБД: Так')) {
@@ -6957,7 +7089,6 @@ document.getElementById('adminGuests').addEventListener('change', updatePricePre
                                      .trim();
 
             document.getElementById('adminComment').value = textComment;
-            if(document.getElementById('adminDayGuests')) document.getElementById('adminDayGuests').value = parsedDayGuests;
         }
 
             setBookingSourceFromSaved(booking.source);
@@ -6976,13 +7107,10 @@ document.getElementById('adminGuests').addEventListener('change', updatePricePre
             
             document.getElementById('adminCottage').value = savedRoom;
             document.getElementById('cottageSelectedText').innerText = savedRoom ? `${savedRoom} (${savedDesc})` : "Оберіть котедж";
+            renderAdminCustomServices();
             
             checkInPicker.setDate(booking.checkIn);
             checkOutPicker.setDate(booking.checkOut);
-            
-            if (document.getElementById('adminPets')) {
-                togglePet((booking.pets === "Так" || booking.pets === true) ? "Так" : "Ні");
-            }
             
             document.querySelectorAll('.status-btn').forEach(b => b.classList.remove('active'));
             let matched = Array.from(document.querySelectorAll('.status-btn')).find(b => b.getAttribute('data-status') === booking.status);
@@ -7144,12 +7272,16 @@ document.getElementById('adminGuests').addEventListener('change', updatePricePre
             };
 
             // Формуємо системний коментар
+            syncAdminLegacyServiceFields();
             let rawComment = document.getElementById('adminComment').value.trim();
-            let dayGuests = parseInt(document.getElementById('adminDayGuests').value) || 0;
+            if (typeof BosoServices !== 'undefined') {
+                rawComment = BosoServices.stripServiceTokensFromComment(rawComment);
+                rawComment = BosoServices.stripLegacyServiceFlagsFromComment(rawComment);
+            }
             let sysComment = [];
-            if (dayGuests > 0) sysComment.push(`👥 Денні гості: ${dayGuests}`);
-            if (document.getElementById('adminCrib') && document.getElementById('adminCrib').value === 'Так') sysComment.push(`🛏️ Дитяче ліжечко: Так`);
-            if (document.getElementById('adminVat').value === 'Так') sysComment.push(`♨️ Чан: Так`);
+            if (typeof BosoServices !== 'undefined') {
+                sysComment.push(...BosoServices.buildServiceCommentTokens(selectedServices));
+            }
             if (document.getElementById('adminUBD').value === 'Так') sysComment.push(`🇺🇦 УБД: Так`);
             if (typeof selectedEarlyTime !== 'undefined' && selectedEarlyTime) sysComment.push(`🕒 Ранній заїзд: з ${selectedEarlyTime}`);
             if (typeof selectedLateTime !== 'undefined' && selectedLateTime) sysComment.push(`🕒 Пізній виїзд: до ${selectedLateTime}`);
@@ -7445,7 +7577,10 @@ function selectOption(wrapperId, inputId, value, element = null, displayText = n
         element.classList.add('selected');
     }
     
-    if (inputId === 'adminCottage') updatePricePreview(); // Оновлюємо калькулятор
+    if (inputId === 'adminCottage') {
+        renderAdminCustomServices();
+        updatePricePreview(); // Оновлюємо калькулятор
+    }
     if (inputId === 'reportPeriodVal') {
         // Якщо вибрали стандартний період - стираємо кастомні дати з календаря
         if (value !== 'custom' && typeof reportRangePicker !== 'undefined') {
@@ -8943,15 +9078,44 @@ function bosoLeave() {
                     let extraGuests = Math.max(0, (parseInt(b.guests) || 2) - cap);
                     // --- 🟢 ПРІОРИТЕТ РУЧНИМ ПРАВКАМ ДЛЯ ТОЧНОСТІ ДО ГРИВНІ ---
                     let feeGuests = b.extraGuestFee !== undefined && b.extraGuestFee !== "" ? Number(b.extraGuestFee) : (extraGuests * extraPrice * nights);
-                    let feePets = b.petFee !== undefined && b.petFee !== "" ? Number(b.petFee) : ((b.pets === "Так" || b.pets === true) ? (500 + 200 * nights) : 0);
-                    let feeDayGuests = b.dayGuestFee !== undefined && b.dayGuestFee !== "" ? Number(b.dayGuestFee) : 0;
-                    let feeCrib = b.cribFee !== undefined && b.cribFee !== "" ? Number(b.cribFee) : (String(b.comment || '').includes('🛏️ Дитяче ліжечко: Так') ? 500 : 0);
+                    let feePets = 0;
+                    let feeDayGuests = 0;
+                    let feeCrib = 0;
+                    let serviceExtraLines = [];
+
+                    if (typeof BosoServices !== 'undefined') {
+                        const attr = BosoServices.attributeBookingServiceFees(b, customServicesList, nights);
+                        attr.lines.forEach(line => {
+                            if (line.onSite || line.amount <= 0) return;
+                            if (line.kind === 'pets') feePets += line.amount;
+                            else if (line.kind === 'crib') feeCrib += line.amount;
+                            else if (line.kind === 'dayGuests') feeDayGuests += line.amount;
+                            else serviceExtraLines.push(line);
+                        });
+                        // Legacy fallback якщо токенів немає
+                        if (!Object.keys(attr.selected || {}).length) {
+                            feePets = b.petFee !== undefined && b.petFee !== "" ? Number(b.petFee) : ((b.pets === "Так" || b.pets === true) ? (500 + 200 * nights) : 0);
+                            feeDayGuests = b.dayGuestFee !== undefined && b.dayGuestFee !== "" ? Number(b.dayGuestFee) : 0;
+                            feeCrib = b.cribFee !== undefined && b.cribFee !== "" ? Number(b.cribFee) : (String(b.comment || '').includes('🛏️ Дитяче ліжечко: Так') ? 500 : 0);
+                        } else if (attr.leftoverOther > 0) {
+                            serviceExtraLines.push({ name: 'Інші послуги', amount: attr.leftoverOther, kind: 'other' });
+                        }
+                    } else {
+                        feePets = b.petFee !== undefined && b.petFee !== "" ? Number(b.petFee) : ((b.pets === "Так" || b.pets === true) ? (500 + 200 * nights) : 0);
+                        feeDayGuests = b.dayGuestFee !== undefined && b.dayGuestFee !== "" ? Number(b.dayGuestFee) : 0;
+                        feeCrib = b.cribFee !== undefined && b.cribFee !== "" ? Number(b.cribFee) : (String(b.comment || '').includes('🛏️ Дитяче ліжечко: Так') ? 500 : 0);
+                    }
 
                     if (feeGuests > 0) { currGuests += feeGuests; window.bosoDetails.guests.push({...baseObj, amount: feeGuests}); }
                     if (feePets > 0) { currPets += feePets; window.bosoDetails.pets.push({...baseObj, amount: feePets}); }
-                    // Денних гостей кидаємо в "Інший дохід"
                     if (feeDayGuests > 0) { currOther += feeDayGuests; window.bosoDetails.other.push({...baseObj, amount: feeDayGuests, name: baseObj.name + " (Денні гості)"}); }
                     if (feeCrib > 0) { currOther += feeCrib; window.bosoDetails.other.push({...baseObj, amount: feeCrib, name: baseObj.name + " (Дитяче ліжечко)"}); }
+                    serviceExtraLines.forEach(line => {
+                        const amt = Number(line.amount) || 0;
+                        if (amt <= 0) return;
+                        currOther += amt;
+                        window.bosoDetails.other.push({...baseObj, amount: amt, name: baseObj.name + " (" + line.name + ")"});
+                    });
 
                     let feeEarlyLate = 0;
                     if ((b.earlyFee !== undefined && b.earlyFee !== "") || (b.lateFee !== undefined && b.lateFee !== "")) {

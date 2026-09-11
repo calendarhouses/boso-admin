@@ -51,6 +51,7 @@
     })();
     </script>
     <script src="/auth.js?v=8"></script>
+    <script src="/additional-services.js?v=1"></script>
     <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     
@@ -1679,45 +1680,15 @@
                                     <button type="button" onclick="changeGuests(1)" style="width: 50px; height: 100%; background: #F0FDF4; color: #059669; border: none; border-left: 1px solid #A7F3D0; font-size: 22px; font-weight: 600; cursor: pointer; outline: none;">+</button>
                                 </div>
                             </div>
-                            <div class="form-group">
-                                <label>Тварини:</label>
-                                <div style="display: flex; background: #F3F4F6; border-radius: 12px; padding: 4px; height: 48px;">
-                                    <div class="pet-btn active" data-val="Ні" onclick="togglePet('Ні')">Ні</div>
-                                    <div class="pet-btn" data-val="Так" onclick="togglePet('Так')">Так</div>
-                                </div>
-                                <input type="hidden" id="adminPets" value="Ні">
-                            </div>
                         </div>
 
-                        <div class="form-grid">
-                            <div class="form-group">
-                                <label>Денні гості:</label>
-                                <div style="display: flex; align-items: center; background: #F9FAFB; border-radius: 12px; border: 1px solid #D1D5DB; height: 48px; overflow: hidden;">
-                                    <button type="button" onclick="changeAdminDayGuests(-1)" style="width: 50px; height: 100%; background: #FEF2F2; color: #DC2626; border: none; border-right: 1px solid #FECACA; font-size: 24px; font-weight: 600; cursor: pointer; outline: none;">-</button>
-                                    <input type="number" inputmode="numeric" pattern="[0-9]*" id="adminDayGuests" value="0" min="0" style="flex: 1; text-align: center; background: transparent; border: none; font-size: 16px; font-weight: 700; color: #111827; padding: 0; outline: none; pointer-events: none;" readonly>
-                                    <button type="button" onclick="changeAdminDayGuests(1)" style="width: 50px; height: 100%; background: #F0FDF4; color: #059669; border: none; border-left: 1px solid #A7F3D0; font-size: 22px; font-weight: 600; cursor: pointer; outline: none;">+</button>
-                                </div>
-                            </div>
-                            <div class="form-group">
-                                <label>Чан:</label>
-                                <div style="display: flex; background: #F3F4F6; border-radius: 12px; padding: 4px; height: 48px;">
-                                    <div class="vat-btn active" data-val="Ні" onclick="toggleVat('Ні')">Ні</div>
-                                    <div class="vat-btn" data-val="Так" onclick="toggleVat('Так')">Так</div>
-                                </div>
-                                <input type="hidden" id="adminVat" value="Ні">
-                            </div>
-                        </div>
-
-                        <div class="form-grid">
-                            <div class="form-group">
-                                <label>Дитяче ліжечко (+500 грн):</label>
-                                <div style="display: flex; background: #F3F4F6; border-radius: 12px; padding: 4px; height: 48px;">
-                                    <div class="crib-btn active" data-val="Ні" onclick="toggleCrib('Ні')">Ні</div>
-                                    <div class="crib-btn" data-val="Так" onclick="toggleCrib('Так')">Так</div>
-                                </div>
-                                <input type="hidden" id="adminCrib" value="Ні">
-                            </div>
-                        </div>
+                        <!-- Додаткові послуги (замінює хардкод тварин/денних гостей/ліжечка/чану) -->
+                        <div id="adminCustomServicesMount" style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;"></div>
+                        <!-- Legacy sync fields (заповнюються з selectedServices) -->
+                        <input type="hidden" id="adminPets" value="Ні">
+                        <input type="hidden" id="adminDayGuests" value="0">
+                        <input type="hidden" id="adminCrib" value="Ні">
+                        <input type="hidden" id="adminVat" value="Ні">
 
                         <div class="form-group">
                             <label>Знижка УБД (-10%):</label>
@@ -1885,7 +1856,10 @@
             { id: 4, name: "FAMILY №4", short: "FAMILY 4", desc: "Сімейний котедж", capacity: 4, maxCapacity: 7, extraGuestPrice: 2500, priceWeekday: 6500, priceWeekend: 7500, active: true }
         ];
         let discountsList = [];
-        let customServicesList = [];
+        let customServicesList = (typeof BosoServices !== 'undefined')
+            ? BosoServices.ensureDefaultCustomServices([])
+            : [];
+        let selectedServices = {}; // { [serviceId]: qty }
         let sysServicesList = [];
         let customPrices = {};
         let smsSettings = {
@@ -1918,6 +1892,7 @@
                 if (settingsData.roomsList) roomsList = settingsData.roomsList;
                 if (settingsData.discountsList) discountsList = settingsData.discountsList;
                 if (settingsData.customServicesList) customServicesList = settingsData.customServicesList;
+                if (typeof BosoServices !== 'undefined') customServicesList = BosoServices.ensureDefaultCustomServices(customServicesList);
                 if (settingsData.sysServicesList) sysServicesList = settingsData.sysServicesList;
                 if (settingsData.customPrices) customPrices = settingsData.customPrices;
                 if (settingsData.restrictions) restrictions = settingsData.restrictions;
@@ -1963,6 +1938,7 @@
                     if (settingsData.roomsList) roomsList = settingsData.roomsList;
                     if (settingsData.discountsList) discountsList = settingsData.discountsList;
                     if (settingsData.customServicesList) customServicesList = settingsData.customServicesList;
+                    if (typeof BosoServices !== 'undefined') customServicesList = BosoServices.ensureDefaultCustomServices(customServicesList);
                     if (settingsData.sysServicesList) sysServicesList = settingsData.sysServicesList;
                     if (settingsData.customPrices) customPrices = settingsData.customPrices;
                     if (settingsData.restrictions) restrictions = settingsData.restrictions;
@@ -4350,28 +4326,96 @@ if (sClass.includes('скас')) {
             if (!window._bookingDrawerLoading) updatePricePreview(); 
         }
 
-        function changeAdminDayGuests(amount) {
-            let input = document.getElementById('adminDayGuests');
-            let currentVal = parseInt(input.value) || 0;
-            let newVal = currentVal + amount;
-            if (newVal >= 0) { 
-                input.value = newVal;
-                updatePricePreview(); 
-            }
-        }
-
-        // Ручне введення денних гостей з клавіатури
-        document.addEventListener("DOMContentLoaded", () => {
-            const dayGuestsInput = document.getElementById('adminDayGuests');
-            if(dayGuestsInput) {
-                dayGuestsInput.addEventListener('input', updatePricePreview);
-                dayGuestsInput.addEventListener('change', updatePricePreview);
-            }
-        });
+        // changeAdminDayGuests — видалено; керується через setAdminServiceQty
 
         const CRIB_FEE = 500;
         let selectedEarlyTime = null;
         let selectedLateTime = null;
+
+        // ─── Додаткові послуги (мобільна версія) ─────────────────────────────
+        function syncAdminLegacyServiceFields() {
+            if (typeof BosoServices === 'undefined') return;
+            const legacy = BosoServices.syncLegacyFieldsFromSelection(customServicesList, selectedServices);
+            const petsEl = document.getElementById('adminPets');
+            const cribEl = document.getElementById('adminCrib');
+            const vatEl  = document.getElementById('adminVat');
+            const dayEl  = document.getElementById('adminDayGuests');
+            if (petsEl) petsEl.value = legacy.pets;
+            if (cribEl) cribEl.value = legacy.crib;
+            if (vatEl)  vatEl.value  = legacy.vat;
+            if (dayEl)  dayEl.value  = legacy.dayGuests;
+        }
+
+        function setAdminServiceQty(serviceId, qty) {
+            const id = String(serviceId);
+            const n  = Math.max(0, Number(qty) || 0);
+            if (n <= 0) delete selectedServices[id];
+            else selectedServices[id] = n;
+            syncAdminLegacyServiceFields();
+            renderAdminCustomServices();
+            if (!window._bookingDrawerLoading) updatePricePreview();
+        }
+
+        function renderAdminCustomServices() {
+            const mount = document.getElementById('adminCustomServicesMount');
+            if (!mount || typeof BosoServices === 'undefined') return;
+            const roomName = document.getElementById('adminCottage') ? document.getElementById('adminCottage').value : '';
+            const room = roomsList.find(r => r.name === roomName) || null;
+            const list = BosoServices.listServicesForRoom(customServicesList, room);
+            if (!list.length) { mount.innerHTML = ''; return; }
+            mount.innerHTML = list.map(service => {
+                const qty     = BosoServices.getServiceQty(selectedServices, service.id);
+                const hint    = BosoServices.formatServicePriceHint(service);
+                const isCounter = BosoServices.serviceInputType(service) === 'counter';
+                const maxQ    = Math.max(1, Number(service.maxQuantity) || 20);
+                if (isCounter) {
+                    return `<div class="form-group">
+                        <label>${service.name}:</label>
+                        <div style="font-size:11px;color:#9CA3AF;margin-bottom:4px;">${hint}</div>
+                        <div style="display:flex;align-items:center;background:#F9FAFB;border-radius:12px;border:1px solid #D1D5DB;height:48px;overflow:hidden;">
+                            <button type="button" onclick="setAdminServiceQty(${service.id},${qty-1})" style="width:50px;height:100%;background:#FEF2F2;color:#DC2626;border:none;border-right:1px solid #FECACA;font-size:24px;font-weight:600;cursor:pointer;outline:none;">−</button>
+                            <span style="flex:1;text-align:center;font-size:16px;font-weight:700;color:#111827;">${qty}</span>
+                            <button type="button" onclick="setAdminServiceQty(${service.id},${Math.min(maxQ,qty+1)})" style="width:50px;height:100%;background:#F0FDF4;color:#059669;border:none;border-left:1px solid #A7F3D0;font-size:22px;font-weight:600;cursor:pointer;outline:none;">+</button>
+                        </div>
+                    </div>`;
+                } else {
+                    return `<div class="form-group">
+                        <label>${service.name}:</label>
+                        <div style="font-size:11px;color:#9CA3AF;margin-bottom:4px;">${hint}</div>
+                        <div style="display:flex;background:#F3F4F6;border-radius:12px;padding:4px;height:48px;">
+                            <div class="mode-btn ${qty<=0?'active':''}" onclick="setAdminServiceQty(${service.id},0)" style="display:flex;align-items:center;justify-content:center;height:100%;margin:0;padding:0;flex:1;cursor:pointer;">Ні</div>
+                            <div class="mode-btn ${qty>0?'active':''}" onclick="setAdminServiceQty(${service.id},1)" style="display:flex;align-items:center;justify-content:center;height:100%;margin:0;padding:0;flex:1;cursor:pointer;">Так</div>
+                        </div>
+                    </div>`;
+                }
+            }).join('');
+        }
+
+        function resetAdminSelectedServices() {
+            selectedServices = {};
+            syncAdminLegacyServiceFields();
+            renderAdminCustomServices();
+        }
+
+        function loadAdminSelectedServicesFromBooking(booking) {
+            if (typeof BosoServices === 'undefined') {
+                selectedServices = {};
+                return;
+            }
+            selectedServices = BosoServices.resolveSelectedServices(
+                customServicesList,
+                booking && booking.comment,
+                {
+                    pets: booking && booking.pets,
+                    dayGuests: 0,
+                    crib: '',
+                    vat: ''
+                }
+            );
+            syncAdminLegacyServiceFields();
+            renderAdminCustomServices();
+        }
+        // ─── Кінець: додаткові послуги ───────────────────────────────────────
 
         function toggleAdminService(type) {
             const card = document.getElementById(type === 'early' ? 'adminCardEarly' : 'adminCardLate');
@@ -4617,9 +4661,22 @@ if (sClass.includes('скас')) {
     let extraGuests = Math.max(0, guests - (room.capacity || 2));
     let dynamicExtraPrice = room.extraGuestPrice !== undefined ? room.extraGuestPrice : 2500;
     let extraGuestFee = extraGuests * dynamicExtraPrice * nights;
-    let petFee = (pets === "Так") ? (500 + 200 * nights) : 0;
-    let dayGuestsFee = dayGuests * 500; 
-    let cribFee = crib === 'Так' ? CRIB_FEE : 0;
+
+    // ─── Ціни послуг через BosoServices ───────────────────────────────────
+    syncAdminLegacyServiceFields();
+    const _serviceOpts = { nights: nights, adults: guests, children: 0 };
+    const _roomServices = (typeof BosoServices !== 'undefined')
+        ? BosoServices.listServicesForRoom(customServicesList, room) : [];
+    const _serviceLines = (typeof BosoServices !== 'undefined')
+        ? BosoServices.buildServiceLines(_roomServices, selectedServices, _serviceOpts) : [];
+    let petFee = 0, dayGuestsFee = 0, cribFee = 0;
+    _serviceLines.forEach(function(line) {
+        if (line.onSite) return;
+        if (line.kind === 'pets') petFee += line.fee;
+        else if (line.kind === 'crib') cribFee += line.fee;
+        else dayGuestsFee += line.fee;
+    });
+    // ──────────────────────────────────────────────────────────────────────
 
     let earlyFee = 0;
     let lateFee = 0;
@@ -4651,7 +4708,8 @@ if (sClass.includes('скас')) {
     let manDisc = getVal('manualDiscount');
     let isDiscEdited = document.getElementById('manualDiscountEdited')?.value === "true";
 
-    let currState = { checkIn: checkInStr, checkOut: checkOutStr, cottage: roomName, guests: guests, pets: pets, dayGuests: dayGuests, crib: crib, early: selectedEarlyTime, late: selectedLateTime };
+    const _servicesStateKey = JSON.stringify(selectedServices || {});
+    let currState = { checkIn: checkInStr, checkOut: checkOutStr, cottage: roomName, guests: guests, services: _servicesStateKey, early: selectedEarlyTime, late: selectedLateTime };
 
     if (!isInitialLoad) {
         let isDatesChanged = (prevFormState.checkIn !== currState.checkIn || prevFormState.checkOut !== currState.checkOut || prevFormState.cottage !== currState.cottage);
@@ -4659,9 +4717,9 @@ if (sClass.includes('скас')) {
         if (!isDatesChanged) {
             if (manBase !== null) basePriceTotal = manBase;
             if (prevFormState.guests === currState.guests && manExtra !== null) extraGuestFee = manExtra;
-            if (prevFormState.pets === currState.pets && manPet !== null) petFee = manPet;
-            if (prevFormState.dayGuests === currState.dayGuests && manDay !== null) dayGuestsFee = manDay;
-            if (prevFormState.crib === currState.crib && manCrib !== null) cribFee = manCrib;
+            if (prevFormState.services === currState.services && manPet !== null) petFee = manPet;
+            if (prevFormState.services === currState.services && manDay !== null) dayGuestsFee = manDay;
+            if (prevFormState.services === currState.services && manCrib !== null) cribFee = manCrib;
             if (prevFormState.early === currState.early && manEarly !== null) earlyFee = manEarly;
             if (prevFormState.late === currState.late && manLate !== null) lateFee = manLate;
         } else {
@@ -5144,7 +5202,7 @@ async function bosoSendRemainderPaymentSms() {
         function openNewBookingDrawer(prefillRoom = null, prefillDateStart = null, prefillDateEnd = null) {
             editingRowNumber = null;
             window._editingBookingId = '';
-            prevFormState = { checkIn: "", checkOut: "", cottage: "", guests: 0, pets: "", dayGuests: 0, crib: "", early: null, late: null };
+            prevFormState = { checkIn: "", checkOut: "", cottage: "", guests: 0, services: "{}", early: null, late: null };
             document.getElementById('drawerTitle').innerText = 'Нова бронь'; 
             document.getElementById('adminBookingForm').reset();
             document.getElementById('adminDeleteBtn').style.display = 'none';
@@ -5165,11 +5223,8 @@ async function bosoSendRemainderPaymentSms() {
             window._bookingPaymentsManuallyEdited = false;
             window._bookingPayments = [];
             window._bookingPaymentMeta = { createdAt: bosoFormatDateIso(new Date()), checkOut: '' };
-            if(document.getElementById('adminPets')) togglePet('Ні');
-            if(document.getElementById('adminCrib')) toggleCrib('Ні');
-            if(document.getElementById('adminVat')) toggleVat('Ні');
+            resetAdminSelectedServices();
             if(document.getElementById('adminUBD')) toggleUBD('Ні');
-            if(document.getElementById('adminDayGuests')) document.getElementById('adminDayGuests').value = 0;
             
             selectedEarlyTime = null;
             selectedLateTime = null;
@@ -5204,6 +5259,7 @@ async function bosoSendRemainderPaymentSms() {
                 checkInPicker.clear(); 
                 checkOutPicker.clear(); 
             }
+            renderAdminCustomServices();
             setTimeout(updatePricePreview, 100); 
             document.querySelector('.drawer-body').scrollTop = 0;
             document.getElementById('bookingDrawer').classList.add('active');
@@ -5218,7 +5274,7 @@ async function bosoSendRemainderPaymentSms() {
             window._bookingDrawerLoading = true;
             editingRowNumber = rowNumber;
             window._editingBookingId = booking.id ? String(booking.id) : '';
-            prevFormState = { checkIn: "", checkOut: "", cottage: "", guests: 0, pets: "", dayGuests: 0, crib: "", early: null, late: null };
+            prevFormState = { checkIn: "", checkOut: "", cottage: "", guests: 0, services: "{}", early: null, late: null };
 
             let savedPrepayInit = Number(booking.prepayAmount) || 0;
             let savedSurchargeInit = Number(booking.surchargeAmount) || 0;
@@ -5240,42 +5296,29 @@ async function bosoSendRemainderPaymentSms() {
             document.getElementById('adminPhone').value = booking.phone ? '+' + formatPhone(booking.phone) : '';
             document.getElementById('adminGuests').value = booking.guests || 2;
             
-            // --- СКИДАЄМО ВСІ НОВІ ПОСЛУГИ ПЕРЕД ЗАПОВНЕННЯМ ---
-            if(document.getElementById('adminVat')) toggleVat('Ні');
-            if(document.getElementById('adminUBD')) toggleUBD('Ні');
-            if(document.getElementById('adminCrib')) toggleCrib('Ні');
-            if(document.getElementById('adminDayGuests')) document.getElementById('adminDayGuests').value = 0;
+            // --- Скидаємо графік та послуги перед заповненням ---
             selectedEarlyTime = null; selectedLateTime = null;
             document.querySelectorAll('.service-card').forEach(c => c.classList.remove('active'));
             document.querySelectorAll('.time-chips .t-chip').forEach(c => c.classList.remove('selected'));
             if (document.getElementById('adminLabelPriceEarly')) document.getElementById('adminLabelPriceEarly').innerHTML = 'Оберіть час';
             if (document.getElementById('adminLabelPriceLate')) document.getElementById('adminLabelPriceLate').innerHTML = 'Оберіть час';
 
-            // --- ПАРСИНГ СИСТЕМНОГО КОМЕНТАРЯ (ЯК НА ПК) ---
-            let textComment = booking.comment || "";
-            let parsedDayGuests = 0;
-            
-            // 1. Шукаємо Денних гостей
-            let dayGuestRegex = /👥 Денні гості[^:]*:\s*(\d+)/;
-            let matchDay = textComment.match(dayGuestRegex);
-            if (matchDay) {
-                parsedDayGuests = parseInt(matchDay[1]);
-                textComment = textComment.replace(/👥 Денні гості[^|]+(\|\s*)?/, '').trim();
-            }
+            // --- Послуги (замість ручного парсингу legacy) ---
+            loadAdminSelectedServicesFromBooking(booking);
 
-            const hasCrib = textComment.includes('🛏️ Дитяче ліжечко: Так') || Number(booking.cribFee) > 0;
-            if(document.getElementById('adminCrib')) toggleCrib(hasCrib ? 'Так' : 'Ні');
-            textComment = textComment.replace(/🛏️ Дитяче ліжечко: Так\s*(\|\s*)?/, '').trim();
-            
-            // 2. Шукаємо Чан
-            if (textComment.includes('♨️ Чан: Так')) {
-                if(document.getElementById('adminVat')) toggleVat('Так');
-                textComment = textComment.replace(/♨️ Чан: Так\s*(\|\s*)?/, '').trim();
-            } else {
-                if(document.getElementById('adminVat')) toggleVat('Ні');
+            // --- ПАРСИНГ СИСТЕМНОГО КОМЕНТАРЯ ---
+            let textComment = booking.comment || "";
+            // Видаляємо токени послуг і legacy-прапорці
+            if (typeof BosoServices !== 'undefined') {
+                textComment = BosoServices.stripServiceTokensFromComment(textComment);
+                textComment = BosoServices.stripLegacyServiceFlagsFromComment(textComment);
             }
-            
-            // 3. Шукаємо УБД
+            // Запасне видалення старих форматів
+            textComment = textComment.replace(/👥 Денні гості[^|]+(\|\s*)?/g, '').trim();
+            textComment = textComment.replace(/🛏️ Дитяче ліжечко: Так\s*(\|\s*)?/g, '').trim();
+            textComment = textComment.replace(/♨️ Чан: Так\s*(\|\s*)?/g, '').trim();
+
+            // УБД
             if (textComment.includes('🇺🇦 УБД: Так')) {
                 if(document.getElementById('adminUBD')) toggleUBD('Так');
                 textComment = textComment.replace(/🇺🇦 УБД: Так\s*(\|\s*)?/, '').trim();
@@ -5283,7 +5326,7 @@ async function bosoSendRemainderPaymentSms() {
                 if(document.getElementById('adminUBD')) toggleUBD('Ні');
             }
 
-            // 4. Шукаємо Ранній заїзд
+            // Ранній заїзд
             let earlyRegex = /🕒 Ранній заїзд: з (\d{2}:\d{2})(\s*\|\s*)?/;
             let matchEarly = textComment.match(earlyRegex);
             if (matchEarly) {
@@ -5294,8 +5337,8 @@ async function bosoSendRemainderPaymentSms() {
                 });
                 textComment = textComment.replace(earlyRegex, '').trim();
             }
-            
-            // 5. Шукаємо Пізній виїзд
+
+            // Пізній виїзд
             let lateRegex = /🕒 Пізній виїзд: до (\d{2}:\d{2})(\s*\|\s*)?/;
             let matchLate = textComment.match(lateRegex);
             if (matchLate) {
@@ -5307,12 +5350,10 @@ async function bosoSendRemainderPaymentSms() {
                 textComment = textComment.replace(lateRegex, '').trim();
             }
 
-            // 6. Фінальна чистка коментаря
+            // Фінальна чистка коментаря
             textComment = textComment.replace(/^Коментар гостя:\s*/, '').replace(/^\|\s*/, '').replace(/\|\s*$/, '').trim();
-
             if(document.getElementById('adminComment')) document.getElementById('adminComment').value = textComment;
-            if(document.getElementById('adminDayGuests')) document.getElementById('adminDayGuests').value = parsedDayGuests;
-            // ---------------------------------------------
+            // -------------------------------------------------
             
             const availableRooms = roomsList.filter(r => r.active || r.name === booking.cottage);
             const cottageOptions = document.getElementById('cottageOptions');
@@ -5327,14 +5368,13 @@ async function bosoSendRemainderPaymentSms() {
             document.getElementById('cottageSelectedText').innerText = savedRoom ? `${savedRoom} (${savedDesc})` : "Оберіть котедж";
             setBookingSourceFromSaved(booking.source);
             checkInPicker.setDate(booking.checkIn); checkOutPicker.setDate(booking.checkOut);
-            
-            if (document.getElementById('adminPets')) { togglePet((booking.pets === "Так" || booking.pets === true) ? "Так" : "Ні"); }
-            
+
             document.querySelectorAll('.status-btn').forEach(b => b.classList.remove('active'));
             let matched = Array.from(document.querySelectorAll('.status-btn')).find(b => b.getAttribute('data-status') === booking.status);
             if(matched) matched.classList.add('active'); else document.querySelector('.status-btn[data-status="Нова бронь"]').classList.add('active');
 
             setTimeout(() => {
+                renderAdminCustomServices();
                 updatePricePreview(true); // <-- ДОДАЛИ true
                 setTimeout(() => {
                     if(document.getElementById('adminTotalPrice')) {
@@ -5483,11 +5523,13 @@ async function bosoSendRemainderPaymentSms() {
 
             // Формуємо системний коментар
             let rawComment = document.getElementById('adminComment').value.trim();
-            let dayGuests = parseInt(document.getElementById('adminDayGuests').value) || 0;
             let sysComment = [];
-            if (dayGuests > 0) sysComment.push(`👥 Денні гості: ${dayGuests}`);
-            if (document.getElementById('adminCrib').value === 'Так') sysComment.push(`🛏️ Дитяче ліжечко: Так`);
-            if (document.getElementById('adminVat').value === 'Так') sysComment.push(`♨️ Чан: Так`);
+            // Токени послуг (замінює 👥/🛏️/♨️)
+            if (typeof BosoServices !== 'undefined') {
+                rawComment = BosoServices.stripServiceTokensFromComment(rawComment);
+                rawComment = BosoServices.stripLegacyServiceFlagsFromComment(rawComment);
+                sysComment.push(...BosoServices.buildServiceCommentTokens(selectedServices));
+            }
             if (document.getElementById('adminUBD').value === 'Так') sysComment.push(`🇺🇦 УБД: Так`);
             if (selectedEarlyTime) sysComment.push(`🕒 Ранній заїзд: з ${selectedEarlyTime}`);
             if (selectedLateTime) sysComment.push(`🕒 Пізній виїзд: до ${selectedLateTime}`);
@@ -5776,7 +5818,7 @@ async function bosoSendRemainderPaymentSms() {
                 element.classList.add('selected'); 
             }
             
-            if (inputId === 'adminCottage') updatePricePreview(); 
+            if (inputId === 'adminCottage') { renderAdminCustomServices(); updatePricePreview(); }
             
             // 🟢 ДОДАЄМО: Реакція на зміну періоду
             if (inputId === 'reportPeriodVal') {
