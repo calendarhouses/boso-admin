@@ -1055,6 +1055,7 @@
             <div class="mobile-settings-tabs">
                 <div class="m-tab active" onclick="switchSettingsTab('rooms', this)">Котеджі</div>
                 <div class="m-tab" onclick="switchSettingsTab('prices', this)">Ціни</div>
+                <div class="m-tab" onclick="switchSettingsTab('services', this)">Послуги</div>
                 <div class="m-tab" onclick="switchSettingsTab('restrictions', this)">Обмеження</div>
                 <div class="m-tab" onclick="switchSettingsTab('discounts', this)">Знижки</div>
                 <div class="m-tab" onclick="switchSettingsTab('sms', this)">SMS</div>
@@ -1161,6 +1162,19 @@
             <div id="set-discounts" class="settings-tab-content" style="display: none;"> 
                 <button class="btn-primary" style="margin-bottom: 16px;" onclick="openGenericModal('discount')">+ Додати знижку</button> 
                 <table><tbody id="settingsDiscountsTableBody"></tbody></table> 
+            </div>
+
+            <div id="set-services" class="settings-tab-content" style="display: none;">
+                <div style="margin-bottom: 20px;">
+                    <strong style="font-size:15px; display:block; margin-bottom:8px;">Системні послуги</strong>
+                    <table><tbody id="settingsSysServicesTableBody"></tbody></table>
+                </div>
+                <div style="display:flex; justify-content:space-between; align-items:center; gap:12px; margin-bottom:12px;">
+                    <strong style="font-size:15px;">Ваші додаткові послуги</strong>
+                    <button class="btn-primary" style="padding:8px 12px; font-size:13px; height:auto; white-space:nowrap;" onclick="openGenericModal('customService')">+ Додати</button>
+                </div>
+                <p style="color:#6B7280; font-size:13px; margin:0 0 12px;">Тварини, денні гості, ліжечко та інші послуги для бронювань.</p>
+                <table><tbody id="settingsServicesTableBody"></tbody></table>
             </div>
 
             <div id="set-sms" class="settings-tab-content" style="display: none;">
