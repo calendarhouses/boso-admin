@@ -1475,6 +1475,7 @@
                         <div class="mc-header"><div class="metric-icon" style="background:#ECFDF5; color:#047857;"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg></div></div>
                         <div class="mc-body"><span class="metric-title">Велосипеди</span><span class="metric-val" id="metBikes" style="font-size: 16px;">0 грн</span></div>
                     </div>
+                    <div id="dynamicServiceCardsMount" style="display: contents;"></div>
                     <div class="metric-card" id="cardOther" onclick="openUniversalDetails('other', 'Інший дохід', '#4B5563', '#F3F4F6', 'Дохід')">
                         <div class="mc-header"><div class="metric-icon" style="background:#F3F4F6; color:#4B5563;"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"></path></svg></div></div>
                         <div class="mc-body"><span class="metric-title">Інший дохід</span><span class="metric-val" id="metOther" style="font-size: 16px;">0 грн</span></div>
@@ -1960,6 +1961,7 @@
                 if(typeof renderSettingsRooms === 'function') renderSettingsRooms();
                 if(typeof renderSettingsDiscounts === 'function') renderSettingsDiscounts();
                 if(typeof renderSettingsServices === 'function') renderSettingsServices();
+                if(typeof renderDynamicServiceCards === 'function') renderDynamicServiceCards();
 
             } catch (error) {
                 console.error("Помилка завантаження даних:", error);
@@ -2957,7 +2959,8 @@
             } 
             else if (currentEditType === 'service') { 
                 customServicesList = customServicesList.filter(s => s.id !== currentEditId); 
-                renderSettingsServices(); 
+                renderSettingsServices();
+                if (typeof renderDynamicServiceCards === 'function') renderDynamicServiceCards();
             } 
             else if (currentEditType === 'transaction') {
                 // 🟢 МАГІЯ ТУТ: Видаляємо транзакцію з бази і одразу перемальовуємо фінанси
@@ -2994,6 +2997,7 @@
                 if (currentEditId) { let s = customServicesList.find(x => x.id === currentEditId); s.name = name; s.price = price; s.perDay = pDay; s.perGuest = pGuest; s.active = active; } 
                 else { customServicesList.push({ id: Date.now(), name: name, price: price, perDay: pDay, perGuest: pGuest, rooms: "Всі", active: active }); }
                 renderSettingsServices();
+                if (typeof renderDynamicServiceCards === 'function') renderDynamicServiceCards();
             } else if (currentEditType === 'sysService') {
                 const price = document.getElementById('mSysPrice').value || 0; const active = document.getElementById('mSysStatus').value === 'true';
                 let ss = sysServicesList.find(x => x.id === currentEditId); if(ss) { ss.price = price; ss.active = active; }
@@ -7172,11 +7176,21 @@ async function bosoSendRemainderPaymentSms() {
             let currSum = 0, currCount = 0, currPaid = 0;
             let statFOP = 0, statCard = 0, statCash = 0, statWayForPay = 0;
             let currGuests = 0, currPets = 0, currEarlyLate = 0, currVat = 0, currBikes = 0, currOther = 0;
+            const serviceTotals = {};
+            const serviceNamesMap = {};
+            getReportableCustomServices().forEach(s => {
+                serviceTotals[String(s.id)] = 0;
+                serviceNamesMap[String(s.id)] = s.name;
+            });
             let topRoomsCount = {}; 
             let totalIncome = 0, totalExpense = 0;
-            let incomeBreakdown = { base: 0, guests: 0, pets: 0, earlyLate: 0 };
+            let incomeBreakdown = { base: 0, guests: 0, pets: 0, earlyLate: 0, services: {} };
+            renderDynamicServiceCards();
 
             window.bosoDetails = { sum: [], paid: [], debt: [], creditor: [], accrualDebtor: [], creditorStart: [], accrualDebtorStart: [], count: [], pets: [], guests: [], vat: [], bikes: [], earlyLate: [], other: [], fop: [], wayforpay: [], card: [], cash: [], fopWfpNet: [], cleaning: [] };
+            getReportableCustomServices().forEach(s => {
+                window.bosoDetails[serviceDetailKey(s.id)] = [];
+            });
             const payStats = { fop: 0, card: 0, cash: 0, wayforpay: 0 };
 
             allBookings.forEach(b => {
@@ -7199,9 +7213,8 @@ async function bosoSendRemainderPaymentSms() {
                     let inD = new Date(bDateStr); 
                     let outDStr = b.checkOut.includes('.') ? b.checkOut.split('.').reverse().join('-') : b.checkOut;
                     let outD = new Date(outDStr);
-                    // Було short, ставимо long
-let                 fIn = inD.toLocaleDateString('uk-UA', { day: 'numeric', month: 'long' });
-let                 fOut = outD.toLocaleDateString('uk-UA', { day: 'numeric', month: 'long' });
+                    let fIn = inD.toLocaleDateString('uk-UA', { day: 'numeric', month: 'long' });
+                    let fOut = outD.toLocaleDateString('uk-UA', { day: 'numeric', month: 'long' });
                     let baseObj = { name: cName, phone: formatPhone(b.phone), date: `${fIn} — ${fOut}`, row: b.row, isTrans: false, rawDate: inD.getTime() };
 
                     if (price > 0) window.bosoDetails.sum.push({...baseObj, amount: price});
@@ -7238,69 +7251,92 @@ let                 fOut = outD.toLocaleDateString('uk-UA', { day: 'numeric', mo
                     let extraPrice = room && room.extraGuestPrice !== undefined ? room.extraGuestPrice : 2500;
                     let cap = room ? room.capacity : 2;
                     
-                    // 1. Дод. гості (з ночівлею)
                     let feeGuests = (b.extraGuestFee !== undefined && b.extraGuestFee !== "" && b.extraGuestFee !== null) 
                         ? Number(b.extraGuestFee) 
                         : Math.max(0, (parseInt(b.guests) || 2) - cap) * extraPrice * nights;
                     
                     let feePets = 0;
-                    let feeDayGuests = 0;
-                    let feeCrib = 0;
-                    let serviceExtraLines = [];
+                    let servicesPaidTotal = 0;
+                    const bookingServiceParts = [];
 
                     if (typeof BosoServices !== 'undefined') {
                         const attr = BosoServices.attributeBookingServiceFees(b, customServicesList, nights);
                         attr.lines.forEach(line => {
                             if (line.onSite || line.amount <= 0) return;
+                            bookingServiceParts.push(line);
                             if (line.kind === 'pets') feePets += line.amount;
-                            else if (line.kind === 'crib') feeCrib += line.amount;
-                            else if (line.kind === 'dayGuests') feeDayGuests += line.amount;
-                            else serviceExtraLines.push(line);
+                            else {
+                                const sid = String(line.id);
+                                if (serviceTotals[sid] === undefined) {
+                                    serviceTotals[sid] = 0;
+                                    serviceNamesMap[sid] = line.name;
+                                    if (!window.bosoDetails[serviceDetailKey(sid)]) window.bosoDetails[serviceDetailKey(sid)] = [];
+                                }
+                                serviceTotals[sid] += line.amount;
+                                window.bosoDetails[serviceDetailKey(sid)].push({...baseObj, amount: line.amount, name: baseObj.name + " (" + line.name + ")"});
+                                servicesPaidTotal += line.amount;
+                            }
                         });
                         if (!Object.keys(attr.selected || {}).length) {
                             feePets = (b.petFee !== undefined && b.petFee !== "" && b.petFee !== null) 
                                 ? Number(b.petFee) 
                                 : ((b.pets === "Так" || b.pets === true) ? (500 + 200 * nights) : 0);
-                            feeDayGuests = (b.dayGuestFee !== undefined && b.dayGuestFee !== "" && b.dayGuestFee !== null)
+                            let feeDayGuests = (b.dayGuestFee !== undefined && b.dayGuestFee !== "" && b.dayGuestFee !== null)
                                 ? Number(b.dayGuestFee)
                                 : (parseInt(b.dayGuests) || 0) * 500;
-                            feeCrib = (b.cribFee !== undefined && b.cribFee !== "" && b.cribFee !== null)
+                            let feeCrib = (b.cribFee !== undefined && b.cribFee !== "" && b.cribFee !== null)
                                 ? Number(b.cribFee)
                                 : (String(b.comment || '').includes('🛏️ Дитяче ліжечко: Так') ? (typeof CRIB_FEE !== 'undefined' ? CRIB_FEE : 500) : 0);
+                            const daySvc = BosoServices.findServiceByNameHint(customServicesList, 'dayGuests');
+                            const cribSvc = BosoServices.findServiceByNameHint(customServicesList, 'crib');
+                            if (feeDayGuests > 0 && daySvc) {
+                                const sid = String(daySvc.id);
+                                serviceTotals[sid] = (serviceTotals[sid] || 0) + feeDayGuests;
+                                serviceNamesMap[sid] = daySvc.name;
+                                if (!window.bosoDetails[serviceDetailKey(sid)]) window.bosoDetails[serviceDetailKey(sid)] = [];
+                                window.bosoDetails[serviceDetailKey(sid)].push({...baseObj, amount: feeDayGuests});
+                                servicesPaidTotal += feeDayGuests;
+                                bookingServiceParts.push({ id: daySvc.id, name: daySvc.name, kind: 'dayGuests', amount: feeDayGuests });
+                            } else if (feeDayGuests > 0) {
+                                currOther += feeDayGuests;
+                                window.bosoDetails.other.push({...baseObj, amount: feeDayGuests, name: baseObj.name + " (Денні гості)"});
+                                servicesPaidTotal += feeDayGuests;
+                            }
+                            if (feeCrib > 0 && cribSvc) {
+                                const sid = String(cribSvc.id);
+                                serviceTotals[sid] = (serviceTotals[sid] || 0) + feeCrib;
+                                serviceNamesMap[sid] = cribSvc.name;
+                                if (!window.bosoDetails[serviceDetailKey(sid)]) window.bosoDetails[serviceDetailKey(sid)] = [];
+                                window.bosoDetails[serviceDetailKey(sid)].push({...baseObj, amount: feeCrib});
+                                servicesPaidTotal += feeCrib;
+                                bookingServiceParts.push({ id: cribSvc.id, name: cribSvc.name, kind: 'crib', amount: feeCrib });
+                            } else if (feeCrib > 0) {
+                                currOther += feeCrib;
+                                window.bosoDetails.other.push({...baseObj, amount: feeCrib, name: baseObj.name + " (Дитяче ліжечко)"});
+                                servicesPaidTotal += feeCrib;
+                            }
                         } else if (attr.leftoverOther > 0) {
-                            serviceExtraLines.push({ name: 'Інші послуги', amount: attr.leftoverOther, kind: 'other' });
+                            currOther += attr.leftoverOther;
+                            window.bosoDetails.other.push({...baseObj, amount: attr.leftoverOther, name: baseObj.name + " (Інші послуги)"});
+                            servicesPaidTotal += attr.leftoverOther;
                         }
                     } else {
                         feePets = (b.petFee !== undefined && b.petFee !== "" && b.petFee !== null) 
                             ? Number(b.petFee) 
                             : ((b.pets === "Так" || b.pets === true) ? (500 + 200 * nights) : 0);
-                        feeDayGuests = (b.dayGuestFee !== undefined && b.dayGuestFee !== "" && b.dayGuestFee !== null)
+                        let feeDayGuests = (b.dayGuestFee !== undefined && b.dayGuestFee !== "" && b.dayGuestFee !== null)
                             ? Number(b.dayGuestFee)
                             : (parseInt(b.dayGuests) || 0) * 500;
-                        feeCrib = (b.cribFee !== undefined && b.cribFee !== "" && b.cribFee !== null)
+                        let feeCrib = (b.cribFee !== undefined && b.cribFee !== "" && b.cribFee !== null)
                             ? Number(b.cribFee)
                             : (String(b.comment || '').includes('🛏️ Дитяче ліжечко: Так') ? (typeof CRIB_FEE !== 'undefined' ? CRIB_FEE : 500) : 0);
+                        if (feeDayGuests > 0) { currOther += feeDayGuests; window.bosoDetails.other.push({...baseObj, amount: feeDayGuests, name: baseObj.name + " (Денні гості)"}); servicesPaidTotal += feeDayGuests; }
+                        if (feeCrib > 0) { currOther += feeCrib; window.bosoDetails.other.push({...baseObj, amount: feeCrib, name: baseObj.name + " (Дитяче ліжечко)"}); servicesPaidTotal += feeCrib; }
                     }
 
                     if (feeGuests > 0) { currGuests += feeGuests; window.bosoDetails.guests.push({...baseObj, amount: feeGuests}); }
                     if (feePets > 0) { currPets += feePets; window.bosoDetails.pets.push({...baseObj, amount: feePets}); }
-                    
-                    if (feeDayGuests > 0) { 
-                        currOther += feeDayGuests; 
-                        window.bosoDetails.other.push({...baseObj, amount: feeDayGuests, name: baseObj.name + " (Денні гості)"}); 
-                    }
-                    if (feeCrib > 0) {
-                        currOther += feeCrib;
-                        window.bosoDetails.other.push({...baseObj, amount: feeCrib, name: baseObj.name + " (Дитяче ліжечко)"});
-                    }
-                    serviceExtraLines.forEach(line => {
-                        const amt = Number(line.amount) || 0;
-                        if (amt <= 0) return;
-                        currOther += amt;
-                        window.bosoDetails.other.push({...baseObj, amount: amt, name: baseObj.name + " (" + line.name + ")"});
-                    });
 
-                    // 4. Гнучкий графік
                     let feeEarlyLate = 0;
                     if ((b.earlyFee !== undefined && b.earlyFee !== "" && b.earlyFee !== null) || 
                         (b.lateFee !== undefined && b.lateFee !== "" && b.lateFee !== null)) {
@@ -7315,14 +7351,23 @@ let                 fOut = outD.toLocaleDateString('uk-UA', { day: 'numeric', mo
 
                     if (feeEarlyLate > 0) { currEarlyLate += feeEarlyLate; window.bosoDetails.earlyLate.push({...baseObj, amount: feeEarlyLate}); }
                     
-                    // 5. Фінальний розподіл доходу (Breakdown)
                     if (paid > 0) {
                         let ratio = (price > 0) ? (paid / price) : 1;
                         incomeBreakdown.pets += (feePets * ratio);
                         incomeBreakdown.guests += (feeGuests * ratio);
                         incomeBreakdown.earlyLate += (feeEarlyLate * ratio);
-                        // Віднімаємо додаткові послуги від бази, щоб все зійшлося
-                        incomeBreakdown.base += (paid - (feePets * ratio) - (feeGuests * ratio) - (feeEarlyLate * ratio) - (feeDayGuests * ratio) - (feeCrib * ratio));
+                        let servicesRatioSum = 0;
+                        bookingServiceParts.forEach(line => {
+                            if (line.kind === 'pets') return;
+                            const part = Math.round(line.amount * ratio);
+                            const sid = String(line.id);
+                            incomeBreakdown.services[sid] = (incomeBreakdown.services[sid] || 0) + part;
+                            serviceNamesMap[sid] = line.name;
+                            servicesRatioSum += part;
+                        });
+                        const attributedNonPets = bookingServiceParts.filter(l => l.kind !== 'pets').reduce((s,l)=>s+(l.amount||0),0);
+                        const otherPart = Math.max(0, Math.round((servicesPaidTotal - attributedNonPets) * ratio));
+                        incomeBreakdown.base += (paid - (feePets * ratio) - (feeGuests * ratio) - (feeEarlyLate * ratio) - servicesRatioSum - otherPart);
                     }
                 }
             });
@@ -7353,6 +7398,25 @@ let                 fOut = outD.toLocaleDateString('uk-UA', { day: 'numeric', mo
                     else if (t.category === "Чан") { currVat += t.amount; window.bosoDetails.vat.push(tObj); }
                     else if (t.category === "Оренда велосипедів") { currBikes += t.amount; window.bosoDetails.bikes.push(tObj); }
                     else if (t.category === "Інший дохід" || t.category === "Міні-бар") { currOther += t.amount; window.bosoDetails.other.push(tObj); }
+                    else {
+                        const matched = findServiceForIncomeCategory(t.category);
+                        if (matched && matched.kind === 'pets') {
+                            currPets += t.amount;
+                            window.bosoDetails.pets.push(tObj);
+                        } else if (matched && matched.kind === 'chan') {
+                            currVat += t.amount;
+                            window.bosoDetails.vat.push(tObj);
+                        } else if (matched && matched.id != null) {
+                            const sid = String(matched.id);
+                            serviceTotals[sid] = (serviceTotals[sid] || 0) + t.amount;
+                            serviceNamesMap[sid] = matched.name || t.category;
+                            if (!window.bosoDetails[serviceDetailKey(sid)]) window.bosoDetails[serviceDetailKey(sid)] = [];
+                            window.bosoDetails[serviceDetailKey(sid)].push(tObj);
+                        } else {
+                            currOther += t.amount;
+                            window.bosoDetails.other.push(tObj);
+                        }
+                    }
                 } else {
                     totalExpense += t.amount;
                 }
@@ -7385,6 +7449,10 @@ let                 fOut = outD.toLocaleDateString('uk-UA', { day: 'numeric', mo
             animateValue('metPets', 0, currPets, 800);
             animateValue('metGuests', 0, currGuests, 800);
             animateValue('metVat', 0, currVat, 800);
+            Object.keys(serviceTotals).forEach(sid => {
+                const el = document.getElementById('metSvc_' + sid);
+                if (el) animateValue('metSvc_' + sid, 0, serviceTotals[sid] || 0, 800);
+            });
             animateValue('metEarlyLate', 0, currEarlyLate, 800);
             if (typeof animateValue !== 'undefined') {
                 animateValue('statFOPLabel', 0, statFOP, 800);
@@ -7495,6 +7563,21 @@ let                 fOut = outD.toLocaleDateString('uk-UA', { day: 'numeric', mo
                 tbodyFinance.innerHTML += renderFinRow("Додаткові гості", "Оплати за додаткові місця", incomeBreakdown.guests, 'income', true);
                 tbodyFinance.innerHTML += renderFinRow("Тварини", "Оплати за улюбленців", incomeBreakdown.pets, 'income', true);
                 tbodyFinance.innerHTML += renderFinRow("Гнучкий графік", "Ранні/пізні заїзди", incomeBreakdown.earlyLate, 'income', true);
+                Object.keys(incomeBreakdown.services || {}).forEach(sid => {
+                    const amt = incomeBreakdown.services[sid] || 0;
+                    if (amt <= 0) return;
+                    const title = serviceNamesMap[sid] || ('Послуга ' + sid);
+                    const key = serviceDetailKey(sid);
+                    tbodyFinance.innerHTML += renderFinRow(
+                        title,
+                        "Додаткова послуга",
+                        amt,
+                        'income',
+                        true,
+                        null,
+                        `openUniversalDetails('${key}', '${String(title).replace(/'/g, "\\'")}', '#0369A1', '#E0F2FE', 'Дохід')`
+                    );
+                });
                 if (cleaning.total > 0) {
                     tbodyFinance.innerHTML += renderFinRow(
                         "Прибирання",
@@ -7562,13 +7645,74 @@ let                 fOut = outD.toLocaleDateString('uk-UA', { day: 'numeric', mo
             return document.getElementById(containerId + '-val')?.value || 'Готівка';
         }
 
-        const incomeCategories = ["Плата за раннє заселення/пізнє виселення", "Додаткові гості", "Домашні тварини", "Міні-бар", "Чан", "Оренда велосипедів", "Інший дохід"];
+        const BASE_INCOME_CATEGORIES = ["Плата за раннє заселення/пізнє виселення", "Додаткові гості", "Домашні тварини", "Міні-бар", "Чан", "Оренда велосипедів", "Інший дохід"];
+        function getIncomeCategories() {
+            const fromServices = (customServicesList || [])
+                .filter(s => s && s.active !== false)
+                .map(s => String(s.name || '').trim())
+                .filter(Boolean);
+            const seen = new Set();
+            const out = [];
+            [...BASE_INCOME_CATEGORIES, ...fromServices].forEach(name => {
+                if (seen.has(name)) return;
+                seen.add(name);
+                out.push(name);
+            });
+            return out;
+        }
+        Object.defineProperty(window, 'incomeCategories', {
+            get: function () { return getIncomeCategories(); },
+            configurable: true
+        });
+        const SERVICE_CARD_PALETTE = [
+            { color: '#0369A1', bg: '#E0F2FE' },
+            { color: '#B45309', bg: '#FFEDD5' },
+            { color: '#047857', bg: '#ECFDF5' },
+            { color: '#7C3AED', bg: '#F3E8FF' },
+            { color: '#BE123C', bg: '#FFE4E6' },
+            { color: '#0F766E', bg: '#CCFBF1' }
+        ];
+        function serviceDetailKey(id) { return 'svc_' + String(id); }
+        function getReportableCustomServices() {
+            return (customServicesList || []).filter(s => {
+                if (!s || s.active === false) return false;
+                if (s.kind === 'pets' || s.kind === 'chan') return false;
+                return String(s.name || '').trim().length > 0;
+            });
+        }
+        function renderDynamicServiceCards() {
+            const mount = document.getElementById('dynamicServiceCardsMount');
+            if (!mount) return;
+            const list = getReportableCustomServices();
+            const defaultIcon = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />';
+            mount.innerHTML = list.map((s, idx) => {
+                const pal = SERVICE_CARD_PALETTE[idx % SERVICE_CARD_PALETTE.length];
+                const key = serviceDetailKey(s.id);
+                const title = String(s.name).replace(/'/g, "\\'");
+                return `<div class="metric-card" id="cardSvc_${s.id}" onclick="openUniversalDetails('${key}', '${title}', '${pal.color}', '${pal.bg}', 'Дохід')">
+                    <div class="mc-header"><div class="metric-icon" style="background:${pal.bg}; color:${pal.color};"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24">${defaultIcon}</svg></div></div>
+                    <div class="mc-body"><span class="metric-title">${s.name}</span><span class="metric-val" id="metSvc_${s.id}" style="font-size: 16px;">0 грн</span></div>
+                </div>`;
+            }).join('');
+        }
+        function findServiceForIncomeCategory(category) {
+            const cat = String(category || '').trim();
+            if (!cat) return null;
+            if (cat === 'Домашні тварини' || cat === 'Тварини') {
+                return (customServicesList || []).find(s => s.kind === 'pets') || { kind: 'pets', name: 'Тварини', id: 'pets' };
+            }
+            if (cat === 'Чан') {
+                return (customServicesList || []).find(s => s.kind === 'chan') || { kind: 'chan', name: 'Чан', id: 'chan' };
+            }
+            return (customServicesList || []).find(s => String(s.name || '').trim() === cat) || null;
+        }
+
         const expenseCategories = ["Прибирання", "Прання", "Миючі засоби", "Прасування", "Користування електроенергією", "Утримання прилеглої території", "Розхідні матеріали", "Реклама", "Адміністрування та SMM", "Податки", "Інші витрати"];
         let transactions = [];
 
         function openFinanceInlineCards(type) {
             const isIncome = type === 'income';
-            const categories = isIncome ? incomeCategories : expenseCategories;
+            const categories = isIncome ? getIncomeCategories() : expenseCategories;
             const colorHex = isIncome ? '#059669' : '#DC2626';
             const bgHex = isIncome ? '#ECFDF5' : '#FEF2F2';
             document.getElementById('fcTitle').innerText = isIncome ? "Категорія доходу" : "Категорія витрати";
@@ -7815,6 +7959,11 @@ let                 fOut = outD.toLocaleDateString('uk-UA', { day: 'numeric', mo
                     { id: 'cardEarlyLate', val: window.bosoDetails.earlyLate ? window.bosoDetails.earlyLate.reduce((a,b)=>a+b.amount,0) : 0 },
                     { id: 'cardOther', val: window.bosoDetails.other ? window.bosoDetails.other.reduce((a,b)=>a+b.amount,0) : 0 }
                 ];
+                getReportableCustomServices().forEach(s => {
+                    const key = serviceDetailKey(s.id);
+                    const list = window.bosoDetails[key] || [];
+                    services.push({ id: 'cardSvc_' + s.id, val: list.reduce((a,b)=>a+(b.amount||0),0) });
+                });
                 services.sort((a, b) => b.val - a.val);
                 services.forEach((service, index) => {
                     let el = document.getElementById(service.id);
