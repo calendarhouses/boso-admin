@@ -5289,22 +5289,7 @@ async function bosoSendRemainderPaymentSms() {
                 textComment = BosoServices.stripLegacyServiceFlagsFromComment(textComment);
             }
             // Запасне видалення старих форматів
-            textComment = textComment.replace(/👥 Денні гості[^|let cleanComment = (typeof BosoServices !== 'undefined' && BosoServices.getGuestVisibleComment)
-        ? BosoServices.getGuestVisibleComment(rawComment)
-        : String(rawComment || '')
-            .replace(/🛎️#\d+(?:⏳)?:\s*[^|\n]+/g, '')
-            .replace(/(?:^|[|\s\n])(?:[A-Za-z])?#\d+(?:⏳)?:\s*[^|\n]+/g, ' ')
-            .replace(/👥 Денні гості[^|]+(\|\s*)?/g, '')
-            .replace(/🛏️ Дитяче ліжечко: Так\s*(\|\s*)?/g, '')
-            .replace(/♨️ Чан: Так\s*(\|\s*)?/g, '')
-            .replace(/🇺🇦 УБД: Так\s*(\|\s*)?/g, '')
-            .replace(/🕒 Ранній заїзд: з \d{2}:\d{2}(\s*\|\s*)?/g, '')
-            .replace(/🕒 Пізній виїзд: до \d{2}:\d{2}(\s*\|\s*)?/g, '')
-            .replace(/Коментар гостя:/gi, '')
-            .replace(/^\|\s*/, '')
-            .replace(/\|\s*$/, '')
-            .replace(/^[|\s]+|[|\s]+$/g, '')
-            .trim();
+            textComment = textComment.replace(/👥 Денні гості[^|]+(\|\s*)?/g, '').trim();
             textComment = textComment.replace(/🛏️ Дитяче ліжечко: Так\s*(\|\s*)?/g, '').trim();
             textComment = textComment.replace(/♨️ Чан: Так\s*(\|\s*)?/g, '').trim();
 
@@ -5340,8 +5325,12 @@ async function bosoSendRemainderPaymentSms() {
                 textComment = textComment.replace(lateRegex, '').trim();
             }
 
-            // Фінальна чистка коментаря
-            textComment = textComment.replace(/^Коментар гостя:\s*/, '').replace(/^\|\s*/, '').replace(/\|\s*$/, '').trim();
+            // Фінальна чистка коментаря — лише видимий текст гостя
+            if (typeof BosoServices !== 'undefined' && BosoServices.getGuestVisibleComment) {
+                textComment = BosoServices.getGuestVisibleComment(booking.comment || '');
+            } else {
+                textComment = textComment.replace(/^Коментар гостя:\s*/, '').replace(/^\|\s*/, '').replace(/\|\s*$/, '').trim();
+            }
             if(document.getElementById('adminComment')) document.getElementById('adminComment').value = textComment;
             // -------------------------------------------------
             
@@ -8592,38 +8581,10 @@ async function capturePremiumCard(b) {
         basePrice = Math.max(0, total + discAmt - feeSum);
     }
 
-    // Очищаємо коментар
+    // Очищаємо коментар — лише текст гостя
     let cleanComment = (typeof BosoServices !== 'undefined' && BosoServices.getGuestVisibleComment)
         ? BosoServices.getGuestVisibleComment(rawComment)
-        : String(rawComment || '')
-            .replace(/🛎️#\d+(?:⏳)?:\s*[^|\n]+/g, '')
-            .replace(/(?:^|[|\s\n])(?:[A-Za-z])?#\d+(?:⏳)?:\s*[^|\n]+/g, ' ')
-            .replace(/👥 Денні гості[^|]+(\|\s*)?/g, '')
-            .replace(/🛏️ Дитяче ліжечко: Так\s*(\|\s*)?/g, '')
-            .replace(/♨️ Чан: Так\s*(\|\s*)?/g, '')
-            .replace(/🇺🇦 УБД: Так\s*(\|\s*)?/g, '')
-            .replace(/🕒 Ранній заїзд: з \d{2}:\d{2}(\s*\|\s*)?/g, '')
-            .replace(/🕒 Пізній виїзд: до \d{2}:\d{2}(\s*\|\s*)?/g, '')
-            .replace(/Коментар гостя:/gi, '')
-            .replace(/^\|\s*/, '')
-            .replace(/\|\s*$/, '')
-            .replace(/^[|\s]+|[|\s]+$/g, '')
-            .trim();|let cleanComment = (typeof BosoServices !== 'undefined' && BosoServices.getGuestVisibleComment)
-        ? BosoServices.getGuestVisibleComment(rawComment)
-        : String(rawComment || '')
-            .replace(/🛎️#\d+(?:⏳)?:\s*[^|\n]+/g, '')
-            .replace(/(?:^|[|\s\n])(?:[A-Za-z])?#\d+(?:⏳)?:\s*[^|\n]+/g, ' ')
-            .replace(/👥 Денні гості[^|]+(\|\s*)?/g, '')
-            .replace(/🛏️ Дитяче ліжечко: Так\s*(\|\s*)?/g, '')
-            .replace(/♨️ Чан: Так\s*(\|\s*)?/g, '')
-            .replace(/🇺🇦 УБД: Так\s*(\|\s*)?/g, '')
-            .replace(/🕒 Ранній заїзд: з \d{2}:\d{2}(\s*\|\s*)?/g, '')
-            .replace(/🕒 Пізній виїзд: до \d{2}:\d{2}(\s*\|\s*)?/g, '')
-            .replace(/Коментар гостя:/gi, '')
-            .replace(/^\|\s*/, '')
-            .replace(/\|\s*$/, '')
-            .replace(/^[|\s]+|[|\s]+$/g, '')
-            .trim();
+        : '';
 
     // 🟢 Будуємо розділ послуг
     let extraHtml = '';
@@ -9187,35 +9148,7 @@ async function captureCleaningCard(b) {
 
     let cleanComment = (typeof BosoServices !== 'undefined' && BosoServices.getGuestVisibleComment)
         ? BosoServices.getGuestVisibleComment(rawComment)
-        : String(rawComment || '')
-            .replace(/🛎️#\d+(?:⏳)?:\s*[^|\n]+/g, '')
-            .replace(/(?:^|[|\s\n])(?:[A-Za-z])?#\d+(?:⏳)?:\s*[^|\n]+/g, ' ')
-            .replace(/👥 Денні гості[^|]+(\|\s*)?/g, '')
-            .replace(/🛏️ Дитяче ліжечко: Так\s*(\|\s*)?/g, '')
-            .replace(/♨️ Чан: Так\s*(\|\s*)?/g, '')
-            .replace(/🇺🇦 УБД: Так\s*(\|\s*)?/g, '')
-            .replace(/🕒 Ранній заїзд: з \d{2}:\d{2}(\s*\|\s*)?/g, '')
-            .replace(/🕒 Пізній виїзд: до \d{2}:\d{2}(\s*\|\s*)?/g, '')
-            .replace(/Коментар гостя:/gi, '')
-            .replace(/^\|\s*/, '')
-            .replace(/\|\s*$/, '')
-            .replace(/^[|\s]+|[|\s]+$/g, '')
-            .trim();|let cleanComment = (typeof BosoServices !== 'undefined' && BosoServices.getGuestVisibleComment)
-        ? BosoServices.getGuestVisibleComment(rawComment)
-        : String(rawComment || '')
-            .replace(/🛎️#\d+(?:⏳)?:\s*[^|\n]+/g, '')
-            .replace(/(?:^|[|\s\n])(?:[A-Za-z])?#\d+(?:⏳)?:\s*[^|\n]+/g, ' ')
-            .replace(/👥 Денні гості[^|]+(\|\s*)?/g, '')
-            .replace(/🛏️ Дитяче ліжечко: Так\s*(\|\s*)?/g, '')
-            .replace(/♨️ Чан: Так\s*(\|\s*)?/g, '')
-            .replace(/🇺🇦 УБД: Так\s*(\|\s*)?/g, '')
-            .replace(/🕒 Ранній заїзд: з \d{2}:\d{2}(\s*\|\s*)?/g, '')
-            .replace(/🕒 Пізній виїзд: до \d{2}:\d{2}(\s*\|\s*)?/g, '')
-            .replace(/Коментар гостя:/gi, '')
-            .replace(/^\|\s*/, '')
-            .replace(/\|\s*$/, '')
-            .replace(/^[|\s]+|[|\s]+$/g, '')
-            .trim();
+        : '';
 
     let extraHtml = '';
     const rowStyle = `display:flex; justify-content:space-between; align-items:center; margin-bottom: 12px; font-size: 15px; color: #4B5563;`;
