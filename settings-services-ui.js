@@ -16,8 +16,7 @@
     hash: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 9h14M5 15h14M10 3 8 21M16 3l-2 18"/></svg>',
     clock: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>',
     x: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6 6 18M6 6l12 12"/></svg>',
-    house: '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m3 11 9-8 9 8"/><path d="M5 10v10h14V10"/></svg>',
-    shield: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3 4 7v5c0 5 3.5 8.5 8 9 4.5-.5 8-4 8-9V7l-8-4Z"/></svg>'
+    house: '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m3 11 9-8 9 8"/><path d="M5 10v10h14V10"/></svg>'
   };
 
   var SERVICE_TEMPLATES = [
@@ -39,7 +38,7 @@
     {
       id: 'transfer',
       label: 'Трансфер',
-      form: { name: 'Трансфер', price: '500', perDay: false, perGuest: false, perBooking: true, requiresApproval: true, description: 'Вкажіть час прибуття в коментарі', inputType: 'toggle', active: true }
+      form: { name: 'Трансфер', price: '500', perDay: false, perGuest: false, perBooking: true, description: 'Вкажіть час прибуття в коментарі', inputType: 'toggle', active: true }
     }
   ];
 
@@ -58,7 +57,6 @@
       perGuest: false,
       perHour: false,
       onSite: false,
-      requiresApproval: false,
       inputType: 'toggle',
       maxQuantity: 10,
       roomIds: []
@@ -80,7 +78,6 @@
       perGuest: s.perGuest === 'Так',
       perHour: s.perHour === 'Так',
       onSite: !!s.onSite || (typeof BosoServices !== 'undefined' && BosoServices.serviceIsOnSite(s)),
-      requiresApproval: !!s.requiresApproval,
       inputType: s.inputType === 'counter' ? 'counter' : 'toggle',
       maxQuantity: Math.max(1, Number(s.maxQuantity) || 10),
       roomIds: Array.isArray(s.roomIds) ? s.roomIds.map(Number) : []
@@ -120,7 +117,6 @@
 
   function previewFee(form) {
     if (form.onSite) return 'Оплата на місці';
-    if (form.requiresApproval) return 'Запит без суми';
     var price = Math.max(0, Number(form.price) || 0);
     var base = Math.max(0, Number(form.baseFee) || 0);
     var qty = 1;
@@ -225,10 +221,6 @@
       '      <span class="svc-option-card__icon svc-option-card__icon--stone">' + SVG.banknote.replace('14', '18').replace('14', '18') + '</span>' +
       '      <span class="svc-option-card__body"><strong>Оплата на місці</strong><small>Не входить у онлайн-розрахунок</small></span>' +
       '      <span class="svc-switch svc-switch--sm' + (f.onSite ? ' is-on' : '') + '" aria-hidden><span></span></span></button>' +
-      '    <button type="button" class="svc-option-card' + (f.requiresApproval ? ' is-active' : '') + '" onclick="BosoServicesUI.patchForm({requiresApproval:!' + f.requiresApproval + '});BosoServicesUI.renderEditorBody()">' +
-      '      <span class="svc-option-card__icon svc-option-card__icon--amber">' + SVG.shield + '</span>' +
-      '      <span class="svc-option-card__body"><strong>Підтвердження адміном</strong><small>На сайті — запит без суми в оплаті</small></span>' +
-      '      <span class="svc-switch svc-switch--sm' + (f.requiresApproval ? ' is-on' : '') + '" aria-hidden><span></span></span></button>' +
       '  </div>' +
       '  <div class="svc-field"><span class="svc-field__label">Як гість обирає</span>' +
       '    <div class="svc-segmented">' +
@@ -327,7 +319,6 @@
       perBooking: yesNo(formState.perBooking || (!formState.perDay && !formState.perGuest && !formState.perHour)),
       perHour: yesNo(formState.perHour),
       onSite: !!formState.onSite,
-      requiresApproval: !!formState.requiresApproval,
       inputType: formState.inputType === 'counter' ? 'counter' : 'toggle',
       maxQuantity: Math.max(1, Number(formState.maxQuantity) || 10),
       rooms: rooms,
@@ -335,7 +326,10 @@
     };
     if (editId != null) {
       var existing = customServicesList.find(function (x) { return x.id === editId; });
-      if (existing) Object.assign(existing, payload);
+      if (existing) {
+        Object.assign(existing, payload);
+        delete existing.requiresApproval;
+      }
     } else {
       customServicesList.push(Object.assign({ id: Date.now() }, payload));
     }
@@ -413,7 +407,6 @@
           '<span class="svc-tag">' + escapeHtml(roomsLabel(s)) + '</span>' +
           (s.onSite || (typeof BosoServices !== 'undefined' && BosoServices.serviceIsOnSite(s))
             ? '<span class="svc-tag svc-tag--muted">' + SVG.banknote + ' На місці</span>' : '') +
-          (s.requiresApproval ? '<span class="svc-tag svc-tag--amber">' + SVG.clock + ' Запит</span>' : '') +
           (s.inputType === 'counter' ? '<span class="svc-tag svc-tag--muted">Лічильник</span>' : '');
 
         return '<article class="svc-card' + (isActive ? '' : ' is-off') + '">' +
