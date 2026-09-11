@@ -52,6 +52,7 @@
     </script>
     <script src="/auth.js?v=8"></script>
     <script src="/additional-services.js?v=1"></script>
+    <script src="/settings-services-ui.js?v=1"></script>
     <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     
@@ -69,6 +70,8 @@
     <link rel="preconnect" href="https://cdn.jsdelivr.net">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Roboto:wght@500&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+    <link rel="stylesheet" href="/settings-additional-services.css?v=1">
+    <link rel="stylesheet" href="/settings-side-drawer.css?v=1">
     
     <style>
         /* --- МОБІЛЬНА ПРЕМІУМ-ПАЛІТРА ТА БАЗА --- */
@@ -1165,16 +1168,7 @@
             </div>
 
             <div id="set-services" class="settings-tab-content" style="display: none;">
-                <div style="margin-bottom: 20px;">
-                    <strong style="font-size:15px; display:block; margin-bottom:8px;">Системні послуги</strong>
-                    <table><tbody id="settingsSysServicesTableBody"></tbody></table>
-                </div>
-                <div style="display:flex; justify-content:space-between; align-items:center; gap:12px; margin-bottom:12px;">
-                    <strong style="font-size:15px;">Ваші додаткові послуги</strong>
-                    <button class="btn-primary" style="padding:8px 12px; font-size:13px; height:auto; white-space:nowrap;" onclick="openGenericModal('customService')">+ Додати</button>
-                </div>
-                <p style="color:#6B7280; font-size:13px; margin:0 0 12px;">Тварини, денні гості, ліжечко та інші послуги для бронювань.</p>
-                <table><tbody id="settingsServicesTableBody"></tbody></table>
+                <div id="servicesCatalogMount"></div>
             </div>
 
             <div id="set-sms" class="settings-tab-content" style="display: none;">
@@ -2598,22 +2592,10 @@
         }
 
         function renderSettingsServices() {
-            const sysBody = document.getElementById('settingsSysServicesTableBody'); 
-            if (!sysBody) return; // <-- Захист від падіння на мобілці!
-            
-            sysBody.innerHTML = '';
-            sysServicesList.forEach(s => {
-                let badge = s.active ? `<span class="badge confirmed" style="font-size:10px;">Активна</span>` : `<span class="badge cancelled" style="font-size:10px;">Не активна</span>`;
-                sysBody.innerHTML += `<tr><td><strong>${s.name}</strong></td><td style="flex-direction:row; font-size:12px;">${s.price} грн ${badge}</td>
-                <td style="justify-content: flex-end;"><button class="btn-action" style="padding:6px 12px;" onclick="openGenericModal('sysService', ${s.id})">Редаг.</button></td></tr>`;
-            });
-            const custBody = document.getElementById('settingsServicesTableBody'); 
-            if (custBody) custBody.innerHTML = '';
-            customServicesList.forEach(s => {
-                let badge = s.active ? `<span class="badge confirmed" style="font-size:10px;">Активна</span>` : `<span class="badge cancelled" style="font-size:10px;">Не активна</span>`;
-                if(custBody) custBody.innerHTML += `<tr><td><strong>${s.name}</strong></td><td style="flex-direction:row; font-size:12px;">${s.price} грн ${badge}</td>
-                <td style="justify-content: flex-end;"><button class="btn-action" style="padding:6px 12px;" onclick="openGenericModal('customService', ${s.id})">Редаг.</button></td></tr>`;
-            });
+            if (typeof BosoServicesUI !== 'undefined' && BosoServicesUI.renderSettingsServices) {
+                BosoServicesUI.renderSettingsServices();
+                return;
+            }
         }
         
         function clearPricesAlert() { openCustomConfirm("Очистити ціни?", "Ви впевнені, що хочете скинути всі налаштовані ціни?", confirmClearPrices); }
@@ -2706,6 +2688,11 @@
         }
 
         function openGenericModal(type, id = null) {
+            if (type === 'customService') {
+                if (typeof BosoServicesUI !== 'undefined') BosoServicesUI.openServiceEditor(id || null);
+                return;
+            }
+            if (type === 'sysService') return;
             currentEditType = type; currentEditId = id;
             document.getElementById('modalDeleteBtn').style.display = id ? 'flex' : 'none';
             const title = document.getElementById('gModalTitle'); const body = document.getElementById('gModalBody');
@@ -2868,28 +2855,6 @@
                     </div>
                     <div class="form-group" style="margin-bottom: 0;"><label>Котеджі:</label><div class="chips-container">${roomsChips}</div></div>
                 `;
-            } else if (type === 'customService') {
-                title.innerText = id ? 'Редагувати послугу' : 'Додати послугу';
-                let s = id ? customServicesList.find(x => x.id === id) : {name: '', price: 0, perDay: 'Ні', perGuest: 'Ні', active: true};
-                body.innerHTML = `
-                    <div class="form-group"><label>Назва:</label><input type="text" id="mServName" value="${s.name}"></div>
-                    <div class="form-group"><label>Ціна (грн):</label><input type="number" id="mServPrice" value="${s.price}"></div>
-                    <div class="form-grid">
-                        <div class="form-group"><label>Подобова:</label><select id="mServDay"><option value="Так" ${s.perDay==='Так'?'selected':''}>Так</option><option value="Ні" ${s.perDay==='Ні'?'selected':''}>Ні</option></select></div>
-                        <div class="form-group"><label>За гостя:</label><select id="mServGuest"><option value="Так" ${s.perGuest==='Так'?'selected':''}>Так</option><option value="Ні" ${s.perGuest==='Ні'?'selected':''}>Ні</option></select></div>
-                    </div>
-                    <div class="form-group"><label>Статус:</label><select id="mServStatus"><option value="true" ${s.active?'selected':''}>Активна</option><option value="false" ${!s.active?'selected':''}>Не активна</option></select></div>
-                `;
-            } else if (type === 'sysService') {
-                title.innerText = 'Системна послуга';
-                let ss = sysServicesList.find(x => x.id === id);
-                body.innerHTML = `
-                    <div class="form-group"><label>Назва:</label><input type="text" value="${ss.name}" disabled style="background:#E5E7EB; color:#6B7280;"></div>
-                    <div class="form-grid">
-                        <div class="form-group"><label>Ціна:</label><input type="number" id="mSysPrice" value="${ss.price}" min="0"></div>
-                        <div class="form-group"><label>Статус:</label><select id="mSysStatus"><option value="true" ${ss.active?'selected':''}>Активна</option><option value="false" ${!ss.active?'selected':''}>Вимкнена</option></select></div>
-                    </div>
-                `;
             }
             document.getElementById('genericModal').classList.add('active');
         }
@@ -3006,17 +2971,8 @@
                 if (currentEditId) { let d = discountsList.find(x => x.id === currentEditId); d.condition = `Діб в бронюванні: ${days}`; d.discount = `${pct}%`; d.roomsIds = savedIds; d.rooms = displayRoomsText; } 
                 else { discountsList.push({ id: Date.now(), condition: `Діб в бронюванні: ${days}`, discount: `${pct}%`, roomsIds: savedIds, rooms: displayRoomsText }); }
                 renderSettingsDiscounts();
-            } else if (currentEditType === 'customService') {
-                const name = document.getElementById('mServName').value || 'Нова послуга'; const price = document.getElementById('mServPrice').value || 0;
-                const pDay = document.getElementById('mServDay').value; const pGuest = document.getElementById('mServGuest').value; const active = document.getElementById('mServStatus').value === 'true';
-                if (currentEditId) { let s = customServicesList.find(x => x.id === currentEditId); s.name = name; s.price = price; s.perDay = pDay; s.perGuest = pGuest; s.active = active; } 
-                else { customServicesList.push({ id: Date.now(), name: name, price: price, perDay: pDay, perGuest: pGuest, rooms: "Всі", active: active }); }
-                renderSettingsServices();
-                if (typeof renderDynamicServiceCards === 'function') renderDynamicServiceCards();
-            } else if (currentEditType === 'sysService') {
-                const price = document.getElementById('mSysPrice').value || 0; const active = document.getElementById('mSysStatus').value === 'true';
-                let ss = sysServicesList.find(x => x.id === currentEditId); if(ss) { ss.price = price; ss.active = active; }
-                renderSettingsServices();
+            } else if (currentEditType === 'customService' || currentEditType === 'sysService') {
+                // через BosoServicesUI drawer
             } else if (currentEditType === 'price') {
                 const selectedRooms = Array.from(document.querySelectorAll('.room-chip.active')).map(chip => chip.getAttribute('data-id'));
                 const amount = parseInt(document.getElementById('mPriceAmount').value) || 0;
