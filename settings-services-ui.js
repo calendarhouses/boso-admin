@@ -23,11 +23,13 @@
     {
       id: 'bike',
       label: 'Велосипед',
+      kind: 'bike',
       form: { name: 'Прокат велосипеда', price: '300', perDay: false, perGuest: false, perBooking: true, onSite: false, description: 'На добу або частину дня', inputType: 'counter', maxQuantity: 5, active: true }
     },
     {
       id: 'chan',
       label: 'Чан',
+      kind: 'chan',
       form: { name: 'Чан', price: '0', perDay: false, perGuest: false, perBooking: true, onSite: true, description: 'Оплата на місці після прогріву', inputType: 'toggle', active: true }
     },
     {
@@ -59,7 +61,8 @@
       onSite: false,
       inputType: 'toggle',
       maxQuantity: 10,
-      roomIds: []
+      roomIds: [],
+      kind: ''
     };
   }
 
@@ -80,7 +83,8 @@
       onSite: !!s.onSite || (typeof BosoServices !== 'undefined' && BosoServices.serviceIsOnSite(s)),
       inputType: s.inputType === 'counter' ? 'counter' : 'toggle',
       maxQuantity: Math.max(1, Number(s.maxQuantity) || 10),
-      roomIds: Array.isArray(s.roomIds) ? s.roomIds.map(Number) : []
+      roomIds: Array.isArray(s.roomIds) ? s.roomIds.map(Number) : [],
+      kind: s.kind || ''
     };
   }
 
@@ -324,10 +328,16 @@
       rooms: rooms,
       roomIds: roomIds
     };
+    var inferredKind = formState.kind
+      || (/велосипед/i.test(name) ? 'bike' : '')
+      || (/чан/i.test(name) ? 'chan' : '');
+    if (inferredKind) payload.kind = inferredKind;
     if (editId != null) {
       var existing = customServicesList.find(function (x) { return x.id === editId; });
       if (existing) {
+        var prevKind = existing.kind;
         Object.assign(existing, payload);
+        if (!inferredKind && prevKind) existing.kind = prevKind;
         delete existing.requiresApproval;
       }
     } else {
@@ -374,7 +384,7 @@
   function openFromTemplate(templateId) {
     var t = SERVICE_TEMPLATES.find(function (x) { return x.id === templateId; });
     if (!t) return;
-    openServiceEditor(null, t.form);
+    openServiceEditor(null, Object.assign({}, t.form, { kind: t.kind || '' }));
   }
 
   function renderSettingsServices() {

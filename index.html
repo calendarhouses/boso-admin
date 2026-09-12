@@ -1761,15 +1761,6 @@ input[type="number"] {
                             <span class="metric-val" id="metVat" style="font-size: 20px;">0 грн</span>
                         </div>
                     </div>
-                    <div class="metric-card" id="cardBikes" onclick="openUniversalDetails('bikes', 'Велосипеди', '#047857', '#ECFDF5', 'Дохід')">
-                        <div class="mc-header">
-                            <div class="metric-icon" style="background:#ECFDF5; color:#047857;"><svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg></div>
-                        </div>
-                        <div class="mc-body">
-                            <span class="metric-title">Велосипеди</span>
-                            <span class="metric-val" id="metBikes" style="font-size: 20px;">0 грн</span>
-                        </div>
-                    </div>
                     <div class="metric-card" id="cardEarlyLate" onclick="openUniversalDetails('earlyLate', 'Гнучкий графік', '#6D28D9', '#F3E8FF', 'Дохід')">
                         <div class="mc-header">
                             <div class="metric-icon" style="background:#F3E8FF; color:#6D28D9;"><svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg></div>
@@ -2541,6 +2532,7 @@ function getVisitWord(count) {
             ? BosoServices.ensureDefaultCustomServices([])
             : [];
         let selectedServices = {}; // { [serviceId]: qty }
+        let confirmedServices = {}; // { [serviceId]: true } — підтверджені on-site (чан тощо)
 
         let sysServicesList = [
             { id: 1, name: "Пізній виїзд", rooms: "Всі", price: 0, active: false },
@@ -2575,7 +2567,6 @@ function getVisitWord(count) {
             "Домашні тварини",
             "Міні-бар",
             "Чан",
-            "Оренда велосипедів",
             "Інший дохід"
         ];
 
@@ -2629,7 +2620,9 @@ function getVisitWord(count) {
                 const pal = SERVICE_CARD_PALETTE[idx % SERVICE_CARD_PALETTE.length];
                 const key = serviceDetailKey(s.id);
                 const title = String(s.name).replace(/'/g, "\\'");
-                const icon = globalCatIcons[s.name] || '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />';
+                const icon = globalCatIcons[s.name]
+                    || (/велосипед/i.test(String(s.name || '')) ? globalCatIcons['Оренда велосипедів'] : null)
+                    || '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />';
                 return `<div class="metric-card" id="cardSvc_${s.id}" onclick="openUniversalDetails('${key}', '${title}', '${pal.color}', '${pal.bg}', 'Дохід')">
                     <div class="mc-header">
                         <div class="metric-icon" style="background:${pal.bg}; color:${pal.color};"><svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24">${icon}</svg></div>
@@ -2650,6 +2643,12 @@ function getVisitWord(count) {
             }
             if (cat === 'Чан') {
                 return (customServicesList || []).find(s => s.kind === 'chan') || { kind: 'chan', name: 'Чан', id: 'chan' };
+            }
+            // Legacy «Оренда велосипедів» + будь-яка назва з «велосипед» → картка послуги з каталогу
+            if (cat === 'Оренда велосипедів' || /велосипед/i.test(cat)) {
+                const bike = (customServicesList || []).find(s => s.kind === 'bike')
+                    || (customServicesList || []).find(s => /велосипед/i.test(String(s.name || '')));
+                if (bike) return bike;
             }
             return (customServicesList || []).find(s => String(s.name || '').trim() === cat) || null;
         }
@@ -5780,9 +5779,24 @@ else if (total === 0) { finText = "Немає ціни"; badgeBg = "rgba(255,255
         function setAdminServiceQty(serviceId, qty) {
             const id = String(serviceId);
             const n = Math.max(0, Number(qty) || 0);
-            if (n <= 0) delete selectedServices[id];
-            else selectedServices[id] = n;
+            if (n <= 0) {
+                delete selectedServices[id];
+                delete confirmedServices[id];
+            } else {
+                selectedServices[id] = n;
+            }
             syncAdminLegacyServiceFields();
+            renderAdminCustomServices();
+            if (!window._bookingDrawerLoading && typeof updatePricePreview === 'function') updatePricePreview();
+        }
+
+        function setAdminServiceConfirmed(serviceId, confirmed) {
+            const id = String(serviceId);
+            if (confirmed && BosoServices.getServiceQty(selectedServices, id) > 0) {
+                confirmedServices[id] = true;
+            } else {
+                delete confirmedServices[id];
+            }
             renderAdminCustomServices();
             if (!window._bookingDrawerLoading && typeof updatePricePreview === 'function') updatePricePreview();
         }
@@ -5805,6 +5819,16 @@ else if (total === 0) { finText = "Немає ціни"; badgeBg = "rgba(255,255
                 const hint = BosoServices.formatServicePriceHint(service);
                 const isCounter = BosoServices.serviceInputType(service) === 'counter';
                 const maxQ = Math.max(1, Number(service.maxQuantity) || 20);
+                const isOnSite = BosoServices.serviceIsOnSite(service);
+                const isConfirmed = !!confirmedServices[String(service.id)];
+                const confirmPrice = Math.max(0, Number(service.price) || 0);
+                const confirmRow = (isOnSite && qty > 0) ? `
+                    <label style="display:flex;align-items:center;gap:8px;margin-top:10px;cursor:pointer;user-select:none;">
+                        <input type="checkbox" ${isConfirmed ? 'checked' : ''} onchange="setAdminServiceConfirmed(${service.id}, this.checked)" style="width:16px;height:16px;accent-color:var(--accent);cursor:pointer;">
+                        <span style="font-size:13px;font-weight:600;color:#111827;text-transform:none;letter-spacing:0;">Підтверджено${confirmPrice > 0 ? ` (+${confirmPrice.toLocaleString('uk-UA')} ₴)` : ''}</span>
+                    </label>
+                    <div style="font-size:11px;color:#6B7280;margin-top:2px;">${isConfirmed ? 'Суму додано в розрахунок і звіти' : 'Запит гостя · оплата після підтвердження'}</div>
+                ` : `<div style="font-size:11px;color:#6B7280;margin-top:4px;">${hint}</div>`;
                 if (isCounter) {
                     return `<div class="form-group" style="margin:0;">
                         <label>${service.name}${service.description ? ` <span style="font-weight:500;color:#6B7280;text-transform:none;letter-spacing:0;">(${hint})</span>` : ''}</label>
@@ -5813,7 +5837,7 @@ else if (total === 0) { finText = "Немає ціни"; badgeBg = "rgba(255,255
                             <div style="flex:1;text-align:center;font-size:16px;font-weight:700;color:#111827;">${qty}</div>
                             <button type="button" onclick="setAdminServiceQty(${service.id}, ${Math.min(maxQ, qty + 1)})" style="width:50px;height:100%;background:#F0FDF4;color:#059669;border:none;border-left:1px solid #A7F3D0;font-size:22px;font-weight:600;cursor:pointer;">+</button>
                         </div>
-                        <div style="font-size:11px;color:#6B7280;margin-top:4px;">${hint}</div>
+                        ${confirmRow}
                     </div>`;
                 }
                 return `<div class="form-group" style="margin:0;">
@@ -5822,13 +5846,14 @@ else if (total === 0) { finText = "Немає ціни"; badgeBg = "rgba(255,255
                         <div class="mode-btn ${qty <= 0 ? 'active' : ''}" onclick="setAdminServiceQty(${service.id}, 0)" style="display:flex;align-items:center;justify-content:center;height:100%;margin:0;padding:0;flex:1;cursor:pointer;">Ні</div>
                         <div class="mode-btn ${qty > 0 ? 'active' : ''}" onclick="setAdminServiceQty(${service.id}, 1)" style="display:flex;align-items:center;justify-content:center;height:100%;margin:0;padding:0;flex:1;cursor:pointer;">Так</div>
                     </div>
-                    <div style="font-size:11px;color:#6B7280;margin-top:4px;">${hint}</div>
+                    ${confirmRow}
                 </div>`;
             }).join('');
         }
 
         function resetAdminSelectedServices() {
             selectedServices = {};
+            confirmedServices = {};
             syncAdminLegacyServiceFields();
             renderAdminCustomServices();
         }
@@ -5836,6 +5861,7 @@ else if (total === 0) { finText = "Немає ціни"; badgeBg = "rgba(255,255
         function loadAdminSelectedServicesFromBooking(booking) {
             if (typeof BosoServices === 'undefined') {
                 selectedServices = {};
+                confirmedServices = {};
                 return;
             }
             selectedServices = BosoServices.resolveSelectedServices(customServicesList, booking && booking.comment, {
@@ -5844,6 +5870,7 @@ else if (total === 0) { finText = "Немає ціни"; badgeBg = "rgba(255,255
                 crib: '',
                 vat: ''
             });
+            confirmedServices = BosoServices.resolveConfirmedServices(customServicesList, booking && booking.comment);
             // Якщо токенів немає — підтягнемо денних з legacy-парсу коментаря (вже в resolve)
             syncAdminLegacyServiceFields();
             renderAdminCustomServices();
@@ -6117,7 +6144,7 @@ if (guests > maxCap) {
 
     // Додаткові послуги з каталогу (тварини / денні / ліжечко / чан / …)
     syncAdminLegacyServiceFields();
-    const serviceOpts = { nights: nights, adults: guests, children: 0 };
+    const serviceOpts = { nights: nights, adults: guests, children: 0, confirmedServices: confirmedServices };
     const roomServices = (typeof BosoServices !== 'undefined')
         ? BosoServices.listServicesForRoom(customServicesList, room)
         : [];
@@ -6128,17 +6155,22 @@ if (guests > maxCap) {
     let dayGuestFee = 0;
     let cribFee = 0;
     let servicesFeePaid = 0;
+    let chanFee = 0;
     serviceLines.forEach(line => {
         if (line.onSite) return;
         servicesFeePaid += line.fee;
         if (line.kind === 'pets') petFee += line.fee;
         else if (line.kind === 'crib') cribFee += line.fee;
+        else if (line.kind === 'chan') {
+            chanFee += line.fee;
+            dayGuestFee += line.fee; // зберігається в dayGuestFee разом з іншими paid-послугами
+        }
         else dayGuestFee += line.fee; // денні + інші кастомні → dayGuestFee
     });
     // Агрегат для колонки dayGuestFee (усі paid-послуги крім pets/crib окремо для зворотної сумісності)
     const adminDayGuests = parseInt(document.getElementById('adminDayGuests').value) || 0;
     const adminCrib = document.getElementById('adminCrib') ? document.getElementById('adminCrib').value : "Ні";
-    const servicesStateKey = JSON.stringify(selectedServices || {});
+    const servicesStateKey = JSON.stringify({ s: selectedServices || {}, c: confirmedServices || {} });
  
     let earlyFee = 0;
     let lateFee = 0;
@@ -6354,7 +6386,7 @@ const appliesToRoom =
                 
                 ${serviceLines.filter(l => !l.onSite && l.kind !== 'pets' && l.kind !== 'crib').map(line => `
                 <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
-                    <span style="display:flex; align-items:center; gap:8px;">${iconUsers} ${line.name}${line.quantity > 1 ? ` (${line.quantity})` : ''}:</span>
+                    <span style="display:flex; align-items:center; gap:8px;">${line.kind === 'chan' ? iconVat : iconUsers} ${line.name}${line.quantity > 1 ? ` (${line.quantity})` : ''}:</span>
                     <span style="font-weight:700;">+${line.fee} грн</span>
                 </div>`).join('')}
                 <input type="hidden" id="manualDayGuest" value="${dayGuestFee}">
@@ -6390,7 +6422,7 @@ const appliesToRoom =
                     </div>`}
                 </div>` : `<input type="hidden" id="manualLate" value="0">`}
 
-                ${isVat === "Так" ? `<div style="display:flex; justify-content:space-between; margin-bottom:10px; padding-top:8px; border-top:1px solid #F3F4F6;"><span style="display:flex; align-items:center; gap:8px; color:var(--text-main); font-weight:500;">${iconVat} Чан:</span><span style="font-weight:700; color:var(--text-main);">Оплата на місці</span></div>` : ''}
+                ${isVat === "Так" && chanFee <= 0 ? `<div style="display:flex; justify-content:space-between; margin-bottom:10px; padding-top:8px; border-top:1px solid #F3F4F6;"><span style="display:flex; align-items:center; gap:8px; color:var(--text-main); font-weight:500;">${iconVat} Чан:</span><span style="font-weight:700; color:var(--text-main);">Оплата на місці</span></div>` : ''}
                 
                 <div style="display:flex; justify-content:space-between; align-items:center; margin-top:12px; padding-top:12px; border-top:1px dashed #E5E7EB; color:var(--danger);">
                     <span style="display:flex; align-items:center; gap:8px; font-weight:500; color: #DC2626;">${iconShield} Знижка (${discountLabelPct}):</span>
@@ -7249,7 +7281,7 @@ document.getElementById('adminGuests').addEventListener('change', updatePricePre
             }
             let sysComment = [];
             if (typeof BosoServices !== 'undefined') {
-                sysComment.push(...BosoServices.buildServiceCommentTokens(selectedServices));
+                sysComment.push(...BosoServices.buildServiceCommentTokens(selectedServices, customServicesList, confirmedServices));
             }
             if (document.getElementById('adminUBD').value === 'Так') sysComment.push(`🇺🇦 УБД: Так`);
             if (typeof selectedEarlyTime !== 'undefined' && selectedEarlyTime) sysComment.push(`🕒 Ранній заїзд: з ${selectedEarlyTime}`);
@@ -8950,7 +8982,7 @@ function bosoLeave() {
 
             let currSum = 0, currCount = 0, currPaid = 0, prevSum = 0, prevCount = 0;
             let statFOP = 0, statCard = 0, statCash = 0, statWayForPay = 0;
-            let currGuests = 0, currPets = 0, currEarlyLate = 0, currVat = 0, currBikes = 0, currOther = 0;
+            let currGuests = 0, currPets = 0, currEarlyLate = 0, currVat = 0, currOther = 0;
             const serviceTotals = {}; // id -> amount
             const serviceNamesMap = {};
             getReportableCustomServices().forEach(s => {
@@ -9180,7 +9212,6 @@ function bosoLeave() {
                     
                     if (t.category === "Плата за раннє заселення/пізнє виселення") { currEarlyLate += t.amount; window.bosoDetails.earlyLate.push(tObj); }
                     else if (t.category === "Чан") { currVat += t.amount; window.bosoDetails.vat.push(tObj); }
-                    else if (t.category === "Оренда велосипедів") { currBikes += t.amount; window.bosoDetails.bikes.push(tObj); }
                     else if (t.category === "Інший дохід" || t.category === "Міні-бар") { currOther += t.amount; window.bosoDetails.other.push(tObj); }
                     else {
                         const matched = findServiceForIncomeCategory(t.category);
@@ -9252,7 +9283,6 @@ function bosoLeave() {
             animateValue('metPets', 0, currPets, 800);
             animateValue('metGuests', 0, currGuests, 800);
             animateValue('metVat', 0, currVat, 800);
-            animateValue('metBikes', 0, currBikes, 800);
             animateValue('metEarlyLate', 0, currEarlyLate, 800);
             animateValue('metOther', 0, currOther, 800);
             Object.keys(serviceTotals).forEach(sid => {
@@ -9275,7 +9305,6 @@ function bosoLeave() {
                 { id: 'cardPets', val: currPets },
                 { id: 'cardGuests', val: currGuests },
                 { id: 'cardVat', val: currVat },
-                { id: 'cardBikes', val: currBikes },
                 { id: 'cardEarlyLate', val: currEarlyLate },
                 { id: 'cardOther', val: currOther }
             ];
@@ -9298,7 +9327,7 @@ function bosoLeave() {
                         bestRoom = r;
                     }
                 }
-                let extraTotal = currPets + currGuests + currVat + currBikes + currEarlyLate + currOther;
+                let extraTotal = currPets + currGuests + currVat + currEarlyLate + currOther;
                 Object.keys(serviceTotals).forEach(sid => { extraTotal += (serviceTotals[sid] || 0); });
                 let text = "";
                 if (currSum === 0) {
@@ -9875,8 +9904,8 @@ async function capturePremiumCard(b) {
     let cleanComment = (typeof BosoServices !== 'undefined' && BosoServices.getGuestVisibleComment)
         ? BosoServices.getGuestVisibleComment(rawComment)
         : String(rawComment || '')
-            .replace(/🛎️#\d+(?:⏳)?:\s*[^|\n]+/g, '')
-            .replace(/(?:^|[|\s\n])(?:[A-Za-z])?#\d+(?:⏳)?:\s*[^|\n]+/g, ' ')
+            .replace(/🛎️#\d+(?:⏳|✓)?:\s*[^|\n]+/g, '')
+            .replace(/(?:^|[|\s\n])(?:[A-Za-z])?#\d+(?:⏳|✓)?:\s*[^|\n]+/g, ' ')
             .replace(/👥 Денні гості[^|]+(\|\s*)?/g, '')
             .replace(/🛏️ Дитяче ліжечко: Так\s*(\|\s*)?/g, '')
             .replace(/♨️ Чан: Так\s*(\|\s*)?/g, '')
@@ -10460,8 +10489,8 @@ async function captureCleaningCard(b) {
     let cleanComment = (typeof BosoServices !== 'undefined' && BosoServices.getGuestVisibleComment)
         ? BosoServices.getGuestVisibleComment(rawComment)
         : String(rawComment || '')
-            .replace(/🛎️#\d+(?:⏳)?:\s*[^|\n]+/g, '')
-            .replace(/(?:^|[|\s\n])(?:[A-Za-z])?#\d+(?:⏳)?:\s*[^|\n]+/g, ' ')
+            .replace(/🛎️#\d+(?:⏳|✓)?:\s*[^|\n]+/g, '')
+            .replace(/(?:^|[|\s\n])(?:[A-Za-z])?#\d+(?:⏳|✓)?:\s*[^|\n]+/g, ' ')
             .replace(/👥 Денні гості[^|]+(\|\s*)?/g, '')
             .replace(/🛏️ Дитяче ліжечко: Так\s*(\|\s*)?/g, '')
             .replace(/♨️ Чан: Так\s*(\|\s*)?/g, '')

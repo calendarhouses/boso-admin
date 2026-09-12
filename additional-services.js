@@ -7,6 +7,8 @@
 
   var SERVICE_TOKEN = /🛎️#(\d+):\s*([^|]+)/g;
   var SERVICE_PENDING_TOKEN = /🛎️#(\d+)⏳:\s*([^|]+)/g;
+  /** Підтверджена on-site послуга (оплата додана в розрахунок / звіти) */
+  var SERVICE_BILLED_TOKEN = /🛎️#(\d+)✓:\s*([^|]+)/g;
 
   /** Дефолтний каталог — міграція зі старих захардкоджених полів */
   var DEFAULT_CUSTOM_SERVICES = [
@@ -127,7 +129,8 @@
   function calculateServiceFee(service, quantity, opts) {
     var qty = Math.max(0, Number(quantity) || 0);
     if (qty <= 0 || !service) return 0;
-    if (serviceIsOnSite(service)) return 0;
+    var forcePaid = !!(opts && (opts.forcePaid || opts.confirmed));
+    if (serviceIsOnSite(service) && !forcePaid) return 0;
 
     var unit = Math.max(0, Number(service.price) || 0);
     var base = Math.max(0, Number(service.baseFee) || 0);
@@ -156,25 +159,40 @@
     }, 0);
   }
 
+  function isServiceConfirmed(confirmedServices, serviceId) {
+    if (!confirmedServices) return false;
+    return !!confirmedServices[String(serviceId)];
+  }
+
   function buildServiceLines(services, selectedServices, opts) {
+    var confirmedServices = (opts && opts.confirmedServices) || {};
     return (services || []).map(function (service) {
       var quantity = getServiceQty(selectedServices, service.id);
-      var fee = calculateServiceFee(service, quantity, opts || {});
       var onSite = serviceIsOnSite(service);
+      var confirmed = !onSite || isServiceConfirmed(confirmedServices, service.id);
+      var feeOpts = Object.assign({}, opts || {}, { forcePaid: confirmed && onSite, confirmed: confirmed && onSite });
+      var fee = calculateServiceFee(service, quantity, feeOpts);
       return {
         id: service.id,
         kind: service.kind || '',
         name: service.name,
         quantity: quantity,
         fee: fee,
-        onSite: onSite,
+        onSite: onSite && !confirmed,
+        confirmed: confirmed,
         selected: quantity > 0
       };
     }).filter(function (line) { return line.selected; });
   }
 
   function formatServicePriceHint(service) {
-    if (serviceIsOnSite(service)) return 'Оплата на місці';
+    if (serviceIsOnSite(service)) {
+      var onSitePrice = Math.max(0, Number(service.price) || 0);
+      if (onSitePrice > 0) {
+        return 'Оплата на місці · ' + onSitePrice.toLocaleString('uk-UA') + ' ₴ після підтвердження';
+      }
+      return 'Оплата на місці';
+    }
     var price = Math.max(0, Number(service.price) || 0);
     var base = Math.max(0, Number(service.baseFee) || 0);
     var parts = [];
@@ -210,13 +228,37 @@
     var text = String(raw || '');
     var re1 = new RegExp(SERVICE_TOKEN.source, 'g');
     var re2 = new RegExp(SERVICE_PENDING_TOKEN.source, 'g');
-    var re3 = /(?:^|[|\s\n])(?:[A-Za-z])?#(\d+)(?:⏳)?:\s*([^|\n]+)/g;
+    var reBilled = new RegExp(SERVICE_BILLED_TOKEN.source, 'g');
+    var re3 = /(?:^|[|\s\n])(?:[A-Za-z])?#(\d+)(?:⏳|✓)?:\s*([^|\n]+)/g;
     var match;
     while ((match = re1.exec(text))) ingestServiceTokenMatch(result, match[1], match[2]);
     while ((match = re2.exec(text))) ingestServiceTokenMatch(result, match[1], match[2]);
+    while ((match = reBilled.exec(text))) ingestServiceTokenMatch(result, match[1], match[2]);
     while ((match = re3.exec(text))) {
       if (result[match[1]]) continue; // вже з нормального токена
       ingestServiceTokenMatch(result, match[1], match[2]);
+    }
+    return result;
+  }
+
+  /** Id on-site послуг, підтверджених адміном (токен ✓) */
+  function parseBilledServiceIdsFromComment(raw) {
+    var result = {};
+    var text = String(raw || '');
+    var re = new RegExp(SERVICE_BILLED_TOKEN.source, 'g');
+    var match;
+    while ((match = re.exec(text))) {
+      var tmp = {};
+      ingestServiceTokenMatch(tmp, match[1], match[2]);
+      Object.keys(tmp).forEach(function (id) { result[id] = true; });
+    }
+    // манглені: #1004✓: Так
+    var reM = /(?:^|[|\s\n])(?:[A-Za-z])?#(\d+)✓:\s*([^|\n]+)/g;
+    while ((match = reM.exec(text))) {
+      if (result[match[1]]) continue;
+      var tmp2 = {};
+      ingestServiceTokenMatch(tmp2, match[1], match[2]);
+      Object.keys(tmp2).forEach(function (id) { result[id] = true; });
     }
     return result;
   }
@@ -225,8 +267,9 @@
     return String(raw || '')
       .replace(new RegExp(SERVICE_TOKEN.source, 'g'), '')
       .replace(new RegExp(SERVICE_PENDING_TOKEN.source, 'g'), '')
-      // мангелені / без emoji: A#1001:Tak, #1002: 2
-      .replace(/(?:^|[|\s\n])(?:[A-Za-z])?#\d+(?:⏳)?:\s*[^|\n]+/g, ' ')
+      .replace(new RegExp(SERVICE_BILLED_TOKEN.source, 'g'), '')
+      // мангелені / без emoji: A#1001:Tak, #1002: 2, #1004✓: Так
+      .replace(/(?:^|[|\s\n])(?:[A-Za-z])?#\d+(?:⏳|✓)?:\s*[^|\n]+/g, ' ')
       .replace(/\|\s*\|\s*/g, ' | ')
       .replace(/^\|\s*/, '')
       .replace(/\|\s*$/, '')
@@ -271,7 +314,7 @@
 
     if (!text || text === 'undefined' || text === 'null' || text === 'Немає') return '';
     // якщо лишилось лише сміття на кшталт "#1001" / "A#1001:Tak"
-    if (/^(?:[A-Za-z])?#\d+(?:⏳)?:?\s*(?:Так|Tak|Ні|Ni|\d+)?$/i.test(text)) return '';
+    if (/^(?:[A-Za-z])?#\d+(?:⏳|✓)?:?\s*(?:Так|Tak|Ні|Ni|\d+)?$/i.test(text)) return '';
     return text;
   }
 
@@ -286,13 +329,44 @@
       .trim();
   }
 
-  function buildServiceCommentTokens(selectedServices, servicesById) {
+  /**
+   * Токени в коментар.
+   * on-site без підтвердження → ⏳ (запит, без суми)
+   * on-site з підтвердженням → ✓ (сума в розрахунку і звітах)
+   * звичайні послуги → звичайний токен
+   */
+  function buildServiceCommentTokens(selectedServices, services, confirmedServices) {
+    confirmedServices = confirmedServices || {};
+    var byId = {};
+    (services || []).forEach(function (s) {
+      if (s && s.id != null) byId[String(s.id)] = s;
+    });
     return Object.keys(selectedServices || {}).filter(function (id) {
       return getServiceQty(selectedServices, id) > 0;
     }).map(function (id) {
       var qty = getServiceQty(selectedServices, id);
-      return qty > 1 ? ('🛎️#' + id + ': ' + qty) : ('🛎️#' + id + ': Так');
+      var service = byId[String(id)];
+      var onSite = serviceIsOnSite(service);
+      var billed = onSite && isServiceConfirmed(confirmedServices, id);
+      var pending = onSite && !billed;
+      var marker = billed ? '✓' : (pending ? '⏳' : '');
+      var prefix = '🛎️#' + id + marker + ': ';
+      return qty > 1 ? (prefix + qty) : (prefix + 'Так');
     });
+  }
+
+  /** Підтверджені on-site з коментаря (лише токен ✓). Legacy «🛎️#id:» / «♨️ Чан» — без підтвердження. */
+  function resolveConfirmedServices(services, comment) {
+    var billed = parseBilledServiceIdsFromComment(comment);
+    var result = {};
+    Object.keys(billed).forEach(function (id) {
+      var service = (services || []).find(function (s) { return String(s.id) === String(id); });
+      // якщо сервіс уже не on-site — підтвердження не потрібне, але прапорець не шкодить
+      if (!service || serviceIsOnSite(service) || service.kind === 'chan') {
+        result[String(id)] = true;
+      }
+    });
+    return result;
   }
 
   function migrateLegacyServiceSelection(services, legacy) {
@@ -397,10 +471,12 @@
       crib: '',
       vat: ''
     });
+    var confirmedServices = resolveConfirmedServices(services, comment);
     var opts = {
       nights: Math.max(1, Number(nights) || 1),
       adults: Math.max(1, parseInt(booking && booking.guests, 10) || 2),
-      children: 0
+      children: 0,
+      confirmedServices: confirmedServices
     };
     var lines = buildServiceLines(services, selected, opts);
     var hasTokens = Object.keys(parseSelectedServicesFromComment(comment)).length > 0;
@@ -420,6 +496,7 @@
         name: l.name,
         quantity: l.quantity,
         onSite: l.onSite,
+        confirmed: !!l.confirmed,
         amount: Math.round(amount)
       };
     });
@@ -446,7 +523,7 @@
     if (hasTokens && isFinite(storedOther) && storedOther > sumOther) {
       leftoverOther = Math.round(storedOther - sumOther);
     }
-    return { lines: attributed, leftoverOther: leftoverOther, selected: selected };
+    return { lines: attributed, leftoverOther: leftoverOther, selected: selected, confirmed: confirmedServices };
   }
 
   global.BosoServices = {
@@ -455,6 +532,7 @@
     serviceIsHourly: serviceIsHourly,
     serviceInputType: serviceInputType,
     getServiceQty: getServiceQty,
+    isServiceConfirmed: isServiceConfirmed,
     serviceAppliesToRoom: serviceAppliesToRoom,
     listServicesForRoom: listServicesForRoom,
     findServiceByKind: findServiceByKind,
@@ -464,6 +542,7 @@
     buildServiceLines: buildServiceLines,
     formatServicePriceHint: formatServicePriceHint,
     parseSelectedServicesFromComment: parseSelectedServicesFromComment,
+    parseBilledServiceIdsFromComment: parseBilledServiceIdsFromComment,
     stripServiceTokensFromComment: stripServiceTokensFromComment,
     stripLegacyServiceFlagsFromComment: stripLegacyServiceFlagsFromComment,
     stripScheduleFlagsFromComment: stripScheduleFlagsFromComment,
@@ -472,6 +551,7 @@
     migrateLegacyServiceSelection: migrateLegacyServiceSelection,
     parseLegacyFlagsFromComment: parseLegacyFlagsFromComment,
     resolveSelectedServices: resolveSelectedServices,
+    resolveConfirmedServices: resolveConfirmedServices,
     ensureDefaultCustomServices: ensureDefaultCustomServices,
     roomsLabelForIds: roomsLabelForIds,
     syncLegacyFieldsFromSelection: syncLegacyFieldsFromSelection,

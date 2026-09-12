@@ -1479,10 +1479,6 @@
                         <div class="mc-header"><div class="metric-icon" style="background:#F3E8FF; color:#6D28D9;"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg></div></div>
                         <div class="mc-body"><span class="metric-title">Гнуч. графік</span><span class="metric-val" id="metEarlyLate" style="font-size: 16px;">0 грн</span></div>
                     </div>
-                    <div class="metric-card" id="cardBikes" onclick="openUniversalDetails('bikes', 'Велосипеди', '#047857', '#ECFDF5', 'Дохід')">
-                        <div class="mc-header"><div class="metric-icon" style="background:#ECFDF5; color:#047857;"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg></div></div>
-                        <div class="mc-body"><span class="metric-title">Велосипеди</span><span class="metric-val" id="metBikes" style="font-size: 16px;">0 грн</span></div>
-                    </div>
                     <div id="dynamicServiceCardsMount" style="display: contents;"></div>
                     <div class="metric-card" id="cardOther" onclick="openUniversalDetails('other', 'Інший дохід', '#4B5563', '#F3F4F6', 'Дохід')">
                         <div class="mc-header"><div class="metric-icon" style="background:#F3F4F6; color:#4B5563;"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"></path></svg></div></div>
@@ -1869,6 +1865,7 @@
             ? BosoServices.ensureDefaultCustomServices([])
             : [];
         let selectedServices = {}; // { [serviceId]: qty }
+        let confirmedServices = {}; // { [serviceId]: true } — підтверджені on-site (чан тощо)
         let sysServicesList = [];
         let customPrices = {};
         let smsSettings = {
@@ -4324,9 +4321,24 @@ if (sClass.includes('скас')) {
         function setAdminServiceQty(serviceId, qty) {
             const id = String(serviceId);
             const n  = Math.max(0, Number(qty) || 0);
-            if (n <= 0) delete selectedServices[id];
-            else selectedServices[id] = n;
+            if (n <= 0) {
+                delete selectedServices[id];
+                delete confirmedServices[id];
+            } else {
+                selectedServices[id] = n;
+            }
             syncAdminLegacyServiceFields();
+            renderAdminCustomServices();
+            if (!window._bookingDrawerLoading) updatePricePreview();
+        }
+
+        function setAdminServiceConfirmed(serviceId, confirmed) {
+            const id = String(serviceId);
+            if (confirmed && BosoServices.getServiceQty(selectedServices, id) > 0) {
+                confirmedServices[id] = true;
+            } else {
+                delete confirmedServices[id];
+            }
             renderAdminCustomServices();
             if (!window._bookingDrawerLoading) updatePricePreview();
         }
@@ -4343,24 +4355,34 @@ if (sClass.includes('скас')) {
                 const hint    = BosoServices.formatServicePriceHint(service);
                 const isCounter = BosoServices.serviceInputType(service) === 'counter';
                 const maxQ    = Math.max(1, Number(service.maxQuantity) || 20);
+                const isOnSite = BosoServices.serviceIsOnSite(service);
+                const isConfirmed = !!confirmedServices[String(service.id)];
+                const confirmPrice = Math.max(0, Number(service.price) || 0);
+                const confirmRow = (isOnSite && qty > 0) ? `
+                    <label style="display:flex;align-items:center;gap:8px;margin-top:10px;cursor:pointer;user-select:none;">
+                        <input type="checkbox" ${isConfirmed ? 'checked' : ''} onchange="setAdminServiceConfirmed(${service.id}, this.checked)" style="width:16px;height:16px;accent-color:var(--accent);cursor:pointer;">
+                        <span style="font-size:13px;font-weight:600;color:#111827;">Підтверджено${confirmPrice > 0 ? ` (+${confirmPrice.toLocaleString('uk-UA')} ₴)` : ''}</span>
+                    </label>
+                    <div style="font-size:11px;color:#9CA3AF;margin-top:2px;">${isConfirmed ? 'Суму додано в розрахунок і звіти' : 'Запит гостя · оплата після підтвердження'}</div>
+                ` : `<div style="font-size:11px;color:#9CA3AF;margin-top:4px;">${hint}</div>`;
                 if (isCounter) {
                     return `<div class="form-group">
                         <label>${service.name}:</label>
-                        <div style="font-size:11px;color:#9CA3AF;margin-bottom:4px;">${hint}</div>
                         <div style="display:flex;align-items:center;background:#F9FAFB;border-radius:12px;border:1px solid #D1D5DB;height:48px;overflow:hidden;">
                             <button type="button" onclick="setAdminServiceQty(${service.id},${qty-1})" style="width:50px;height:100%;background:#FEF2F2;color:#DC2626;border:none;border-right:1px solid #FECACA;font-size:24px;font-weight:600;cursor:pointer;outline:none;">−</button>
                             <span style="flex:1;text-align:center;font-size:16px;font-weight:700;color:#111827;">${qty}</span>
                             <button type="button" onclick="setAdminServiceQty(${service.id},${Math.min(maxQ,qty+1)})" style="width:50px;height:100%;background:#F0FDF4;color:#059669;border:none;border-left:1px solid #A7F3D0;font-size:22px;font-weight:600;cursor:pointer;outline:none;">+</button>
                         </div>
+                        ${confirmRow}
                     </div>`;
                 } else {
                     return `<div class="form-group">
                         <label>${service.name}:</label>
-                        <div style="font-size:11px;color:#9CA3AF;margin-bottom:4px;">${hint}</div>
                         <div style="display:flex;background:#F3F4F6;border-radius:12px;padding:4px;height:48px;">
                             <div class="mode-btn ${qty<=0?'active':''}" onclick="setAdminServiceQty(${service.id},0)" style="display:flex;align-items:center;justify-content:center;height:100%;margin:0;padding:0;flex:1;cursor:pointer;">Ні</div>
                             <div class="mode-btn ${qty>0?'active':''}" onclick="setAdminServiceQty(${service.id},1)" style="display:flex;align-items:center;justify-content:center;height:100%;margin:0;padding:0;flex:1;cursor:pointer;">Так</div>
                         </div>
+                        ${confirmRow}
                     </div>`;
                 }
             }).join('');
@@ -4368,6 +4390,7 @@ if (sClass.includes('скас')) {
 
         function resetAdminSelectedServices() {
             selectedServices = {};
+            confirmedServices = {};
             syncAdminLegacyServiceFields();
             renderAdminCustomServices();
         }
@@ -4375,6 +4398,7 @@ if (sClass.includes('скас')) {
         function loadAdminSelectedServicesFromBooking(booking) {
             if (typeof BosoServices === 'undefined') {
                 selectedServices = {};
+                confirmedServices = {};
                 return;
             }
             selectedServices = BosoServices.resolveSelectedServices(
@@ -4387,6 +4411,7 @@ if (sClass.includes('скас')) {
                     vat: ''
                 }
             );
+            confirmedServices = BosoServices.resolveConfirmedServices(customServicesList, booking && booking.comment);
             syncAdminLegacyServiceFields();
             renderAdminCustomServices();
         }
@@ -4639,18 +4664,22 @@ if (sClass.includes('скас')) {
 
     // ─── Ціни послуг через BosoServices ───────────────────────────────────
     syncAdminLegacyServiceFields();
-    const _serviceOpts = { nights: nights, adults: guests, children: 0 };
+    const _serviceOpts = { nights: nights, adults: guests, children: 0, confirmedServices: confirmedServices };
     const _roomServices = (typeof BosoServices !== 'undefined')
         ? BosoServices.listServicesForRoom(customServicesList, room) : [];
     const _serviceLines = (typeof BosoServices !== 'undefined')
         ? BosoServices.buildServiceLines(_roomServices, selectedServices, _serviceOpts) : [];
-    let petFee = 0, dayGuestsFee = 0, cribFee = 0;
+    let petFee = 0, dayGuestsFee = 0, cribFee = 0, chanFee = 0;
     _serviceLines.forEach(function(line) {
         if (line.onSite) return;
         if (line.kind === 'pets') petFee += line.fee;
         else if (line.kind === 'crib') cribFee += line.fee;
-        else dayGuestsFee += line.fee;
+        else {
+            dayGuestsFee += line.fee;
+            if (line.kind === 'chan') chanFee += line.fee;
+        }
     });
+    const _servicesStateKey = JSON.stringify({ s: selectedServices || {}, c: confirmedServices || {} });
     // ──────────────────────────────────────────────────────────────────────
 
     let earlyFee = 0;
@@ -4683,7 +4712,6 @@ if (sClass.includes('скас')) {
     let manDisc = getVal('manualDiscount');
     let isDiscEdited = document.getElementById('manualDiscountEdited')?.value === "true";
 
-    const _servicesStateKey = JSON.stringify(selectedServices || {});
     let currState = { checkIn: checkInStr, checkOut: checkOutStr, cottage: roomName, guests: guests, services: _servicesStateKey, early: selectedEarlyTime, late: selectedLateTime };
 
     if (!isInitialLoad) {
@@ -4838,8 +4866,8 @@ if (sClass.includes('скас')) {
                 
                 ${dayGuestsFee > 0 ? `
                 <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
-                    <span style="display:flex; align-items:center; gap:8px;">${iconUsers} Денні гості:</span>
-                    <div class="price-edit-wrapper" style="padding:4px 8px; border-radius:8px; margin-right:-8px; background:rgba(0,0,0,0.03);" onclick="openQuickEdit('manualDayGuest', 'Денні гості', ${dayGuestsFee})">
+                    <span style="display:flex; align-items:center; gap:8px;">${iconUsers} Дод. послуги${chanFee > 0 && dayGuestsFee === chanFee ? ' (Чан)' : ''}:</span>
+                    <div class="price-edit-wrapper" style="padding:4px 8px; border-radius:8px; margin-right:-8px; background:rgba(0,0,0,0.03);" onclick="openQuickEdit('manualDayGuest', 'Дод. послуги', ${dayGuestsFee})">
                         <span>+</span>
                         <span class="editable-number" id="manualDayGuest" style="font-weight:700;">${dayGuestsFee}</span>
                         <span>грн</span>
@@ -4877,7 +4905,7 @@ if (sClass.includes('скас')) {
                     </div>`}
                 </div>` : `<span id="manualLate" style="display:none;">0</span>`}
 
-                ${hasVat ? `
+                ${hasVat && chanFee <= 0 ? `
                 <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; padding-top:8px; border-top:1px solid #F3F4F6;">
                     <span style="display:flex; align-items:center; gap:8px; color:var(--text-main); font-weight:500;">${iconVat} Чан:</span>
                     <span style="font-weight:700; color:var(--text-main);">Оплата на місці</span>
@@ -5507,7 +5535,7 @@ async function bosoSendRemainderPaymentSms() {
             if (typeof BosoServices !== 'undefined') {
                 rawComment = BosoServices.stripServiceTokensFromComment(rawComment);
                 rawComment = BosoServices.stripLegacyServiceFlagsFromComment(rawComment);
-                sysComment.push(...BosoServices.buildServiceCommentTokens(selectedServices));
+                sysComment.push(...BosoServices.buildServiceCommentTokens(selectedServices, customServicesList, confirmedServices));
             }
             if (document.getElementById('adminUBD').value === 'Так') sysComment.push(`🇺🇦 УБД: Так`);
             if (selectedEarlyTime) sysComment.push(`🕒 Ранній заїзд: з ${selectedEarlyTime}`);
@@ -7133,7 +7161,7 @@ async function bosoSendRemainderPaymentSms() {
 
             let currSum = 0, currCount = 0, currPaid = 0;
             let statFOP = 0, statCard = 0, statCash = 0, statWayForPay = 0;
-            let currGuests = 0, currPets = 0, currEarlyLate = 0, currVat = 0, currBikes = 0, currOther = 0;
+            let currGuests = 0, currPets = 0, currEarlyLate = 0, currVat = 0, currOther = 0;
             const serviceTotals = {};
             const serviceNamesMap = {};
             getReportableCustomServices().forEach(s => {
@@ -7354,7 +7382,6 @@ async function bosoSendRemainderPaymentSms() {
                     if (manualAmt > 0) bosoPushPaymentStat(payStats, t.paymentMethod || 'Готівка', '', manualAmt, manualBase, '');
                     if (t.category === "Плата за раннє заселення/пізнє виселення") { currEarlyLate += t.amount; window.bosoDetails.earlyLate.push(tObj); }
                     else if (t.category === "Чан") { currVat += t.amount; window.bosoDetails.vat.push(tObj); }
-                    else if (t.category === "Оренда велосипедів") { currBikes += t.amount; window.bosoDetails.bikes.push(tObj); }
                     else if (t.category === "Інший дохід" || t.category === "Міні-бар") { currOther += t.amount; window.bosoDetails.other.push(tObj); }
                     else {
                         const matched = findServiceForIncomeCategory(t.category);
@@ -7603,7 +7630,7 @@ async function bosoSendRemainderPaymentSms() {
             return document.getElementById(containerId + '-val')?.value || 'Готівка';
         }
 
-        const BASE_INCOME_CATEGORIES = ["Плата за раннє заселення/пізнє виселення", "Додаткові гості", "Домашні тварини", "Міні-бар", "Чан", "Оренда велосипедів", "Інший дохід"];
+        const BASE_INCOME_CATEGORIES = ["Плата за раннє заселення/пізнє виселення", "Додаткові гості", "Домашні тварини", "Міні-бар", "Чан", "Інший дохід"];
         function getIncomeCategories() {
             const fromServices = (customServicesList || [])
                 .filter(s => s && s.active !== false)
@@ -7661,6 +7688,11 @@ async function bosoSendRemainderPaymentSms() {
             }
             if (cat === 'Чан') {
                 return (customServicesList || []).find(s => s.kind === 'chan') || { kind: 'chan', name: 'Чан', id: 'chan' };
+            }
+            if (cat === 'Оренда велосипедів' || /велосипед/i.test(cat)) {
+                const bike = (customServicesList || []).find(s => s.kind === 'bike')
+                    || (customServicesList || []).find(s => /велосипед/i.test(String(s.name || '')));
+                if (bike) return bike;
             }
             return (customServicesList || []).find(s => String(s.name || '').trim() === cat) || null;
         }
@@ -7906,14 +7938,12 @@ async function bosoSendRemainderPaymentSms() {
 
             // 🟢 Анімація нових карток та сортування
             if (typeof animateValue !== 'undefined') {
-                animateValue('metBikes', 0, window.bosoDetails.bikes ? window.bosoDetails.bikes.reduce((a,b)=>a+b.amount,0) : 0, 800);
                 animateValue('metOther', 0, window.bosoDetails.other ? window.bosoDetails.other.reduce((a,b)=>a+b.amount,0) : 0, 800);
                 
                 const services = [
                     { id: 'cardPets', val: window.bosoDetails.pets ? window.bosoDetails.pets.reduce((a,b)=>a+b.amount,0) : 0 },
                     { id: 'cardGuests', val: window.bosoDetails.guests ? window.bosoDetails.guests.reduce((a,b)=>a+b.amount,0) : 0 },
                     { id: 'cardVat', val: window.bosoDetails.vat ? window.bosoDetails.vat.reduce((a,b)=>a+b.amount,0) : 0 },
-                    { id: 'cardBikes', val: window.bosoDetails.bikes ? window.bosoDetails.bikes.reduce((a,b)=>a+b.amount,0) : 0 },
                     { id: 'cardEarlyLate', val: window.bosoDetails.earlyLate ? window.bosoDetails.earlyLate.reduce((a,b)=>a+b.amount,0) : 0 },
                     { id: 'cardOther', val: window.bosoDetails.other ? window.bosoDetails.other.reduce((a,b)=>a+b.amount,0) : 0 }
                 ];
