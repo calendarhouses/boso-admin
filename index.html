@@ -2533,6 +2533,7 @@ function getVisitWord(count) {
             : [];
         let selectedServices = {}; // { [serviceId]: qty }
         let confirmedServices = {}; // { [serviceId]: true } — підтверджені on-site (чан тощо)
+        let serviceDays = {}; // { [serviceId]: days } — для perRentalDay (шт × доби)
 
         let sysServicesList = [
             { id: 1, name: "Пізній виїзд", rooms: "Всі", price: 0, active: false },
@@ -5782,10 +5783,26 @@ else if (total === 0) { finText = "Немає ціни"; badgeBg = "rgba(255,255
             if (n <= 0) {
                 delete selectedServices[id];
                 delete confirmedServices[id];
+                delete serviceDays[id];
             } else {
                 selectedServices[id] = n;
+                const svc = (customServicesList || []).find(s => String(s.id) === id);
+                if (svc && BosoServices.serviceIsRentalDay(svc) && !serviceDays[id]) {
+                    serviceDays[id] = 1;
+                }
             }
             syncAdminLegacyServiceFields();
+            renderAdminCustomServices();
+            if (!window._bookingDrawerLoading && typeof updatePricePreview === 'function') updatePricePreview();
+        }
+
+        function setAdminServiceDays(serviceId, days) {
+            const id = String(serviceId);
+            const svc = (customServicesList || []).find(s => String(s.id) === id);
+            const maxD = Math.max(1, Number(svc && svc.maxDays) || 14);
+            const d = Math.min(maxD, Math.max(1, Number(days) || 1));
+            if (BosoServices.getServiceQty(selectedServices, id) <= 0) return;
+            serviceDays[id] = d;
             renderAdminCustomServices();
             if (!window._bookingDrawerLoading && typeof updatePricePreview === 'function') updatePricePreview();
         }
@@ -5818,7 +5835,13 @@ else if (total === 0) { finText = "Немає ціни"; badgeBg = "rgba(255,255
                 const qty = BosoServices.getServiceQty(selectedServices, service.id);
                 const hint = BosoServices.formatServicePriceHint(service);
                 const isCounter = BosoServices.serviceInputType(service) === 'counter';
+                const isRental = BosoServices.serviceIsRentalDay(service);
                 const maxQ = Math.max(1, Number(service.maxQuantity) || 20);
+                const maxD = Math.max(1, Number(service.maxDays) || 14);
+                const days = qty > 0 ? BosoServices.getServiceDays(serviceDays, service.id) : 0;
+                const rentalFee = isRental && qty > 0
+                    ? BosoServices.calculateServiceFee(service, qty, { serviceDays: serviceDays, rentalDays: days })
+                    : 0;
                 const isOnSite = BosoServices.serviceIsOnSite(service);
                 const isConfirmed = !!confirmedServices[String(service.id)];
                 const confirmPrice = Math.max(0, Number(service.price) || 0);
@@ -5828,7 +5851,33 @@ else if (total === 0) { finText = "Немає ціни"; badgeBg = "rgba(255,255
                         <span style="font-size:13px;font-weight:600;color:#111827;text-transform:none;letter-spacing:0;">Підтверджено${confirmPrice > 0 ? ` (+${confirmPrice.toLocaleString('uk-UA')} ₴)` : ''}</span>
                     </label>
                     <div style="font-size:11px;color:#6B7280;margin-top:2px;">${isConfirmed ? 'Суму додано в розрахунок і звіти' : 'Запит гостя · оплата після підтвердження'}</div>
-                ` : `<div style="font-size:11px;color:#6B7280;margin-top:4px;">${hint}</div>`;
+                ` : (!isRental ? `<div style="font-size:11px;color:#6B7280;margin-top:4px;">${hint}</div>` : '');
+
+                if (isRental) {
+                    return `<div class="form-group" style="margin:0;grid-column:1/-1;">
+                        <label>${service.name} <span style="font-weight:500;color:#6B7280;text-transform:none;letter-spacing:0;">(${hint})</span></label>
+                        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:4px;">
+                            <div>
+                                <div style="font-size:11px;color:#6B7280;margin-bottom:4px;">Кількість</div>
+                                <div style="display:flex;align-items:center;background:#F9FAFB;border-radius:12px;border:1px solid #D1D5DB;height:48px;overflow:hidden;">
+                                    <button type="button" onclick="setAdminServiceQty(${service.id}, ${qty - 1})" style="width:50px;height:100%;background:#FEF2F2;color:#DC2626;border:none;border-right:1px solid #FECACA;font-size:24px;font-weight:600;cursor:pointer;">−</button>
+                                    <div style="flex:1;text-align:center;font-size:16px;font-weight:700;color:#111827;">${qty}</div>
+                                    <button type="button" onclick="setAdminServiceQty(${service.id}, ${Math.min(maxQ, qty + 1)})" style="width:50px;height:100%;background:#F0FDF4;color:#059669;border:none;border-left:1px solid #A7F3D0;font-size:22px;font-weight:600;cursor:pointer;">+</button>
+                                </div>
+                            </div>
+                            <div style="${qty <= 0 ? 'opacity:0.4;pointer-events:none;' : ''}">
+                                <div style="font-size:11px;color:#6B7280;margin-bottom:4px;">Діб прокату</div>
+                                <div style="display:flex;align-items:center;background:#F9FAFB;border-radius:12px;border:1px solid #D1D5DB;height:48px;overflow:hidden;">
+                                    <button type="button" onclick="setAdminServiceDays(${service.id}, ${days - 1})" style="width:50px;height:100%;background:#FEF2F2;color:#DC2626;border:none;border-right:1px solid #FECACA;font-size:24px;font-weight:600;cursor:pointer;">−</button>
+                                    <div style="flex:1;text-align:center;font-size:16px;font-weight:700;color:#111827;">${qty > 0 ? days : '—'}</div>
+                                    <button type="button" onclick="setAdminServiceDays(${service.id}, ${Math.min(maxD, days + 1)})" style="width:50px;height:100%;background:#F0FDF4;color:#059669;border:none;border-left:1px solid #A7F3D0;font-size:22px;font-weight:600;cursor:pointer;">+</button>
+                                </div>
+                            </div>
+                        </div>
+                        ${qty > 0 ? `<div style="margin-top:8px;font-size:13px;font-weight:600;color:#111827;">= ${rentalFee.toLocaleString('uk-UA')} ₴ <span style="font-weight:500;color:#6B7280;">(${BosoServices.formatQtyDaysLabel(qty, days)})</span></div>` : ''}
+                        ${confirmRow}
+                    </div>`;
+                }
                 if (isCounter) {
                     return `<div class="form-group" style="margin:0;">
                         <label>${service.name}${service.description ? ` <span style="font-weight:500;color:#6B7280;text-transform:none;letter-spacing:0;">(${hint})</span>` : ''}</label>
@@ -5854,6 +5903,7 @@ else if (total === 0) { finText = "Немає ціни"; badgeBg = "rgba(255,255
         function resetAdminSelectedServices() {
             selectedServices = {};
             confirmedServices = {};
+            serviceDays = {};
             syncAdminLegacyServiceFields();
             renderAdminCustomServices();
         }
@@ -5862,6 +5912,7 @@ else if (total === 0) { finText = "Немає ціни"; badgeBg = "rgba(255,255
             if (typeof BosoServices === 'undefined') {
                 selectedServices = {};
                 confirmedServices = {};
+                serviceDays = {};
                 return;
             }
             selectedServices = BosoServices.resolveSelectedServices(customServicesList, booking && booking.comment, {
@@ -5871,7 +5922,7 @@ else if (total === 0) { finText = "Немає ціни"; badgeBg = "rgba(255,255
                 vat: ''
             });
             confirmedServices = BosoServices.resolveConfirmedServices(customServicesList, booking && booking.comment);
-            // Якщо токенів немає — підтягнемо денних з legacy-парсу коментаря (вже в resolve)
+            serviceDays = BosoServices.resolveServiceDays(customServicesList, booking && booking.comment, selectedServices);
             syncAdminLegacyServiceFields();
             renderAdminCustomServices();
         }
@@ -6144,7 +6195,7 @@ if (guests > maxCap) {
 
     // Додаткові послуги з каталогу (тварини / денні / ліжечко / чан / …)
     syncAdminLegacyServiceFields();
-    const serviceOpts = { nights: nights, adults: guests, children: 0, confirmedServices: confirmedServices };
+    const serviceOpts = { nights: nights, adults: guests, children: 0, confirmedServices: confirmedServices, serviceDays: serviceDays };
     const roomServices = (typeof BosoServices !== 'undefined')
         ? BosoServices.listServicesForRoom(customServicesList, room)
         : [];
@@ -6170,7 +6221,7 @@ if (guests > maxCap) {
     // Агрегат для колонки dayGuestFee (усі paid-послуги крім pets/crib окремо для зворотної сумісності)
     const adminDayGuests = parseInt(document.getElementById('adminDayGuests').value) || 0;
     const adminCrib = document.getElementById('adminCrib') ? document.getElementById('adminCrib').value : "Ні";
-    const servicesStateKey = JSON.stringify({ s: selectedServices || {}, c: confirmedServices || {} });
+    const servicesStateKey = JSON.stringify({ s: selectedServices || {}, c: confirmedServices || {}, d: serviceDays || {} });
  
     let earlyFee = 0;
     let lateFee = 0;
@@ -6386,7 +6437,7 @@ const appliesToRoom =
                 
                 ${serviceLines.filter(l => !l.onSite && l.kind !== 'pets' && l.kind !== 'crib').map(line => `
                 <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
-                    <span style="display:flex; align-items:center; gap:8px;">${line.kind === 'chan' ? iconVat : iconUsers} ${line.name}${line.quantity > 1 ? ` (${line.quantity})` : ''}:</span>
+                    <span style="display:flex; align-items:center; gap:8px;">${line.kind === 'chan' ? iconVat : iconUsers} ${line.name}${line.label ? ` (${line.label})` : (line.quantity > 1 ? ` (${line.quantity})` : '')}:</span>
                     <span style="font-weight:700;">+${line.fee} грн</span>
                 </div>`).join('')}
                 <input type="hidden" id="manualDayGuest" value="${dayGuestFee}">
@@ -7281,7 +7332,7 @@ document.getElementById('adminGuests').addEventListener('change', updatePricePre
             }
             let sysComment = [];
             if (typeof BosoServices !== 'undefined') {
-                sysComment.push(...BosoServices.buildServiceCommentTokens(selectedServices, customServicesList, confirmedServices));
+                sysComment.push(...BosoServices.buildServiceCommentTokens(selectedServices, customServicesList, confirmedServices, serviceDays));
             }
             if (document.getElementById('adminUBD').value === 'Так') sysComment.push(`🇺🇦 УБД: Так`);
             if (typeof selectedEarlyTime !== 'undefined' && selectedEarlyTime) sysComment.push(`🕒 Ранній заїзд: з ${selectedEarlyTime}`);
@@ -9094,7 +9145,7 @@ function bosoLeave() {
                                     if (!window.bosoDetails[serviceDetailKey(sid)]) window.bosoDetails[serviceDetailKey(sid)] = [];
                                 }
                                 serviceTotals[sid] += line.amount;
-                                window.bosoDetails[serviceDetailKey(sid)].push({...baseObj, amount: line.amount, name: baseObj.name + " (" + line.name + ")"});
+                                window.bosoDetails[serviceDetailKey(sid)].push({...baseObj, amount: line.amount, name: baseObj.name + " (" + line.name + (line.label ? ', ' + line.label : '') + ")"});
                                 servicesPaidTotal += line.amount;
                             }
                         });

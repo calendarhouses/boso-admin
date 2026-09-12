@@ -79,14 +79,52 @@
     return service && service.perHour === 'Так';
   }
 
+  /** Прокат «за добу»: гість/адмін обирає шт × доби (не авто×ночі броні) */
+  function serviceIsRentalDay(service) {
+    return !!(service && (service.perRentalDay === 'Так' || service.perRentalDay === true));
+  }
+
   function serviceInputType(service) {
-    if (serviceIsHourly(service)) return 'counter';
+    if (serviceIsHourly(service) || serviceIsRentalDay(service)) return 'counter';
     return service && service.inputType === 'counter' ? 'counter' : 'toggle';
   }
 
   function getServiceQty(map, serviceId) {
     if (!map) return 0;
     return Math.max(0, Number(map[String(serviceId)]) || 0);
+  }
+
+  function getServiceDays(daysMap, serviceId) {
+    if (!daysMap) return 1;
+    var d = Math.max(0, Number(daysMap[String(serviceId)]) || 0);
+    return d > 0 ? d : 1;
+  }
+
+  function dayWord(n) {
+    var x = Math.abs(Number(n) || 0) % 100;
+    var n1 = x % 10;
+    if (x > 10 && x < 20) return 'діб';
+    if (n1 === 1) return 'доба';
+    if (n1 >= 2 && n1 <= 4) return 'доби';
+    return 'діб';
+  }
+
+  function parseQtyDaysValue(rawValue) {
+    var value = String(rawValue || '').trim();
+    var m = value.match(/^(\d+)\s*[×xX*]\s*(\d+)/);
+    if (m) {
+      return {
+        qty: Math.max(0, parseInt(m[1], 10) || 0),
+        days: Math.max(1, parseInt(m[2], 10) || 1)
+      };
+    }
+    return null;
+  }
+
+  function formatQtyDaysLabel(qty, days) {
+    var q = Math.max(0, Number(qty) || 0);
+    var d = Math.max(1, Number(days) || 1);
+    return q + ' × ' + d + ' ' + dayWord(d);
   }
 
   function serviceAppliesToRoom(service, room) {
@@ -116,6 +154,7 @@
     var byKind = findServiceByKind(services, kind);
     if (byKind) return byKind;
     if (kind === 'chan') return (services || []).find(function (s) { return /чан/i.test(s.name); }) || null;
+    if (kind === 'bike') return (services || []).find(function (s) { return /велосипед/i.test(s.name); }) || null;
     if (kind === 'dayGuests') return (services || []).find(function (s) { return /денн/i.test(s.name) && /гост/i.test(s.name); }) || null;
     if (kind === 'crib') return (services || []).find(function (s) { return /ліжеч/i.test(s.name) || /crib/i.test(s.name); }) || null;
     if (kind === 'pets') return (services || []).find(function (s) { return /тварин/i.test(s.name) || /pets?/i.test(s.name); }) || null;
@@ -137,6 +176,13 @@
     var nights = Math.max(1, Number(opts && opts.nights) || 1);
     var guests = Math.max(1, Number(opts && opts.adults) || 0) + Math.max(0, Number(opts && opts.children) || 0);
     if (guests < 1) guests = 1;
+
+    if (serviceIsRentalDay(service)) {
+      var daysMap = (opts && opts.serviceDays) || {};
+      var days = getServiceDays(daysMap, service.id);
+      if (opts && opts.rentalDays != null) days = Math.max(1, Number(opts.rentalDays) || 1);
+      return base + unit * qty * days;
+    }
 
     if (serviceIsHourly(service)) return (base + unit * qty);
 
@@ -166,20 +212,30 @@
 
   function buildServiceLines(services, selectedServices, opts) {
     var confirmedServices = (opts && opts.confirmedServices) || {};
+    var serviceDays = (opts && opts.serviceDays) || {};
     return (services || []).map(function (service) {
       var quantity = getServiceQty(selectedServices, service.id);
       var onSite = serviceIsOnSite(service);
       var confirmed = !onSite || isServiceConfirmed(confirmedServices, service.id);
-      var feeOpts = Object.assign({}, opts || {}, { forcePaid: confirmed && onSite, confirmed: confirmed && onSite });
+      var days = serviceIsRentalDay(service) ? getServiceDays(serviceDays, service.id) : 1;
+      var feeOpts = Object.assign({}, opts || {}, {
+        forcePaid: confirmed && onSite,
+        confirmed: confirmed && onSite,
+        serviceDays: serviceDays,
+        rentalDays: days
+      });
       var fee = calculateServiceFee(service, quantity, feeOpts);
       return {
         id: service.id,
         kind: service.kind || '',
         name: service.name,
         quantity: quantity,
+        days: serviceIsRentalDay(service) ? days : null,
+        label: serviceIsRentalDay(service) ? formatQtyDaysLabel(quantity, days) : null,
         fee: fee,
         onSite: onSite && !confirmed,
         confirmed: confirmed,
+        rentalDay: serviceIsRentalDay(service),
         selected: quantity > 0
       };
     }).filter(function (line) { return line.selected; });
@@ -195,6 +251,9 @@
     }
     var price = Math.max(0, Number(service.price) || 0);
     var base = Math.max(0, Number(service.baseFee) || 0);
+    if (serviceIsRentalDay(service)) {
+      return price.toLocaleString('uk-UA') + ' ₴ / доба';
+    }
     var parts = [];
     if (base > 0) parts.push(base.toLocaleString('uk-UA') + ' ₴ фікс');
     if (price > 0 || base === 0) {
@@ -202,7 +261,7 @@
       if (serviceIsHourly(service)) unitParts.push('год');
       else {
         var perBooking = service.perBooking === 'Так' ||
-          (service.perBooking !== 'Ні' && service.perDay !== 'Так' && service.perGuest !== 'Так' && !serviceIsHourly(service));
+          (service.perBooking !== 'Ні' && service.perDay !== 'Так' && service.perGuest !== 'Так' && !serviceIsHourly(service) && !serviceIsRentalDay(service));
         if (perBooking && service.perDay !== 'Так' && service.perGuest !== 'Так') unitParts.push('бронь');
         if (service.perDay === 'Так') unitParts.push('ніч');
         if (service.perGuest === 'Так') unitParts.push('гість');
@@ -212,9 +271,15 @@
     return parts.join(' + ') || '0 ₴';
   }
 
-  function ingestServiceTokenMatch(result, id, rawValue) {
+  function ingestServiceTokenMatch(result, id, rawValue, daysOut) {
     var value = String(rawValue || '').trim();
     if (!value || value === 'Ні' || /^ni$/i.test(value) || /^no$/i.test(value)) return;
+    var qd = parseQtyDaysValue(value);
+    if (qd && qd.qty > 0) {
+      result[String(id)] = qd.qty;
+      if (daysOut) daysOut[String(id)] = qd.days;
+      return;
+    }
     if (value === 'Так' || value.indexOf('Так') === 0 || /^tak$/i.test(value) || /^yes$/i.test(value)) {
       result[String(id)] = 1;
       return;
@@ -239,6 +304,26 @@
       ingestServiceTokenMatch(result, match[1], match[2]);
     }
     return result;
+  }
+
+  /** Дні прокату з токенів виду 🛎️#id: 2×3 */
+  function parseServiceDaysFromComment(raw) {
+    var days = {};
+    var selected = {};
+    var text = String(raw || '');
+    var re1 = new RegExp(SERVICE_TOKEN.source, 'g');
+    var re2 = new RegExp(SERVICE_PENDING_TOKEN.source, 'g');
+    var reBilled = new RegExp(SERVICE_BILLED_TOKEN.source, 'g');
+    var re3 = /(?:^|[|\s\n])(?:[A-Za-z])?#(\d+)(?:⏳|✓)?:\s*([^|\n]+)/g;
+    var match;
+    while ((match = re1.exec(text))) ingestServiceTokenMatch(selected, match[1], match[2], days);
+    while ((match = re2.exec(text))) ingestServiceTokenMatch(selected, match[1], match[2], days);
+    while ((match = reBilled.exec(text))) ingestServiceTokenMatch(selected, match[1], match[2], days);
+    while ((match = re3.exec(text))) {
+      if (selected[match[1]] && days[match[1]]) continue;
+      ingestServiceTokenMatch(selected, match[1], match[2], days);
+    }
+    return days;
   }
 
   /** Id on-site послуг, підтверджених адміном (токен ✓) */
@@ -314,7 +399,7 @@
 
     if (!text || text === 'undefined' || text === 'null' || text === 'Немає') return '';
     // якщо лишилось лише сміття на кшталт "#1001" / "A#1001:Tak"
-    if (/^(?:[A-Za-z])?#\d+(?:⏳|✓)?:?\s*(?:Так|Tak|Ні|Ni|\d+)?$/i.test(text)) return '';
+    if (/^(?:[A-Za-z])?#\d+(?:⏳|✓)?:?\s*(?:Так|Tak|Ні|Ni|\d+(?:\s*[×xX*]\s*\d+)?)?$/i.test(text)) return '';
     return text;
   }
 
@@ -335,8 +420,9 @@
    * on-site з підтвердженням → ✓ (сума в розрахунку і звітах)
    * звичайні послуги → звичайний токен
    */
-  function buildServiceCommentTokens(selectedServices, services, confirmedServices) {
+  function buildServiceCommentTokens(selectedServices, services, confirmedServices, serviceDays) {
     confirmedServices = confirmedServices || {};
+    serviceDays = serviceDays || {};
     var byId = {};
     (services || []).forEach(function (s) {
       if (s && s.id != null) byId[String(s.id)] = s;
@@ -351,6 +437,10 @@
       var pending = onSite && !billed;
       var marker = billed ? '✓' : (pending ? '⏳' : '');
       var prefix = '🛎️#' + id + marker + ': ';
+      if (serviceIsRentalDay(service)) {
+        var days = getServiceDays(serviceDays, id);
+        return prefix + qty + '×' + days;
+      }
       return qty > 1 ? (prefix + qty) : (prefix + 'Так');
     });
   }
@@ -410,6 +500,18 @@
     if (Object.keys(fromTokens).length) return fromTokens;
     var legacy = Object.assign({}, parseLegacyFlagsFromComment(comment), legacyExtras || {});
     return migrateLegacyServiceSelection(services, legacy);
+  }
+
+  function resolveServiceDays(services, comment, selectedServices) {
+    var fromTokens = parseServiceDaysFromComment(comment);
+    var result = {};
+    Object.keys(selectedServices || {}).forEach(function (id) {
+      if (getServiceQty(selectedServices, id) <= 0) return;
+      var service = (services || []).find(function (s) { return String(s.id) === String(id); });
+      if (!serviceIsRentalDay(service)) return;
+      result[String(id)] = fromTokens[String(id)] || 1;
+    });
+    return result;
   }
 
   function ensureDefaultCustomServices(list) {
@@ -472,11 +574,13 @@
       vat: ''
     });
     var confirmedServices = resolveConfirmedServices(services, comment);
+    var serviceDays = resolveServiceDays(services, comment, selected);
     var opts = {
       nights: Math.max(1, Number(nights) || 1),
       adults: Math.max(1, parseInt(booking && booking.guests, 10) || 2),
       children: 0,
-      confirmedServices: confirmedServices
+      confirmedServices: confirmedServices,
+      serviceDays: serviceDays
     };
     var lines = buildServiceLines(services, selected, opts);
     var hasTokens = Object.keys(parseSelectedServicesFromComment(comment)).length > 0;
@@ -495,6 +599,8 @@
         kind: l.kind,
         name: l.name,
         quantity: l.quantity,
+        days: l.days,
+        label: l.label,
         onSite: l.onSite,
         confirmed: !!l.confirmed,
         amount: Math.round(amount)
@@ -523,15 +629,25 @@
     if (hasTokens && isFinite(storedOther) && storedOther > sumOther) {
       leftoverOther = Math.round(storedOther - sumOther);
     }
-    return { lines: attributed, leftoverOther: leftoverOther, selected: selected, confirmed: confirmedServices };
+    return {
+      lines: attributed,
+      leftoverOther: leftoverOther,
+      selected: selected,
+      confirmed: confirmedServices,
+      serviceDays: serviceDays
+    };
   }
 
   global.BosoServices = {
     DEFAULT_CUSTOM_SERVICES: DEFAULT_CUSTOM_SERVICES,
     serviceIsOnSite: serviceIsOnSite,
     serviceIsHourly: serviceIsHourly,
+    serviceIsRentalDay: serviceIsRentalDay,
     serviceInputType: serviceInputType,
     getServiceQty: getServiceQty,
+    getServiceDays: getServiceDays,
+    dayWord: dayWord,
+    formatQtyDaysLabel: formatQtyDaysLabel,
     isServiceConfirmed: isServiceConfirmed,
     serviceAppliesToRoom: serviceAppliesToRoom,
     listServicesForRoom: listServicesForRoom,
@@ -542,6 +658,7 @@
     buildServiceLines: buildServiceLines,
     formatServicePriceHint: formatServicePriceHint,
     parseSelectedServicesFromComment: parseSelectedServicesFromComment,
+    parseServiceDaysFromComment: parseServiceDaysFromComment,
     parseBilledServiceIdsFromComment: parseBilledServiceIdsFromComment,
     stripServiceTokensFromComment: stripServiceTokensFromComment,
     stripLegacyServiceFlagsFromComment: stripLegacyServiceFlagsFromComment,
@@ -551,6 +668,7 @@
     migrateLegacyServiceSelection: migrateLegacyServiceSelection,
     parseLegacyFlagsFromComment: parseLegacyFlagsFromComment,
     resolveSelectedServices: resolveSelectedServices,
+    resolveServiceDays: resolveServiceDays,
     resolveConfirmedServices: resolveConfirmedServices,
     ensureDefaultCustomServices: ensureDefaultCustomServices,
     roomsLabelForIds: roomsLabelForIds,

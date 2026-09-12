@@ -15,6 +15,7 @@
     users: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg>',
     hash: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 9h14M5 15h14M10 3 8 21M16 3l-2 18"/></svg>',
     clock: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>',
+    sun: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>',
     x: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6 6 18M6 6l12 12"/></svg>',
     house: '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m3 11 9-8 9 8"/><path d="M5 10v10h14V10"/></svg>'
   };
@@ -24,7 +25,20 @@
       id: 'bike',
       label: 'Велосипед',
       kind: 'bike',
-      form: { name: 'Прокат велосипеда', price: '300', perDay: false, perGuest: false, perBooking: true, onSite: false, description: 'На добу або частину дня', inputType: 'counter', maxQuantity: 5, active: true }
+      form: {
+        name: 'Прокат велосипеда',
+        price: '1000',
+        perDay: false,
+        perGuest: false,
+        perBooking: false,
+        perRentalDay: true,
+        onSite: false,
+        description: '1000 ₴ за добу · оберіть кількість і дні',
+        inputType: 'counter',
+        maxQuantity: 5,
+        maxDays: 14,
+        active: true
+      }
     },
     {
       id: 'chan',
@@ -58,9 +72,11 @@
       perDay: false,
       perGuest: false,
       perHour: false,
+      perRentalDay: false,
       onSite: false,
       inputType: 'toggle',
       maxQuantity: 10,
+      maxDays: 14,
       roomIds: [],
       kind: ''
     };
@@ -69,7 +85,8 @@
   function yesNo(v) { return v ? 'Так' : 'Ні'; }
 
   function formFromService(s) {
-    var perBooking = s.perBooking === 'Так' || (s.perBooking !== 'Ні' && s.perDay !== 'Так' && s.perGuest !== 'Так' && s.perHour !== 'Так');
+    var rental = s.perRentalDay === 'Так' || s.perRentalDay === true;
+    var perBooking = !rental && (s.perBooking === 'Так' || (s.perBooking !== 'Ні' && s.perDay !== 'Так' && s.perGuest !== 'Так' && s.perHour !== 'Так'));
     return {
       name: s.name || '',
       price: String(s.price != null ? s.price : ''),
@@ -77,12 +94,14 @@
       description: s.description || '',
       active: s.active !== false,
       perBooking: !!perBooking,
-      perDay: s.perDay === 'Так',
-      perGuest: s.perGuest === 'Так',
-      perHour: s.perHour === 'Так',
+      perDay: !rental && s.perDay === 'Так',
+      perGuest: !rental && s.perGuest === 'Так',
+      perHour: !rental && s.perHour === 'Так',
+      perRentalDay: !!rental,
       onSite: !!s.onSite || (typeof BosoServices !== 'undefined' && BosoServices.serviceIsOnSite(s)),
-      inputType: s.inputType === 'counter' ? 'counter' : 'toggle',
+      inputType: (rental || s.inputType === 'counter') ? 'counter' : 'toggle',
       maxQuantity: Math.max(1, Number(s.maxQuantity) || 10),
+      maxDays: Math.max(1, Number(s.maxDays) || 14),
       roomIds: Array.isArray(s.roomIds) ? s.roomIds.map(Number) : [],
       kind: s.kind || ''
     };
@@ -90,6 +109,10 @@
 
   function pricingLabels(s) {
     var labels = [];
+    if (s.perRentalDay === 'Так' || s.perRentalDay === true) {
+      labels.push('За добу');
+      return labels;
+    }
     if (s.perHour === 'Так') labels.push('За годину');
     else {
       var perBooking = s.perBooking === 'Так' || (s.perBooking !== 'Ні' && s.perDay !== 'Так' && s.perGuest !== 'Так');
@@ -101,6 +124,7 @@
   }
 
   function pricingIconSvg(s) {
+    if (s.perRentalDay === 'Так' || s.perRentalDay === true) return SVG.sun;
     if (s.perGuest === 'Так') return SVG.users;
     if (s.perDay === 'Так') return SVG.moon;
     if (s.perHour === 'Так') return SVG.clock;
@@ -123,10 +147,14 @@
     if (form.onSite) return 'Оплата на місці';
     var price = Math.max(0, Number(form.price) || 0);
     var base = Math.max(0, Number(form.baseFee) || 0);
-    var qty = 1;
+    var qty = 2;
     var nights = 3;
     var guests = 2;
     var amount = base + price;
+    if (form.perRentalDay) {
+      amount = base + price * qty * 1;
+      return Math.round(amount).toLocaleString('uk-UA') + ' ₴ · ' + qty + ' шт × 1 доба';
+    }
     if (form.perHour) amount = price * qty;
     else {
       amount = base;
@@ -184,7 +212,8 @@
 
     var pricing = [
       { key: 'perBooking', label: 'За бронь', hint: 'базова', icon: SVG.hash },
-      { key: 'perDay', label: 'За ніч', hint: '× ночі', icon: SVG.moon },
+      { key: 'perDay', label: 'За ніч', hint: '× ночі броні', icon: SVG.moon },
+      { key: 'perRentalDay', label: 'За добу', hint: 'гість обирає шт × доби', icon: SVG.sun },
       { key: 'perGuest', label: 'За гостя', hint: '× гості', icon: SVG.users },
       { key: 'perHour', label: 'За годину', hint: '× години', icon: SVG.clock }
     ].map(function (opt) {
@@ -228,11 +257,16 @@
       '  </div>' +
       '  <div class="svc-field"><span class="svc-field__label">Як гість обирає</span>' +
       '    <div class="svc-segmented">' +
-      '      <button type="button" class="svc-segmented__btn' + (f.inputType === 'toggle' ? ' is-active' : '') + '" onclick="BosoServicesUI.patchForm({inputType:\'toggle\'});BosoServicesUI.renderEditorBody()">Так / Ні</button>' +
-      '      <button type="button" class="svc-segmented__btn' + (f.inputType === 'counter' ? ' is-active' : '') + '" onclick="BosoServicesUI.patchForm({inputType:\'counter\'});BosoServicesUI.renderEditorBody()">Лічильник</button>' +
+      '      <button type="button" class="svc-segmented__btn' + (f.inputType === 'toggle' && !f.perRentalDay ? ' is-active' : '') + '" onclick="BosoServicesUI.patchForm({inputType:\'toggle\'});BosoServicesUI.renderEditorBody()" ' + (f.perRentalDay ? 'disabled style="opacity:.45"' : '') + '>Так / Ні</button>' +
+      '      <button type="button" class="svc-segmented__btn' + (f.inputType === 'counter' || f.perRentalDay ? ' is-active' : '') + '" onclick="BosoServicesUI.patchForm({inputType:\'counter\'});BosoServicesUI.renderEditorBody()">Лічильник</button>' +
       '    </div></div>' +
-      (f.inputType === 'counter'
-        ? '<label class="svc-field"><span class="svc-field__label">Максимум, шт.</span><input class="svc-field__input" type="number" min="1" max="99" value="' + f.maxQuantity + '" oninput="BosoServicesUI.patchForm({maxQuantity:Math.max(1,Number(this.value)||1)})"></label>'
+      (f.inputType === 'counter' || f.perRentalDay
+        ? '<div class="svc-form-grid svc-form-grid--2">' +
+          '<label class="svc-field"><span class="svc-field__label">Максимум, шт.</span><input class="svc-field__input" type="number" min="1" max="99" value="' + f.maxQuantity + '" oninput="BosoServicesUI.patchForm({maxQuantity:Math.max(1,Number(this.value)||1)})"></label>' +
+          (f.perRentalDay
+            ? '<label class="svc-field"><span class="svc-field__label">Макс. діб</span><input class="svc-field__input" type="number" min="1" max="60" value="' + f.maxDays + '" oninput="BosoServicesUI.patchForm({maxDays:Math.max(1,Number(this.value)||1)})"></label>'
+            : '') +
+          '</div>'
         : '') +
       '</div>' +
 
@@ -243,7 +277,7 @@
 
       '<div class="svc-drawer-preview" id="svcEditPreview">' +
       '  <div class="svc-drawer-preview__text"><span class="svc-drawer-preview__label">Сума для гостя</span>' +
-      '  <span class="svc-drawer-preview__hint">3 ночі · 2 гості · 1 послуга</span></div>' +
+      '  <span class="svc-drawer-preview__hint">' + (f.perRentalDay ? '2 шт · 1 доба' : '3 ночі · 2 гості · 1 послуга') + '</span></div>' +
       '  <strong>' + escapeHtml(previewFee(f)) + '</strong></div>';
   }
 
@@ -279,15 +313,25 @@
 
   function togglePricing(key) {
     var next = !formState[key];
-    if (key === 'perHour' && next) {
+    if (key === 'perRentalDay' && next) {
+      formState.perRentalDay = true;
+      formState.perBooking = false;
+      formState.perDay = false;
+      formState.perGuest = false;
+      formState.perHour = false;
+      formState.inputType = 'counter';
+      if (!formState.maxDays) formState.maxDays = 14;
+    } else if (key === 'perHour' && next) {
       formState.perHour = true;
       formState.perBooking = false;
       formState.perDay = false;
       formState.perGuest = false;
+      formState.perRentalDay = false;
       formState.inputType = 'counter';
-    } else if (key !== 'perHour' && next) {
+    } else if (key !== 'perHour' && key !== 'perRentalDay' && next) {
       formState[key] = true;
       formState.perHour = false;
+      formState.perRentalDay = false;
     } else {
       formState[key] = next;
     }
@@ -318,13 +362,15 @@
       baseFee: Math.max(0, Number(formState.baseFee) || 0),
       description: String(formState.description || '').trim(),
       active: !!formState.active,
-      perDay: yesNo(formState.perDay),
-      perGuest: yesNo(formState.perGuest),
-      perBooking: yesNo(formState.perBooking || (!formState.perDay && !formState.perGuest && !formState.perHour)),
-      perHour: yesNo(formState.perHour),
+      perDay: yesNo(formState.perDay && !formState.perRentalDay),
+      perGuest: yesNo(formState.perGuest && !formState.perRentalDay),
+      perBooking: yesNo(formState.perRentalDay ? false : (formState.perBooking || (!formState.perDay && !formState.perGuest && !formState.perHour))),
+      perHour: yesNo(formState.perHour && !formState.perRentalDay),
+      perRentalDay: yesNo(formState.perRentalDay),
       onSite: !!formState.onSite,
-      inputType: formState.inputType === 'counter' ? 'counter' : 'toggle',
+      inputType: (formState.perRentalDay || formState.inputType === 'counter') ? 'counter' : 'toggle',
       maxQuantity: Math.max(1, Number(formState.maxQuantity) || 10),
+      maxDays: Math.max(1, Number(formState.maxDays) || 14),
       rooms: rooms,
       roomIds: roomIds
     };
