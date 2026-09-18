@@ -2559,6 +2559,8 @@ function getVisitWord(count) {
         };
         let restrictions = {}; // Мін. кількість діб: { roomId: { "YYYY-MM-DD": minNights } }
         let closedDates = {}; // Закриті дати: { roomId: { "YYYY-MM-DD": true } }
+        let earlyPrepOpened = {}; // Адмін відкрив авто-закриття перед раннім заїздом: { roomId: { "YYYY-MM-DD": true } }
+        let pendingOpenClosedDates = null; // { roomId, dates[] }
         let bookingHorizon = { enabled: false, lastDate: '' }; // Глобальний ліміт бронювання для сайту
         let transactions = []; // База ручних транзакцій
 
@@ -2893,6 +2895,7 @@ function saveInlineTransaction(type, category, idx) {
                 if (settingsData.customPrices) customPrices = settingsData.customPrices;
                 if (settingsData.restrictions) restrictions = settingsData.restrictions;
                 if (settingsData.closedDates) closedDates = settingsData.closedDates;
+                if (settingsData.earlyPrepOpened) earlyPrepOpened = settingsData.earlyPrepOpened;
                 if (settingsData.bookingHorizon) bookingHorizon = normalizeBookingHorizon(settingsData.bookingHorizon);
                 if (settingsData.transactions) transactions = settingsData.transactions;
                 if (settingsData.smsSettings) smsSettings = settingsData.smsSettings;
@@ -2938,8 +2941,9 @@ function saveInlineTransaction(type, category, idx) {
                     if (settingsData.sysServicesList) sysServicesList = settingsData.sysServicesList;
                     if (settingsData.customPrices) customPrices = settingsData.customPrices;
                     if (settingsData.restrictions) restrictions = settingsData.restrictions;
-                if (settingsData.closedDates) closedDates = settingsData.closedDates;
-                if (settingsData.bookingHorizon) bookingHorizon = normalizeBookingHorizon(settingsData.bookingHorizon);
+                    if (settingsData.closedDates) closedDates = settingsData.closedDates;
+                    if (settingsData.earlyPrepOpened) earlyPrepOpened = settingsData.earlyPrepOpened;
+                    if (settingsData.bookingHorizon) bookingHorizon = normalizeBookingHorizon(settingsData.bookingHorizon);
                     if (settingsData.transactions) transactions = settingsData.transactions;
                     if (settingsData.smsSettings) smsSettings = settingsData.smsSettings;
                 }
@@ -2989,6 +2993,7 @@ function saveInlineTransaction(type, category, idx) {
                     if (sd.customPrices) customPrices = sd.customPrices;
                     if (sd.restrictions) restrictions = sd.restrictions;
                     if (sd.closedDates) closedDates = sd.closedDates;
+                    if (sd.earlyPrepOpened) earlyPrepOpened = sd.earlyPrepOpened;
                     if (sd.bookingHorizon) bookingHorizon = normalizeBookingHorizon(sd.bookingHorizon);
                     if (sd.transactions) transactions = sd.transactions;
                     if (sd.smsSettings) smsSettings = sd.smsSettings;
@@ -3023,6 +3028,7 @@ function saveInlineTransaction(type, category, idx) {
                 customPrices: customPrices,
                 restrictions: restrictions,
                 closedDates: closedDates,
+                earlyPrepOpened: earlyPrepOpened,
                 bookingHorizon: bookingHorizon,
                 transactions: transactions
             };
@@ -4042,15 +4048,34 @@ function saveInlineTransaction(type, category, idx) {
         }
 
         // --- УНІВЕРСАЛЬНЕ ВІКНО ПІДТВЕРДЖЕННЯ ---
-        function openCustomConfirm(title, desc, actionFunction) {
+        function openCustomConfirm(title, desc, actionFunction, opts) {
+            opts = opts || {};
             document.getElementById('confirmModalTitle').innerText = title;
             document.getElementById('confirmModalDesc').innerText = desc;
-            document.getElementById('confirmModalActionBtn').onclick = actionFunction;
+            const btn = document.getElementById('confirmModalActionBtn');
+            btn.onclick = actionFunction;
+            btn.innerText = opts.confirmLabel || 'Видалити';
+            if (opts.confirmTone === 'ok') {
+                btn.style.background = '#556B2F';
+                btn.style.border = '1px solid #3F5222';
+                btn.style.boxShadow = '0 4px 6px rgba(85, 107, 47, 0.2)';
+            } else {
+                btn.style.background = '#DC2626';
+                btn.style.border = '1px solid #B91C1C';
+                btn.style.boxShadow = '0 4px 6px rgba(220, 38, 38, 0.2)';
+            }
             document.getElementById('customConfirmModal').classList.add('active');
         }
 
         function closeCustomConfirm() {
             document.getElementById('customConfirmModal').classList.remove('active');
+            const btn = document.getElementById('confirmModalActionBtn');
+            if (btn) {
+                btn.innerText = 'Видалити';
+                btn.style.background = '#DC2626';
+                btn.style.border = '1px solid #B91C1C';
+                btn.style.boxShadow = '0 4px 6px rgba(220, 38, 38, 0.2)';
+            }
         }
 
         // --- ВИДАЛЕННЯ БРОНІ ---
@@ -4777,7 +4802,7 @@ else if (total === 0) { finText = "Немає ціни"; badgeBg = "rgba(255,255
                 closedSegments.forEach(seg => {
                     const blockLeft = seg.startIndex * cellWidth + 2;
                     const blockWidth = seg.length * cellWidth - 4;
-                    rowHtml += buildMainTimelineClosedHtml(seg, blockLeft, blockWidth);
+                    rowHtml += buildMainTimelineClosedHtml(room.id, seg, blockLeft, blockWidth);
                 });
 
                 const horizonSegments = getHorizonSegmentsForTimeline(startDate, daysCount);
@@ -4909,8 +4934,16 @@ else if (total === 0) { finText = "Немає ціни"; badgeBg = "rgba(255,255
             return false;
         }
 
-        /** День перед раннім заїздом — авто «Закрито» на шахматі. */
-        function isDateAutoClosedByEarly(roomId, dateObj) {
+        function isEarlyPrepOpened(roomId, dateObj) {
+            const ds = formatDateKey(dateObj);
+            const rid = String(roomId);
+            if (earlyPrepOpened[roomId] && earlyPrepOpened[roomId][ds]) return true;
+            if (earlyPrepOpened[rid] && earlyPrepOpened[rid][ds]) return true;
+            return false;
+        }
+
+        /** День перед раннім заїздом (без урахування адмін-відкриття). */
+        function isDateAutoClosedByEarlyRaw(roomId, dateObj) {
             const room = roomsList.find(r => r.id == roomId || String(r.id) === String(roomId));
             if (!room) return false;
             const next = new Date(dateObj);
@@ -4926,6 +4959,12 @@ else if (total === 0) { finText = "Немає ціни"; badgeBg = "rgba(255,255
                 if (inDate.getTime() === nextT) return true;
             }
             return false;
+        }
+
+        /** День перед раннім заїздом — авто «Закрито» на шахматі. */
+        function isDateAutoClosedByEarly(roomId, dateObj) {
+            if (isEarlyPrepOpened(roomId, dateObj)) return false;
+            return isDateAutoClosedByEarlyRaw(roomId, dateObj);
         }
 
         function isDateClosed(roomId, dateObj) {
@@ -5268,7 +5307,7 @@ else if (total === 0) { finText = "Немає ціни"; badgeBg = "rgba(255,255
 
         function closedBarDataAttrs(roomId, segment) {
             return `data-room="${roomId}" data-dates="${segment.dates.join(',')}" data-closed="1"
-                onmousedown="onRestrictionBarPointer(event)" onclick="onClosedBarClick(event, this)"`;
+                onmousedown="onRestrictionBarPointer(event)" onclick="onClosedBarClick(event, this)" style="cursor:pointer;"`;
         }
 
         function segmentHasManualClosed(roomId, segment) {
@@ -5281,18 +5320,15 @@ else if (total === 0) { finText = "Немає ціни"; badgeBg = "rgba(255,255
 
         function buildClosedDateSegmentHtml(roomId, segment, blockLeft, blockWidth) {
             const { length: spanDays } = segment;
-            const isManual = segmentHasManualClosed(roomId, segment);
-            const attrs = isManual ? closedBarDataAttrs(roomId, segment) : '';
-            const title = isManual
-                ? 'Закрито для бронювання — натисніть для дій'
-                : 'Закрито автоматично (ранній заїзд наступного дня)';
+            const attrs = closedBarDataAttrs(roomId, segment);
+            const title = 'Закрито — натисніть, щоб відкрити';
             if (blockWidth < 72) {
-                return `<div class="booking-block status-closed closed-date-chip closed-date-chip--single" style="left:${blockLeft}px;width:${blockWidth}px" title="${title}" ${attrs}>
+                return `<div class="booking-block status-closed closed-date-chip closed-date-chip--single" style="left:${blockLeft}px;width:${blockWidth}px;cursor:pointer" title="${title}" ${attrs}>
                     <span class="restriction-chip-single-label">Закрито</span>
                 </div>`;
             }
             const rangeHint = spanDays > 1 ? ` · ${spanDays} ${dateWord(spanDays)}` : '';
-            return `<div class="booking-block status-closed closed-date-chip" style="left:${blockLeft}px;width:${blockWidth}px" title="${title}" ${attrs}>
+            return `<div class="booking-block status-closed closed-date-chip" style="left:${blockLeft}px;width:${blockWidth}px;cursor:pointer" title="${title}" ${attrs}>
                 <div class="booking-inner-content" style="position:relative;z-index:2;display:flex;flex-direction:column;width:100%;justify-content:center;height:100%;">
                     <div style="font-size:12px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;line-height:1.2;">Закрито${rangeHint}</div>
                     <div style="margin-top:4px;display:flex;">
@@ -5302,16 +5338,18 @@ else if (total === 0) { finText = "Немає ціни"; badgeBg = "rgba(255,255
             </div>`;
         }
 
-        function buildMainTimelineClosedHtml(segment, blockLeft, blockWidth) {
+        function buildMainTimelineClosedHtml(roomId, segment, blockLeft, blockWidth) {
             const { length: spanDays } = segment;
-            const title = 'Закрито для бронювання';
+            const attrs = `data-room="${roomId}" data-dates="${(segment.dates || []).join(',')}" data-closed="1"
+                onclick="onTimelineClosedClick(event, this)"`;
+            const title = 'Закрито — натисніть, щоб відкрити';
             if (blockWidth < 56) {
-                return `<div class="booking-block status-closed" style="left:${blockLeft}px;width:${blockWidth}px" title="${title}">
+                return `<div class="booking-block status-closed" style="left:${blockLeft}px;width:${blockWidth}px;cursor:pointer" title="${title}" ${attrs}>
                     <span style="font-size:10px;font-weight:700;">Закрито</span>
                 </div>`;
             }
             const rangeHint = spanDays > 1 ? ` · ${spanDays} ${dateWord(spanDays)}` : '';
-            return `<div class="booking-block status-closed" style="left:${blockLeft}px;width:${blockWidth}px" title="${title}">
+            return `<div class="booking-block status-closed" style="left:${blockLeft}px;width:${blockWidth}px;cursor:pointer" title="${title}" ${attrs}>
                 <div class="booking-inner-content" style="position:relative;z-index:2;display:flex;flex-direction:column;width:100%;justify-content:center;height:100%;">
                     <div style="font-size:12px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;line-height:1.2;">Закрито${rangeHint}</div>
                     <div style="margin-top:4px;display:flex;">
@@ -5410,8 +5448,59 @@ else if (total === 0) { finText = "Немає ціни"; badgeBg = "rgba(255,255
             e.preventDefault();
             const roomId = el.getAttribute('data-room');
             const dates = (el.getAttribute('data-dates') || '').split(',').filter(Boolean);
-            selectRestrictionSegment(roomId, dates, 0, false);
-            openRestrictionBarMenu(e, el);
+            promptOpenClosedDates(roomId, dates);
+        }
+
+        function onTimelineClosedClick(e, el) {
+            e.stopPropagation();
+            e.preventDefault();
+            const roomId = el.getAttribute('data-room');
+            const dates = (el.getAttribute('data-dates') || '').split(',').filter(Boolean);
+            promptOpenClosedDates(roomId, dates);
+        }
+
+        function promptOpenClosedDates(roomId, dates) {
+            if (!roomId || !dates || !dates.length) return;
+            pendingOpenClosedDates = { roomId, dates: [...dates] };
+            const n = dates.length;
+            const desc = n === 1
+                ? 'Зняти блокування з цієї дати? Вона знову буде доступна для бронювання.'
+                : `Зняти блокування з ${n} дат? Вони знову будуть доступні для бронювання.`;
+            openCustomConfirm('Відкрити дату?', desc, confirmOpenClosedDates, {
+                confirmLabel: 'Так',
+                confirmTone: 'ok'
+            });
+        }
+
+        function confirmOpenClosedDates() {
+            closeCustomConfirm();
+            const pending = pendingOpenClosedDates;
+            pendingOpenClosedDates = null;
+            if (!pending || !pending.roomId || !pending.dates || !pending.dates.length) return;
+            const roomId = pending.roomId;
+            const rid = String(roomId);
+            pending.dates.forEach(ds => {
+                const d = parseSafeDate(ds);
+                d.setHours(0, 0, 0, 0);
+                if (closedDates[roomId]) delete closedDates[roomId][ds];
+                if (closedDates[rid]) delete closedDates[rid][ds];
+                if (closedDates[roomId] && Object.keys(closedDates[roomId]).length === 0) delete closedDates[roomId];
+                if (closedDates[rid] && Object.keys(closedDates[rid]).length === 0) delete closedDates[rid];
+                if (isDateAutoClosedByEarlyRaw(roomId, d)) {
+                    if (!earlyPrepOpened[roomId]) earlyPrepOpened[roomId] = {};
+                    earlyPrepOpened[roomId][ds] = true;
+                }
+            });
+            lastRestrictionSelection = null;
+            if (typeof updateRestrictionSelectionHint === 'function') updateRestrictionSelectionHint();
+            if (document.getElementById('set-restrictions') && document.getElementById('set-restrictions').style.display === 'block') {
+                renderRestrictionsGrid();
+            }
+            if (document.getElementById('view-grid') && (document.getElementById('view-grid').style.display === 'flex' || document.getElementById('view-grid').style.display === 'block')) {
+                renderTimeline(true);
+            }
+            saveSettingsToCloud();
+            showToast(pending.dates.length === 1 ? 'Дату відкрито' : 'Дати відкрито');
         }
 
         function getRestrictionMenuViewport() {
@@ -6185,9 +6274,14 @@ if (guests > maxCap) {
                     break;
                 }
                 if (exHasEarly) {
-                    isOverlap = true;
-                    overlapReason = "Наступний гість має <b>Ранній заїзд</b>.";
-                    break;
+                    const prep = new Date(exIn);
+                    prep.setDate(prep.getDate() - 1);
+                    prep.setHours(0, 0, 0, 0);
+                    if (!isEarlyPrepOpened(room.id, prep)) {
+                        isOverlap = true;
+                        overlapReason = "Наступний гість має <b>Ранній заїзд</b>.";
+                        break;
+                    }
                 }
             }
         }
