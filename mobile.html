@@ -5758,6 +5758,17 @@ async function bosoSendRemainderPaymentSms() {
             
             if (isEdit) bookingData.row = editingRowNumber;
 
+            // Аванс/оплата → статус Підтверджено (не чіпаємо Скасовано)
+            if (Number(bookingData.paidAmount) > 0 && bookingData.status !== 'Скасовано') {
+                const st = String(bookingData.status || '').toLowerCase();
+                if (st.includes('нов') || st.includes('очік') || !bookingData.status) {
+                    bookingData.status = 'Підтверджено';
+                    document.querySelectorAll('.status-btn').forEach(b => b.classList.remove('active'));
+                    const confBtn = document.querySelector('.status-btn[data-status="Підтверджено"]');
+                    if (confBtn) confBtn.classList.add('active');
+                }
+            }
+
             const payloadForServer = { ...bookingData };
             if (isEdit) {
                 const openPay = window._bookingOpenPayments || { prepay: 0, surcharge: 0 };
