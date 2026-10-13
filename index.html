@@ -6829,15 +6829,18 @@ function calculateBalanceLive() {
         bosoUpdatePayLinkActionsVisibility(balance);
     }
 
-    // Авто-статус тільки для НОВИХ броней (не чіпаємо існуючі при глюку UI)
+    // Авто-статус: є оплата/аванс → Підтверджено (і для нової, і при редагуванні)
     let activeStatusBtn = document.querySelector('.status-btn.active');
     let currentStatus = activeStatusBtn ? activeStatusBtn.getAttribute('data-status') : '';
-    if (!editingRowNumber && !window._bookingDrawerLoading && currentStatus !== 'Скасовано') {
-        document.querySelectorAll('.status-btn').forEach(b => b.classList.remove('active'));
+    if (!window._bookingDrawerLoading && currentStatus !== 'Скасовано') {
         if (paid > 0) {
-            let confBtn = document.querySelector('.status-btn[data-status="Підтверджено"]');
-            if (confBtn) confBtn.classList.add('active');
-        } else {
+            if (currentStatus !== 'Підтверджено') {
+                document.querySelectorAll('.status-btn').forEach(b => b.classList.remove('active'));
+                let confBtn = document.querySelector('.status-btn[data-status="Підтверджено"]');
+                if (confBtn) confBtn.classList.add('active');
+            }
+        } else if (!editingRowNumber) {
+            document.querySelectorAll('.status-btn').forEach(b => b.classList.remove('active'));
             let newBtn = document.querySelector('.status-btn[data-status="Нова бронь"]');
             if (newBtn) newBtn.classList.add('active');
         }
@@ -7516,6 +7519,17 @@ document.getElementById('adminGuests').addEventListener('change', updatePricePre
             };
             
             if (isEdit) bookingData.row = editingRowNumber;
+
+            // Аванс/оплата → статус Підтверджено (не чіпаємо Скасовано)
+            if (Number(bookingData.paidAmount) > 0 && bookingData.status !== 'Скасовано') {
+                const st = String(bookingData.status || '').toLowerCase();
+                if (st.includes('нов') || st.includes('очік') || !bookingData.status) {
+                    bookingData.status = 'Підтверджено';
+                    document.querySelectorAll('.status-btn').forEach(b => b.classList.remove('active'));
+                    const confBtn = document.querySelector('.status-btn[data-status="Підтверджено"]');
+                    if (confBtn) confBtn.classList.add('active');
+                }
+            }
 
             // 🟢 РОБИМО ЧИСТУ КОПІЮ ДЛЯ GOOGLE
             const payloadForServer = { ...bookingData };
