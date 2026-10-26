@@ -8167,6 +8167,17 @@ async function bosoSendRemainderPaymentSms() {
             Chart.defaults.color = '#6B7280';
             const bosoColors = ['#556B2F', '#D2B48C', '#2C2C2C', '#8FBC8F', '#BC8F8F'];
 
+            function getSourceChartColor(sourceName) {
+                const s = String(sourceName || '').toLowerCase();
+                if (s.includes('instagram') || s.includes('insta')) return '#E1306C'; // Instagram
+                if (s.includes('threads') || s === 'thread') return '#0A0A0A'; // Threads
+                if (s.includes('hutshub')) return '#8FA89E';
+                if (s.includes('telegram')) return '#2AABEE';
+                if (s === 'сайт' || s === 'site') return '#CDA062';
+                if (s.includes('адмін')) return '#556B2F';
+                return '#9CA3AF';
+            }
+
             // ГРАФІК ПОПУЛЯРНОСТІ
             const ctxRooms = document.getElementById('roomsChart').getContext('2d');
             if (roomsChartInstance) roomsChartInstance.destroy(); 
@@ -8198,13 +8209,14 @@ async function bosoSendRemainderPaymentSms() {
             const ctxSource = document.getElementById('sourceChart').getContext('2d');
             if (sourceChartInstance) sourceChartInstance.destroy();
             const activeSources = Object.keys(sourceCounts).filter(k => sourceCounts[k] > 0);
+            const activeSourceColors = activeSources.map(getSourceChartColor);
             sourceChartInstance = new Chart(ctxSource, {
                 type: 'doughnut',
                 data: {
                     labels: activeSources.length > 0 ? activeSources : ['Немає даних'],
                     datasets: [{
                         data: activeSources.length > 0 ? activeSources.map(k => sourceCounts[k]) : [1],
-                        backgroundColor: activeSources.length > 0 ? bosoColors : ['#F3F4F6'],
+                        backgroundColor: activeSources.length > 0 ? activeSourceColors : ['#F3F4F6'],
                         borderWidth: 0, hoverOffset: 4
                     }]
                 },
