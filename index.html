@@ -2327,6 +2327,7 @@ input[type="number"] {
                                     <div class="custom-select-options">
                                         <div class="custom-option selected" onclick="selectOption('sourceWrapper', 'adminSource', 'Адмінка', this)">Адмінка</div>
                                         <div class="custom-option" onclick="selectOption('sourceWrapper', 'adminSource', 'Instagram', this)">Instagram</div>
+                                        <div class="custom-option" onclick="selectOption('sourceWrapper', 'adminSource', 'Threads', this)">Threads</div>
                                         <div class="custom-option" onclick="selectOption('sourceWrapper', 'adminSource', 'Telegram Бот', this)">Telegram Бот</div>
                                         <div class="custom-option" onclick="selectOption('sourceWrapper', 'adminSource', 'Hutshub', this)">Hutshub</div>
                                     </div>
@@ -7782,7 +7783,7 @@ function isHutshubBooking(b) {
     return String((b && b.source) || '').toLowerCase().includes('hutshub');
 }
 
-var ADMIN_SELECTABLE_SOURCES = ['Адмінка', 'Instagram', 'Telegram Бот', 'Hutshub'];
+var ADMIN_SELECTABLE_SOURCES = ['Адмінка', 'Instagram', 'Threads', 'Telegram Бот', 'Hutshub'];
 
 function setBookingSourceDefault() {
     const def = 'Адмінка';
@@ -7796,15 +7797,15 @@ function setBookingSourceDefault() {
     });
 }
 
-/** Джерела лише з веб-посилання — показуємо, не даємо змінити. Instagram лишається в селекті (як і раніше). */
-var GUEST_LOCKED_SOURCES = ['Сайт', 'Threads'];
+/** Лише «Сайт» з гостьового посилання — показ без зміни. Instagram/Threads можна обрати вручну. */
+var GUEST_LOCKED_SOURCES = ['Сайт'];
 
 function setBookingSourceFromSaved(savedSource) {
     let src = savedSource || 'Адмінка';
     if (src === 'Telegram') src = 'Telegram Бот';
     const wrapper = document.getElementById('sourceWrapper');
 
-    // Сайт / Threads з реф-посилання — тільки показ (атрибуція)
+    // Сайт з реф-посилання — тільки показ (атрибуція)
     if (GUEST_LOCKED_SOURCES.indexOf(src) !== -1) {
         wrapper.classList.add('source-readonly');
         document.getElementById('adminSource').value = src;

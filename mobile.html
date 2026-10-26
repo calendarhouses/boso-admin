@@ -1652,6 +1652,7 @@
                                     <div class="custom-select-options">
                                         <div class="custom-option selected" onclick="selectOption('sourceWrapper', 'adminSource', 'Адмінка', this)">Адмінка</div>
                                         <div class="custom-option" onclick="selectOption('sourceWrapper', 'adminSource', 'Instagram', this)">Instagram</div>
+                                        <div class="custom-option" onclick="selectOption('sourceWrapper', 'adminSource', 'Threads', this)">Threads</div>
                                         <div class="custom-option" onclick="selectOption('sourceWrapper', 'adminSource', 'Telegram Бот', this)">Telegram Бот</div>
                                         <div class="custom-option" onclick="selectOption('sourceWrapper', 'adminSource', 'Hutshub', this)">Hutshub</div>
                                     </div>
@@ -5980,8 +5981,8 @@ async function bosoSendRemainderPaymentSms() {
             return String((b && b.source) || '').toLowerCase().includes('hutshub');
         }
 
-        var ADMIN_SELECTABLE_SOURCES = ['Адмінка', 'Instagram', 'Telegram Бот', 'Hutshub'];
-        var GUEST_LOCKED_SOURCES = ['Сайт', 'Threads'];
+        var ADMIN_SELECTABLE_SOURCES = ['Адмінка', 'Instagram', 'Threads', 'Telegram Бот', 'Hutshub'];
+        var GUEST_LOCKED_SOURCES = ['Сайт'];
 
         function setBookingSourceDefault() {
             const def = 'Адмінка';
