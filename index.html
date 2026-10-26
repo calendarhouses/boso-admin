@@ -7747,16 +7747,19 @@ function setBookingSourceDefault() {
     });
 }
 
+/** Джерела лише з веб-посилання — показуємо, не даємо змінити. Instagram лишається в селекті (як і раніше). */
+var GUEST_LOCKED_SOURCES = ['Сайт', 'Threads'];
+
 function setBookingSourceFromSaved(savedSource) {
     let src = savedSource || 'Адмінка';
     if (src === 'Telegram') src = 'Telegram Бот';
     const wrapper = document.getElementById('sourceWrapper');
 
-    // Бронь з сайту — тільки показуємо, не даємо змінити (інакше ламається TG)
-    if (src === 'Сайт') {
+    // Сайт / Threads з реф-посилання — тільки показ (атрибуція)
+    if (GUEST_LOCKED_SOURCES.indexOf(src) !== -1) {
         wrapper.classList.add('source-readonly');
-        document.getElementById('adminSource').value = 'Сайт';
-        document.getElementById('sourceSelectedText').innerText = 'Сайт';
+        document.getElementById('adminSource').value = src;
+        document.getElementById('sourceSelectedText').innerText = src;
         document.querySelectorAll('#sourceWrapper .custom-option').forEach(opt => opt.classList.remove('selected'));
         return;
     }
@@ -8491,7 +8494,7 @@ function bosoLeave() {
             const created = b.createdAt || b.checkIn;
             const payments = [];
             if (prepay > 0) {
-                payments.push({ id: 'legacy-p', date: created, amount: prepay, method: b.prepayMethod || 'ФОП', type: String(b.source) === 'Сайт' ? 'online' : 'prepay', note: '' });
+                payments.push({ id: 'legacy-p', date: created, amount: prepay, method: b.prepayMethod || 'ФОП', type: (['Сайт','Threads','Instagram'].indexOf(String(b.source)) !== -1) ? 'online' : 'prepay', note: '' });
             }
             if (surcharge > 0) {
                 payments.push({ id: 'legacy-s', date: b.checkOut, amount: surcharge, method: b.surchargeMethod || 'Готівка', type: 'surcharge', note: '' });
@@ -9736,7 +9739,7 @@ function bosoLeave() {
                 globalRoomMoney[r.name] = 0; 
                 globalRoomNights[r.name] = 0; // 🟢 ОБНУЛЯЄМО
             });
-            ['Адмінка', 'Instagram', 'Telegram Бот', 'Сайт', 'Hutshub'].forEach(s => sourceCounts[s] = 0);
+            ['Адмінка', 'Instagram', 'Telegram Бот', 'Сайт', 'Threads', 'Hutshub'].forEach(s => sourceCounts[s] = 0);
 
             allBookings.forEach(b => {
                 if (String(b.status).toLowerCase().includes('скас')) return;

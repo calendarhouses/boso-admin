@@ -5967,6 +5967,7 @@ async function bosoSendRemainderPaymentSms() {
         }
 
         var ADMIN_SELECTABLE_SOURCES = ['Адмінка', 'Instagram', 'Telegram Бот', 'Hutshub'];
+        var GUEST_LOCKED_SOURCES = ['Сайт', 'Threads'];
 
         function setBookingSourceDefault() {
             const def = 'Адмінка';
@@ -5985,10 +5986,10 @@ async function bosoSendRemainderPaymentSms() {
             if (src === 'Telegram') src = 'Telegram Бот';
             const wrapper = document.getElementById('sourceWrapper');
 
-            if (src === 'Сайт') {
+            if (GUEST_LOCKED_SOURCES.indexOf(src) !== -1) {
                 wrapper.classList.add('source-readonly');
-                document.getElementById('adminSource').value = 'Сайт';
-                document.getElementById('sourceSelectedText').innerText = 'Сайт';
+                document.getElementById('adminSource').value = src;
+                document.getElementById('sourceSelectedText').innerText = src;
                 document.querySelectorAll('#sourceWrapper .custom-option').forEach(opt => opt.classList.remove('selected'));
                 return;
             }
@@ -6720,7 +6721,7 @@ async function bosoSendRemainderPaymentSms() {
             const paid = Math.round(Number(b.paidAmount) || 0);
             const created = b.createdAt || b.checkIn;
             const payments = [];
-            if (prepay > 0) payments.push({ id: 'legacy-p', date: created, amount: prepay, method: b.prepayMethod || 'ФОП', type: String(b.source) === 'Сайт' ? 'online' : 'prepay', note: '' });
+            if (prepay > 0) payments.push({ id: 'legacy-p', date: created, amount: prepay, method: b.prepayMethod || 'ФОП', type: (['Сайт','Threads','Instagram'].indexOf(String(b.source)) !== -1) ? 'online' : 'prepay', note: '' });
             if (surcharge > 0) payments.push({ id: 'legacy-s', date: b.checkOut, amount: surcharge, method: b.surchargeMethod || 'Готівка', type: 'surcharge', note: '' });
             if (!payments.length && paid > 0) payments.push({ id: 'legacy-t', date: created, amount: paid, method: b.prepayMethod || 'ФОП', type: 'prepay', note: '' });
             return payments;
@@ -8101,7 +8102,7 @@ async function bosoSendRemainderPaymentSms() {
             globalRoomCounts = {}; globalRoomMoney = {}; globalRoomNights = {};
             const sourceCounts = {}; const revenueTimeline = {}; 
             roomsList.forEach(r => { globalRoomCounts[r.name] = 0; globalRoomMoney[r.name] = 0; globalRoomNights[r.name] = 0; });
-            ['Адмінка', 'Instagram', 'Telegram Бот', 'Сайт', 'Hutshub'].forEach(s => sourceCounts[s] = 0);
+            ['Адмінка', 'Instagram', 'Telegram Бот', 'Сайт', 'Threads', 'Hutshub'].forEach(s => sourceCounts[s] = 0);
 
             allBookings.forEach(b => {
                 if (String(b.status).toLowerCase().includes('скас')) return;
