@@ -357,6 +357,44 @@
             border-color: rgba(26, 51, 42, 0.15);
         }
 
+        /* 4b. INSTAGRAM: градієнт застосунку */
+        .booking-block.status-instagram {
+            background: linear-gradient(135deg, #833AB4 0%, #E1306C 55%, #F77737 100%);
+            color: #FFFFFF;
+            border-color: rgba(255, 255, 255, 0.18);
+        }
+
+        /* 4c. THREADS: темний стиль застосунку */
+        .booking-block.status-threads {
+            background: linear-gradient(135deg, #2A2A2A 0%, #0A0A0A 100%);
+            color: #FFFFFF;
+            border-color: rgba(255, 255, 255, 0.14);
+        }
+
+        .booking-channel-icon {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            width: 14px;
+            height: 14px;
+            margin-right: 5px;
+            vertical-align: -2px;
+            opacity: 0.95;
+        }
+        .booking-channel-icon svg { width: 14px; height: 14px; display: block; }
+        .booking-block .booking-title-row {
+            display: flex;
+            align-items: center;
+            min-width: 0;
+        }
+        .booking-block .booking-title-row .booking-guest-name {
+            min-width: 0;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
         /* 5. ЗАКРИТО: червона карта для закритих дат */
         .booking-block.status-closed {
             background: linear-gradient(135deg, #EF4444 0%, #B91C1C 100%);
@@ -4682,18 +4720,24 @@ if (cottageStr === rShort || cottageStr.includes(rShort) || (room.id === 3 && co
                             let balance = total - paid;
                             let sClass = String(b.status).toLowerCase();
 
-                          // 🟢 РОЗУМНА ЛОГІКА СТАТУСІВ ДЛЯ МОБІЛКИ
-let statusClass = 'status-new'; 
+                          // 🟢 РОЗУМНА ЛОГІКА СТАТУСІВ / КАНАЛІВ
+let statusClass = 'status-new';
+const srcLow = String(b.source || '').toLowerCase();
+const nameLow = String(b.name || '').toLowerCase();
 
 if (sClass.includes('скас')) {
     statusClass = 'status-cancelled';
-} else if (String(b.source).toLowerCase().includes('hutshub') || String(b.name).toLowerCase().includes('hutshub')) {
+} else if (srcLow.includes('hutshub') || nameLow.includes('hutshub')) {
     statusClass = 'status-hutshub';
+} else if (srcLow.includes('instagram') || srcLow.includes('insta')) {
+    statusClass = 'status-instagram';
+} else if (srcLow.includes('threads') || srcLow.includes('thread')) {
+    statusClass = 'status-threads';
 } else if (total > 0 && balance <= 0) {
     statusClass = 'status-confirmed'; // ТІЛЬКИ якщо оплачено повністю
 } else {
     // Всі інші (навіть якщо статус "Підтверджено", але є борг) — залишаються "status-new" (коричневими)
-    statusClass = 'status-new'; 
+    statusClass = 'status-new';
 }
 
                             // 🟢 ВІЗУАЛЬНИЙ ГНУЧКИЙ ГРАФІК: Читаємо, чи є ранній/пізній заїзд
@@ -4763,8 +4807,8 @@ if (sClass.includes('скас')) {
                             let finText = ""; let badgeBg = ""; let badgeColor = "#FFFFFF";
 
                             if (statusClass === 'status-cancelled') { finText = "Скасовано"; badgeBg = "rgba(0,0,0,0.05)"; badgeColor = "#9CA3AF"; } 
-else if (statusClass === 'status-hutshub') { finText = "Hutshub"; badgeBg = "rgba(255,255,255,0.3)"; badgeColor = "#1A332A"; } // 🟢 Гарна плашка для Hutshub
-else if (total === 0) { finText = "Немає ціни"; badgeBg = "rgba(255,255,255,0.3)"; badgeColor = "#1A1A1A"; }
+else if (statusClass === 'status-hutshub') { finText = "Hutshub"; badgeBg = "rgba(255,255,255,0.3)"; badgeColor = "#1A332A"; }
+else if (total === 0) { finText = "Немає ціни"; badgeBg = "rgba(255,255,255,0.3)"; badgeColor = statusClass === 'status-instagram' || statusClass === 'status-threads' ? "#FFFFFF" : "#1A1A1A"; }
                             else if (paid === 0) { finText = "Очікує оплату"; badgeBg = "#F59E0B"; } 
                             else if (balance <= 0) { finText = "Оплачено"; badgeBg = "#10B981"; } 
                             else {
@@ -4773,6 +4817,11 @@ else if (total === 0) { finText = "Немає ціни"; badgeBg = "rgba(255,255
                             }
 
                             let guestName = String(b.name).replace(' (Ручна бронь)', '');
+                            const iconIg = `<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2.2c3.2 0 3.6 0 4.8.1 3.3.1 4.8 1.7 4.9 4.9.1 1.3.1 1.6.1 4.8s0 3.6-.1 4.8c-.1 3.2-1.7 4.8-4.9 4.9-1.3.1-1.6.1-4.8.1s-3.6 0-4.8-.1c-3.2-.1-4.8-1.7-4.9-4.9C2.2 15.6 2.2 15.2 2.2 12s0-3.6.1-4.8c.1-3.2 1.7-4.8 4.9-4.9C8.4 2.2 8.8 2.2 12 2.2m0-2.2C8.7 0 8.3 0 7 0.1 2.7.3.3 2.7.1 7 0 8.3 0 8.7 0 12s0 3.7.1 5c.2 4.3 2.6 6.7 7 6.9 1.3.1 1.7.1 5 .1s3.7 0 5-.1c4.3-.2 6.7-2.6 6.9-7 .1-1.3.1-1.7.1-5s0-3.7-.1-5c-.2-4.3-2.6-6.7-7-6.9C15.7 0 15.3 0 12 0zm0 5.8a6.2 6.2 0 1 0 0 12.4 6.2 6.2 0 0 0 0-12.4zM12 16a4 4 0 1 1 0-8 4 4 0 0 1 0 8zm6.4-11.8a1.4 1.4 0 1 0 0 2.9 1.4 1.4 0 0 0 0-2.9z"/></svg>`;
+                            const iconTh = `<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M17.3 9.1c-.2-2.4-2-4-4.7-4-2.9 0-5 2-5 4.9 0 2.4 1.3 4 3.5 4.5l-.2.5c-.4.2-1.1.3-1.6.3-1.8 0-2.7-.9-2.7-2.3 0-.2 0-.4.1-.6l-1.9-.1c0 .3-.1.7-.1 1 0 2.4 1.8 3.9 4.6 3.9 1.2 0 2.2-.3 3-.9 1 1.8 2.7 2.8 4.9 2.8 3.1 0 5.2-2.1 5.2-5.2 0-2.9-1.9-4.8-4.4-4.8h-.7zm1.4 5c0 1.8-1.1 3-2.8 3-1.2 0-2.1-.5-2.8-1.5.9-.8 1.4-1.8 1.5-3.2h.4c2 0 2.7 1.1 2.7 1.7zM12.9 13.8c-1.3-.3-2.2-1.3-2.2-2.8 0-1.6 1.1-2.7 2.7-2.7 1.4 0 2.4.9 2.5 2.3-.1 1.5-1 2.8-3 3.2z"/></svg>`;
+                            let channelIconHtml = '';
+                            if (statusClass === 'status-instagram') channelIconHtml = `<span class="booking-channel-icon" title="Instagram">${iconIg}</span>`;
+                            else if (statusClass === 'status-threads') channelIconHtml = `<span class="booking-channel-icon" title="Threads">${iconTh}</span>`;
 
                             // 🚀 ЧИСТА ПЛАШКА
                             rowHtml += `
@@ -4784,8 +4833,8 @@ else if (total === 0) { finText = "Немає ціни"; badgeBg = "rgba(255,255
                                     ${extensionsHtml}
                                     
                                     <div class="booking-inner-content" style="position: relative; z-index: 2; display: flex; flex-direction: column; width: 100%;">
-                                        <div style="font-size: 12px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; line-height: 1.2;">
-                                            ${guestName}
+                                        <div class="booking-title-row" style="font-size: 12px; font-weight: 600; line-height: 1.2;">
+                                            ${channelIconHtml}<span class="booking-guest-name">${guestName}</span>
                                         </div>
                                         <div style="margin-top: 4px; display: flex; overflow: hidden;">
                                             <span style="background: ${badgeBg}; color: ${badgeColor}; font-size: 9px; font-weight: 700; padding: 2px 6px; border-radius: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; box-shadow: 0 1px 2px rgba(0,0,0,0.1);">
