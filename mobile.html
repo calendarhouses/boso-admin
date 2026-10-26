@@ -3318,22 +3318,8 @@
                 
                 allBookings.forEach((b) => {
                     if (String(b.status).toLowerCase().includes('скас')) return;
-                    
-                    // 🟢 БРОНЕБІЙНА ПЕРЕВІРКА НАЗВ
-                    let cottageStr = String(b.cottage || '').trim().toUpperCase();
-                    let rShort = String(room.short || '').trim().toUpperCase();
-
-                    let isMatch = cottageStr === rShort || cottageStr.includes(rShort) || (room.id === 3 && cottageStr.includes("ЛЮКС")) || (room.id === 2 && cottageStr.includes("СІМЕЙНИЙ"));
-
-                    if (!isMatch) {
-                        let lowerCottage = cottageStr.toLowerCase();
-                        if (room.id === 1 && (lowerCottage.includes("junior 1") || lowerCottage.includes("junior") || lowerCottage.includes("номер 1"))) isMatch = true;
-                        if (room.id === 2 && (lowerCottage.includes("family №2") || lowerCottage.includes("family 2") || lowerCottage.includes("номер 2"))) isMatch = true;
-                        if (room.id === 3 && (lowerCottage.includes("family №3") || lowerCottage.includes("family 3") || lowerCottage.includes("номер 3"))) isMatch = true;
-                        if (room.id === 4 && (lowerCottage.includes("family №4") || lowerCottage.includes("family 4") || lowerCottage.includes("номер 4"))) isMatch = true;
-                    }
-
-                    if (isMatch) {
+                    if (!bookingMatchesRoom(b, room)) return;
+                    {
                         const inDate = new Date(b.checkIn); const outDate = new Date(b.checkOut);
                         inDate.setHours(0,0,0,0); outDate.setHours(0,0,0,0);
                         const timelineStart = new Date(startDate); timelineStart.setHours(0,0,0,0);
@@ -3542,14 +3528,50 @@ if (sClass.includes('скас')) {
             return 0;
         }
 
+        function normalizeCottageKey(value) {
+            return String(value || '')
+                .trim()
+                .toUpperCase()
+                .replace(/[\u00A0\u202F]/g, ' ')
+                .replace(/[№#]/g, ' ')
+                .replace(/\s+/g, ' ')
+                .trim();
+        }
+
+        function findRoomByCottage(cottage) {
+            const raw = String(cottage || '').trim();
+            if (!raw || !Array.isArray(roomsList) || !roomsList.length) return null;
+            const key = normalizeCottageKey(raw);
+            let best = null;
+            let bestScore = -1;
+            roomsList.forEach((r) => {
+                const n = normalizeCottageKey(r.name);
+                const s = normalizeCottageKey(r.short || '');
+                let score = -1;
+                if (n === key || s === key) score = 1000 + Math.max(n.length, s.length);
+                else if (n && (key.includes(n) || n.includes(key))) score = 500 + n.length;
+                else if (s && (key.includes(s) || s.includes(key))) score = 400 + s.length;
+                else {
+                    const low = key.toLowerCase();
+                    const id = Number(r.id);
+                    if (id === 1 && (low.includes('junior 1') || low.includes('junior') || low.includes('номер 1'))) score = 300;
+                    else if (id === 2 && (low.includes('family 2') || low.includes('сімейний') || low.includes('номер 2'))) score = 300;
+                    else if (id === 3 && (low.includes('family 3') || low.includes('люкс') || low.includes('номер 3'))) score = 300;
+                    else if (id === 4 && (low.includes('family 4') || low.includes('номер 4'))) score = 300;
+                }
+                if (score > bestScore) {
+                    bestScore = score;
+                    best = r;
+                }
+            });
+            return bestScore >= 0 ? best : null;
+        }
+
         function bookingMatchesRoom(b, room) {
             if (!b || !room) return false;
             if (String(b.status).toLowerCase().includes('скас')) return false;
-            const cottageStr = String(b.cottage || '').trim().toUpperCase();
-            const rShort = String(room.short || '').trim().toUpperCase();
-            return cottageStr === rShort || cottageStr.includes(rShort) ||
-                (room.id === 3 && cottageStr.includes('ЛЮКС')) ||
-                (room.id === 2 && cottageStr.includes('СІМЕЙНИЙ'));
+            const matched = findRoomByCottage(b.cottage);
+            return !!(matched && String(matched.id) === String(room.id));
         }
 
         function isManualClosedDate(roomId, dateObj) {
@@ -5555,17 +5577,16 @@ async function bosoSendRemainderPaymentSms() {
             if(document.getElementById('adminComment')) document.getElementById('adminComment').value = textComment;
             // -------------------------------------------------
             
-            const availableRooms = roomsList.filter(r => r.active || r.name === booking.cottage);
+            const matchedRoomObj = findRoomByCottage(booking.cottage);
+            const availableRooms = roomsList.filter(r => r.active || (matchedRoomObj && String(r.id) === String(matchedRoomObj.id)) || r.name === booking.cottage);
             const cottageOptions = document.getElementById('cottageOptions');
             cottageOptions.innerHTML = availableRooms.map(r => `<div class="custom-option" onclick="selectOption('cottageWrapper', 'adminCottage', '${r.name}', this, '${r.name} (${r.desc})')"><div>${r.name} <span style="font-size:11px; color:#9CA3AF; display:block;">${r.desc}</span></div></div>`).join('');
 
-            // Розумний пошук котеджу (шукає не тільки по точній назві, а й по короткій, напр. FAMILY 2)
-            let matchedRoomObj = roomsList.find(r => r.name === booking.cottage || r.short === booking.cottage || (booking.cottage && booking.cottage.includes(r.short)));
-            let savedRoom = matchedRoomObj ? matchedRoomObj.name : (availableRooms[0] ? availableRooms[0].name : "");
-            let savedDesc = matchedRoomObj ? matchedRoomObj.desc : "";
+            let savedRoom = matchedRoomObj ? matchedRoomObj.name : String(booking.cottage || '').trim();
+            let savedDesc = matchedRoomObj ? (matchedRoomObj.desc || '') : '';
             
             document.getElementById('adminCottage').value = savedRoom;
-            document.getElementById('cottageSelectedText').innerText = savedRoom ? `${savedRoom} (${savedDesc})` : "Оберіть котедж";
+            document.getElementById('cottageSelectedText').innerText = savedRoom ? (savedDesc ? `${savedRoom} (${savedDesc})` : savedRoom) : "Оберіть котедж";
             setBookingSourceFromSaved(booking.source);
             checkInPicker.setDate(booking.checkIn); checkOutPicker.setDate(booking.checkOut);
 

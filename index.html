@@ -4702,11 +4702,8 @@ function saveInlineTransaction(type, category, idx) {
                 
                 allBookings.forEach((b) => {
                     if (String(b.status).toLowerCase().includes('скас')) return;
-
-                   let cottageStr = String(b.cottage || '').trim().toUpperCase();
-let rShort = String(room.short || '').trim().toUpperCase();
-
-if (cottageStr === rShort || cottageStr.includes(rShort) || (room.id === 3 && cottageStr.includes("ЛЮКС")) || (room.id === 2 && cottageStr.includes("СІМЕЙНИЙ"))) {
+                    if (!bookingMatchesRoom(b, room)) return;
+                    {
                         const inDate = parseSafeDate(b.checkIn); const outDate = parseSafeDate(b.checkOut);
                         inDate.setHours(0,0,0,0); outDate.setHours(0,0,0,0);
                         const timelineStart = new Date(startDate); timelineStart.setHours(0,0,0,0);
@@ -4966,14 +4963,52 @@ else if (total === 0) { finText = "Немає ціни"; badgeBg = "rgba(255,255
             return 0;
         }
 
+        /** Нормалізація назви котеджу для порівняння (№/#, пробіли, регістр). */
+        function normalizeCottageKey(value) {
+            return String(value || '')
+                .trim()
+                .toUpperCase()
+                .replace(/[\u00A0\u202F]/g, ' ')
+                .replace(/[№#]/g, ' ')
+                .replace(/\s+/g, ' ')
+                .trim();
+        }
+
+        /** Знайти кімнату за cottage з броні (name/short/fuzzy). Не падати на rooms[0]. */
+        function findRoomByCottage(cottage) {
+            const raw = String(cottage || '').trim();
+            if (!raw || !Array.isArray(roomsList) || !roomsList.length) return null;
+            const key = normalizeCottageKey(raw);
+            let best = null;
+            let bestScore = -1;
+            roomsList.forEach((r) => {
+                const n = normalizeCottageKey(r.name);
+                const s = normalizeCottageKey(r.short || '');
+                let score = -1;
+                if (n === key || s === key) score = 1000 + Math.max(n.length, s.length);
+                else if (n && (key.includes(n) || n.includes(key))) score = 500 + n.length;
+                else if (s && (key.includes(s) || s.includes(key))) score = 400 + s.length;
+                else {
+                    const low = key.toLowerCase();
+                    const id = Number(r.id);
+                    if (id === 1 && (low.includes('junior 1') || low.includes('junior') || low.includes('номер 1'))) score = 300;
+                    else if (id === 2 && (low.includes('family 2') || low.includes('сімейний') || low.includes('номер 2'))) score = 300;
+                    else if (id === 3 && (low.includes('family 3') || low.includes('люкс') || low.includes('номер 3'))) score = 300;
+                    else if (id === 4 && (low.includes('family 4') || low.includes('номер 4'))) score = 300;
+                }
+                if (score > bestScore) {
+                    bestScore = score;
+                    best = r;
+                }
+            });
+            return bestScore >= 0 ? best : null;
+        }
+
         function bookingMatchesRoom(b, room) {
             if (!b || !room) return false;
             if (String(b.status).toLowerCase().includes('скас')) return false;
-            const cottageStr = String(b.cottage || '').trim().toUpperCase();
-            const rShort = String(room.short || '').trim().toUpperCase();
-            return cottageStr === rShort || cottageStr.includes(rShort) ||
-                (room.id === 3 && cottageStr.includes('ЛЮКС')) ||
-                (room.id === 2 && cottageStr.includes('СІМЕЙНИЙ'));
+            const matched = findRoomByCottage(b.cottage);
+            return !!(matched && String(matched.id) === String(room.id));
         }
 
         function isManualClosedDate(roomId, dateObj) {
@@ -7337,7 +7372,8 @@ document.getElementById('adminGuests').addEventListener('change', updatePricePre
 
             setBookingSourceFromSaved(booking.source);
             
-            const availableRooms = roomsList.filter(r => r.active || r.name === booking.cottage);
+            const matchedRoomObj = findRoomByCottage(booking.cottage);
+            const availableRooms = roomsList.filter(r => r.active || (matchedRoomObj && String(r.id) === String(matchedRoomObj.id)) || r.name === booking.cottage);
             const cottageOptions = document.getElementById('cottageOptions');
             
             cottageOptions.innerHTML = availableRooms.map(r => `
@@ -7346,11 +7382,17 @@ document.getElementById('adminGuests').addEventListener('change', updatePricePre
                 </div>
             `).join('');
 
-            let savedRoom = roomsList.some(r => r.name === booking.cottage) ? booking.cottage : (availableRooms[0] ? availableRooms[0].name : "");
-            let savedDesc = roomsList.find(r => r.name === savedRoom)?.desc || "";
+            // Раніше при неточному name === cottage підставлявся rooms[0] (JUNIOR) — баг Hutshub/iCal.
+            let savedRoom = matchedRoomObj ? matchedRoomObj.name : String(booking.cottage || '').trim();
+            let savedDesc = matchedRoomObj ? (matchedRoomObj.desc || '') : '';
+            if (matchedRoomObj) {
+                cottageOptions.querySelectorAll('.custom-option').forEach(opt => {
+                    opt.classList.toggle('selected', opt.textContent.trim().startsWith(matchedRoomObj.name));
+                });
+            }
             
             document.getElementById('adminCottage').value = savedRoom;
-            document.getElementById('cottageSelectedText').innerText = savedRoom ? `${savedRoom} (${savedDesc})` : "Оберіть котедж";
+            document.getElementById('cottageSelectedText').innerText = savedRoom ? (savedDesc ? `${savedRoom} (${savedDesc})` : savedRoom) : "Оберіть котедж";
             renderAdminCustomServices();
             
             checkInPicker.setDate(booking.checkIn);
