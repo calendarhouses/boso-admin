@@ -2188,6 +2188,25 @@ input[type="number"] {
                             <div class="timeline-rows" id="priceGrid"></div>
                         </div>
                     </div>
+
+                    <section class="egw-panel" aria-labelledby="psrPanelTitle" style="margin-top:28px;">
+                        <div class="egw-panel__head">
+                            <div class="egw-panel__brand">
+                                <div class="egw-panel__icon" aria-hidden="true">
+                                    <svg width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6v12m-7.5-3.75h15M3.75 9.75h15"/></svg>
+                                </div>
+                                <div>
+                                    <p class="egw-panel__eyebrow">Тарифи · довжина броні</p>
+                                    <h3 class="egw-panel__title" id="psrPanelTitle">Ліміт дорогих ночей</h3>
+                                    <p class="egw-panel__desc">У святковому періоді максимум N ночей по високій ціні; решта ночей цього періоду — за звичайною. Незалежно від того, 30–01 чи 31–02.</p>
+                                </div>
+                            </div>
+                            <button type="button" class="egw-panel__add" onclick="openGenericModal('peakStayRule')">+ Додати правило</button>
+                        </div>
+                        <div class="egw-panel__body">
+                            <div class="egw-list" id="settingsPeakStayRulesBody"></div>
+                        </div>
+                    </section>
                 </div>
 
                 <div id="set-restrictions" class="settings-tab-content" style="display: none;">
@@ -2794,6 +2813,7 @@ function getVisitWord(count) {
             { id: 2, condition: "Діб в бронюванні: 3", discount: "20%", rooms: "Всі котеджі" }
         ];
         let extraGuestWaivers = []; // [{ id, start, end, roomsIds, rooms }]
+        let peakStayRules = []; // [{ id, start, end, roomsIds, rooms, peakPrice, maxPeakNights, overflowPrice }]
 
         let customServicesList = (typeof BosoServices !== 'undefined')
             ? BosoServices.ensureDefaultCustomServices([])
@@ -3159,6 +3179,7 @@ function saveInlineTransaction(type, category, idx) {
                 if (settingsData.roomsList) roomsList = settingsData.roomsList;
                 if (settingsData.discountsList) discountsList = settingsData.discountsList;
                 if (Array.isArray(settingsData.extraGuestWaivers)) extraGuestWaivers = settingsData.extraGuestWaivers;
+                if (Array.isArray(settingsData.peakStayRules)) peakStayRules = settingsData.peakStayRules;
                 if (settingsData.customServicesList) customServicesList = settingsData.customServicesList;
                 if (typeof BosoServices !== 'undefined') customServicesList = BosoServices.ensureDefaultCustomServices(customServicesList);
                 if (settingsData.sysServicesList) sysServicesList = settingsData.sysServicesList;
@@ -3207,6 +3228,7 @@ function saveInlineTransaction(type, category, idx) {
                     if (settingsData.roomsList) roomsList = settingsData.roomsList;
                     if (settingsData.discountsList) discountsList = settingsData.discountsList;
                     if (Array.isArray(settingsData.extraGuestWaivers)) extraGuestWaivers = settingsData.extraGuestWaivers;
+                    if (Array.isArray(settingsData.peakStayRules)) peakStayRules = settingsData.peakStayRules;
                     if (settingsData.customServicesList) customServicesList = settingsData.customServicesList;
                     if (typeof BosoServices !== 'undefined') customServicesList = BosoServices.ensureDefaultCustomServices(customServicesList);
                     if (settingsData.sysServicesList) sysServicesList = settingsData.sysServicesList;
@@ -3262,6 +3284,7 @@ function saveInlineTransaction(type, category, idx) {
                     if (sd.roomsList) roomsList = sd.roomsList;
                     if (sd.discountsList) discountsList = sd.discountsList;
                     if (Array.isArray(sd.extraGuestWaivers)) extraGuestWaivers = sd.extraGuestWaivers;
+                    if (Array.isArray(sd.peakStayRules)) peakStayRules = sd.peakStayRules;
                     if (sd.customPrices) customPrices = sd.customPrices;
                     if (sd.restrictions) restrictions = sd.restrictions;
                     if (sd.closedDates) closedDates = sd.closedDates;
@@ -3296,6 +3319,7 @@ function saveInlineTransaction(type, category, idx) {
                 roomsList: roomsList,
                 discountsList: discountsList,
                 extraGuestWaivers: extraGuestWaivers,
+                peakStayRules: peakStayRules,
                 customServicesList: customServicesList,
                 sysServicesList: sysServicesList,
                 customPrices: customPrices,
@@ -3456,7 +3480,7 @@ function saveInlineTransaction(type, category, idx) {
             document.getElementById('set-' + tabName).style.display = 'block';
 
             if(tabName === 'rooms') renderSettingsRooms();
-            if(tabName === 'prices') renderPriceGrid();
+            if(tabName === 'prices') { renderPriceGrid(); renderSettingsPeakStayRules(); }
             if(tabName === 'restrictions') {
                 syncBookingHorizonUI();
                 renderRestrictionsGrid();
@@ -3582,6 +3606,91 @@ function saveInlineTransaction(type, category, idx) {
                 if (!isExtraGuestNightWaived(room.id, iso)) fee += extraGuests * price;
             }
             return fee;
+        }
+
+        function findPeakStayRuleForNight(roomId, dateIso) {
+            const ds = String(dateIso || '').substring(0, 10);
+            const rid = String(roomId);
+            return (peakStayRules || []).find(r => {
+                const rooms = r.roomsIds || [];
+                const okRoom = !rooms.length || rooms.includes('all') || rooms.map(String).includes(rid);
+                if (!okRoom) return false;
+                return ds >= String(r.start || '').substring(0, 10) && ds <= String(r.end || '').substring(0, 10);
+            }) || null;
+        }
+
+        /** Базова вартість проживання з урахуванням ліміту дорогих ночей у періоді */
+        function calcStayBasePrice(room, checkIn, checkOut) {
+            if (!room) return 0;
+            const start = new Date(String(checkIn).substring(0, 10) + 'T12:00:00');
+            const end = new Date(String(checkOut).substring(0, 10) + 'T12:00:00');
+            if (isNaN(start.getTime()) || isNaN(end.getTime()) || end <= start) return 0;
+            let total = 0;
+            const peakBuckets = {}; // ruleId -> { rule, nights: Date[] }
+            for (let d = new Date(start); d < end; d.setDate(d.getDate() + 1)) {
+                const night = new Date(d);
+                const iso = formatPriceDateKey(night);
+                const rule = findPeakStayRuleForNight(room.id, iso);
+                if (rule) {
+                    const key = String(rule.id);
+                    if (!peakBuckets[key]) peakBuckets[key] = { rule, nights: [] };
+                    peakBuckets[key].nights.push(night);
+                } else {
+                    total += getDayPrice(room, night);
+                }
+            }
+            Object.keys(peakBuckets).forEach(key => {
+                const { rule, nights } = peakBuckets[key];
+                const maxPeak = Math.max(0, parseInt(rule.maxPeakNights, 10) || 0);
+                const peakPrice = Number(rule.peakPrice) || 0;
+                const overflowPrice = Number(rule.overflowPrice) || 0;
+                nights.forEach((night, idx) => {
+                    total += idx < maxPeak ? peakPrice : overflowPrice;
+                });
+            });
+            return total;
+        }
+
+        function renderSettingsPeakStayRules() {
+            const host = document.getElementById('settingsPeakStayRulesBody');
+            if (!host) return;
+            host.innerHTML = '';
+            if (!peakStayRules.length) {
+                host.innerHTML = `<div class="egw-empty">
+                    <strong>Немає правил</strong>
+                    <span>Приклад НР: період 30.12–01.01 · макс. 2 ночі по 20 000 ₴ · решта по 9 500 ₴.</span>
+                </div>`;
+                return;
+            }
+            peakStayRules.forEach(r => {
+                const s = String(r.start || '').substring(0, 10);
+                const e = String(r.end || '').substring(0, 10);
+                const sm = s.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+                const em = e.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+                let label = '—';
+                if (sm && em) {
+                    label = sm[1] === em[1]
+                        ? `${sm[3]}.${sm[2]} — ${em[3]}.${em[2]}`
+                        : `${sm[3]}.${sm[2]}.${sm[1]} — ${em[3]}.${em[2]}.${em[1]}`;
+                }
+                const maxN = parseInt(r.maxPeakNights, 10) || 0;
+                const peak = Number(r.peakPrice) || 0;
+                const overflow = Number(r.overflowPrice) || 0;
+                host.innerHTML += `<article class="egw-card">
+                    <div class="egw-card__main">
+                        <div class="egw-card__dates">${label}</div>
+                        <div class="egw-card__meta">
+                            <span class="egw-pill">макс. ${maxN} × ${peak.toLocaleString('uk-UA')} ₴</span>
+                            <span class="egw-pill egw-pill--muted">далі ${overflow.toLocaleString('uk-UA')} ₴</span>
+                            <span class="egw-pill egw-pill--muted">${r.rooms || 'Всі котеджі'}</span>
+                        </div>
+                    </div>
+                    <div class="egw-card__actions">
+                        <button class="btn-icon-only" title="Редагувати" onclick="openGenericModal('peakStayRule', ${r.id})"><svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg></button>
+                        <button class="btn-icon-only danger" title="Видалити" onclick="deleteGenericItem('peakStayRule', ${r.id})"><svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg></button>
+                    </div>
+                </article>`;
+            });
         }
 
         function renderSettingsServices() {
@@ -4464,6 +4573,47 @@ function saveInlineTransaction(type, category, idx) {
                 setTimeout(() => bindRangeCalendar({
                     hostId: 'egwRangeCalendar', startId: 'mEgwStart', endId: 'mEgwEnd', showPrices: false, view: { y: null, m: null }
                 }), 0);
+            } else if (type === 'peakStayRule') {
+                title.innerText = id ? 'Редагувати правило' : 'Ліміт дорогих ночей';
+                let r = id ? peakStayRules.find(x => x.id === id) : {
+                    start: '', end: '', roomsIds: ['all'], rooms: 'Всі котеджі',
+                    peakPrice: 20000, maxPeakNights: 2, overflowPrice: 9500
+                };
+                const start = (r.start || '').substring(0, 10);
+                const end = (r.end || '').substring(0, 10);
+                let selectedIds = r.roomsIds || [];
+                if (id && selectedIds.length === 0 && String(r.rooms || '').includes('Всі')) selectedIds = ['all'];
+                let isAllSelected = selectedIds.includes('all') || !selectedIds.length;
+                let roomsChips = `<div class="chip-btn ${isAllSelected ? 'active' : ''}" id="chip-psr-room-all" onclick="toggleAllPsrRooms()">Усі котеджі</div>`;
+                roomsChips += roomsList.filter(rm => rm.active).map(rm => {
+                    const isActive = !isAllSelected && selectedIds.map(String).includes(String(rm.id));
+                    return `<div class="chip-btn psr-room-chip ${isActive ? 'active' : ''}" data-id="${rm.id}" onclick="toggleSinglePsrRoom(this)">${rm.name}</div>`;
+                }).join('');
+                const monthBase = new Date(); monthBase.setDate(1);
+                const defaultStart = start || formatPriceDateKey(monthBase);
+                const defaultEnd = end || formatPriceDateKey(new Date(monthBase.getFullYear(), monthBase.getMonth() + 1, 0));
+                body.innerHTML = `
+                    <p style="font-size:13px;color:#6B7280;margin:0 0 14px;line-height:1.5;">У періоді максимум N ночей по дорогій ціні; наступні ночі цього ж періоду — за звичайною (неважливо, 30–01 чи 31–02).</p>
+                    <div class="form-group">
+                        <div class="price-ctor-heading">Котеджі</div>
+                        <div class="chips-container">${roomsChips}</div>
+                    </div>
+                    <div class="form-grid">
+                        <div class="form-group"><label>Дорога ціна за ніч (₴)</label><input type="number" id="mPsrPeakPrice" value="${Number(r.peakPrice) || 20000}" min="0"></div>
+                        <div class="form-group"><label>Макс. дорогих ночей</label><input type="number" id="mPsrMaxPeak" value="${parseInt(r.maxPeakNights,10) || 2}" min="1" max="30"></div>
+                    </div>
+                    <div class="form-group"><label>Ціна решти ночей у періоді (₴)</label><input type="number" id="mPsrOverflowPrice" value="${Number(r.overflowPrice) || 9500}" min="0"></div>
+                    <div class="form-group" style="margin-bottom:0;">
+                        <div class="price-ctor-heading">Період (ночі, можна через місяці)</div>
+                        <div id="psrRangeCalendar"></div>
+                        <input type="hidden" id="mPsrStart" value="${defaultStart}">
+                        <input type="hidden" id="mPsrEnd" value="${defaultEnd}">
+                    </div>`;
+                const box = document.querySelector('#genericModal .modal-box');
+                if (box) box.style.maxWidth = '560px';
+                setTimeout(() => bindRangeCalendar({
+                    hostId: 'psrRangeCalendar', startId: 'mPsrStart', endId: 'mPsrEnd', showPrices: false, view: { y: null, m: null }
+                }), 0);
             } else if (type === 'customService' || type === 'sysService') {
                 return;
             } else if (type === 'transaction') {
@@ -4606,6 +4756,7 @@ function saveInlineTransaction(type, category, idx) {
             if (currentEditType === 'room') itemType = 'котедж';
             if (currentEditType === 'discount') itemType = 'знижку';
             if (currentEditType === 'extraGuestWaiver') itemType = 'період без доплати';
+            if (currentEditType === 'peakStayRule') itemType = 'правило дорогих ночей';
             if (currentEditType === 'service') itemType = 'послугу';
             if (currentEditType === 'transaction') itemType = 'транзакцію';
 
@@ -4632,6 +4783,10 @@ function saveInlineTransaction(type, category, idx) {
             else if (currentEditType === 'extraGuestWaiver') {
                 extraGuestWaivers = extraGuestWaivers.filter(w => w.id !== currentEditId);
                 renderSettingsExtraGuestWaivers();
+            }
+            else if (currentEditType === 'peakStayRule') {
+                peakStayRules = peakStayRules.filter(r => r.id !== currentEditId);
+                renderSettingsPeakStayRules();
             }
             else if (currentEditType === 'service') {
                 customServicesList = customServicesList.filter(s => s.id !== currentEditId);
@@ -4751,6 +4906,42 @@ function saveInlineTransaction(type, category, idx) {
                     extraGuestWaivers.push({ id: Date.now(), ...payload });
                 }
                 renderSettingsExtraGuestWaivers();
+
+            } else if (currentEditType === 'peakStayRule') {
+                const start = (document.getElementById('mPsrStart')?.value || '').substring(0, 10);
+                const end = (document.getElementById('mPsrEnd')?.value || '').substring(0, 10);
+                const peakPrice = parseInt(document.getElementById('mPsrPeakPrice')?.value, 10) || 0;
+                const maxPeakNights = parseInt(document.getElementById('mPsrMaxPeak')?.value, 10) || 0;
+                const overflowPrice = parseInt(document.getElementById('mPsrOverflowPrice')?.value, 10) || 0;
+                if (!/^\d{4}-\d{2}-\d{2}$/.test(start) || !/^\d{4}-\d{2}-\d{2}$/.test(end)) {
+                    showToast('Оберіть період на календарі'); return;
+                }
+                if (peakPrice <= 0 || overflowPrice < 0 || maxPeakNights < 1) {
+                    showToast('Перевірте ціни і ліміт ночей'); return;
+                }
+                const allBtn = document.getElementById('chip-psr-room-all');
+                let savedIds = [];
+                let displayRoomsText = '';
+                if (allBtn && allBtn.classList.contains('active')) {
+                    savedIds = ['all'];
+                    displayRoomsText = 'Всі котеджі';
+                } else {
+                    const names = [];
+                    document.querySelectorAll('.psr-room-chip.active').forEach(chip => {
+                        savedIds.push(chip.getAttribute('data-id'));
+                        names.push(chip.innerText);
+                    });
+                    displayRoomsText = names.length ? names.join(', ') : 'Не обрано';
+                }
+                if (!savedIds.length) { showToast('Оберіть хоча б один котедж'); return; }
+                const payload = { start, end, roomsIds: savedIds, rooms: displayRoomsText, peakPrice, maxPeakNights, overflowPrice };
+                if (currentEditId) {
+                    const row = peakStayRules.find(x => x.id === currentEditId);
+                    if (row) Object.assign(row, payload);
+                } else {
+                    peakStayRules.push({ id: Date.now(), ...payload });
+                }
+                renderSettingsPeakStayRules();
 
             } else if (currentEditType === 'customService' || currentEditType === 'sysService') {
                 // редагування послуг — через BosoServicesUI drawer
@@ -6878,16 +7069,8 @@ if (guests > maxCap) {
             <strong>Обмеження для гостей на сайті:</strong> мінімум <b>${requiredMinNights}</b> ${nightWord(requiredMinNights)} (зараз ${nights} ${nightWord(nights)}). У адмінці зберегти можна.
         </div>` : '';
 
-    // === 1. СИСТЕМНІ БАЗОВІ РОЗРАХУНКИ ===
-    let basePriceTotal = 0;
-    for (let i = 0; i < nights; i++) {
-        let curr = new Date(d1); curr.setDate(curr.getDate() + i);
-        let ds = `${curr.getFullYear()}-${String(curr.getMonth()+1).padStart(2,'0')}-${String(curr.getDate()).padStart(2,'0')}`;
-        let isWeekend = (curr.getDay() === 0 || curr.getDay() === 6);
-        let dp = isWeekend ? room.priceWeekend : room.priceWeekday;
-        if (customPrices[room.id] && customPrices[room.id][ds]) dp = customPrices[room.id][ds];
-        basePriceTotal += dp;
-    }
+    // === 1. СИСТЕМНІ БАЗОВІ РОЗРАХУНКИ (з лімітом дорогих ночей) ===
+    let basePriceTotal = calcStayBasePrice(room, safeIn, safeOut);
 
     let extraGuests = Math.max(0, guests - room.capacity);
     let extraGuestFee = calcExtraGuestFeeForStay(room, guests, safeIn, safeOut);
@@ -8623,6 +8806,25 @@ document.addEventListener('click', function(e) {
             el.classList.toggle('active');
             const chips = document.querySelectorAll('.egw-room-chip');
             const active = document.querySelectorAll('.egw-room-chip.active');
+            if (chips.length && active.length === chips.length && allBtn) {
+                allBtn.classList.add('active');
+                chips.forEach(c => c.classList.remove('active'));
+            }
+        }
+        function toggleAllPsrRooms() {
+            const allBtn = document.getElementById('chip-psr-room-all');
+            const isActive = !allBtn.classList.contains('active');
+            if (isActive) {
+                allBtn.classList.add('active');
+                document.querySelectorAll('.psr-room-chip').forEach(c => c.classList.remove('active'));
+            } else allBtn.classList.remove('active');
+        }
+        function toggleSinglePsrRoom(el) {
+            const allBtn = document.getElementById('chip-psr-room-all');
+            if (allBtn) allBtn.classList.remove('active');
+            el.classList.toggle('active');
+            const chips = document.querySelectorAll('.psr-room-chip');
+            const active = document.querySelectorAll('.psr-room-chip.active');
             if (chips.length && active.length === chips.length && allBtn) {
                 allBtn.classList.add('active');
                 chips.forEach(c => c.classList.remove('active'));
