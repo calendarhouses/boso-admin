@@ -493,6 +493,26 @@
         .chips-container { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 6px; }
         .chip-btn { padding: 10px 16px; background: #FFFFFF; border: 1px solid #D1D5DB; border-radius: 12px; font-size: 13px; font-weight: 600; color: #6B7280; display: inline-flex; align-items: center; justify-content: center; }
         .chip-btn.active { background: #F0FDF4; border-color: var(--success); color: #059669; box-shadow: 0 4px 12px rgba(5, 150, 105, 0.15); }
+        .price-ctor-amount { display:flex; align-items:baseline; justify-content:center; gap:8px; padding:18px 12px; border-radius:14px; border:1px solid #D6D3D1; background:linear-gradient(180deg,#F7F8F4,#EEF1E8); }
+        .price-ctor-amount input { width:100%; border:none; background:transparent; outline:none; text-align:center; font-size:40px; font-weight:700; color:#1A1A1A; }
+        .price-ctor-amount span { font-size:20px; color:#9CA3AF; }
+        .price-ctor-heading { display:flex; align-items:center; gap:8px; margin:0 0 8px; font-size:13px; font-weight:600; color:#374151; }
+        .price-range-calendar { border:1px solid #E7E5E4; border-radius:14px; background:#fff; padding:10px; }
+        .price-range-calendar__header { display:flex; align-items:center; justify-content:space-between; gap:8px; margin-bottom:8px; padding-bottom:8px; border-bottom:1px solid #F5F5F4; }
+        .price-range-calendar__title { flex:1; margin:0; text-align:center; font-size:15px; font-weight:700; text-transform:capitalize; }
+        .price-range-calendar__nav { width:32px; height:32px; border:1px solid #E7E5E4; border-radius:10px; background:#FAFAF9; }
+        .price-range-calendar__weekdays, .price-range-calendar__grid { display:grid; grid-template-columns:repeat(7,1fr); gap:2px; }
+        .price-range-calendar__weekday { text-align:center; font-size:10px; font-weight:600; color:#A8A29E; text-transform:uppercase; }
+        .price-range-calendar__cell--empty { min-height:42px; }
+        .price-range-calendar__cell--day { min-height:42px; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:1px; border:1px solid transparent; border-radius:10px; background:transparent; padding:2px; font-family:inherit; }
+        .price-range-calendar__day-num { font-size:13px; font-weight:700; color:#1C1917; }
+        .price-range-calendar__day-price { font-size:9px; color:#A8A29E; }
+        .price-range-calendar__cell--day.is-in-range { background:#F0F4E8; border-radius:0; }
+        .price-range-calendar__cell--day.is-edge, .price-range-calendar__cell--day.is-single { background:#EAF0E4 !important; border-color:#8A9E6A; border-radius:10px; }
+        .price-range-calendar__cell--day.is-range-start:not(.is-single) { border-radius:10px 0 0 10px; }
+        .price-range-calendar__cell--day.is-range-end:not(.is-single) { border-radius:0 10px 10px 0; }
+        .price-range-calendar__hint { margin:8px 0 0; text-align:center; font-size:12px; color:#6B7280; }
+        .price-cell-custom { color:#556B2F !important; background:#F0F4E8 !important; }
 
         .pet-btn, .crib-btn, .room-status-btn, .vat-btn, .ubd-btn { flex: 1; display: flex !important; align-items: center; justify-content: center; font-size: 14px; font-weight: 600; border-radius: 10px; padding: 10px 4px !important; margin: 0 !important; border: 1px solid transparent; color: #6B7280; }
         .pet-btn.active[data-val="Ні"], .crib-btn.active[data-val="Ні"], .room-status-btn.active[data-val="false"], .vat-btn.active[data-val="Ні"], .ubd-btn.active[data-val="Ні"] { background: #FEF2F2 !important; color: #DC2626 !important; border-color: #FECACA !important; }
@@ -1077,7 +1097,7 @@
 
             <div id="set-prices" class="settings-tab-content" style="display: none;">
                 <div class="form-grid" style="margin-bottom: 16px;">
-                    <button class="btn-primary" onclick="openGenericModal('price')">Конструктор</button>
+                    <button class="btn-primary" onclick="openPriceConstructor()">Конструктор</button>
                     <button class="btn-outline-danger" onclick="clearPricesAlert()">Очистити</button>
                 </div>
                 <div class="timeline-nav-row" style="margin-bottom: 12px;">
@@ -1876,6 +1896,8 @@
         let serviceDays = {}; // { [serviceId]: days } — perRentalDay
         let sysServicesList = [];
         let customPrices = {};
+        let pendingPriceModal = null;
+        let priceCalView = { y: null, m: null };
         let smsSettings = {
             enabled: true,
             sender: 'BOSO',
@@ -2731,33 +2753,44 @@
                 `;
             } else if (type === 'price') {
                 title.innerText = 'Конструктор цін';
-                let roomsChips = `<div class="chip-btn" id="chip-room-all" onclick="toggleAllRoomsChip()">Усі котеджі</div>`;
-                roomsChips += roomsList.map(r => `<div class="chip-btn room-chip" data-id="${r.id}" onclick="toggleSingleRoomChip(this)">${r.name}</div>`).join('');
-
+                const pre = pendingPriceModal || {};
+                const monthBase = new Date(priceTimelineBaseDate); monthBase.setDate(1);
+                const monthEnd = new Date(monthBase.getFullYear(), monthBase.getMonth() + 1, 0);
+                const defaultStart = (pre.startDate || formatPriceDateKey(monthBase)).substring(0, 10);
+                const defaultEnd = (pre.endDate || formatPriceDateKey(monthEnd)).substring(0, 10);
+                const preRoomIds = (pre.roomIds || []).map(String);
+                const allRoomsPre = !preRoomIds.length;
+                let singleWeekday = null;
+                if (defaultStart === defaultEnd) {
+                    const sd = new Date(defaultStart + 'T12:00:00');
+                    if (!isNaN(sd.getTime())) singleWeekday = sd.getDay();
+                }
+                const dayOn = (wd) => singleWeekday === null || singleWeekday === wd;
+                let roomsChips = `<div class="chip-btn ${allRoomsPre ? 'active' : ''}" id="chip-room-all" onclick="toggleAllRoomsChip(); renderPriceRangeCalendar();">Усі котеджі</div>`;
+                roomsChips += roomsList.map(r => {
+                    const active = !allRoomsPre && preRoomIds.includes(String(r.id));
+                    return `<div class="chip-btn room-chip ${active ? 'active' : ''}" data-id="${r.id}" onclick="toggleSingleRoomChip(this); renderPriceRangeCalendar();">${r.name}</div>`;
+                }).join('');
+                const dayChip = (label, val) => `<div class="chip-btn day-chip ${dayOn(val) ? 'active' : ''}" data-val="${val}" onclick="toggleSingleDayChip(this)">${label}</div>`;
                 body.innerHTML = `
-                    <div class="form-group"><label>Оберіть котеджі:</label><div class="chips-container">${roomsChips}</div></div>
-                    <div class="form-group"><label>Встановіть ціну (грн):</label><input type="number" inputmode="numeric" pattern="[0-9]*" id="mPriceAmount" placeholder="0" min="0"></div>
-                    <div class="form-group"><label>Оберіть період:</label>
-                        <div class="chips-container" id="periodChipsContainer">
-                            <div class="chip-btn active period-chip" data-val="1" onclick="selectPeriodChip(this)">Поточний місяць</div>
-                            <div class="chip-btn period-chip" data-val="3" onclick="selectPeriodChip(this)">3 місяці</div>
-                            <div class="chip-btn period-chip" data-val="12" onclick="selectPeriodChip(this)">12 міс</div>
-                        </div>
-                        <input type="hidden" id="mPricePeriod" value="1">
-                    </div>
-                    <div class="form-group" style="margin-bottom: 0;"><label>Оберіть дні тижня:</label>
+                    <div class="form-group"><div class="price-ctor-heading">Ціна за добу</div><div class="price-ctor-amount"><input type="text" inputmode="numeric" id="mPriceAmount" placeholder="0"><span>₴</span></div></div>
+                    <div class="form-group"><div class="price-ctor-heading">Котеджі</div><div class="chips-container">${roomsChips}</div></div>
+                    <div class="form-group"><div class="price-ctor-heading">Дні тижня</div>
                         <div class="chips-container" id="daysChipsContainer">
-                            <div class="chip-btn active" id="chip-day-all" onclick="toggleAllDaysChip()">Усі дні</div>
-                            <div class="chip-btn active day-chip" data-val="1" onclick="toggleSingleDayChip(this)">Пн</div>
-                            <div class="chip-btn active day-chip" data-val="2" onclick="toggleSingleDayChip(this)">Вт</div>
-                            <div class="chip-btn active day-chip" data-val="3" onclick="toggleSingleDayChip(this)">Ср</div>
-                            <div class="chip-btn active day-chip" data-val="4" onclick="toggleSingleDayChip(this)">Чт</div>
-                            <div class="chip-btn active day-chip" data-val="5" onclick="toggleSingleDayChip(this)">Пт</div>
-                            <div class="chip-btn active day-chip" data-val="6" onclick="toggleSingleDayChip(this)">Сб</div>
-                            <div class="chip-btn active day-chip" data-val="0" onclick="toggleSingleDayChip(this)">Нд</div>
-                        </div><input type="hidden" id="mPriceDays" value="all">
+                            <div class="chip-btn ${singleWeekday === null ? 'active' : ''}" id="chip-day-all" onclick="toggleAllDaysChip()">Усі дні</div>
+                            ${dayChip('Пн',1)}${dayChip('Вт',2)}${dayChip('Ср',3)}${dayChip('Чт',4)}${dayChip('Пт',5)}${dayChip('Сб',6)}${dayChip('Нд',0)}
+                        </div><input type="hidden" id="mPriceDays" value="${singleWeekday === null ? 'all' : String(singleWeekday)}">
                     </div>
-                `;
+                    <div class="form-group" style="margin-bottom:0;"><div class="price-ctor-heading">Період (день або діапазон)</div>
+                        <div id="priceRangeCalendar"></div>
+                        <input type="hidden" id="mPriceStart" value="${defaultStart}">
+                        <input type="hidden" id="mPriceEnd" value="${defaultEnd}">
+                    </div>`;
+                const viewBase = new Date(defaultStart + 'T12:00:00');
+                priceCalView.y = viewBase.getFullYear(); priceCalView.m = viewBase.getMonth();
+                syncPriceDaysValue();
+                setTimeout(() => { renderPriceRangeCalendar(); const amt = document.getElementById('mPriceAmount'); if (amt) amt.focus(); }, 0);
+                pendingPriceModal = null;
             } else if (type === 'restriction') {
                 title.innerText = 'Конструктор обмежень';
                 const pre = pendingRestrictionModal || {};
@@ -2872,6 +2905,7 @@
             if (currentEditType === 'restriction' || currentEditType === 'closedDate') {
                 clearRestrictionSelection();
             }
+            pendingPriceModal = null;
             document.getElementById('genericModal').classList.remove('active');
         }
 
@@ -3000,29 +3034,33 @@
             } else if (currentEditType === 'customService' || currentEditType === 'sysService') {
                 // через BosoServicesUI drawer
             } else if (currentEditType === 'price') {
-                const selectedRooms = Array.from(document.querySelectorAll('.room-chip.active')).map(chip => chip.getAttribute('data-id'));
-                const amount = parseInt(document.getElementById('mPriceAmount').value) || 0;
-                const periodMonths = parseInt(document.getElementById('mPricePeriod').value) || 1;
+                syncPriceDaysValue();
+                const allRoomsBtn = document.getElementById('chip-room-all');
+                let selectedRooms = Array.from(document.querySelectorAll('.room-chip.active')).map(chip => chip.getAttribute('data-id'));
+                if (allRoomsBtn && allRoomsBtn.classList.contains('active')) selectedRooms = roomsList.map(r => String(r.id));
+                const amount = parseInt(String(document.getElementById('mPriceAmount').value || '').replace(/[^\d]/g, ''), 10) || 0;
                 const daysVal = document.getElementById('mPriceDays').value;
-                const selectedDays = daysVal === 'all'
-                    ? [0, 1, 2, 3, 4, 5, 6]
-                    : daysVal.split(',').map(Number).filter(n => !isNaN(n));
-                if (selectedDays.length === 0) { showToast("Оберіть хоча б один день тижня"); return; }
-                if (amount > 0 && selectedRooms.length > 0) {
-                    const startDate = new Date(priceTimelineBaseDate); const endDate = new Date(startDate); endDate.setMonth(endDate.getMonth() + periodMonths); const daysCount = Math.round((endDate - startDate) / (1000 * 60 * 60 * 24));
-                    roomsList.forEach(r => {
-                        if (selectedRooms.includes(String(r.id))) {
-                            if (!customPrices[r.id]) customPrices[r.id] = {};
-                            for (let i = 0; i < daysCount; i++) {
-                                let d = new Date(startDate); d.setDate(startDate.getDate() + i);
-                                if (!selectedDays.includes(d.getDay())) continue;
-                                let dateStr = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
-                                customPrices[r.id][dateStr] = amount;
-                            }
-                        }
-                    });
-                }
+                const selectedDays = daysVal === 'all' ? [0,1,2,3,4,5,6] : daysVal.split(',').map(Number).filter(n => !isNaN(n));
+                const startIso = (document.getElementById('mPriceStart')?.value || '').substring(0, 10);
+                const endIso = (document.getElementById('mPriceEnd')?.value || '').substring(0, 10);
+                if (amount <= 0) { showToast("Вкажіть ціну"); return; }
+                if (selectedRooms.length === 0) { showToast("Оберіть котедж"); return; }
+                if (selectedDays.length === 0) { showToast("Оберіть день тижня"); return; }
+                if (!/^\d{4}-\d{2}-\d{2}$/.test(startIso) || !/^\d{4}-\d{2}-\d{2}$/.test(endIso)) { showToast("Оберіть період на календарі"); return; }
+                const startDate = new Date(startIso + 'T12:00:00');
+                const endDate = new Date(endIso + 'T12:00:00');
+                if (isNaN(startDate.getTime()) || isNaN(endDate.getTime()) || startDate > endDate) { showToast("Некоректний період"); return; }
+                selectedRooms.forEach(rid => {
+                    const room = roomsList.find(r => String(r.id) === String(rid));
+                    const key = room ? room.id : rid;
+                    if (!customPrices[key]) customPrices[key] = {};
+                    for (let d = new Date(startDate); d <= endDate; d.setDate(d.getDate() + 1)) {
+                        if (!selectedDays.includes(d.getDay())) continue;
+                        customPrices[key][formatPriceDateKey(d)] = amount;
+                    }
+                });
                 renderPriceGrid();
+                showToast("Ціни оновлено");
             } else if (currentEditType === 'restriction') {
                 const selectedRooms = Array.from(document.querySelectorAll('.restr-room-chip.active'))
                     .map(chip => chip.getAttribute('data-id'));
@@ -3497,10 +3535,11 @@ if (sClass.includes('скас')) {
                 let rowHtml = `<div class="timeline-row-bg" style="height: 60px; position: relative;">`;
                 for (let i = 0; i < daysCount; i++) {
                     const d = new Date(startDate); d.setDate(startDate.getDate() + i); const isWeekend = d.getDay() === 0 || d.getDay() === 6;
-                    const dateStr = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
-                    let price = isWeekend ? room.priceWeekend : room.priceWeekday;
-                    if (customPrices[room.id] && customPrices[room.id][dateStr]) { price = customPrices[room.id][dateStr]; }
-                    rowHtml += `<div class="timeline-cell ${isWeekend ? 'weekend' : ''}" style="display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:#6B7280;" onclick="openGenericModal('price')">${price}</div>`;
+                    const dateStr = formatPriceDateKey(d);
+                    const map = customPrices[room.id] || customPrices[String(room.id)] || {};
+                    const hasCustom = map[dateStr] != null && map[dateStr] !== '';
+                    const price = hasCustom ? Number(map[dateStr]) : (isWeekend ? room.priceWeekend : room.priceWeekday);
+                    rowHtml += `<div class="timeline-cell ${isWeekend ? 'weekend' : ''} ${hasCustom ? 'price-cell-custom' : ''}" style="display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:#6B7280;" onclick="openPriceConstructor({ roomIds: ['${room.id}'], startDate: '${dateStr}', endDate: '${dateStr}' })">${price}</div>`;
                 }
                 rowHtml += `</div>`; gridContainer.innerHTML += rowHtml;
             });
@@ -6064,6 +6103,94 @@ async function bosoSendRemainderPaymentSms() {
         }
         
         document.addEventListener('click', function(e) { if (!e.target.closest('.custom-select-wrapper')) { document.querySelectorAll('.custom-select-wrapper').forEach(w => w.classList.remove('open')); } });
+
+        function formatPriceDateKey(d) {
+            return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+        }
+        function openPriceConstructor(preset) {
+            pendingPriceModal = preset || null;
+            openGenericModal('price');
+        }
+        function getPriceFormRange() {
+            return {
+                start: (document.getElementById('mPriceStart')?.value || '').substring(0, 10),
+                end: (document.getElementById('mPriceEnd')?.value || '').substring(0, 10)
+            };
+        }
+        function setPriceFormRange(start, end) {
+            const s = start <= end ? start : end;
+            const e = start <= end ? end : start;
+            const startEl = document.getElementById('mPriceStart');
+            const endEl = document.getElementById('mPriceEnd');
+            if (startEl) startEl.value = s;
+            if (endEl) endEl.value = e;
+            renderPriceRangeCalendar();
+        }
+        function onPriceCalDayClick(iso) {
+            const { start, end } = getPriceFormRange();
+            if (start && end && start !== end) { setPriceFormRange(iso, iso); return; }
+            if (start && end && start === end) {
+                if (iso === start) return;
+                if (iso < start) setPriceFormRange(iso, start); else setPriceFormRange(start, iso);
+                return;
+            }
+            setPriceFormRange(iso, iso);
+        }
+        function shiftPriceCalMonth(delta) {
+            const d = new Date(priceCalView.y, priceCalView.m + delta, 1);
+            priceCalView.y = d.getFullYear(); priceCalView.m = d.getMonth();
+            renderPriceRangeCalendar();
+        }
+        function getPricePreviewRoom() {
+            const selected = Array.from(document.querySelectorAll('.room-chip.active')).map(c => c.getAttribute('data-id'));
+            const allBtn = document.getElementById('chip-room-all');
+            const rooms = roomsList.filter(r => r.active);
+            if (!rooms.length) return roomsList[0] || null;
+            if ((allBtn && allBtn.classList.contains('active')) || selected.length === 0) return rooms[0];
+            return rooms.find(r => selected.includes(String(r.id))) || rooms[0];
+        }
+        function getDisplayDayPriceForRoom(room, date) {
+            if (!room) return 0;
+            const ds = formatPriceDateKey(date);
+            const map = customPrices[room.id] || customPrices[String(room.id)] || {};
+            if (map[ds] != null && map[ds] !== '') return Number(map[ds]);
+            const isWE = date.getDay() === 0 || date.getDay() === 5 || date.getDay() === 6;
+            return Number(isWE ? room.priceWeekend : room.priceWeekday) || 0;
+        }
+        function renderPriceRangeCalendar() {
+            const host = document.getElementById('priceRangeCalendar');
+            if (!host) return;
+            if (priceCalView.y == null || priceCalView.m == null) {
+                const { start } = getPriceFormRange();
+                const base = start ? new Date(start + 'T12:00:00') : new Date();
+                priceCalView.y = base.getFullYear(); priceCalView.m = base.getMonth();
+            }
+            const { start, end } = getPriceFormRange();
+            const rangeStart = start && end ? (start <= end ? start : end) : '';
+            const rangeEnd = start && end ? (start <= end ? end : start) : '';
+            const previewRoom = getPricePreviewRoom();
+            const labelDate = new Date(priceCalView.y, priceCalView.m, 1);
+            const monthLabel = labelDate.toLocaleString('uk-UA', { month: 'long', year: 'numeric' });
+            const first = new Date(priceCalView.y, priceCalView.m, 1);
+            const daysInMonth = new Date(priceCalView.y, priceCalView.m + 1, 0).getDate();
+            const pad = (first.getDay() + 6) % 7;
+            const weekdays = ['Пн','Вт','Ср','Чт','Пт','Сб','Нд'];
+            let cellsHtml = '';
+            for (let i = 0; i < pad; i++) cellsHtml += `<div class="price-range-calendar__cell--empty"></div>`;
+            for (let day = 1; day <= daysInMonth; day++) {
+                const date = new Date(priceCalView.y, priceCalView.m, day, 12, 0, 0, 0);
+                const iso = formatPriceDateKey(date);
+                const inRange = rangeStart && rangeEnd && iso >= rangeStart && iso <= rangeEnd;
+                const isStart = rangeStart && iso === rangeStart;
+                const isEnd = rangeEnd && iso === rangeEnd;
+                const isSingle = inRange && rangeStart === rangeEnd;
+                const price = getDisplayDayPriceForRoom(previewRoom, date);
+                const cls = ['price-range-calendar__cell--day', inRange ? 'is-in-range' : '', (isStart||isEnd) ? 'is-edge' : '', isStart ? 'is-range-start' : '', isEnd ? 'is-range-end' : '', isSingle ? 'is-single' : ''].filter(Boolean).join(' ');
+                cellsHtml += `<button type="button" class="${cls}" onclick="onPriceCalDayClick('${iso}')"><span class="price-range-calendar__day-num">${day}</span><span class="price-range-calendar__day-price">${price || '—'}</span></button>`;
+            }
+            const hint = !rangeStart ? 'Обери день або діапазон' : (rangeStart === rangeEnd ? `Обрано: ${rangeStart.split('-').reverse().join('.')}` : `Обрано: ${rangeStart.split('-').reverse().join('.')} — ${rangeEnd.split('-').reverse().join('.')}`);
+            host.innerHTML = `<div class="price-range-calendar"><div class="price-range-calendar__header"><button type="button" class="price-range-calendar__nav" onclick="shiftPriceCalMonth(-1)">‹</button><h4 class="price-range-calendar__title">${monthLabel}</h4><button type="button" class="price-range-calendar__nav" onclick="shiftPriceCalMonth(1)">›</button></div><div class="price-range-calendar__weekdays">${weekdays.map(w => `<div class="price-range-calendar__weekday">${w}</div>`).join('')}</div><div class="price-range-calendar__grid">${cellsHtml}</div><p class="price-range-calendar__hint">${hint}</p></div>`;
+        }
 
         // ЛОГІКА ЧІПСІВ (КНОПОК)
         function toggleAllRoomsChip() {
