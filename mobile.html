@@ -9051,17 +9051,16 @@ async function bosoSendRemainderPaymentSms() {
             tParentNode = null;
             isSingleContainer = false;
 
+            // Налаштування: лише кнопками (свайп між розділами вимкнено — ламав верстку)
+            if (viewSettings && viewSettings.style.display === 'flex') {
+                isTDragging = false;
+                return;
+            }
+
             if (viewReports && viewReports.style.display === 'flex') {
                 tActiveNavs = document.querySelectorAll('.reports-tabs .r-tab');
                 tTabsContent = [document.getElementById('rep-finance'), document.getElementById('rep-analytics')];
                 tParentNode = viewReports;
-            } else if (viewSettings && viewSettings.style.display === 'flex') {
-                tActiveNavs = document.querySelectorAll('#view-settings .mobile-settings-tabs .m-tab');
-                const allSettingsContents = document.querySelectorAll('#view-settings .settings-tab-content');
-                tActiveNavs.forEach((nav, idx) => {
-                    if (allSettingsContents[idx]) tTabsContent.push(allSettingsContents[idx]);
-                });
-                tParentNode = viewSettings;
             } else if (viewList && viewList.style.display === 'block') {
                 let guestFilter = document.getElementById('guestFilterTab');
                 if (guestFilter && guestFilter.style.display !== 'none') {
