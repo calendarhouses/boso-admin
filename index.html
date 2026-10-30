@@ -2156,7 +2156,18 @@ input[type="number"] {
                         <tbody id="settingsDiscountsTableBody"> 
                         </tbody> 
                     </table> 
-                    <button class="btn-secondary" style="margin-top: 20px; font-size: 13px;" onclick="openGenericModal('discount')">+ Додати знижку</button> 
+                    <button class="btn-secondary" style="margin-top: 20px; font-size: 13px;" onclick="openGenericModal('discount')">+ Додати знижку</button>
+
+                    <div class="settings-title" style="justify-content: flex-start; gap: 12px; margin-top: 40px;">
+                        <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19.128a9.38 9.38 0 002.625.372 9.337 9.337 0 004.121-.952 4.125 4.125 0 00-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 018.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0111.964-3.07M12 6.375a3.375 3.375 0 11-6.75 0 3.375 3.375 0 016.75 0zm8.25 2.25a2.625 2.625 0 11-5.25 0 2.625 2.625 0 015.25 0z"/></svg>
+                        Без доплати за доп. гостей
+                    </div>
+                    <p style="color: #6B7280; font-size: 14px; margin-bottom: 24px; max-width: 600px; line-height: 1.5;">На обрані ночі (напр. свята) доплата за додаткових гостей не нараховується — ні на сайті, ні в автоматичному розрахунку.</p>
+                    <table>
+                        <thead><tr><th>Період</th><th>Котеджі</th><th>Дії</th></tr></thead>
+                        <tbody id="settingsExtraGuestWaiversBody"></tbody>
+                    </table>
+                    <button class="btn-secondary" style="margin-top: 20px; font-size: 13px;" onclick="openGenericModal('extraGuestWaiver')">+ Додати період</button>
                 </div> 
 
                 <div id="set-services" class="settings-tab-content" style="display: none;">
@@ -2637,6 +2648,7 @@ function getVisitWord(count) {
             { id: 1, condition: "Діб в бронюванні: 2", discount: "15%", rooms: "Всі котеджі" },
             { id: 2, condition: "Діб в бронюванні: 3", discount: "20%", rooms: "Всі котеджі" }
         ];
+        let extraGuestWaivers = []; // [{ id, start, end, roomsIds, rooms }]
 
         let customServicesList = (typeof BosoServices !== 'undefined')
             ? BosoServices.ensureDefaultCustomServices([])
@@ -3001,6 +3013,7 @@ function saveInlineTransaction(type, category, idx) {
             if (settingsData && Object.keys(settingsData).length > 0) {
                 if (settingsData.roomsList) roomsList = settingsData.roomsList;
                 if (settingsData.discountsList) discountsList = settingsData.discountsList;
+                if (Array.isArray(settingsData.extraGuestWaivers)) extraGuestWaivers = settingsData.extraGuestWaivers;
                 if (settingsData.customServicesList) customServicesList = settingsData.customServicesList;
                 if (typeof BosoServices !== 'undefined') customServicesList = BosoServices.ensureDefaultCustomServices(customServicesList);
                 if (settingsData.sysServicesList) sysServicesList = settingsData.sysServicesList;
@@ -3048,6 +3061,7 @@ function saveInlineTransaction(type, category, idx) {
                 if (settingsData && Object.keys(settingsData).length > 0) {
                     if (settingsData.roomsList) roomsList = settingsData.roomsList;
                     if (settingsData.discountsList) discountsList = settingsData.discountsList;
+                    if (Array.isArray(settingsData.extraGuestWaivers)) extraGuestWaivers = settingsData.extraGuestWaivers;
                     if (settingsData.customServicesList) customServicesList = settingsData.customServicesList;
                     if (typeof BosoServices !== 'undefined') customServicesList = BosoServices.ensureDefaultCustomServices(customServicesList);
                     if (settingsData.sysServicesList) sysServicesList = settingsData.sysServicesList;
@@ -3102,6 +3116,7 @@ function saveInlineTransaction(type, category, idx) {
                     const sd = data.settings || {};
                     if (sd.roomsList) roomsList = sd.roomsList;
                     if (sd.discountsList) discountsList = sd.discountsList;
+                    if (Array.isArray(sd.extraGuestWaivers)) extraGuestWaivers = sd.extraGuestWaivers;
                     if (sd.customPrices) customPrices = sd.customPrices;
                     if (sd.restrictions) restrictions = sd.restrictions;
                     if (sd.closedDates) closedDates = sd.closedDates;
@@ -3135,6 +3150,7 @@ function saveInlineTransaction(type, category, idx) {
             const settingsToSave = {
                 roomsList: roomsList,
                 discountsList: discountsList,
+                extraGuestWaivers: extraGuestWaivers,
                 customServicesList: customServicesList,
                 sysServicesList: sysServicesList,
                 customPrices: customPrices,
@@ -3301,7 +3317,7 @@ function saveInlineTransaction(type, category, idx) {
                 renderRestrictionsGrid();
                 scrollToRestrictionsGrid();
             }
-            if(tabName === 'discounts') renderSettingsDiscounts();
+            if(tabName === 'discounts') { renderSettingsDiscounts(); renderSettingsExtraGuestWaivers(); }
             if(tabName === 'services') renderSettingsServices();
             if(tabName === 'sms') {
                 renderSmsSettingsPanel();
@@ -3326,21 +3342,22 @@ function saveInlineTransaction(type, category, idx) {
             });
         }
 
+        function formatIsoShortUa(iso) {
+            const s = String(iso || '').substring(0, 10);
+            const m = s.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+            return m ? `${m[3]}.${m[2]}` : s;
+        }
+
         function renderSettingsDiscounts() {
             const tbody = document.getElementById('settingsDiscountsTableBody');
             tbody.innerHTML = '';
             discountsList.forEach(d => {
                 const bits = [];
-                const fmtShortUa = (iso) => {
-                    const s = String(iso || '').substring(0, 10);
-                    const m = s.match(/^(\d{4})-(\d{2})-(\d{2})$/);
-                    return m ? `${m[3]}.${m[2]}` : s;
-                };
                 if (d.periodMode === 'range' && d.periodStart && d.periodEnd) {
-                    bits.push(`діє ${fmtShortUa(d.periodStart)}–${fmtShortUa(d.periodEnd)}`);
+                    bits.push(`діє ${formatIsoShortUa(d.periodStart)}–${formatIsoShortUa(d.periodEnd)}`);
                 }
                 if (d.excludeMode === 'range' && d.excludeStart && d.excludeEnd) {
-                    bits.push(`викл. ${fmtShortUa(d.excludeStart)}–${fmtShortUa(d.excludeEnd)}`);
+                    bits.push(`викл. ${formatIsoShortUa(d.excludeStart)}–${formatIsoShortUa(d.excludeEnd)}`);
                 }
                 const meta = bits.length ? `<div style="font-size:12px;color:#6B7280;margin-top:4px;">${bits.join(' · ')}</div>` : '';
                 tbody.innerHTML += `<tr>
@@ -3351,6 +3368,67 @@ function saveInlineTransaction(type, category, idx) {
                     </div></td>
                 </tr>`;
             });
+        }
+
+        function renderSettingsExtraGuestWaivers() {
+            const tbody = document.getElementById('settingsExtraGuestWaiversBody');
+            if (!tbody) return;
+            tbody.innerHTML = '';
+            if (!extraGuestWaivers.length) {
+                tbody.innerHTML = `<tr><td colspan="3" style="color:#6B7280;font-size:13px;">Немає періодів — доплата за доп. гостей береться завжди.</td></tr>`;
+                return;
+            }
+            extraGuestWaivers.forEach(w => {
+                const s = String(w.start || '').substring(0, 10);
+                const e = String(w.end || '').substring(0, 10);
+                const sm = s.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+                const em = e.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+                let label = '—';
+                if (sm && em) {
+                    label = sm[1] === em[1]
+                        ? `${sm[3]}.${sm[2]} — ${em[3]}.${em[2]}`
+                        : `${sm[3]}.${sm[2]}.${sm[1]} — ${em[3]}.${em[2]}.${em[1]}`;
+                }
+                tbody.innerHTML += `<tr>
+                    <td><strong>${label}</strong><div style="font-size:12px;color:#6B7280;margin-top:4px;">без доплати за доп. гостей</div></td>
+                    <td>${w.rooms || 'Всі котеджі'}</td>
+                    <td><div style="display: flex; gap: 8px;">
+                        <button class="btn-icon-only" onclick="openGenericModal('extraGuestWaiver', ${w.id})"><svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg></button>
+                        <button class="btn-icon-only danger" onclick="deleteGenericItem('extraGuestWaiver', ${w.id})"><svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg></button>
+                    </div></td>
+                </tr>`;
+            });
+        }
+
+        function isExtraGuestNightWaived(roomId, dateIso) {
+            const ds = String(dateIso || '').substring(0, 10);
+            if (!/^\d{4}-\d{2}-\d{2}$/.test(ds)) return false;
+            const rid = String(roomId);
+            return (extraGuestWaivers || []).some(w => {
+                const rooms = w.roomsIds || [];
+                const okRoom = !rooms.length || rooms.includes('all') || rooms.map(String).includes(rid);
+                if (!okRoom) return false;
+                const a = String(w.start || '').substring(0, 10);
+                const b = String(w.end || '').substring(0, 10);
+                return ds >= a && ds <= b;
+            });
+        }
+
+        function calcExtraGuestFeeForStay(room, guests, checkIn, checkOut) {
+            if (!room) return 0;
+            const cap = room.capacity || 2;
+            const extraGuests = Math.max(0, (parseInt(guests, 10) || 0) - cap);
+            if (extraGuests <= 0) return 0;
+            const price = room.extraGuestPrice !== undefined ? Number(room.extraGuestPrice) : 2500;
+            const start = new Date(String(checkIn).substring(0, 10) + 'T12:00:00');
+            const end = new Date(String(checkOut).substring(0, 10) + 'T12:00:00');
+            if (isNaN(start.getTime()) || isNaN(end.getTime()) || end <= start) return 0;
+            let fee = 0;
+            for (let d = new Date(start); d < end; d.setDate(d.getDate() + 1)) {
+                const iso = formatPriceDateKey(d);
+                if (!isExtraGuestNightWaived(room.id, iso)) fee += extraGuests * price;
+            }
+            return fee;
         }
 
         function renderSettingsServices() {
@@ -4200,6 +4278,39 @@ function saveInlineTransaction(type, category, idx) {
                     if (periodMode === 'range') setDiscountPeriodMode('range');
                     if (excludeMode === 'range') setDiscountExcludeMode('range');
                 }, 0);
+            } else if (type === 'extraGuestWaiver') {
+                title.innerText = id ? 'Редагувати період' : 'Без доплати за доп. гостей';
+                let w = id ? extraGuestWaivers.find(x => x.id === id) : { start: '', end: '', roomsIds: ['all'], rooms: 'Всі котеджі' };
+                const start = (w.start || '').substring(0, 10);
+                const end = (w.end || '').substring(0, 10);
+                let selectedIds = w.roomsIds || [];
+                if (id && selectedIds.length === 0 && String(w.rooms || '').includes('Всі')) selectedIds = ['all'];
+                let isAllSelected = selectedIds.includes('all') || !selectedIds.length;
+                let roomsChips = `<div class="chip-btn ${isAllSelected ? 'active' : ''}" id="chip-egw-room-all" onclick="toggleAllEgwRooms()">Усі котеджі</div>`;
+                roomsChips += roomsList.filter(r => r.active).map(r => {
+                    const isActive = !isAllSelected && selectedIds.map(String).includes(String(r.id));
+                    return `<div class="chip-btn egw-room-chip ${isActive ? 'active' : ''}" data-id="${r.id}" onclick="toggleSingleEgwRoom(this)">${r.name}</div>`;
+                }).join('');
+                const monthBase = new Date(); monthBase.setDate(1);
+                const defaultStart = start || formatPriceDateKey(monthBase);
+                const defaultEnd = end || formatPriceDateKey(new Date(monthBase.getFullYear(), monthBase.getMonth() + 1, 0));
+                body.innerHTML = `
+                    <p style="font-size:13px;color:#6B7280;margin:0 0 16px;line-height:1.5;">На обрані ночі доплата за додаткових гостей не нараховується (сайт і авторозрахунок).</p>
+                    <div class="form-group">
+                        <div class="price-ctor-heading">Котеджі</div>
+                        <div class="chips-container">${roomsChips}</div>
+                    </div>
+                    <div class="form-group" style="margin-bottom:0;">
+                        <div class="price-ctor-heading">Період (можна через місяці)</div>
+                        <div id="egwRangeCalendar"></div>
+                        <input type="hidden" id="mEgwStart" value="${defaultStart}">
+                        <input type="hidden" id="mEgwEnd" value="${defaultEnd}">
+                    </div>`;
+                const box = document.querySelector('#genericModal .modal-box');
+                if (box) box.style.maxWidth = '540px';
+                setTimeout(() => bindRangeCalendar({
+                    hostId: 'egwRangeCalendar', startId: 'mEgwStart', endId: 'mEgwEnd', showPrices: false, view: { y: null, m: null }
+                }), 0);
             } else if (type === 'customService' || type === 'sysService') {
                 return;
             } else if (type === 'transaction') {
@@ -4341,6 +4452,7 @@ function saveInlineTransaction(type, category, idx) {
             let itemType = 'елемент';
             if (currentEditType === 'room') itemType = 'котедж';
             if (currentEditType === 'discount') itemType = 'знижку';
+            if (currentEditType === 'extraGuestWaiver') itemType = 'період без доплати';
             if (currentEditType === 'service') itemType = 'послугу';
             if (currentEditType === 'transaction') itemType = 'транзакцію';
 
@@ -4363,7 +4475,11 @@ function saveInlineTransaction(type, category, idx) {
             else if (currentEditType === 'discount') {
                 discountsList = discountsList.filter(d => d.id !== currentEditId);
                 renderSettingsDiscounts();
-            } 
+            }
+            else if (currentEditType === 'extraGuestWaiver') {
+                extraGuestWaivers = extraGuestWaivers.filter(w => w.id !== currentEditId);
+                renderSettingsExtraGuestWaivers();
+            }
             else if (currentEditType === 'service') {
                 customServicesList = customServicesList.filter(s => s.id !== currentEditId);
                 renderSettingsServices();
@@ -4452,6 +4568,36 @@ function saveInlineTransaction(type, category, idx) {
                     discountsList.push({ id: Date.now(), ...payload });
                 }
                 renderSettingsDiscounts();
+
+            } else if (currentEditType === 'extraGuestWaiver') {
+                const start = (document.getElementById('mEgwStart')?.value || '').substring(0, 10);
+                const end = (document.getElementById('mEgwEnd')?.value || '').substring(0, 10);
+                if (!/^\d{4}-\d{2}-\d{2}$/.test(start) || !/^\d{4}-\d{2}-\d{2}$/.test(end)) {
+                    showToast('Оберіть період на календарі'); return;
+                }
+                const allBtn = document.getElementById('chip-egw-room-all');
+                let savedIds = [];
+                let displayRoomsText = '';
+                if (allBtn && allBtn.classList.contains('active')) {
+                    savedIds = ['all'];
+                    displayRoomsText = 'Всі котеджі';
+                } else {
+                    const names = [];
+                    document.querySelectorAll('.egw-room-chip.active').forEach(chip => {
+                        savedIds.push(chip.getAttribute('data-id'));
+                        names.push(chip.innerText);
+                    });
+                    displayRoomsText = names.length ? names.join(', ') : 'Не обрано';
+                }
+                if (!savedIds.length) { showToast('Оберіть хоча б один котедж'); return; }
+                const payload = { start, end, roomsIds: savedIds, rooms: displayRoomsText };
+                if (currentEditId) {
+                    const row = extraGuestWaivers.find(x => x.id === currentEditId);
+                    if (row) Object.assign(row, payload);
+                } else {
+                    extraGuestWaivers.push({ id: Date.now(), ...payload });
+                }
+                renderSettingsExtraGuestWaivers();
 
             } else if (currentEditType === 'customService' || currentEditType === 'sysService') {
                 // редагування послуг — через BosoServicesUI drawer
@@ -6591,8 +6737,7 @@ if (guests > maxCap) {
     }
 
     let extraGuests = Math.max(0, guests - room.capacity);
-    let dynamicExtraPrice = room.extraGuestPrice !== undefined ? room.extraGuestPrice : 2500;
-    let extraGuestFee = extraGuests * dynamicExtraPrice * nights;
+    let extraGuestFee = calcExtraGuestFeeForStay(room, guests, safeIn, safeOut);
 
     // Додаткові послуги з каталогу (тварини / денні / ліжечко / чан / …)
     syncAdminLegacyServiceFields();
@@ -8306,6 +8451,28 @@ document.addEventListener('click', function(e) {
                     showPrices: false,
                     view: { y: null, m: null }
                 });
+            }
+        }
+
+        function toggleAllEgwRooms() {
+            const allBtn = document.getElementById('chip-egw-room-all');
+            const isActive = !allBtn.classList.contains('active');
+            if (isActive) {
+                allBtn.classList.add('active');
+                document.querySelectorAll('.egw-room-chip').forEach(c => c.classList.remove('active'));
+            } else {
+                allBtn.classList.remove('active');
+            }
+        }
+        function toggleSingleEgwRoom(el) {
+            const allBtn = document.getElementById('chip-egw-room-all');
+            if (allBtn) allBtn.classList.remove('active');
+            el.classList.toggle('active');
+            const chips = document.querySelectorAll('.egw-room-chip');
+            const active = document.querySelectorAll('.egw-room-chip.active');
+            if (chips.length && active.length === chips.length && allBtn) {
+                allBtn.classList.add('active');
+                chips.forEach(c => c.classList.remove('active'));
             }
         }
 
