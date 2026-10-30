@@ -714,6 +714,143 @@
             align-self: stretch;
         }
 
+        /* Преміум-блок: без доплати за додаткових гостей */
+        .egw-panel {
+            margin-top: 36px;
+            border-radius: 20px;
+            border: 1px solid #E7E5E4;
+            background:
+                linear-gradient(165deg, rgba(255,255,255,0.96) 0%, rgba(250,250,249,0.92) 48%, rgba(245,247,241,0.98) 100%);
+            box-shadow: 0 10px 28px -18px rgba(28, 25, 23, 0.28), 0 1px 0 rgba(255,255,255,0.8) inset;
+            overflow: hidden;
+        }
+        .egw-panel__head {
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            gap: 16px;
+            padding: 22px 24px 18px;
+            border-bottom: 1px solid rgba(231, 229, 228, 0.9);
+        }
+        .egw-panel__brand {
+            display: flex;
+            align-items: flex-start;
+            gap: 14px;
+            min-width: 0;
+        }
+        .egw-panel__icon {
+            width: 44px;
+            height: 44px;
+            border-radius: 14px;
+            flex-shrink: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #556B2F;
+            background: linear-gradient(160deg, #F3F6EC 0%, #E8EEDC 100%);
+            border: 1px solid rgba(85, 107, 47, 0.14);
+            box-shadow: inset 0 1px 0 rgba(255,255,255,0.75);
+        }
+        .egw-panel__eyebrow {
+            font-size: 11px;
+            font-weight: 700;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            color: #8A9E6A;
+            margin: 0 0 4px;
+        }
+        .egw-panel__title {
+            margin: 0;
+            font-size: 18px;
+            font-weight: 700;
+            letter-spacing: -0.02em;
+            color: #1C1917;
+            line-height: 1.25;
+        }
+        .egw-panel__desc {
+            margin: 6px 0 0;
+            font-size: 13px;
+            line-height: 1.5;
+            color: #78716C;
+            max-width: 46ch;
+        }
+        .egw-panel__add {
+            flex-shrink: 0;
+            height: 40px;
+            padding: 0 16px;
+            border: none;
+            border-radius: 12px;
+            background: #556B2F;
+            color: #fff;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            box-shadow: 0 6px 14px -6px rgba(85, 107, 47, 0.55);
+            transition: background 0.15s ease, transform 0.15s ease;
+        }
+        .egw-panel__add:hover { background: #4B5D28; }
+        .egw-panel__add:active { transform: scale(0.98); }
+        .egw-panel__body { padding: 16px 18px 18px; }
+        .egw-list { display: flex; flex-direction: column; gap: 10px; }
+        .egw-empty {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            gap: 6px;
+            padding: 28px 16px;
+            border-radius: 14px;
+            border: 1px dashed #D6D3D1;
+            background: rgba(255,255,255,0.55);
+            color: #78716C;
+        }
+        .egw-empty strong { color: #44403C; font-size: 14px; font-weight: 600; }
+        .egw-empty span { font-size: 13px; line-height: 1.45; max-width: 36ch; }
+        .egw-card {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 14px;
+            padding: 14px 16px;
+            border-radius: 14px;
+            background: #fff;
+            border: 1px solid #E7E5E4;
+            box-shadow: 0 1px 2px rgba(28, 25, 23, 0.04);
+            transition: border-color 0.15s ease, box-shadow 0.15s ease;
+        }
+        .egw-card:hover {
+            border-color: #D6D3D1;
+            box-shadow: 0 8px 20px -14px rgba(28, 25, 23, 0.28);
+        }
+        .egw-card__main { min-width: 0; display: flex; flex-direction: column; gap: 6px; }
+        .egw-card__dates {
+            font-size: 15px;
+            font-weight: 700;
+            color: #1C1917;
+            letter-spacing: -0.01em;
+        }
+        .egw-card__meta { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+        .egw-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            height: 24px;
+            padding: 0 10px;
+            border-radius: 999px;
+            font-size: 11px;
+            font-weight: 600;
+            background: #F3F6EC;
+            color: #556B2F;
+            border: 1px solid rgba(85, 107, 47, 0.12);
+        }
+        .egw-pill--muted {
+            background: #F5F5F4;
+            color: #57534E;
+            border-color: #E7E5E4;
+        }
+        .egw-card__actions { display: flex; gap: 8px; flex-shrink: 0; }
+
         .restriction-bar-menu {
             position: fixed;
             z-index: 3500;
@@ -2158,16 +2295,24 @@ input[type="number"] {
                     </table> 
                     <button class="btn-secondary" style="margin-top: 20px; font-size: 13px;" onclick="openGenericModal('discount')">+ Додати знижку</button>
 
-                    <div class="settings-title" style="justify-content: flex-start; gap: 12px; margin-top: 40px;">
-                        <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19.128a9.38 9.38 0 002.625.372 9.337 9.337 0 004.121-.952 4.125 4.125 0 00-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 018.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0111.964-3.07M12 6.375a3.375 3.375 0 11-6.75 0 3.375 3.375 0 016.75 0zm8.25 2.25a2.625 2.625 0 11-5.25 0 2.625 2.625 0 015.25 0z"/></svg>
-                        Без доплати за доп. гостей
-                    </div>
-                    <p style="color: #6B7280; font-size: 14px; margin-bottom: 24px; max-width: 600px; line-height: 1.5;">На обрані ночі (напр. свята) доплата за додаткових гостей не нараховується — ні на сайті, ні в автоматичному розрахунку.</p>
-                    <table>
-                        <thead><tr><th>Період</th><th>Котеджі</th><th>Дії</th></tr></thead>
-                        <tbody id="settingsExtraGuestWaiversBody"></tbody>
-                    </table>
-                    <button class="btn-secondary" style="margin-top: 20px; font-size: 13px;" onclick="openGenericModal('extraGuestWaiver')">+ Додати період</button>
+                    <section class="egw-panel" aria-labelledby="egwPanelTitle">
+                        <div class="egw-panel__head">
+                            <div class="egw-panel__brand">
+                                <div class="egw-panel__icon" aria-hidden="true">
+                                    <svg width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19.128a9.38 9.38 0 002.625.372 9.337 9.337 0 004.121-.952 4.125 4.125 0 00-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 018.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0111.964-3.07M12 6.375a3.375 3.375 0 11-6.75 0 3.375 3.375 0 016.75 0zm8.25 2.25a2.625 2.625 0 11-5.25 0 2.625 2.625 0 015.25 0z"/></svg>
+                                </div>
+                                <div>
+                                    <p class="egw-panel__eyebrow">Тарифи · виключення</p>
+                                    <h3 class="egw-panel__title" id="egwPanelTitle">Без доплати за додаткових гостей</h3>
+                                    <p class="egw-panel__desc">На обрані ночі (наприклад, свята) доплата не нараховується — ні на сайті, ні в авторозрахунку.</p>
+                                </div>
+                            </div>
+                            <button type="button" class="egw-panel__add" onclick="openGenericModal('extraGuestWaiver')">+ Додати період</button>
+                        </div>
+                        <div class="egw-panel__body">
+                            <div class="egw-list" id="settingsExtraGuestWaiversBody"></div>
+                        </div>
+                    </section>
                 </div> 
 
                 <div id="set-services" class="settings-tab-content" style="display: none;">
@@ -3371,11 +3516,14 @@ function saveInlineTransaction(type, category, idx) {
         }
 
         function renderSettingsExtraGuestWaivers() {
-            const tbody = document.getElementById('settingsExtraGuestWaiversBody');
-            if (!tbody) return;
-            tbody.innerHTML = '';
+            const host = document.getElementById('settingsExtraGuestWaiversBody');
+            if (!host) return;
+            host.innerHTML = '';
             if (!extraGuestWaivers.length) {
-                tbody.innerHTML = `<tr><td colspan="3" style="color:#6B7280;font-size:13px;">Немає періодів — доплата за доп. гостей береться завжди.</td></tr>`;
+                host.innerHTML = `<div class="egw-empty">
+                    <strong>Поки немає періодів</strong>
+                    <span>Доплата за додаткових гостей береться завжди. Додайте святкові або спецдати, щоб скасувати її.</span>
+                </div>`;
                 return;
             }
             extraGuestWaivers.forEach(w => {
@@ -3389,14 +3537,19 @@ function saveInlineTransaction(type, category, idx) {
                         ? `${sm[3]}.${sm[2]} — ${em[3]}.${em[2]}`
                         : `${sm[3]}.${sm[2]}.${sm[1]} — ${em[3]}.${em[2]}.${em[1]}`;
                 }
-                tbody.innerHTML += `<tr>
-                    <td><strong>${label}</strong><div style="font-size:12px;color:#6B7280;margin-top:4px;">без доплати за доп. гостей</div></td>
-                    <td>${w.rooms || 'Всі котеджі'}</td>
-                    <td><div style="display: flex; gap: 8px;">
-                        <button class="btn-icon-only" onclick="openGenericModal('extraGuestWaiver', ${w.id})"><svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg></button>
-                        <button class="btn-icon-only danger" onclick="deleteGenericItem('extraGuestWaiver', ${w.id})"><svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg></button>
-                    </div></td>
-                </tr>`;
+                host.innerHTML += `<article class="egw-card">
+                    <div class="egw-card__main">
+                        <div class="egw-card__dates">${label}</div>
+                        <div class="egw-card__meta">
+                            <span class="egw-pill">Без доплати</span>
+                            <span class="egw-pill egw-pill--muted">${w.rooms || 'Всі котеджі'}</span>
+                        </div>
+                    </div>
+                    <div class="egw-card__actions">
+                        <button class="btn-icon-only" title="Редагувати" onclick="openGenericModal('extraGuestWaiver', ${w.id})"><svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg></button>
+                        <button class="btn-icon-only danger" title="Видалити" onclick="deleteGenericItem('extraGuestWaiver', ${w.id})"><svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg></button>
+                    </div>
+                </article>`;
             });
         }
 
@@ -4279,7 +4432,7 @@ function saveInlineTransaction(type, category, idx) {
                     if (excludeMode === 'range') setDiscountExcludeMode('range');
                 }, 0);
             } else if (type === 'extraGuestWaiver') {
-                title.innerText = id ? 'Редагувати період' : 'Без доплати за доп. гостей';
+                title.innerText = id ? 'Редагувати період' : 'Без доплати за додаткових гостей';
                 let w = id ? extraGuestWaivers.find(x => x.id === id) : { start: '', end: '', roomsIds: ['all'], rooms: 'Всі котеджі' };
                 const start = (w.start || '').substring(0, 10);
                 const end = (w.end || '').substring(0, 10);
