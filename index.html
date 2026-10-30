@@ -3331,11 +3331,16 @@ function saveInlineTransaction(type, category, idx) {
             tbody.innerHTML = '';
             discountsList.forEach(d => {
                 const bits = [];
+                const fmtShortUa = (iso) => {
+                    const s = String(iso || '').substring(0, 10);
+                    const m = s.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+                    return m ? `${m[3]}.${m[2]}` : s;
+                };
                 if (d.periodMode === 'range' && d.periodStart && d.periodEnd) {
-                    bits.push(`діє ${String(d.periodStart).substring(5).replace('-', '.')}–${String(d.periodEnd).substring(5).replace('-', '.')}`);
+                    bits.push(`діє ${fmtShortUa(d.periodStart)}–${fmtShortUa(d.periodEnd)}`);
                 }
                 if (d.excludeMode === 'range' && d.excludeStart && d.excludeEnd) {
-                    bits.push(`викл. ${String(d.excludeStart).substring(5).replace('-', '.')}–${String(d.excludeEnd).substring(5).replace('-', '.')}`);
+                    bits.push(`викл. ${fmtShortUa(d.excludeStart)}–${fmtShortUa(d.excludeEnd)}`);
                 }
                 const meta = bits.length ? `<div style="font-size:12px;color:#6B7280;margin-top:4px;">${bits.join(' · ')}</div>` : '';
                 tbody.innerHTML += `<tr>
