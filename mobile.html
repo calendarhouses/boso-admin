@@ -2604,17 +2604,20 @@
         function renderSettingsDiscounts() {
             const tbody = document.getElementById('settingsDiscountsTableBody'); tbody.innerHTML = '';
             discountsList.forEach(d => {
-                // Міняємо текст прямо при виводі
-                let roomsText = d.rooms.replace('Всі котеджі', 'Всі котеджі');
-                
+                const bits = [];
+                if (d.periodMode === 'range' && d.periodStart && d.periodEnd) {
+                    bits.push(`діє ${String(d.periodStart).substring(5).replace('-', '.')}–${String(d.periodEnd).substring(5).replace('-', '.')}`);
+                }
+                if (d.excludeMode === 'range' && d.excludeStart && d.excludeEnd) {
+                    bits.push(`викл. ${String(d.excludeStart).substring(5).replace('-', '.')}–${String(d.excludeEnd).substring(5).replace('-', '.')}`);
+                }
+                const meta = bits.length ? `<div style="font-size:11px;color:#6B7280;margin-top:4px;">${bits.join(' · ')}</div>` : '';
                 tbody.innerHTML += `<tr>
                     <td style="flex-direction: row; justify-content: space-between; align-items: flex-start;">
-                        <div style="flex:1;"><strong>${d.condition}</strong></div>
+                        <div style="flex:1;"><strong>${d.condition}</strong>${meta}</div>
                         <div style="text-align: right;"><span class="badge confirmed" style="font-size: 14px;">${d.discount}</span></div>
                     </td>
-                    <td style="font-size:12px; color:#6B7280;">
-                        Застосовано: ${roomsText}
-                    </td>
+                    <td style="font-size:12px; color:#6B7280;">Застосовано: ${d.rooms || ''}</td>
                     <td style="justify-content: flex-end; padding-top: 10px;">
                         <button class="btn-action" style="padding:10px 16px; font-size:14px; width:100%; justify-content:center;" onclick="openGenericModal('discount', ${d.id})">Редагувати знижку</button>
                     </td>
@@ -2794,31 +2797,22 @@
             } else if (type === 'restriction') {
                 title.innerText = 'Конструктор обмежень';
                 const pre = pendingRestrictionModal || {};
-                let roomsChips = `<div class="chip-btn" id="chip-restr-room-all" onclick="toggleAllRestrRoomsChip()">Усі котеджі</div>`;
+                const monthBase = new Date(restrictionsTimelineBaseDate); monthBase.setDate(1);
+                const monthEnd = new Date(monthBase.getFullYear(), monthBase.getMonth() + 1, 0);
+                const defaultStart = (pre.startDate || formatPriceDateKey(monthBase)).substring(0, 10);
+                const defaultEnd = (pre.endDate || formatPriceDateKey(monthEnd)).substring(0, 10);
+                const preRoomIds = (pre.roomIds || []).map(String);
+                const allRoomsPre = !preRoomIds.length;
+                let roomsChips = `<div class="chip-btn ${allRoomsPre ? 'active' : ''}" id="chip-restr-room-all" onclick="toggleAllRestrRoomsChip()">Усі котеджі</div>`;
                 roomsChips += roomsList.filter(r => r.active).map(r => {
-                    const isPre = pre.roomIds && (pre.roomIds.includes(String(r.id)) || pre.roomIds.includes(r.id));
+                    const isPre = !allRoomsPre && preRoomIds.includes(String(r.id));
                     return `<div class="chip-btn restr-room-chip ${isPre ? 'active' : ''}" data-id="${r.id}" onclick="toggleSingleRestrRoomChip(this)">${r.name}</div>`;
                 }).join('');
                 const defaultMin = pre.minNights || 2;
-                const useCustom = pre.useCustomRange ? 'true' : 'false';
                 body.innerHTML = `
                     <div class="form-group"><label>Котеджі:</label><div class="chips-container">${roomsChips}</div></div>
-                    <div class="form-group"><label>Мін. кількість діб:</label><input type="number" inputmode="numeric" id="mRestrMinNights" value="${defaultMin}" min="1" max="30"></div>
-                    <div class="form-group" id="restrPeriodGroup" style="${useCustom === 'true' ? 'display:none;' : ''}">
-                        <label>Період:</label>
-                        <div class="chips-container">
-                            <div class="chip-btn active restr-period-chip" data-val="1" onclick="selectRestrPeriodChip(this)">Поточний місяць</div>
-                            <div class="chip-btn restr-period-chip" data-val="3" onclick="selectRestrPeriodChip(this)">3 місяці</div>
-                            <div class="chip-btn restr-period-chip" data-val="12" onclick="selectRestrPeriodChip(this)">12 міс</div>
-                        </div>
-                        <input type="hidden" id="mRestrPeriod" value="1">
-                    </div>
-                    <div class="form-group" id="restrCustomRangeHint" style="${useCustom === 'true' ? '' : 'display:none;'} margin-bottom: 0;">
-                        <label>Діапазон на сітці:</label>
-                        <p style="font-size: 13px; color: #4B5563; margin: 8px 0 0;" id="restrCustomRangeText">${pre.rangeLabel || ''}</p>
-                    </div>
-                    <div class="form-group" style="margin-bottom: 0;" id="restrDaysGroup">
-                        <label>Дні тижня:</label>
+                    <div class="form-group"><label>Мін. діб:</label><input type="number" inputmode="numeric" id="mRestrMinNights" value="${defaultMin}" min="1" max="30"></div>
+                    <div class="form-group"><label>Дні тижня:</label>
                         <div class="chips-container">
                             <div class="chip-btn active" id="chip-restr-day-all" onclick="toggleAllRestrDaysChip()">Усі дні</div>
                             <div class="chip-btn active restr-day-chip" data-val="1" onclick="toggleSingleRestrDayChip(this)">Пн</div>
@@ -2831,38 +2825,34 @@
                         </div>
                         <input type="hidden" id="mRestrDays" value="all">
                     </div>
-                    <input type="hidden" id="mRestrUseCustomRange" value="${useCustom}">
-                    <input type="hidden" id="mRestrStart" value="${pre.startDate || ''}">
-                    <input type="hidden" id="mRestrEnd" value="${pre.endDate || ''}">
-                `;
+                    <div class="form-group" style="margin-bottom:0;"><label>Період (можна через місяці):</label>
+                        <div id="restrRangeCalendar"></div>
+                        <input type="hidden" id="mRestrUseCustomRange" value="true">
+                        <input type="hidden" id="mRestrStart" value="${defaultStart}">
+                        <input type="hidden" id="mRestrEnd" value="${defaultEnd}">
+                    </div>`;
                 pendingRestrictionModal = null;
+                setTimeout(() => bindRangeCalendar({
+                    hostId: 'restrRangeCalendar', startId: 'mRestrStart', endId: 'mRestrEnd', showPrices: false, view: { y: null, m: null }
+                }), 0);
             } else if (type === 'closedDate') {
                 title.innerText = 'Закрити дати';
                 const pre = pendingClosedDateModal || {};
-                let roomsChips = `<div class="chip-btn" id="chip-closed-room-all" onclick="toggleAllClosedRoomsChip()">Усі котеджі</div>`;
+                const monthBase = new Date(restrictionsTimelineBaseDate); monthBase.setDate(1);
+                const monthEnd = new Date(monthBase.getFullYear(), monthBase.getMonth() + 1, 0);
+                const defaultStart = (pre.startDate || formatPriceDateKey(monthBase)).substring(0, 10);
+                const defaultEnd = (pre.endDate || formatPriceDateKey(monthEnd)).substring(0, 10);
+                const preRoomIds = (pre.roomIds || []).map(String);
+                const allRoomsPre = !preRoomIds.length;
+                let roomsChips = `<div class="chip-btn ${allRoomsPre ? 'active' : ''}" id="chip-closed-room-all" onclick="toggleAllClosedRoomsChip()">Усі котеджі</div>`;
                 roomsChips += roomsList.filter(r => r.active).map(r => {
-                    const isPre = pre.roomIds && (pre.roomIds.includes(String(r.id)) || pre.roomIds.includes(r.id));
+                    const isPre = !allRoomsPre && (preRoomIds.includes(String(r.id)) || preRoomIds.includes(r.id));
                     return `<div class="chip-btn closed-room-chip ${isPre ? 'active' : ''}" data-id="${r.id}" onclick="toggleSingleClosedRoomChip(this)">${r.name}</div>`;
                 }).join('');
-                const useCustom = pre.useCustomRange ? 'true' : 'false';
                 body.innerHTML = `
                     <p style="font-size:13px;color:#6B7280;margin:0 0 12px;">Закриті дати не можна забронювати через сайт.</p>
                     <div class="form-group"><label>Котеджі:</label><div class="chips-container">${roomsChips}</div></div>
-                    <div class="form-group" id="closedPeriodGroup" style="${useCustom === 'true' ? 'display:none;' : ''}">
-                        <label>Період:</label>
-                        <div class="chips-container">
-                            <div class="chip-btn active closed-period-chip" data-val="1" onclick="selectClosedPeriodChip(this)">Поточний місяць</div>
-                            <div class="chip-btn closed-period-chip" data-val="3" onclick="selectClosedPeriodChip(this)">3 місяці</div>
-                            <div class="chip-btn closed-period-chip" data-val="12" onclick="selectClosedPeriodChip(this)">12 міс</div>
-                        </div>
-                        <input type="hidden" id="mClosedPeriod" value="1">
-                    </div>
-                    <div class="form-group" id="closedCustomRangeHint" style="${useCustom === 'true' ? '' : 'display:none;'} margin-bottom: 0;">
-                        <label>Діапазон на сітці:</label>
-                        <p style="font-size: 13px; color: #4B5563; margin: 8px 0 0;" id="closedCustomRangeText">${pre.rangeLabel || ''}</p>
-                    </div>
-                    <div class="form-group" style="margin-bottom: 0;" id="closedDaysGroup">
-                        <label>Дні тижня:</label>
+                    <div class="form-group"><label>Дні тижня:</label>
                         <div class="chips-container">
                             <div class="chip-btn active" id="chip-closed-day-all" onclick="toggleAllClosedDaysChip()">Усі дні</div>
                             <div class="chip-btn active closed-day-chip" data-val="1" onclick="toggleSingleClosedDayChip(this)">Пн</div>
@@ -2875,28 +2865,72 @@
                         </div>
                         <input type="hidden" id="mClosedDays" value="all">
                     </div>
-                    <input type="hidden" id="mClosedUseCustomRange" value="${useCustom}">
-                    <input type="hidden" id="mClosedStart" value="${pre.startDate || ''}">
-                    <input type="hidden" id="mClosedEnd" value="${pre.endDate || ''}">
-                `;
+                    <div class="form-group" style="margin-bottom:0;"><label>Період (можна через місяці):</label>
+                        <div id="closedRangeCalendar"></div>
+                        <input type="hidden" id="mClosedUseCustomRange" value="true">
+                        <input type="hidden" id="mClosedStart" value="${defaultStart}">
+                        <input type="hidden" id="mClosedEnd" value="${defaultEnd}">
+                    </div>`;
                 pendingClosedDateModal = null;
+                setTimeout(() => bindRangeCalendar({
+                    hostId: 'closedRangeCalendar', startId: 'mClosedStart', endId: 'mClosedEnd', showPrices: false, view: { y: null, m: null }
+                }), 0);
             } else if (type === 'discount') {
                 title.innerText = id ? 'Редагувати знижку' : 'Додати знижку';
-                let d = id ? discountsList.find(x => x.id === id) : {condition: "Діб в бронюванні: 2", discount: "15%", rooms: "Не обрано", roomsIds: []};
-                let condVal = parseInt(String(d.condition).replace(/\D/g,'')) || 2; let discVal = parseInt(String(d.discount).replace(/\D/g,'')) || 15;
-                let selectedIds = d.roomsIds || []; if (id && selectedIds.length === 0 && d.rooms === "Всі котеджі") selectedIds = ["all"];
+                let d = id ? discountsList.find(x => x.id === id) : {condition: "Діб в бронюванні: 2", discount: "15%", rooms: "Не обрано", roomsIds: [], periodMode: 'always', excludeMode: 'none'};
+                let condVal = parseInt(String(d.condition).replace(/\D/g,'')) || 2;
+                let discVal = parseInt(String(d.discount).replace(/\D/g,'')) || 15;
+                const periodMode = d.periodMode === 'range' ? 'range' : 'always';
+                const excludeMode = d.excludeMode === 'range' ? 'range' : 'none';
+                const periodStart = (d.periodStart || '').substring(0, 10);
+                const periodEnd = (d.periodEnd || '').substring(0, 10);
+                const excludeStart = (d.excludeStart || '').substring(0, 10);
+                const excludeEnd = (d.excludeEnd || '').substring(0, 10);
+                let selectedIds = d.roomsIds || [];
+                if (id && selectedIds.length === 0 && d.rooms === "Всі котеджі") selectedIds = ["all"];
                 let isAllSelected = selectedIds.includes("all");
-
                 let roomsChips = `<div class="chip-btn ${isAllSelected ? 'active' : ''}" id="chip-disc-room-all" onclick="toggleAllDiscRooms()">Усі котеджі</div>`;
-                roomsChips += roomsList.map(r => { let isActive = isAllSelected || selectedIds.includes(String(r.id)); return `<div class="chip-btn disc-room-chip ${isActive ? 'active' : ''}" data-id="${r.id}" onclick="toggleSingleDiscRoom(this)">${r.name}</div>`; }).join('');
-
+                roomsChips += roomsList.map(r => {
+                    let isActive = isAllSelected || selectedIds.includes(String(r.id));
+                    return `<div class="chip-btn disc-room-chip ${isActive ? 'active' : ''}" data-id="${r.id}" onclick="toggleSingleDiscRoom(this)">${r.name}</div>`;
+                }).join('');
                 body.innerHTML = `
                     <div class="form-grid">
                         <div class="form-group"><label>К-сть діб від:</label><input type="number" id="mDiscDays" value="${condVal}" min="1"></div>
                         <div class="form-group"><label>Знижка (%):</label><input type="number" inputmode="numeric" pattern="[0-9]*" id="mDiscPercent" value="${discVal}" min="1" max="100"></div>
                     </div>
-                    <div class="form-group" style="margin-bottom: 0;"><label>Котеджі:</label><div class="chips-container">${roomsChips}</div></div>
-                `;
+                    <div class="form-group"><label>Котеджі:</label><div class="chips-container">${roomsChips}</div></div>
+                    <div class="form-group">
+                        <label>Коли діє знижка?</label>
+                        <div class="chips-container">
+                            <div class="chip-btn disc-period-mode ${periodMode === 'always' ? 'active' : ''}" data-val="always" onclick="setDiscountPeriodMode('always')">Завжди</div>
+                            <div class="chip-btn disc-period-mode ${periodMode === 'range' ? 'active' : ''}" data-val="range" onclick="setDiscountPeriodMode('range')">Лише в період</div>
+                        </div>
+                        <input type="hidden" id="mDiscPeriodMode" value="${periodMode}">
+                        <div id="discPeriodCalendarWrap" style="margin-top:12px; ${periodMode === 'range' ? '' : 'display:none;'}">
+                            <div id="discPeriodCalendar"></div>
+                            <input type="hidden" id="mDiscPeriodStart" value="${periodStart}">
+                            <input type="hidden" id="mDiscPeriodEnd" value="${periodEnd}">
+                        </div>
+                    </div>
+                    <div class="form-group" style="margin-bottom:0;">
+                        <label>Не застосовувати на дати</label>
+                        <div class="chips-container">
+                            <div class="chip-btn disc-exclude-mode ${excludeMode === 'none' ? 'active' : ''}" data-val="none" onclick="setDiscountExcludeMode('none')">Без виключень</div>
+                            <div class="chip-btn disc-exclude-mode ${excludeMode === 'range' ? 'active' : ''}" data-val="range" onclick="setDiscountExcludeMode('range')">Виключити період</div>
+                        </div>
+                        <input type="hidden" id="mDiscExcludeMode" value="${excludeMode}">
+                        <div id="discExcludeCalendarWrap" style="margin-top:12px; ${excludeMode === 'range' ? '' : 'display:none;'}">
+                            <div id="discExcludeCalendar"></div>
+                            <input type="hidden" id="mDiscExcludeStart" value="${excludeStart}">
+                            <input type="hidden" id="mDiscExcludeEnd" value="${excludeEnd}">
+                            <p style="font-size:12px;color:#6B7280;margin:8px 0 0;line-height:1.45;">Якщо проживання перетинає ці ночі — знижка не застосовується.</p>
+                        </div>
+                    </div>`;
+                setTimeout(() => {
+                    if (periodMode === 'range') setDiscountPeriodMode('range');
+                    if (excludeMode === 'range') setDiscountExcludeMode('range');
+                }, 0);
             }
             document.getElementById('genericModal').classList.add('active');
         }
@@ -3024,12 +3058,32 @@
                 if(document.getElementById('set-prices').style.display === 'block') renderPriceGrid();
                 if(document.getElementById('set-restrictions').style.display === 'block') renderRestrictionsGrid();
             } else if (currentEditType === 'discount') {
-                const days = document.getElementById('mDiscDays').value || 2; const pct = document.getElementById('mDiscPercent').value || 15;
-                const allBtn = document.getElementById('chip-disc-room-all'); let savedIds = []; let displayRoomsText = "";
-                if (allBtn && allBtn.classList.contains('active')) { savedIds = ["all"]; displayRoomsText = "Всі котеджі"; } 
-                else { const activeChips = document.querySelectorAll('.disc-room-chip.active'); let names = []; activeChips.forEach(chip => { savedIds.push(chip.getAttribute('data-id')); names.push(chip.innerText); }); displayRoomsText = names.length > 0 ? names.join(', ') : "Не обрано"; }
-                if (currentEditId) { let d = discountsList.find(x => x.id === currentEditId); d.condition = `Діб в бронюванні: ${days}`; d.discount = `${pct}%`; d.roomsIds = savedIds; d.rooms = displayRoomsText; } 
-                else { discountsList.push({ id: Date.now(), condition: `Діб в бронюванні: ${days}`, discount: `${pct}%`, roomsIds: savedIds, rooms: displayRoomsText }); }
+                const days = document.getElementById('mDiscDays').value || 2;
+                const pct = document.getElementById('mDiscPercent').value || 15;
+                const periodMode = document.getElementById('mDiscPeriodMode')?.value === 'range' ? 'range' : 'always';
+                const excludeMode = document.getElementById('mDiscExcludeMode')?.value === 'range' ? 'range' : 'none';
+                const periodStart = (document.getElementById('mDiscPeriodStart')?.value || '').substring(0, 10);
+                const periodEnd = (document.getElementById('mDiscPeriodEnd')?.value || '').substring(0, 10);
+                const excludeStart = (document.getElementById('mDiscExcludeStart')?.value || '').substring(0, 10);
+                const excludeEnd = (document.getElementById('mDiscExcludeEnd')?.value || '').substring(0, 10);
+                if (periodMode === 'range' && (!periodStart || !periodEnd)) { showToast('Оберіть період дії знижки'); return; }
+                if (excludeMode === 'range' && (!excludeStart || !excludeEnd)) { showToast('Оберіть період виключення'); return; }
+                const allBtn = document.getElementById('chip-disc-room-all');
+                let savedIds = []; let displayRoomsText = "";
+                if (allBtn && allBtn.classList.contains('active')) { savedIds = ["all"]; displayRoomsText = "Всі котеджі"; }
+                else {
+                    const activeChips = document.querySelectorAll('.disc-room-chip.active');
+                    let names = [];
+                    activeChips.forEach(chip => { savedIds.push(chip.getAttribute('data-id')); names.push(chip.innerText); });
+                    displayRoomsText = names.length > 0 ? names.join(', ') : "Не обрано";
+                }
+                const payload = {
+                    condition: `Діб в бронюванні: ${days}`, discount: `${pct}%`, roomsIds: savedIds, rooms: displayRoomsText,
+                    periodMode, periodStart: periodMode === 'range' ? periodStart : '', periodEnd: periodMode === 'range' ? periodEnd : '',
+                    excludeMode, excludeStart: excludeMode === 'range' ? excludeStart : '', excludeEnd: excludeMode === 'range' ? excludeEnd : ''
+                };
+                if (currentEditId) { Object.assign(discountsList.find(x => x.id === currentEditId), payload); }
+                else { discountsList.push({ id: Date.now(), ...payload }); }
                 renderSettingsDiscounts();
             } else if (currentEditType === 'customService' || currentEditType === 'sysService') {
                 // через BosoServicesUI drawer
@@ -3062,40 +3116,38 @@
                 renderPriceGrid();
                 showToast("Ціни оновлено");
             } else if (currentEditType === 'restriction') {
-                const selectedRooms = Array.from(document.querySelectorAll('.restr-room-chip.active'))
+                let selectedRooms = Array.from(document.querySelectorAll('.restr-room-chip.active'))
                     .map(chip => chip.getAttribute('data-id'));
                 const minNights = parseInt(document.getElementById('mRestrMinNights').value) || 0;
-                const useCustom = document.getElementById('mRestrUseCustomRange').value === 'true';
                 const daysVal = document.getElementById('mRestrDays').value;
                 const selectedDays = daysVal === 'all'
                     ? [0, 1, 2, 3, 4, 5, 6]
                     : daysVal.split(',').map(Number).filter(n => !isNaN(n));
                 if (minNights < 1) { showToast("Вкажіть мінімум 1 добу"); return; }
+                if (!selectedRooms.length) {
+                    const allBtn = document.getElementById('chip-restr-room-all');
+                    if (allBtn && allBtn.classList.contains('active')) {
+                        selectedRooms = roomsList.filter(r => r.active).map(r => String(r.id));
+                    }
+                }
                 if (selectedRooms.length === 0) { showToast("Оберіть хоча б один котедж"); return; }
                 if (selectedDays.length === 0) { showToast("Оберіть хоча б один день тижня"); return; }
+                const startStr = (document.getElementById('mRestrStart')?.value || '').substring(0, 10);
+                const endStr = (document.getElementById('mRestrEnd')?.value || '').substring(0, 10);
+                if (!/^\d{4}-\d{2}-\d{2}$/.test(startStr) || !/^\d{4}-\d{2}-\d{2}$/.test(endStr)) {
+                    showToast("Оберіть період на календарі"); return;
+                }
                 const applyToDates = (roomId, startDate, endDateInclusive) => {
                     if (!restrictions[roomId]) restrictions[roomId] = {};
-                    let d = new Date(startDate);
-                    const end = new Date(endDateInclusive);
+                    let d = new Date(String(startDate).substring(0, 10) + 'T12:00:00');
+                    const end = new Date(String(endDateInclusive).substring(0, 10) + 'T12:00:00');
                     while (d <= end) {
                         if (!selectedDays.includes(d.getDay())) { d.setDate(d.getDate() + 1); continue; }
                         restrictions[roomId][formatDateKey(d)] = minNights;
                         d.setDate(d.getDate() + 1);
                     }
                 };
-                if (useCustom) {
-                    const startStr = document.getElementById('mRestrStart').value;
-                    const endStr = document.getElementById('mRestrEnd').value;
-                    if (!startStr || !endStr) { showToast("Немає обраного діапазону"); return; }
-                    selectedRooms.forEach(rid => applyToDates(rid, startStr, endStr));
-                } else {
-                    const periodMonths = parseInt(document.getElementById('mRestrPeriod').value) || 1;
-                    const startDate = new Date(restrictionsTimelineBaseDate);
-                    const endDate = new Date(startDate);
-                    endDate.setMonth(endDate.getMonth() + periodMonths);
-                    endDate.setDate(endDate.getDate() - 1);
-                    selectedRooms.forEach(rid => applyToDates(rid, startDate, endDate));
-                }
+                selectedRooms.forEach(rid => applyToDates(rid, startStr, endStr));
                 lastRestrictionSelection = null;
                 updateRestrictionSelectionHint();
                 renderRestrictionsGrid();
@@ -3103,38 +3155,34 @@
                     renderTimeline(true);
                 }
             } else if (currentEditType === 'closedDate') {
-                const selectedRooms = Array.from(document.querySelectorAll('.closed-room-chip.active'))
+                let selectedRooms = Array.from(document.querySelectorAll('.closed-room-chip.active'))
                     .map(chip => chip.getAttribute('data-id'));
-                const useCustom = document.getElementById('mClosedUseCustomRange').value === 'true';
+                const allClosedBtn = document.getElementById('chip-closed-room-all');
+                if ((!selectedRooms.length) && allClosedBtn && allClosedBtn.classList.contains('active')) {
+                    selectedRooms = roomsList.filter(r => r.active).map(r => String(r.id));
+                }
                 const daysVal = document.getElementById('mClosedDays').value;
                 const selectedDays = daysVal === 'all'
                     ? [0, 1, 2, 3, 4, 5, 6]
                     : daysVal.split(',').map(Number).filter(n => !isNaN(n));
                 if (selectedRooms.length === 0) { showToast("Оберіть хоча б один котедж"); return; }
                 if (selectedDays.length === 0) { showToast("Оберіть хоча б один день тижня"); return; }
+                const startStr = (document.getElementById('mClosedStart')?.value || '').substring(0, 10);
+                const endStr = (document.getElementById('mClosedEnd')?.value || '').substring(0, 10);
+                if (!/^\d{4}-\d{2}-\d{2}$/.test(startStr) || !/^\d{4}-\d{2}-\d{2}$/.test(endStr)) {
+                    showToast("Оберіть період на календарі"); return;
+                }
                 const applyClosedToDates = (roomId, startDate, endDateInclusive) => {
                     if (!closedDates[roomId]) closedDates[roomId] = {};
-                    let d = new Date(startDate);
-                    const end = new Date(endDateInclusive);
+                    let d = new Date(String(startDate).substring(0, 10) + 'T12:00:00');
+                    const end = new Date(String(endDateInclusive).substring(0, 10) + 'T12:00:00');
                     while (d <= end) {
                         if (!selectedDays.includes(d.getDay())) { d.setDate(d.getDate() + 1); continue; }
                         closedDates[roomId][formatDateKey(d)] = true;
                         d.setDate(d.getDate() + 1);
                     }
                 };
-                if (useCustom) {
-                    const startStr = document.getElementById('mClosedStart').value;
-                    const endStr = document.getElementById('mClosedEnd').value;
-                    if (!startStr || !endStr) { showToast("Немає обраного діапазону"); return; }
-                    selectedRooms.forEach(rid => applyClosedToDates(rid, startStr, endStr));
-                } else {
-                    const periodMonths = parseInt(document.getElementById('mClosedPeriod').value) || 1;
-                    const startDate = new Date(restrictionsTimelineBaseDate);
-                    const endDate = new Date(startDate);
-                    endDate.setMonth(endDate.getMonth() + periodMonths);
-                    endDate.setDate(endDate.getDate() - 1);
-                    selectedRooms.forEach(rid => applyClosedToDates(rid, startDate, endDate));
-                }
+                selectedRooms.forEach(rid => applyClosedToDates(rid, startStr, endStr));
                 lastRestrictionSelection = null;
                 updateRestrictionSelectionHint();
                 renderRestrictionsGrid();
@@ -6111,35 +6159,52 @@ async function bosoSendRemainderPaymentSms() {
             pendingPriceModal = preset || null;
             openGenericModal('price');
         }
-        function getPriceFormRange() {
+
+        let rangeCalCtx = { hostId: 'priceRangeCalendar', startId: 'mPriceStart', endId: 'mPriceEnd', showPrices: true, view: priceCalView };
+
+        function bindRangeCalendar(cfg) {
+            rangeCalCtx = Object.assign({
+                hostId: 'priceRangeCalendar', startId: 'mPriceStart', endId: 'mPriceEnd', showPrices: false, view: { y: null, m: null }
+            }, cfg || {});
+            if (!rangeCalCtx.view) rangeCalCtx.view = { y: null, m: null };
+            const startVal = (document.getElementById(rangeCalCtx.startId)?.value || '').substring(0, 10);
+            const base = startVal ? new Date(startVal + 'T12:00:00') : new Date();
+            if (rangeCalCtx.view.y == null || rangeCalCtx.view.m == null) {
+                rangeCalCtx.view.y = base.getFullYear();
+                rangeCalCtx.view.m = base.getMonth();
+            }
+            renderRangeCalendar();
+        }
+        function getActiveRange() {
             return {
-                start: (document.getElementById('mPriceStart')?.value || '').substring(0, 10),
-                end: (document.getElementById('mPriceEnd')?.value || '').substring(0, 10)
+                start: (document.getElementById(rangeCalCtx.startId)?.value || '').substring(0, 10),
+                end: (document.getElementById(rangeCalCtx.endId)?.value || '').substring(0, 10)
             };
         }
-        function setPriceFormRange(start, end) {
+        function setActiveRange(start, end) {
             const s = start <= end ? start : end;
             const e = start <= end ? end : start;
-            const startEl = document.getElementById('mPriceStart');
-            const endEl = document.getElementById('mPriceEnd');
+            const startEl = document.getElementById(rangeCalCtx.startId);
+            const endEl = document.getElementById(rangeCalCtx.endId);
             if (startEl) startEl.value = s;
             if (endEl) endEl.value = e;
-            renderPriceRangeCalendar();
+            renderRangeCalendar();
         }
-        function onPriceCalDayClick(iso) {
-            const { start, end } = getPriceFormRange();
-            if (start && end && start !== end) { setPriceFormRange(iso, iso); return; }
+        function onRangeCalDayClick(iso) {
+            const { start, end } = getActiveRange();
+            if (start && end && start !== end) { setActiveRange(iso, iso); return; }
             if (start && end && start === end) {
                 if (iso === start) return;
-                if (iso < start) setPriceFormRange(iso, start); else setPriceFormRange(start, iso);
+                if (iso < start) setActiveRange(iso, start); else setActiveRange(start, iso);
                 return;
             }
-            setPriceFormRange(iso, iso);
+            setActiveRange(iso, iso);
         }
-        function shiftPriceCalMonth(delta) {
-            const d = new Date(priceCalView.y, priceCalView.m + delta, 1);
-            priceCalView.y = d.getFullYear(); priceCalView.m = d.getMonth();
-            renderPriceRangeCalendar();
+        function shiftRangeCalMonth(delta) {
+            const d = new Date(rangeCalCtx.view.y, rangeCalCtx.view.m + delta, 1);
+            rangeCalCtx.view.y = d.getFullYear();
+            rangeCalCtx.view.m = d.getMonth();
+            renderRangeCalendar();
         }
         function getPricePreviewRoom() {
             const selected = Array.from(document.querySelectorAll('.room-chip.active')).map(c => c.getAttribute('data-id'));
@@ -6157,39 +6222,67 @@ async function bosoSendRemainderPaymentSms() {
             const isWE = date.getDay() === 0 || date.getDay() === 5 || date.getDay() === 6;
             return Number(isWE ? room.priceWeekend : room.priceWeekday) || 0;
         }
-        function renderPriceRangeCalendar() {
-            const host = document.getElementById('priceRangeCalendar');
+        function renderRangeCalendar() {
+            const host = document.getElementById(rangeCalCtx.hostId);
             if (!host) return;
-            if (priceCalView.y == null || priceCalView.m == null) {
-                const { start } = getPriceFormRange();
+            const view = rangeCalCtx.view;
+            if (view.y == null || view.m == null) {
+                const { start } = getActiveRange();
                 const base = start ? new Date(start + 'T12:00:00') : new Date();
-                priceCalView.y = base.getFullYear(); priceCalView.m = base.getMonth();
+                view.y = base.getFullYear(); view.m = base.getMonth();
             }
-            const { start, end } = getPriceFormRange();
+            const { start, end } = getActiveRange();
             const rangeStart = start && end ? (start <= end ? start : end) : '';
             const rangeEnd = start && end ? (start <= end ? end : start) : '';
-            const previewRoom = getPricePreviewRoom();
-            const labelDate = new Date(priceCalView.y, priceCalView.m, 1);
+            const previewRoom = rangeCalCtx.showPrices ? getPricePreviewRoom() : null;
+            const labelDate = new Date(view.y, view.m, 1);
             const monthLabel = labelDate.toLocaleString('uk-UA', { month: 'long', year: 'numeric' });
-            const first = new Date(priceCalView.y, priceCalView.m, 1);
-            const daysInMonth = new Date(priceCalView.y, priceCalView.m + 1, 0).getDate();
+            const first = new Date(view.y, view.m, 1);
+            const daysInMonth = new Date(view.y, view.m + 1, 0).getDate();
             const pad = (first.getDay() + 6) % 7;
             const weekdays = ['Пн','Вт','Ср','Чт','Пт','Сб','Нд'];
             let cellsHtml = '';
             for (let i = 0; i < pad; i++) cellsHtml += `<div class="price-range-calendar__cell--empty"></div>`;
             for (let day = 1; day <= daysInMonth; day++) {
-                const date = new Date(priceCalView.y, priceCalView.m, day, 12, 0, 0, 0);
+                const date = new Date(view.y, view.m, day, 12, 0, 0, 0);
                 const iso = formatPriceDateKey(date);
                 const inRange = rangeStart && rangeEnd && iso >= rangeStart && iso <= rangeEnd;
                 const isStart = rangeStart && iso === rangeStart;
                 const isEnd = rangeEnd && iso === rangeEnd;
                 const isSingle = inRange && rangeStart === rangeEnd;
-                const price = getDisplayDayPriceForRoom(previewRoom, date);
+                const price = rangeCalCtx.showPrices ? getDisplayDayPriceForRoom(previewRoom, date) : null;
                 const cls = ['price-range-calendar__cell--day', inRange ? 'is-in-range' : '', (isStart||isEnd) ? 'is-edge' : '', isStart ? 'is-range-start' : '', isEnd ? 'is-range-end' : '', isSingle ? 'is-single' : ''].filter(Boolean).join(' ');
-                cellsHtml += `<button type="button" class="${cls}" onclick="onPriceCalDayClick('${iso}')"><span class="price-range-calendar__day-num">${day}</span><span class="price-range-calendar__day-price">${price || '—'}</span></button>`;
+                cellsHtml += `<button type="button" class="${cls}" onclick="onRangeCalDayClick('${iso}')"><span class="price-range-calendar__day-num">${day}</span>${rangeCalCtx.showPrices ? `<span class="price-range-calendar__day-price">${price || '—'}</span>` : ''}</button>`;
             }
-            const hint = !rangeStart ? 'Обери день або діапазон' : (rangeStart === rangeEnd ? `Обрано: ${rangeStart.split('-').reverse().join('.')}` : `Обрано: ${rangeStart.split('-').reverse().join('.')} — ${rangeEnd.split('-').reverse().join('.')}`);
-            host.innerHTML = `<div class="price-range-calendar"><div class="price-range-calendar__header"><button type="button" class="price-range-calendar__nav" onclick="shiftPriceCalMonth(-1)">‹</button><h4 class="price-range-calendar__title">${monthLabel}</h4><button type="button" class="price-range-calendar__nav" onclick="shiftPriceCalMonth(1)">›</button></div><div class="price-range-calendar__weekdays">${weekdays.map(w => `<div class="price-range-calendar__weekday">${w}</div>`).join('')}</div><div class="price-range-calendar__grid">${cellsHtml}</div><p class="price-range-calendar__hint">${hint}</p></div>`;
+            const hint = !rangeStart
+                ? 'Обери день або діапазон (можна через місяці)'
+                : rangeStart === rangeEnd
+                    ? `Обрано: ${rangeStart.split('-').reverse().join('.')}`
+                    : `Обрано: ${rangeStart.split('-').reverse().join('.')} — ${rangeEnd.split('-').reverse().join('.')}`;
+            host.innerHTML = `<div class="price-range-calendar"><div class="price-range-calendar__header"><button type="button" class="price-range-calendar__nav" onclick="shiftRangeCalMonth(-1)">‹</button><h4 class="price-range-calendar__title">${monthLabel}</h4><button type="button" class="price-range-calendar__nav" onclick="shiftRangeCalMonth(1)">›</button></div><div class="price-range-calendar__weekdays">${weekdays.map(w => `<div class="price-range-calendar__weekday">${w}</div>`).join('')}</div><div class="price-range-calendar__grid">${cellsHtml}</div><p class="price-range-calendar__hint">${hint}</p></div>`;
+        }
+        function renderPriceRangeCalendar() {
+            bindRangeCalendar({ hostId: 'priceRangeCalendar', startId: 'mPriceStart', endId: 'mPriceEnd', showPrices: true, view: priceCalView });
+        }
+        function setDiscountPeriodMode(mode) {
+            const hidden = document.getElementById('mDiscPeriodMode');
+            if (hidden) hidden.value = mode;
+            document.querySelectorAll('.disc-period-mode').forEach(el => el.classList.toggle('active', el.getAttribute('data-val') === mode));
+            const box = document.getElementById('discPeriodCalendarWrap');
+            if (box) box.style.display = mode === 'range' ? '' : 'none';
+            if (mode === 'range') {
+                bindRangeCalendar({ hostId: 'discPeriodCalendar', startId: 'mDiscPeriodStart', endId: 'mDiscPeriodEnd', showPrices: false, view: { y: null, m: null } });
+            }
+        }
+        function setDiscountExcludeMode(mode) {
+            const hidden = document.getElementById('mDiscExcludeMode');
+            if (hidden) hidden.value = mode;
+            document.querySelectorAll('.disc-exclude-mode').forEach(el => el.classList.toggle('active', el.getAttribute('data-val') === mode));
+            const box = document.getElementById('discExcludeCalendarWrap');
+            if (box) box.style.display = mode === 'range' ? '' : 'none';
+            if (mode === 'range') {
+                bindRangeCalendar({ hostId: 'discExcludeCalendar', startId: 'mDiscExcludeStart', endId: 'mDiscExcludeEnd', showPrices: false, view: { y: null, m: null } });
+            }
         }
 
         // ЛОГІКА ЧІПСІВ (КНОПОК)
