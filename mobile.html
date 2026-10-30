@@ -86,7 +86,14 @@
             --warning: #D97706; 
             --danger: #DC2626; 
             --nav-bg: #FFFFFF;
-            --safe-bottom: env(safe-area-inset-bottom, 16px);
+            --safe-bottom: env(safe-area-inset-bottom, 0px);
+            /* Floating glass dock (як у girisport) */
+            --mobile-bottom-nav-content: 56px;
+            --mobile-bottom-nav-float: 10px;
+            --mobile-bottom-nav-inset-x: 12px;
+            --mobile-bottom-nav-height: calc(
+                var(--mobile-bottom-nav-content) + var(--mobile-bottom-nav-float) + var(--safe-bottom)
+            );
         }
 
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Inter', sans-serif; -webkit-tap-highlight-color: transparent; touch-action: manipulation; touch-action: pan-x pan-y; }
@@ -119,55 +126,114 @@
             border: none; cursor: pointer; box-shadow: 0 2px 6px rgba(85, 107, 47, 0.3); 
         }
 
-        /* --- НИЖНЯ НАВІГАЦІЯ (МАКСИМАЛЬНИЙ КОМФОРТ) --- */
-        .bottom-nav { 
-            /* Збільшуємо загальну висоту до 90px, щоб підняти контент вище */
-            height: calc(85px + var(--safe-bottom)); 
-            background: var(--nav-bg); 
-            display: flex; 
-            justify-content: space-around; 
-            align-items: flex-start; 
-            /* Додаємо великий відступ знизу (18px), щоб букви не різало закругленням */
-            padding: 12px 0 calc(18px + var(--safe-bottom)) 0; 
-            box-shadow: 0 -5px 20px rgba(0,0,0,0.08); 
-            z-index: 50; 
+        /* --- НИЖНЯ НАВІГАЦІЯ: floating glass pill (як girisport) --- */
+        .bottom-nav {
+            position: fixed;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            z-index: 50;
+            pointer-events: none;
+            padding: 0 var(--mobile-bottom-nav-inset-x) calc(var(--mobile-bottom-nav-float) + var(--safe-bottom));
+            transition: transform 0.2s cubic-bezier(0.22, 1, 0.36, 1), opacity 0.2s ease;
+        }
+        .bottom-nav.is-hidden {
+            transform: translateY(120%);
+            opacity: 0;
+            pointer-events: none;
+        }
+        .bottom-nav__pill {
+            pointer-events: auto;
+            position: relative;
+            margin: 0 auto;
+            width: 100%;
+            max-width: 480px;
+            height: var(--mobile-bottom-nav-content);
+            display: flex;
+            align-items: stretch;
+            justify-content: space-around;
+            padding: 0 6px;
+            overflow: hidden;
+            border-radius: 9999px;
+            background: linear-gradient(180deg, rgba(255,255,255,0.82) 0%, rgba(255,255,255,0.68) 100%);
+            -webkit-backdrop-filter: saturate(180%) blur(28px);
+            backdrop-filter: saturate(180%) blur(28px);
+            box-shadow:
+                0 12px 40px -12px rgba(15, 23, 42, 0.28),
+                0 4px 12px -4px rgba(15, 23, 42, 0.12);
+        }
+        .bottom-nav__pill::before {
+            content: '';
+            pointer-events: none;
+            position: absolute;
+            inset: 0;
+            border-radius: inherit;
+            box-shadow:
+                inset 0 0 0 1px rgba(255,255,255,0.7),
+                0 0 0 1px rgba(0,0,0,0.06);
+        }
+        .bottom-nav__pill::after {
+            content: '';
+            pointer-events: none;
+            position: absolute;
+            left: 2rem;
+            right: 2rem;
+            top: 0;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.95), transparent);
+            opacity: 0.9;
+        }
+
+        .nav-item {
+            position: relative;
+            z-index: 1;
+            display: flex;
+            flex: 1;
+            min-width: 0;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 2px;
+            align-self: stretch;
+            color: #6B7280;
+            cursor: pointer;
+            padding: 0 2px;
+            touch-action: manipulation;
+            transition: color 0.18s cubic-bezier(0.22, 1, 0.36, 1);
+            -webkit-user-select: none;
+            user-select: none;
+        }
+        .nav-item:active { color: #374151; }
+        .nav-item.active { color: #0F172A; }
+        .nav-item.active::before {
+            content: '';
+            position: absolute;
+            inset: 4px 2px;
+            z-index: -1;
+            border-radius: 9999px;
+            background: rgba(0, 0, 0, 0.06);
+            box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.65);
+        }
+
+        .nav-icon {
+            width: 22px;
+            height: 22px;
+            stroke: currentColor;
+            fill: none;
+            stroke-width: 1.6;
             flex-shrink: 0;
-            border-top: 1px solid #E5E7EB;
         }
+        .nav-item.active .nav-icon { stroke-width: 2.1; }
 
-        .nav-item { 
-            display: flex; 
-            flex-direction: column; 
-            align-items: center; 
-            /* Збільшений проміжок між іконкою та текстом для кращої читабельності */
-            gap: 7px; 
-            color: #9CA3AF; 
-            width: 20%; 
-            cursor: pointer; 
-            transition: 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-            padding: 5px 0;
-        }
-        
-        .nav-item.active { 
-            color: var(--accent); 
-            /* Мікро-збільшення активної іконки */
-            transform: scale(1.08) translateY(-2px); 
-        }
-
-        .nav-icon { 
-            width: 28px; 
-            height: 28px; 
-            stroke: currentColor; 
-            fill: none; 
-            stroke-width: 1.8; 
-        }
-
-        .nav-text { 
-            font-size: 11px; 
-            font-weight: 700; 
-            letter-spacing: 0.2px;
-            /* Гарантуємо, що текст не притиснутий */
-            line-height: 1; 
+        .nav-text {
+            max-width: 100%;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            font-size: 10px;
+            font-weight: 600;
+            letter-spacing: 0.02em;
+            line-height: 1;
         }
 
         /* --- ОСНОВНИЙ КОНТЕНТ --- */
@@ -176,6 +242,7 @@
             overflow-y: auto; 
             overflow-x: hidden;
             padding: 16px; 
+            padding-bottom: calc(16px + var(--mobile-bottom-nav-height));
             display: flex; 
             flex-direction: column; 
         }
@@ -1533,31 +1600,33 @@
 
     </div>
 
-    <div class="bottom-nav">
-        <div class="nav-item active" id="nav-grid" onclick="switchView('grid')">
-            <svg class="nav-icon" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 0 1 2.25-2.25h13.5A2.25 2.25 0 0 1 21 7.5v11.25m-18 0A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75m-18 0v-7.5A2.25 2.25 0 0 1 5.25 9h13.5A2.25 2.25 0 0 1 21 11.25v7.5m-9-6h.008v.008H12v-.008ZM12 15h.008v.008H12V15Zm0 2.25h.008v.008H12v-.008ZM9.75 15h.008v.008H9.75V15Zm0 2.25h.008v.008H9.75v-.008ZM7.5 15h.008v.008H7.5V15Zm0 2.25h.008v.008H7.5v-.008Zm6.75-4.5h.008v.008h-.008v-.008Zm0 2.25h.008v.008h-.008V15Zm0 2.25h.008v.008h-.008v-.008Zm2.25-4.5h.008v.008H16.5v-.008Zm0 2.25h.008v.008H16.5V15Z" /></svg>
-            <span class="nav-text">Шахматка</span>
+    <nav class="bottom-nav" id="mobileBottomNav" aria-label="Мобільна навігація">
+        <div class="bottom-nav__pill">
+            <div class="nav-item active" id="nav-grid" onclick="switchView('grid')" role="button" tabindex="0" aria-label="Шахматка">
+                <svg class="nav-icon" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 0 1 2.25-2.25h13.5A2.25 2.25 0 0 1 21 7.5v11.25m-18 0A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75m-18 0v-7.5A2.25 2.25 0 0 1 5.25 9h13.5A2.25 2.25 0 0 1 21 11.25v7.5m-9-6h.008v.008H12v-.008ZM12 15h.008v.008H12V15Zm0 2.25h.008v.008H12v-.008ZM9.75 15h.008v.008H9.75V15Zm0 2.25h.008v.008H9.75v-.008ZM7.5 15h.008v.008H7.5V15Zm0 2.25h.008v.008H7.5v-.008Zm6.75-4.5h.008v.008h-.008v-.008Zm0 2.25h.008v.008h-.008V15Zm0 2.25h.008v.008h-.008v-.008Zm2.25-4.5h.008v.008H16.5v-.008Zm0 2.25h.008v.008H16.5V15Z" /></svg>
+                <span class="nav-text">Шахматка</span>
+            </div>
+            <div class="nav-item" id="nav-list" onclick="switchView('list')" role="button" tabindex="0" aria-label="Броні">
+                <svg class="nav-icon" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M8.25 6.75h12M8.25 12h12m-12 5.25h12M3.75 6.75h.007v.008H3.75V6.75Zm.375 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0ZM3.75 12h.007v.008H3.75V12Zm.375 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Zm-.375 5.25h.007v.008H3.75v-.008Zm.375 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Z" /></svg>
+                <span class="nav-text">Броні</span>
+            </div>
+            <div class="nav-item" id="nav-guests" onclick="switchView('guests')" role="button" tabindex="0" aria-label="Гості">
+                <svg class="nav-icon" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19.128a9.38 9.38 0 0 0 2.625.372 9.337 9.337 0 0 0 4.121-.952 4.125 4.125 0 0 0-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 0 1 8.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0 1 11.964-3.07M12 6.375a3.375 3.375 0 1 1-6.75 0 3.375 3.375 0 0 1 6.75 0Zm8.25 2.25a2.625 2.625 0 1 1-5.25 0 2.625 2.625 0 0 1 5.25 0Z" /></svg>
+                <span class="nav-text">Гості</span>
+            </div>
+            <div class="nav-item" id="nav-reports" onclick="switchView('reports')" role="button" tabindex="0" aria-label="Звіти">
+                <svg class="nav-icon" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 0 1 3 19.875v-6.75ZM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 0 1-1.125-1.125V8.625ZM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 0 1-1.125-1.125V4.125Z" /></svg>
+                <span class="nav-text">Звіти</span>
+            </div>
+            <div class="nav-item" id="nav-settings" onclick="switchView('settings')" role="button" tabindex="0" aria-label="Налаштування">
+                <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="12" cy="12" r="3"></circle>
+                    <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9c.26.6.84 1 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1Z"></path>
+                </svg>
+                <span class="nav-text">Налашт.</span>
+            </div>
         </div>
-        <div class="nav-item" id="nav-list" onclick="switchView('list')">
-            <svg class="nav-icon" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M8.25 6.75h12M8.25 12h12m-12 5.25h12M3.75 6.75h.007v.008H3.75V6.75Zm.375 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0ZM3.75 12h.007v.008H3.75V12Zm.375 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Zm-.375 5.25h.007v.008H3.75v-.008Zm.375 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Z" /></svg>
-            <span class="nav-text">Броні</span>
-        </div>
-        <div class="nav-item" id="nav-guests" onclick="switchView('guests')">
-            <svg class="nav-icon" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19.128a9.38 9.38 0 0 0 2.625.372 9.337 9.337 0 0 0 4.121-.952 4.125 4.125 0 0 0-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 0 1 8.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0 1 11.964-3.07M12 6.375a3.375 3.375 0 1 1-6.75 0 3.375 3.375 0 0 1 6.75 0Zm8.25 2.25a2.625 2.625 0 1 1-5.25 0 2.625 2.625 0 0 1 5.25 0Z" /></svg>
-            <span class="nav-text">Гості</span>
-        </div>
-        <div class="nav-item" id="nav-reports" onclick="switchView('reports')">
-            <svg class="nav-icon" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 0 1 3 19.875v-6.75ZM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 0 1-1.125-1.125V8.625ZM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 0 1-1.125-1.125V4.125Z" /></svg>
-            <span class="nav-text">Звіти</span>
-        </div>
-        <div class="nav-item" id="nav-settings" onclick="switchView('settings')">
-            <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <circle cx="12" cy="12" r="3"></circle>
-                <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9c.26.6.84 1 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1Z"></path>
-            </svg>
-            <span class="nav-text">Налашт.</span>
-        </div>
-    </div>
+    </nav>
 
     <div id="genericModal" class="modal-overlay">
         <div class="modal-box">
@@ -2106,6 +2175,24 @@
         }, 400); 
     }, 3000);
 }
+
+        // Ховаємо floating dock під час клавіатури (як у girisport)
+        (function setupBottomNavKeyboardHide() {
+            const nav = document.getElementById('mobileBottomNav');
+            if (!nav || !window.visualViewport) return;
+            const sync = () => {
+                const vv = window.visualViewport;
+                const keyboardOpen = (window.innerHeight - vv.height) > 120;
+                nav.classList.toggle('is-hidden', keyboardOpen);
+                nav.setAttribute('aria-hidden', keyboardOpen ? 'true' : 'false');
+            };
+            window.visualViewport.addEventListener('resize', sync);
+            window.visualViewport.addEventListener('scroll', sync);
+            window.addEventListener('focusin', (e) => {
+                if (e.target && (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.tagName === 'SELECT')) sync();
+            });
+            window.addEventListener('focusout', () => setTimeout(sync, 80));
+        })();
 
         // МОБІЛЬНА ЛОГІКА ПЕРЕМИКАННЯ МЕНЮ
         function switchView(viewName) {
