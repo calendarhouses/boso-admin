@@ -6236,12 +6236,15 @@ async function bosoSendRemainderPaymentSms() {
             e.preventDefault(); 
             const btn = document.getElementById('adminSubmitBtn'); 
             
+            // Захист від подвійного кліку (інакше 1-й запит створює бронь, 2-й дає OVERLAP без картинок у TG)
+            if (window.__adminBookingSaving) return;
             // 🟢 АБСОЛЮТНИЙ ЗАХИСТ ВІД ВІДПРАВКИ (Якщо овербукінг)
             if (btn.disabled) {
                 showToast("❌ Виправте помилки перед збереженням!");
                 return;
             }
 
+            window.__adminBookingSaving = true;
             const originalText = btn.innerText; 
             btn.innerText = "Збереження..."; 
             btn.disabled = true;
@@ -6369,12 +6372,28 @@ async function bosoSendRemainderPaymentSms() {
                 delete payloadForServer.screenshotPayment;
             }
 
+            const normBookingDate = (v) => {
+                const s = String(v || '');
+                const iso = s.match(/(\d{4}-\d{2}-\d{2})/);
+                if (iso) return iso[1];
+                const ua = s.match(/(\d{2})\.(\d{2})\.(\d{4})/);
+                if (ua) return `${ua[3]}-${ua[2]}-${ua[1]}`;
+                const d = new Date(v);
+                if (!isNaN(d.getTime())) {
+                    const y = d.getFullYear();
+                    const m = String(d.getMonth() + 1).padStart(2, '0');
+                    const day = String(d.getDate()).padStart(2, '0');
+                    return `${y}-${m}-${day}`;
+                }
+                return s.trim();
+            };
             const findSavedBooking = () => allBookings.find(b =>
-                String(b.name || '') === String(bookingData.name || '') &&
-                String(b.checkIn || '') === String(bookingData.checkIn || '') &&
-                String(b.checkOut || '') === String(bookingData.checkOut || '') &&
-                String(b.cottage || '') === String(bookingData.cottage || '') &&
+                String(b.name || '').trim().toLowerCase() === String(bookingData.name || '').trim().toLowerCase() &&
+                normBookingDate(b.checkIn) === normBookingDate(bookingData.checkIn) &&
+                normBookingDate(b.checkOut) === normBookingDate(bookingData.checkOut) &&
+                String(b.cottage || '').toLowerCase().replace(/\s+/g, '') === String(bookingData.cottage || '').toLowerCase().replace(/\s+/g, '') &&
                 String(b.phone || '').replace(/\D/g, '') === String(bookingData.phone || '').replace(/\D/g, '') &&
+                !String(b.status || '').toLowerCase().includes('скас') &&
                 !String(b.row || '').startsWith('temp_')
             );
 
@@ -6437,7 +6456,15 @@ async function bosoSendRemainderPaymentSms() {
                     ? await BosoAuth.parseApiJson(res)
                     : await res.json();
 
-                if (json && json.error === "OVERLAP") { 
+                if (json && json.error === "OVERLAP") {
+                    if (!isEdit) {
+                        try { await silentSync(); } catch (syncErr) {}
+                        const existingOverlap = findSavedBooking();
+                        if (existingOverlap) {
+                            finishCreateSuccess(existingOverlap.id || existingOverlap.orderId);
+                            return;
+                        }
+                    }
                     alert("❌ ПОМИЛКА: Ці дати щойно були зайняті.");
                     return;
                 }
@@ -6446,6 +6473,14 @@ async function bosoSendRemainderPaymentSms() {
                     return;
                 }
                 if (json && json.error === "BUSY") {
+                    if (!isEdit) {
+                        try { await silentSync(); } catch (syncErr) {}
+                        const existingBusy = findSavedBooking();
+                        if (existingBusy) {
+                            finishCreateSuccess(existingBusy.id || existingBusy.orderId);
+                            return;
+                        }
+                    }
                     alert("❌ Сервер зайнятий. Зачекайте кілька секунд і спробуйте ще раз — дані у формі збережено.");
                     return;
                 }
@@ -6498,6 +6533,7 @@ async function bosoSendRemainderPaymentSms() {
                 }
                 alert("❌ Не вдалося зберегти бронь. Перевірте інтернет і спробуйте ще раз — дані у формі збережено.");
             } finally {
+                window.__adminBookingSaving = false;
                 btn.innerText = originalText; 
                 btn.disabled = false;
             }
