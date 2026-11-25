@@ -52,6 +52,7 @@
     </script>
     <script src="/auth.js?v=8"></script>
     <script src="/additional-services.js?v=2"></script>
+    <script src="/premium-select.js?v=1"></script>
     <script src="/settings-services-ui.js?v=2"></script>
     <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
@@ -1853,25 +1854,9 @@
                         <div class="form-group"><label>Ім'я та Прізвище:</label><input type="text" id="adminName" required></div>
                         <div class="form-group">
                             <label>День народження</label>
-                            <div style="display:flex; gap:8px;">
-                                <select id="adminBdayDay" style="flex:1; height:46px; border:1px solid #D1D5DB; border-radius:12px; padding:0 10px; background:#F9FAFB; font-size:14px;">
-                                    <option value="">День</option>
-                                </select>
-                                <select id="adminBdayMonth" style="flex:1; height:46px; border:1px solid #D1D5DB; border-radius:12px; padding:0 10px; background:#F9FAFB; font-size:14px;">
-                                    <option value="">Місяць</option>
-                                    <option value="1">Січень</option>
-                                    <option value="2">Лютий</option>
-                                    <option value="3">Березень</option>
-                                    <option value="4">Квітень</option>
-                                    <option value="5">Травень</option>
-                                    <option value="6">Червень</option>
-                                    <option value="7">Липень</option>
-                                    <option value="8">Серпень</option>
-                                    <option value="9">Вересень</option>
-                                    <option value="10">Жовтень</option>
-                                    <option value="11">Листопад</option>
-                                    <option value="12">Грудень</option>
-                                </select>
+                            <div class="boso-pselect-row">
+                                <select id="adminBdayDay" aria-label="День"><option value="">День</option></select>
+                                <select id="adminBdayMonth" aria-label="Місяць"><option value="">Місяць</option></select>
                             </div>
                         </div>
                         <div class="form-grid">
@@ -2444,12 +2429,17 @@
 
         function initAdminBirthdayDayOptions() {
             const dayEl = document.getElementById('adminBdayDay');
-            if (!dayEl || dayEl.options.length > 1) return;
-            for (let d = 1; d <= 31; d++) {
-                const opt = document.createElement('option');
-                opt.value = String(d);
-                opt.textContent = String(d);
-                dayEl.appendChild(opt);
+            const monthEl = document.getElementById('adminBdayMonth');
+            if (!dayEl || !monthEl) return;
+            if (typeof BosoPremiumSelect !== 'undefined') {
+                BosoPremiumSelect.mountBirthdayPair(dayEl, monthEl);
+            } else if (dayEl.options.length <= 1) {
+                for (let d = 1; d <= 31; d++) {
+                    const opt = document.createElement('option');
+                    opt.value = String(d);
+                    opt.textContent = String(d);
+                    dayEl.appendChild(opt);
+                }
             }
         }
 
@@ -2489,10 +2479,25 @@
             const monthEl = document.getElementById('adminBdayMonth');
             if (!dayEl || !monthEl) return;
             const mmdd = normalizeBirthdayMMDD(null, null, birthday || '');
-            if (!mmdd) { dayEl.value = ''; monthEl.value = ''; return; }
+            if (!mmdd) {
+                if (dayEl._bosoPremium) dayEl._bosoPremium.setValue('');
+                else dayEl.value = '';
+                if (monthEl._bosoPremium) monthEl._bosoPremium.setValue('');
+                else monthEl.value = '';
+                return;
+            }
             const parts = mmdd.split('-');
-            monthEl.value = String(Number(parts[0]));
-            dayEl.value = String(Number(parts[1]));
+            const monthVal = String(Number(parts[0]));
+            const dayVal = String(Number(parts[1]));
+            if (typeof BosoPremiumSelect !== 'undefined') {
+                BosoPremiumSelect.ensureDayOptions(dayEl, monthVal);
+            }
+            if (monthEl._bosoPremium) monthEl._bosoPremium.setValue(monthVal);
+            else monthEl.value = monthVal;
+            if (dayEl._bosoPremium) {
+                dayEl._bosoPremium.refresh();
+                dayEl._bosoPremium.setValue(dayVal);
+            } else dayEl.value = dayVal;
         }
 
         function birthdayFallsInStay(birthday, checkIn, checkOut) {
