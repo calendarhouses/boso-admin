@@ -1,14 +1,12 @@
 /**
  * BOSO PremiumSelect — custom dropdown inspired by GIRISPORT PremiumSelect.
- * Desktop:
- *   - Admin (.drawer-body / .form-group): absolute menu glued under the field
- *   - Booking site: fixed body portal (survives detail-drawer transform/overflow)
+ * Desktop: fixed menu on document.body, positioned under the trigger (no overflow hacks).
  * Mobile: bottom sheet + swipe-down dismiss.
  */
 (function (global) {
   'use strict';
 
-  var STYLE_ID = 'boso-premium-select-css-v5';
+  var STYLE_ID = 'boso-premium-select-css-v7';
   var OPEN_Z = 10050;
   var instances = [];
 
@@ -29,7 +27,7 @@
   ];
 
   function injectCss() {
-    ['boso-premium-select-css', 'boso-premium-select-css-v3', 'boso-premium-select-css-v4'].forEach(function (id) {
+    ['boso-premium-select-css', 'boso-premium-select-css-v3', 'boso-premium-select-css-v4', 'boso-premium-select-css-v5'].forEach(function (id) {
       var old = document.getElementById(id);
       if (old && old.parentNode) old.parentNode.removeChild(old);
     });
@@ -38,7 +36,7 @@
     style.id = STYLE_ID;
     style.textContent = [
       '.boso-pselect{position:relative;width:100%;z-index:1;}',
-      '.boso-pselect.is-open{z-index:80;}',
+      '.boso-pselect.is-open{z-index:5;}',
       '.boso-pselect__native{position:absolute!important;opacity:0!important;pointer-events:none!important;width:1px!important;height:1px!important;margin:0!important;padding:0!important;border:0!important;clip:rect(0,0,0,0)!important;}',
       '.boso-pselect__btn{display:flex;align-items:center;justify-content:space-between;gap:10px;width:100%;min-height:48px;box-sizing:border-box;padding:14px 16px;border:1.5px solid var(--border,#E5E2DC);border-radius:12px;background:#FAFAF8;color:var(--text,#1A1A1A);font:inherit;font-size:14px;font-weight:500;text-align:left;cursor:pointer;outline:none;transition:border-color .18s ease,background .18s ease,box-shadow .18s ease;}',
       '.boso-pselect__btn:hover{border-color:#C9C4BB;background:#fff;}',
@@ -50,19 +48,13 @@
       '.boso-pselect__label.is-placeholder{color:#9CA3AF;font-weight:500;}',
       '.boso-pselect__chevron{width:16px;height:16px;flex-shrink:0;color:#6B7280;transition:transform .2s ease,color .2s ease;}',
       '.boso-pselect__btn.is-open .boso-pselect__chevron{transform:rotate(180deg);color:var(--accent,#556B2F);}',
-      /* Default = portal (booking). .is-local = glued under field (admin). */
-      '.boso-pselect__menu{position:fixed;z-index:' + OPEN_Z + ';max-height:240px;overflow:auto;border:1px solid #E5E7EB;border-radius:12px;background:#fff;box-shadow:0 12px 28px rgba(15,23,42,.14);padding:6px;opacity:0;transform:translateY(-4px);pointer-events:none;transition:opacity .15s ease,transform .15s ease;box-sizing:border-box;}',
-      '.boso-pselect__menu.is-local{position:absolute;left:0;right:0;top:calc(100% + 6px);bottom:auto;width:auto;z-index:90;}',
-      '.boso-pselect__menu.is-local.is-top{top:auto;bottom:calc(100% + 6px);}',
-      '.boso-pselect__menu.is-open{opacity:1;transform:translateY(0);pointer-events:auto;}',
-      '.boso-pselect__menu.is-top{transform:translateY(4px);}',
-      '.boso-pselect__menu.is-top.is-open{transform:translateY(0);}',
+      '.boso-pselect__menu{position:fixed!important;z-index:' + OPEN_Z + ';max-height:240px;overflow:auto;border:1px solid #E5E7EB;border-radius:12px;background:#fff;box-shadow:0 12px 28px rgba(15,23,42,.14);padding:6px;opacity:0;pointer-events:none;box-sizing:border-box;margin:0;}',
+      '.boso-pselect__menu.is-open{opacity:1;pointer-events:auto;}',
       '.boso-pselect__opt{display:flex;align-items:center;justify-content:space-between;gap:12px;width:100%;padding:11px 12px;border:0;border-radius:10px;background:transparent;color:#374151;font:inherit;font-size:14px;text-align:left;cursor:pointer;transition:background .15s ease,color .15s ease;}',
       '.boso-pselect__opt:hover{background:#F9FAFB;}',
       '.boso-pselect__opt.is-active{background:color-mix(in srgb, var(--accent,#556B2F) 12%, #fff);color:var(--accent,#556B2F);font-weight:700;}',
       '.boso-pselect__check{width:16px;height:16px;flex-shrink:0;opacity:0;}',
       '.boso-pselect__opt.is-active .boso-pselect__check{opacity:1;}',
-      '.drawer-body .form-group:has(.boso-pselect.is-open),.drawer-body .boso-pselect-row:has(.boso-pselect.is-open){overflow:visible;position:relative;z-index:20;}',
       '.boso-pselect-sheet{position:fixed;inset:0;z-index:' + (OPEN_Z + 10) + ';display:flex;align-items:flex-end;justify-content:center;opacity:0;pointer-events:none;transition:opacity .2s ease;}',
       '.boso-pselect-sheet.is-open{opacity:1;pointer-events:auto;}',
       '.boso-pselect-sheet__backdrop{position:absolute;inset:0;background:rgba(15,23,42,.42);}',
@@ -140,32 +132,6 @@
     var open = false;
     var menuEl = null;
     var sheetEl = null;
-    var unlockedScrollParents = [];
-    /* Admin drawer: glue menu under field. Booking site: body portal. */
-    var localMenu = !!(selectEl.closest('.drawer-body') || selectEl.closest('#bookingDrawer') || selectEl.closest('.form-group'));
-
-    function unlockScrollParents() {
-      unlockedScrollParents = [];
-      if (!localMenu) return;
-      var node = root.parentElement;
-      while (node && node !== document.body) {
-        var style = window.getComputedStyle(node);
-        if (style.overflowY === 'auto' || style.overflowY === 'scroll' || style.overflow === 'auto' || style.overflow === 'scroll') {
-          unlockedScrollParents.push({ el: node, overflow: node.style.overflow, overflowY: node.style.overflowY });
-          node.style.overflow = 'visible';
-          node.style.overflowY = 'visible';
-        }
-        node = node.parentElement;
-      }
-    }
-
-    function restoreScrollParents() {
-      unlockedScrollParents.forEach(function (item) {
-        item.el.style.overflow = item.overflow;
-        item.el.style.overflowY = item.overflowY;
-      });
-      unlockedScrollParents = [];
-    }
 
     function selectedOption() {
       var val = String(selectEl.value || '');
@@ -224,10 +190,9 @@
     function ensureMenu() {
       if (menuEl && menuEl.parentNode) return menuEl;
       menuEl = document.createElement('div');
-      menuEl.className = 'boso-pselect__menu' + (localMenu ? ' is-local' : '');
+      menuEl.className = 'boso-pselect__menu';
       menuEl.setAttribute('role', 'listbox');
-      if (localMenu) root.appendChild(menuEl);
-      else document.body.appendChild(menuEl);
+      document.body.appendChild(menuEl);
       return menuEl;
     }
 
@@ -240,25 +205,23 @@
       var menu = ensureMenu();
       var rect = btn.getBoundingClientRect();
       var gap = 6;
+      var width = Math.max(rect.width, 120);
       var spaceBelow = window.innerHeight - rect.bottom - 12;
       var spaceAbove = rect.top - 12;
       var placeTop = spaceBelow < 180 && spaceAbove > spaceBelow;
       var available = placeTop ? spaceAbove : spaceBelow;
       var maxH = Math.max(140, Math.min(260, available - 8));
+      var left = Math.round(rect.left);
+      if (left + width > window.innerWidth - 8) left = Math.max(8, Math.round(window.innerWidth - width - 8));
+      if (left < 8) left = 8;
+
+      menu.style.position = 'fixed';
+      menu.style.zIndex = String(OPEN_Z);
+      menu.style.width = width + 'px';
       menu.style.maxHeight = maxH + 'px';
-      menu.classList.toggle('is-top', placeTop);
-
-      if (localMenu) {
-        menu.style.left = '';
-        menu.style.right = '';
-        menu.style.width = '';
-        menu.style.top = '';
-        menu.style.bottom = '';
-        return;
-      }
-
-      menu.style.width = Math.max(rect.width, 120) + 'px';
-      menu.style.left = Math.round(rect.left) + 'px';
+      menu.style.left = left + 'px';
+      menu.style.right = 'auto';
+      menu.style.transform = 'none';
       if (placeTop) {
         menu.style.top = 'auto';
         menu.style.bottom = Math.round(window.innerHeight - rect.top + gap) + 'px';
@@ -269,11 +232,11 @@
     }
 
     function openDesktop() {
-      if (localMenu) unlockScrollParents();
       var menu = ensureMenu();
       fillList(menu);
       positionMenu();
       requestAnimationFrame(function () {
+        positionMenu();
         menu.classList.add('is-open');
       });
     }
@@ -412,8 +375,15 @@
       if (e.key === 'Escape') close();
     }
 
+    function preferSheet() {
+      /* Desktop admin drawer always uses under-field menu; sheet only on real mobile widths. */
+      if (!isMobileViewport()) return false;
+      if (selectEl.closest('#bookingDrawer') && window.matchMedia('(min-width: 900px)').matches) return false;
+      return true;
+    }
+
     function onReposition() {
-      if (open && menuEl && !isMobileViewport()) positionMenu();
+      if (open && menuEl && !preferSheet()) positionMenu();
     }
 
     function openMenu() {
@@ -423,7 +393,7 @@
       root.classList.add('is-open');
       btn.classList.add('is-open');
       btn.setAttribute('aria-expanded', 'true');
-      if (isMobileViewport()) openSheet();
+      if (preferSheet()) openSheet();
       else openDesktop();
       document.addEventListener('mousedown', onDocDown, true);
       document.addEventListener('touchstart', onDocDown, true);
@@ -440,7 +410,6 @@
       btn.setAttribute('aria-expanded', 'false');
       if (menuEl) menuEl.classList.remove('is-open');
       destroyMenu();
-      restoreScrollParents();
       if (sheetEl) {
         sheetEl.classList.remove('is-open');
         var toRemove = sheetEl;
