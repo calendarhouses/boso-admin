@@ -6,7 +6,7 @@
 (function (global) {
   'use strict';
 
-  var STYLE_ID = 'boso-premium-select-css-v7';
+  var STYLE_ID = 'boso-premium-select-css-v8';
   var OPEN_Z = 10050;
   var instances = [];
 
@@ -27,7 +27,7 @@
   ];
 
   function injectCss() {
-    ['boso-premium-select-css', 'boso-premium-select-css-v3', 'boso-premium-select-css-v4', 'boso-premium-select-css-v5'].forEach(function (id) {
+    ['boso-premium-select-css', 'boso-premium-select-css-v3', 'boso-premium-select-css-v4', 'boso-premium-select-css-v5', 'boso-premium-select-css-v7'].forEach(function (id) {
       var old = document.getElementById(id);
       if (old && old.parentNode) old.parentNode.removeChild(old);
     });
@@ -36,7 +36,7 @@
     style.id = STYLE_ID;
     style.textContent = [
       '.boso-pselect{position:relative;width:100%;z-index:1;}',
-      '.boso-pselect.is-open{z-index:5;}',
+      '.boso-pselect.is-open{z-index:50;}',
       '.boso-pselect__native{position:absolute!important;opacity:0!important;pointer-events:none!important;width:1px!important;height:1px!important;margin:0!important;padding:0!important;border:0!important;clip:rect(0,0,0,0)!important;}',
       '.boso-pselect__btn{display:flex;align-items:center;justify-content:space-between;gap:10px;width:100%;min-height:48px;box-sizing:border-box;padding:14px 16px;border:1.5px solid var(--border,#E5E2DC);border-radius:12px;background:#FAFAF8;color:var(--text,#1A1A1A);font:inherit;font-size:14px;font-weight:500;text-align:left;cursor:pointer;outline:none;transition:border-color .18s ease,background .18s ease,box-shadow .18s ease;}',
       '.boso-pselect__btn:hover{border-color:#C9C4BB;background:#fff;}',
@@ -48,7 +48,11 @@
       '.boso-pselect__label.is-placeholder{color:#9CA3AF;font-weight:500;}',
       '.boso-pselect__chevron{width:16px;height:16px;flex-shrink:0;color:#6B7280;transition:transform .2s ease,color .2s ease;}',
       '.boso-pselect__btn.is-open .boso-pselect__chevron{transform:rotate(180deg);color:var(--accent,#556B2F);}',
-      '.boso-pselect__menu{position:fixed!important;z-index:' + OPEN_Z + ';max-height:240px;overflow:auto;border:1px solid #E5E7EB;border-radius:12px;background:#fff;box-shadow:0 12px 28px rgba(15,23,42,.14);padding:6px;opacity:0;pointer-events:none;box-sizing:border-box;margin:0;}',
+      /* Booking site portal */
+      '.boso-pselect__menu{position:fixed;z-index:' + OPEN_Z + ';max-height:240px;overflow:auto;border:1px solid #E5E7EB;border-radius:12px;background:#fff;box-shadow:0 12px 28px rgba(15,23,42,.14);padding:6px;opacity:0;pointer-events:none;box-sizing:border-box;margin:0;}',
+      /* Admin drawer: same pattern as .custom-select-options — glued under the field */
+      '.boso-pselect__menu.is-local{position:absolute!important;left:0!important;right:0!important;top:calc(100% + 6px)!important;bottom:auto!important;width:auto!important;max-width:none!important;transform:none!important;z-index:100!important;}',
+      '.boso-pselect__menu.is-local.is-top{top:auto!important;bottom:calc(100% + 6px)!important;}',
       '.boso-pselect__menu.is-open{opacity:1;pointer-events:auto;}',
       '.boso-pselect__opt{display:flex;align-items:center;justify-content:space-between;gap:12px;width:100%;padding:11px 12px;border:0;border-radius:10px;background:transparent;color:#374151;font:inherit;font-size:14px;text-align:left;cursor:pointer;transition:background .15s ease,color .15s ease;}',
       '.boso-pselect__opt:hover{background:#F9FAFB;}',
@@ -67,7 +71,8 @@
       '.boso-pselect-sheet__eyebrow{margin:0;font-size:11px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:#9CA3AF;}',
       '.boso-pselect-sheet__title{margin:4px 0 0;font-size:17px;font-weight:800;color:#111827;}',
       '.boso-pselect-sheet__list{overflow:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;padding:10px 12px calc(16px + env(safe-area-inset-bottom,0px));touch-action:pan-y;}',
-      '.boso-pselect-row{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.4fr);gap:12px;width:100%;align-items:stretch;}'
+      '.boso-pselect-row{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.4fr);gap:12px;width:100%;align-items:stretch;position:relative;}',
+      '.boso-pselect-row .boso-pselect.is-open{z-index:60;}'
     ].join('\n');
     document.head.appendChild(style);
   }
@@ -132,6 +137,8 @@
     var open = false;
     var menuEl = null;
     var sheetEl = null;
+    /* Admin drawer uses absolute-under-field (like custom-select). Booking site uses body portal. */
+    var useLocalMenu = !!(selectEl.closest('#bookingDrawer') || selectEl.closest('.drawer-body') || selectEl.closest('.drawer'));
 
     function selectedOption() {
       var val = String(selectEl.value || '');
@@ -190,9 +197,10 @@
     function ensureMenu() {
       if (menuEl && menuEl.parentNode) return menuEl;
       menuEl = document.createElement('div');
-      menuEl.className = 'boso-pselect__menu';
+      menuEl.className = 'boso-pselect__menu' + (useLocalMenu ? ' is-local' : '');
       menuEl.setAttribute('role', 'listbox');
-      document.body.appendChild(menuEl);
+      if (useLocalMenu) root.appendChild(menuEl);
+      else document.body.appendChild(menuEl);
       return menuEl;
     }
 
@@ -205,20 +213,34 @@
       var menu = ensureMenu();
       var rect = btn.getBoundingClientRect();
       var gap = 6;
-      var width = Math.max(rect.width, 120);
       var spaceBelow = window.innerHeight - rect.bottom - 12;
       var spaceAbove = rect.top - 12;
-      var placeTop = spaceBelow < 180 && spaceAbove > spaceBelow;
+      var placeTop = spaceBelow < 160 && spaceAbove > spaceBelow;
       var available = placeTop ? spaceAbove : spaceBelow;
       var maxH = Math.max(140, Math.min(260, available - 8));
+      menu.style.maxHeight = maxH + 'px';
+      menu.classList.toggle('is-top', placeTop);
+
+      if (useLocalMenu) {
+        /* CSS .is-local pins it under the field — clear any leftover portal coords */
+        menu.style.position = '';
+        menu.style.left = '';
+        menu.style.right = '';
+        menu.style.top = '';
+        menu.style.bottom = '';
+        menu.style.width = '';
+        menu.style.transform = '';
+        menu.style.zIndex = '';
+        return;
+      }
+
+      var width = Math.max(rect.width, 120);
       var left = Math.round(rect.left);
       if (left + width > window.innerWidth - 8) left = Math.max(8, Math.round(window.innerWidth - width - 8));
       if (left < 8) left = 8;
-
       menu.style.position = 'fixed';
       menu.style.zIndex = String(OPEN_Z);
       menu.style.width = width + 'px';
-      menu.style.maxHeight = maxH + 'px';
       menu.style.left = left + 'px';
       menu.style.right = 'auto';
       menu.style.transform = 'none';
