@@ -12,19 +12,20 @@
   var OPEN_Z = 10050;
   var instances = [];
 
+  /* Родовий відмінок: «14 лютого», не «14 лютий» */
   var MONTHS_UA = [
-    { value: '1', label: 'Січень' },
-    { value: '2', label: 'Лютий' },
-    { value: '3', label: 'Березень' },
-    { value: '4', label: 'Квітень' },
-    { value: '5', label: 'Травень' },
-    { value: '6', label: 'Червень' },
-    { value: '7', label: 'Липень' },
-    { value: '8', label: 'Серпень' },
-    { value: '9', label: 'Вересень' },
-    { value: '10', label: 'Жовтень' },
-    { value: '11', label: 'Листопад' },
-    { value: '12', label: 'Грудень' }
+    { value: '1', label: 'січня' },
+    { value: '2', label: 'лютого' },
+    { value: '3', label: 'березня' },
+    { value: '4', label: 'квітня' },
+    { value: '5', label: 'травня' },
+    { value: '6', label: 'червня' },
+    { value: '7', label: 'липня' },
+    { value: '8', label: 'серпня' },
+    { value: '9', label: 'вересня' },
+    { value: '10', label: 'жовтня' },
+    { value: '11', label: 'листопада' },
+    { value: '12', label: 'грудня' }
   ];
 
   function injectCss() {
@@ -501,7 +502,7 @@
 
   function ensureMonthOptions(selectEl) {
     if (!selectEl) return;
-    if (selectEl.options.length > 1) return;
+    var current = String(selectEl.value || '');
     selectEl.innerHTML = '<option value="">Місяць</option>';
     MONTHS_UA.forEach(function (m) {
       var opt = document.createElement('option');
@@ -509,6 +510,7 @@
       opt.textContent = m.label;
       selectEl.appendChild(opt);
     });
+    if (current) selectEl.value = current;
   }
 
   function ensureDayOptions(selectEl, monthValue) {
