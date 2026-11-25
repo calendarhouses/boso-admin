@@ -807,6 +807,14 @@
             display: flex; align-items: center; justify-content: center; color: #166534; flex-shrink: 0;
         }
         .sms-template-card[data-sms-tpl="payment"] .sms-template-card__icon { background: #EFF6FF; color: #1D4ED8; }
+        .sms-template-card[data-sms-tpl="birthday"] .sms-template-card__icon { background: #FFF7ED; color: #C2410C; }
+        .bday-pill {
+            display: inline-flex; align-items: center; margin-left: 6px; padding: 1px 7px;
+            border-radius: 999px; font-size: 9px; font-weight: 800; letter-spacing: 0.04em;
+            text-transform: uppercase; color: #7C2D12;
+            background: linear-gradient(180deg, #FFF7ED 0%, #FFEDD5 100%);
+            border: 1px solid rgba(194, 65, 12, 0.22); flex-shrink: 0;
+        }
         .sms-template-card__titles { flex: 1; min-width: 0; }
         .sms-template-card__titles strong { display: block; font-size: 14px; }
         .sms-template-card__titles span { display: block; font-size: 11px; color: #6B7280; margin-top: 2px; }
@@ -1428,6 +1436,36 @@
                         </div>
                     </article>
 
+                    <article class="sms-template-card" data-sms-tpl="birthday">
+                        <button type="button" class="sms-template-card__head" onclick="toggleSmsAccordion('birthday')">
+                            <div class="sms-template-card__icon" aria-hidden="true">
+                                <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8v13m0-13V6a2 2 0 112 2h-2zm0 0V5.5A2.5 2.5 0 109.5 8H12zm-7 4h14M5 12a2 2 0 110-4h14a2 2 0 110 4M5 12v7a2 2 0 002 2h10a2 2 0 002-2v-7"/></svg>
+                            </div>
+                            <div class="sms-template-card__titles">
+                                <strong>День народження</strong>
+                                <span>Авто о 10:00 в ДН гостя</span>
+                            </div>
+                            <span class="badge confirmed" id="smsBirthdayStatusPill" style="font-size:10px;">ON</span>
+                            <svg class="sms-template-card__chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>
+                        </button>
+                        <div class="sms-template-card__body">
+                            <label style="display:flex; gap:8px; align-items:center; margin-bottom:10px; font-size:13px;">
+                                <input type="checkbox" id="smsBirthdayEnabled" checked style="width:16px;height:16px;" onchange="syncSmsBirthdayStatusPill()"> Надсилати автоматично
+                            </label>
+                            <div class="form-group" style="margin-bottom:8px;"><label>Текст SMS</label><textarea id="smsBirthdayText" rows="5" style="width:100%;padding:12px;border:1px solid #D1D5DB;border-radius:10px;font-size:14px;font-family:inherit;" oninput="updateSmsTemplatePreview()"></textarea></div>
+                            <div class="sms-vars-section">
+                                <span class="sms-vars-section__label">Змінні — натисніть, щоб вставити</span>
+                                <div class="sms-vars" id="smsVarsBirthday"></div>
+                            </div>
+                            <div class="sms-preview">
+                                <div class="sms-preview__label">Як побачить гість</div>
+                                <div class="sms-preview__bubble" id="smsBirthdayPreview"></div>
+                            </div>
+                            <div class="sms-template__stats" id="smsBirthdayStats"></div>
+                            <button type="button" class="btn-secondary" style="margin-top:10px;" onclick="resetSmsBirthdayTemplate()">Скинути текст</button>
+                        </div>
+                    </article>
+
                     <div class="form-group">
                         <label>Тестовий номер</label>
                         <input type="tel" id="smsTestPhone">
@@ -1807,6 +1845,29 @@
                     <div class="form-section">
                         <span class="form-section-title">Гість</span>
                         <div class="form-group"><label>Ім'я та Прізвище:</label><input type="text" id="adminName" required></div>
+                        <div class="form-group">
+                            <label>День народження <span style="font-weight:500;color:#9CA3AF;text-transform:none;">(за бажанням)</span></label>
+                            <div style="display:flex; gap:8px;">
+                                <select id="adminBdayDay" style="flex:1; height:46px; border:1px solid #D1D5DB; border-radius:12px; padding:0 10px; background:#F9FAFB; font-size:14px;">
+                                    <option value="">День</option>
+                                </select>
+                                <select id="adminBdayMonth" style="flex:1; height:46px; border:1px solid #D1D5DB; border-radius:12px; padding:0 10px; background:#F9FAFB; font-size:14px;">
+                                    <option value="">Місяць</option>
+                                    <option value="1">Січень</option>
+                                    <option value="2">Лютий</option>
+                                    <option value="3">Березень</option>
+                                    <option value="4">Квітень</option>
+                                    <option value="5">Травень</option>
+                                    <option value="6">Червень</option>
+                                    <option value="7">Липень</option>
+                                    <option value="8">Серпень</option>
+                                    <option value="9">Вересень</option>
+                                    <option value="10">Жовтень</option>
+                                    <option value="11">Листопад</option>
+                                    <option value="12">Грудень</option>
+                                </select>
+                            </div>
+                        </div>
                         <div class="form-grid">
                             <div class="form-group"><label>Телефон:</label><input type="tel" id="adminPhone"></div>
                             <div class="form-group">
@@ -2366,8 +2427,95 @@
             { key: 'pay_url', label: 'Посилання на оплату' },
             { key: 'order_id', label: 'Номер броні' }
         ];
+        const SMS_BIRTHDAY_VARIABLES = [
+            { key: 'name', label: "Ім'я гостя" },
+            { key: 'cottage', label: 'Котедж' },
+            { key: 'order_id', label: 'Номер броні' }
+        ];
         const DEFAULT_SMS_REVIEW_TEXT = 'Дякуємо Вам за відвідування нашого комплексу! Чи все сподобалось? Залиште, будь ласка, відгук: {review_url}. Будемо вдячні та раді Вас бачити знову!';
         const DEFAULT_SMS_PAYMENT_TEXT = 'BOSO: до сплати {amount} грн за бронювання {cottage}. Оплата: {pay_url}';
+        const DEFAULT_SMS_BIRTHDAY_TEXT = 'BOSO вітає вас із днем народження, {name}! Будемо раді знову бачити вас у наших котеджах.';
+
+        function initAdminBirthdayDayOptions() {
+            const dayEl = document.getElementById('adminBdayDay');
+            if (!dayEl || dayEl.options.length > 1) return;
+            for (let d = 1; d <= 31; d++) {
+                const opt = document.createElement('option');
+                opt.value = String(d);
+                opt.textContent = String(d);
+                dayEl.appendChild(opt);
+            }
+        }
+
+        function normalizeBirthdayMMDD(day, month, combined) {
+            if (combined) {
+                const s = String(combined).trim();
+                const iso = s.match(/^(\d{4})-(\d{2})-(\d{2})/);
+                if (iso) { month = iso[2]; day = iso[3]; }
+                else {
+                    const mmdd = s.match(/^(\d{1,2})-(\d{1,2})$/);
+                    if (mmdd) { month = mmdd[1]; day = mmdd[2]; }
+                    else {
+                        const dotted = s.match(/^(\d{1,2})[./](\d{1,2})$/);
+                        if (dotted) { day = dotted[1]; month = dotted[2]; }
+                    }
+                }
+            }
+            const d = parseInt(day, 10);
+            const m = parseInt(month, 10);
+            if (!(d >= 1 && d <= 31) || !(m >= 1 && m <= 12)) return '';
+            const maxDay = [31, 29, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31][m - 1];
+            if (d > maxDay) return '';
+            return String(m).padStart(2, '0') + '-' + String(d).padStart(2, '0');
+        }
+
+        function readAdminBirthdayPayload() {
+            const day = (document.getElementById('adminBdayDay') || {}).value || '';
+            const month = (document.getElementById('adminBdayMonth') || {}).value || '';
+            if (!day && !month) return { birthday: '' };
+            const mmdd = normalizeBirthdayMMDD(day, month, null);
+            return { birthday: mmdd || '' };
+        }
+
+        function setAdminBirthdayFields(birthday) {
+            initAdminBirthdayDayOptions();
+            const dayEl = document.getElementById('adminBdayDay');
+            const monthEl = document.getElementById('adminBdayMonth');
+            if (!dayEl || !monthEl) return;
+            const mmdd = normalizeBirthdayMMDD(null, null, birthday || '');
+            if (!mmdd) { dayEl.value = ''; monthEl.value = ''; return; }
+            const parts = mmdd.split('-');
+            monthEl.value = String(Number(parts[0]));
+            dayEl.value = String(Number(parts[1]));
+        }
+
+        function birthdayFallsInStay(birthday, checkIn, checkOut) {
+            const mmdd = normalizeBirthdayMMDD(null, null, birthday);
+            if (!mmdd || !checkIn || !checkOut) return false;
+            const m = Number(mmdd.slice(0, 2));
+            const d = Number(mmdd.slice(3, 5));
+            const inD = new Date(checkIn); inD.setHours(0, 0, 0, 0);
+            const outD = new Date(checkOut); outD.setHours(0, 0, 0, 0);
+            for (let t = new Date(inD); t < outD; t.setDate(t.getDate() + 1)) {
+                if ((t.getMonth() + 1) === m && t.getDate() === d) return true;
+            }
+            return false;
+        }
+
+        function isBirthdayToday(birthday) {
+            const mmdd = normalizeBirthdayMMDD(null, null, birthday);
+            if (!mmdd) return false;
+            const now = new Date();
+            return mmdd === (String(now.getMonth() + 1).padStart(2, '0') + '-' + String(now.getDate()).padStart(2, '0'));
+        }
+
+        function birthdayBadgeHtml(booking) {
+            if (!booking || !booking.birthday) return '';
+            if (birthdayFallsInStay(booking.birthday, booking.checkIn, booking.checkOut) || isBirthdayToday(booking.birthday)) {
+                return '<span class="bday-pill" title="День народження">ДН</span>';
+            }
+            return '';
+        }
 
         function countSmsSegmentsUi(text) {
             const s = String(text || '');
@@ -2433,6 +2581,20 @@
                 pill.style.fontSize = '10px';
             }
         }
+        function syncSmsBirthdayStatusPill() {
+            const pill = document.getElementById('smsBirthdayStatusPill');
+            const enabled = document.getElementById('smsBirthdayEnabled');
+            if (!pill || !enabled) return;
+            if (enabled.checked) {
+                pill.textContent = 'ON';
+                pill.className = 'badge confirmed';
+                pill.style.fontSize = '10px';
+            } else {
+                pill.textContent = 'OFF';
+                pill.className = 'badge cancelled';
+                pill.style.fontSize = '10px';
+            }
+        }
         function resetSmsReviewTemplate() {
             const ta = document.getElementById('smsReviewText');
             if (!ta) return;
@@ -2443,6 +2605,12 @@
             const ta = document.getElementById('smsPaymentText');
             if (!ta) return;
             ta.value = DEFAULT_SMS_PAYMENT_TEXT;
+            updateSmsTemplatePreview();
+        }
+        function resetSmsBirthdayTemplate() {
+            const ta = document.getElementById('smsBirthdayText');
+            if (!ta) return;
+            ta.value = DEFAULT_SMS_BIRTHDAY_TEXT;
             updateSmsTemplatePreview();
         }
         function renderSmsTemplatePreviewText(text, extras) {
@@ -2487,6 +2655,7 @@
                 reviewUrl: urlEl ? urlEl.value : ''
             });
             updateOneSmsPreview('smsPaymentText', 'smsPaymentPreview', 'smsPaymentStats', {});
+            updateOneSmsPreview('smsBirthdayText', 'smsBirthdayPreview', 'smsBirthdayStats', {});
             const active = getOpenSmsTemplateKey();
             const costEl = document.getElementById('smsCostPreview');
             const segEl = document.getElementById('smsSegmentsPreview');
@@ -2495,11 +2664,12 @@
                 if (segEl) segEl.textContent = 'відкрийте шаблон';
                 return;
             }
-            const meta = active === 'payment'
-                ? updateOneSmsPreview('smsPaymentText', 'smsPaymentPreview', 'smsPaymentStats', {})
-                : updateOneSmsPreview('smsReviewText', 'smsReviewPreview', 'smsReviewStats', {
-                    reviewUrl: urlEl ? urlEl.value : ''
-                });
+            let meta = null;
+            if (active === 'payment') meta = updateOneSmsPreview('smsPaymentText', 'smsPaymentPreview', 'smsPaymentStats', {});
+            else if (active === 'birthday') meta = updateOneSmsPreview('smsBirthdayText', 'smsBirthdayPreview', 'smsBirthdayStats', {});
+            else meta = updateOneSmsPreview('smsReviewText', 'smsReviewPreview', 'smsReviewStats', {
+                reviewUrl: urlEl ? urlEl.value : ''
+            });
             if (meta) {
                 if (costEl) costEl.textContent = (Math.round(meta.segments * meta.price * 100) / 100).toFixed(2) + ' грн';
                 if (segEl) segEl.textContent = meta.segments + ' сегм. · ' + meta.rendered.length + ' символів';
@@ -2555,6 +2725,8 @@
                 review: 'Відгук',
                 test: 'Тест',
                 test_payment: 'Тест оплати',
+                test_birthday: 'Тест ДН',
+                birthday: 'День народження',
                 payment: 'Оплата',
                 payment_remainder: 'Оплата',
                 payment_prepay: 'Оплата',
@@ -2591,11 +2763,19 @@
             if (document.getElementById('smsPaymentText')) {
                 document.getElementById('smsPaymentText').value = (smsSettings.templates && smsSettings.templates.payment && smsSettings.templates.payment.text) || DEFAULT_SMS_PAYMENT_TEXT;
             }
+            if (document.getElementById('smsBirthdayEnabled')) {
+                document.getElementById('smsBirthdayEnabled').checked = !(smsSettings.templates && smsSettings.templates.birthday && smsSettings.templates.birthday.enabled === false);
+            }
+            if (document.getElementById('smsBirthdayText')) {
+                document.getElementById('smsBirthdayText').value = (smsSettings.templates && smsSettings.templates.birthday && smsSettings.templates.birthday.text) || DEFAULT_SMS_BIRTHDAY_TEXT;
+            }
             document.getElementById('smsTestPhone').value = smsSettings.testPhone || '';
             renderSmsVarsButtons('smsVarsReview', SMS_REVIEW_VARIABLES, 'smsReviewText');
             renderSmsVarsButtons('smsVarsPayment', SMS_PAYMENT_VARIABLES, 'smsPaymentText');
+            renderSmsVarsButtons('smsVarsBirthday', SMS_BIRTHDAY_VARIABLES, 'smsBirthdayText');
             syncSmsReviewStatusPill();
             syncSmsPaymentStatusPill();
+            syncSmsBirthdayStatusPill();
             updateSmsTemplatePreview();
             renderSmsJournal();
         }
@@ -2612,6 +2792,10 @@
                     review: {
                         enabled: document.getElementById('smsReviewEnabled').checked,
                         text: document.getElementById('smsReviewText').value
+                    },
+                    birthday: {
+                        enabled: document.getElementById('smsBirthdayEnabled') ? document.getElementById('smsBirthdayEnabled').checked : true,
+                        text: document.getElementById('smsBirthdayText') ? document.getElementById('smsBirthdayText').value : DEFAULT_SMS_BIRTHDAY_TEXT
                     },
                     payment: {
                         enabled: document.getElementById('smsPaymentEnabled') ? document.getElementById('smsPaymentEnabled').checked : true,
@@ -2703,8 +2887,16 @@
                 showToast('Відкрийте шаблон для тесту');
                 return;
             }
+            let testType = 'test';
+            let testLabel = 'відгук';
             if (active === 'payment') {
                 text = renderSmsTemplatePreviewText(document.getElementById('smsPaymentText').value, {});
+                testType = 'test_payment';
+                testLabel = 'оплата';
+            } else if (active === 'birthday') {
+                text = renderSmsTemplatePreviewText(document.getElementById('smsBirthdayText').value, {});
+                testType = 'test_birthday';
+                testLabel = 'ДН';
             } else {
                 text = renderSmsTemplatePreviewText(
                     document.getElementById('smsReviewText').value,
@@ -2716,14 +2908,14 @@
                 const res = await BosoAuth.apiFetch(API_URL, {
                     method: 'POST',
                     headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-                    body: JSON.stringify({ action: 'sendSmsTest', phone: phone, text: text, type: active === 'payment' ? 'test_payment' : 'test' })
+                    body: JSON.stringify({ action: 'sendSmsTest', phone: phone, text: text, type: testType })
                 });
                 const data = await BosoAuth.parseApiJson(res);
                 if (BosoAuth.handleApiAuthError(data)) return;
                 if (data && data.smsSettings) smsSettings = data.smsSettings;
                 renderSmsJournal();
                 if (data && data.success) {
-                    showToast('Тестову SMS надіслано (' + (active === 'payment' ? 'оплата' : 'відгук') + ')');
+                    showToast('Тестову SMS надіслано (' + testLabel + ')');
                     saveSmsSettingsFromUi();
                     switchSmsSubView('journal', document.getElementById('smsTabJournal'));
                 } else {
@@ -3946,7 +4138,7 @@ if (sClass.includes('скас')) {
                                      oncontextmenu="event.preventDefault();">
                                      ${extensionsHtml}
                                     <div class="booking-inner-content" style="position: relative; z-index: 2; display: flex; flex-direction: column; width: 100%;">
-                                        <div class="booking-title-row" style="font-size: 11px; line-height: 1;">${channelIconHtml}<span class="booking-guest-name">${guestName}</span></div>
+                                        <div class="booking-title-row" style="font-size: 11px; line-height: 1;">${channelIconHtml}<span class="booking-guest-name">${guestName}</span>${birthdayBadgeHtml(b)}</div>
                                         <div style="margin-top: 3px; display: flex; overflow: hidden;">
                                             <span style="background: ${badgeBg}; color: ${badgeColor}; font-size: 8px; padding: 2px 4px; border-radius: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${finText}</span>
                                         </div>
@@ -5935,6 +6127,7 @@ async function bosoSendRemainderPaymentSms() {
             prevFormState = { checkIn: "", checkOut: "", cottage: "", guests: 0, services: "{}", early: null, late: null };
             document.getElementById('drawerTitle').innerText = 'Нова бронь'; 
             document.getElementById('adminBookingForm').reset();
+            setAdminBirthdayFields('');
             document.getElementById('adminDeleteBtn').style.display = 'none';
             document.getElementById('adminResendTgBtn').style.display = 'none';
             document.getElementById('liveCalculatorContainer').innerHTML = '';
@@ -6019,11 +6212,12 @@ async function bosoSendRemainderPaymentSms() {
                 checkOut: booking.checkOut
             };
 
-            document.getElementById('drawerTitle').innerText = `Деталі броні`;
+            document.getElementById('drawerTitle').innerHTML = `Деталі броні${birthdayBadgeHtml(booking)}`;
             document.getElementById('adminDeleteBtn').style.display = 'flex';
             document.getElementById('adminResendTgBtn').style.display = 'flex';
             document.getElementById('adminName').value = String(booking.name).replace(' (Ручна бронь)', '');
             document.getElementById('adminPhone').value = booking.phone ? '+' + formatPhone(booking.phone) : '';
+            setAdminBirthdayFields(booking.birthday || '');
             document.getElementById('adminGuests').value = booking.guests || 2;
             
             // --- Скидаємо графік та послуги перед заповненням ---
@@ -6277,6 +6471,7 @@ async function bosoSendRemainderPaymentSms() {
             const paymentsForSave = bosoBuildPaymentsForSave();
             const isEdit = editingRowNumber !== null;
 
+            const birthdayPayload = readAdminBirthdayPayload();
             const bookingData = { 
                 checkIn: document.getElementById('adminCheckIn').value, 
                 checkOut: document.getElementById('adminCheckOut').value, 
@@ -6284,6 +6479,7 @@ async function bosoSendRemainderPaymentSms() {
                 name: document.getElementById('adminName').value, 
                 phone: document.getElementById('adminPhone').value, 
                 guests: document.getElementById('adminGuests').value,
+                birthday: birthdayPayload.birthday,
                 pets: document.getElementById('adminPets').value, 
                 source: document.getElementById('adminSource').value,
                 status: document.querySelector('.status-btn.active').getAttribute('data-status'),
@@ -9046,6 +9242,7 @@ async function bosoSendRemainderPaymentSms() {
         }
 
         document.addEventListener('DOMContentLoaded', () => {
+            initAdminBirthdayDayOptions();
             BosoAuth.bootstrap(startAdminPanel);
         });
 
