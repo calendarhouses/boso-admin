@@ -1,6 +1,6 @@
 /**
  * BOSO PremiumSelect — custom dropdown inspired by GIRISPORT PremiumSelect.
- * Desktop: floating menu. Mobile: bottom sheet.
+ * Desktop: menu under the field (absolute). Mobile: bottom sheet.
  */
 (function (global) {
   'use strict';
@@ -29,21 +29,22 @@
     var style = document.createElement('style');
     style.id = STYLE_ID;
     style.textContent = [
-      '.boso-pselect{position:relative;width:100%;}',
+      '.boso-pselect{position:relative;width:100%;z-index:1;}',
+      '.boso-pselect.is-open{z-index:40;}',
       '.boso-pselect__native{position:absolute!important;opacity:0!important;pointer-events:none!important;width:1px!important;height:1px!important;margin:0!important;padding:0!important;border:0!important;clip:rect(0,0,0,0)!important;}',
-      '.boso-pselect__btn{display:flex;align-items:center;justify-content:space-between;gap:10px;width:100%;height:52px;padding:0 16px;border:1.5px solid #E5E7EB;border-radius:16px;background:#F8FAFC;color:#111827;font:inherit;font-size:15px;font-weight:500;text-align:left;cursor:pointer;outline:none;transition:border-color .18s ease,background .18s ease,box-shadow .18s ease;}',
-      '.boso-pselect__btn:hover{border-color:#D1D5DB;background:#fff;}',
+      '.boso-pselect__btn{display:flex;align-items:center;justify-content:space-between;gap:10px;width:100%;height:48px;box-sizing:border-box;padding:0 16px;border:1px solid #D1D5DB;border-radius:10px;background:#F9FAFB;color:#111827;font:inherit;font-size:14px;font-weight:500;text-align:left;cursor:pointer;outline:none;transition:border-color .18s ease,background .18s ease,box-shadow .18s ease;}',
+      '.boso-pselect__btn:hover{border-color:#C4C9D1;background:#fff;}',
       '.boso-pselect__btn.is-open{border-color:var(--accent,#556B2F);background:#fff;box-shadow:0 0 0 4px color-mix(in srgb, var(--accent,#556B2F) 14%, transparent);}',
       '.boso-pselect__btn:disabled{opacity:.6;cursor:not-allowed;}',
       '.boso-pselect__label{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}',
       '.boso-pselect__label.is-placeholder{color:#9CA3AF;font-weight:500;}',
-      '.boso-pselect__chevron{width:16px;height:16px;flex-shrink:0;color:#9CA3AF;transition:transform .2s ease,color .2s ease;}',
+      '.boso-pselect__chevron{width:16px;height:16px;flex-shrink:0;color:#6B7280;transition:transform .2s ease,color .2s ease;}',
       '.boso-pselect__btn.is-open .boso-pselect__chevron{transform:rotate(180deg);color:var(--accent,#556B2F);}',
-      '.boso-pselect__menu{position:fixed;z-index:' + OPEN_Z + ';overflow:auto;border:1px solid #F3F4F6;border-radius:16px;background:#fff;box-shadow:0 16px 40px rgba(15,23,42,.16);padding:6px;opacity:0;transform:translateY(-6px) scale(.98);pointer-events:none;transition:opacity .16s ease,transform .16s ease;}',
-      '.boso-pselect__menu.is-open{opacity:1;transform:translateY(0) scale(1);pointer-events:auto;}',
-      '.boso-pselect__menu.is-top{transform:translateY(6px) scale(.98);}',
-      '.boso-pselect__menu.is-top.is-open{transform:translateY(0) scale(1);}',
-      '.boso-pselect__opt{display:flex;align-items:center;justify-content:space-between;gap:12px;width:100%;padding:12px 14px;border:0;border-radius:12px;background:transparent;color:#374151;font:inherit;font-size:14px;text-align:left;cursor:pointer;transition:background .15s ease,color .15s ease;}',
+      '.boso-pselect__menu{position:absolute;left:0;right:0;top:calc(100% + 6px);z-index:' + OPEN_Z + ';max-height:240px;overflow:auto;border:1px solid #E5E7EB;border-radius:12px;background:#fff;box-shadow:0 12px 28px rgba(15,23,42,.14);padding:6px;opacity:0;transform:translateY(-4px);pointer-events:none;transition:opacity .15s ease,transform .15s ease;}',
+      '.boso-pselect__menu.is-open{opacity:1;transform:translateY(0);pointer-events:auto;}',
+      '.boso-pselect__menu.is-top{top:auto;bottom:calc(100% + 6px);transform:translateY(4px);}',
+      '.boso-pselect__menu.is-top.is-open{transform:translateY(0);}',
+      '.boso-pselect__opt{display:flex;align-items:center;justify-content:space-between;gap:12px;width:100%;padding:11px 12px;border:0;border-radius:10px;background:transparent;color:#374151;font:inherit;font-size:14px;text-align:left;cursor:pointer;transition:background .15s ease,color .15s ease;}',
       '.boso-pselect__opt:hover{background:#F9FAFB;}',
       '.boso-pselect__opt.is-active{background:color-mix(in srgb, var(--accent,#556B2F) 12%, #fff);color:var(--accent,#556B2F);font-weight:700;}',
       '.boso-pselect__check{width:16px;height:16px;flex-shrink:0;opacity:0;}',
@@ -59,7 +60,9 @@
       '.boso-pselect-sheet__eyebrow{margin:0;font-size:11px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:#9CA3AF;}',
       '.boso-pselect-sheet__title{margin:4px 0 0;font-size:17px;font-weight:800;color:#111827;}',
       '.boso-pselect-sheet__list{overflow:auto;padding:10px 12px calc(16px + env(safe-area-inset-bottom,0px));}',
-      '.boso-pselect-row{display:grid;grid-template-columns:1fr 1.35fr;gap:10px;width:100%;}'
+      '.boso-pselect-row{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.4fr);gap:12px;width:100%;align-items:stretch;}',
+      /* When open inside scroll drawers, keep menu above siblings */
+      '.drawer-body .form-group:has(.boso-pselect.is-open),.form-field:has(.boso-pselect.is-open){overflow:visible;z-index:5;position:relative;}'
     ].join('\n');
     document.head.appendChild(style);
   }
@@ -124,6 +127,29 @@
     var open = false;
     var menuEl = null;
     var sheetEl = null;
+    var unlockedScrollParents = [];
+
+    function unlockScrollParents() {
+      unlockedScrollParents = [];
+      var node = root.parentElement;
+      while (node && node !== document.body) {
+        var style = window.getComputedStyle(node);
+        if ((style.overflowY === 'auto' || style.overflowY === 'scroll' || style.overflow === 'auto' || style.overflow === 'scroll') && node.scrollHeight > node.clientHeight) {
+          unlockedScrollParents.push({ el: node, overflow: node.style.overflow, overflowY: node.style.overflowY });
+          node.style.overflow = 'visible';
+          node.style.overflowY = 'visible';
+        }
+        node = node.parentElement;
+      }
+    }
+
+    function restoreScrollParents() {
+      unlockedScrollParents.forEach(function (item) {
+        item.el.style.overflow = item.overflow;
+        item.el.style.overflowY = item.overflowY;
+      });
+      unlockedScrollParents = [];
+    }
 
     function selectedOption() {
       var val = String(selectEl.value || '');
@@ -184,37 +210,23 @@
       menuEl = document.createElement('div');
       menuEl.className = 'boso-pselect__menu';
       menuEl.setAttribute('role', 'listbox');
-      document.body.appendChild(menuEl);
+      root.appendChild(menuEl);
       return menuEl;
     }
 
     function positionMenu() {
       var menu = ensureMenu();
       var rect = btn.getBoundingClientRect();
-      var pad = 12;
-      var gap = 8;
-      var maxH = 320;
-      var spaceBelow = window.innerHeight - rect.bottom - pad;
-      var spaceAbove = rect.top - pad;
-      var placeTop = spaceBelow < 220 && spaceAbove > spaceBelow;
+      var spaceBelow = window.innerHeight - rect.bottom - 12;
+      var spaceAbove = rect.top - 12;
+      var placeTop = spaceBelow < 180 && spaceAbove > spaceBelow;
       var available = placeTop ? spaceAbove : spaceBelow;
-      var height = Math.max(160, Math.min(maxH, available - gap));
-      var left = Math.min(Math.max(pad, rect.left), Math.max(pad, window.innerWidth - rect.width - pad));
-
-      menu.style.width = rect.width + 'px';
-      menu.style.maxHeight = height + 'px';
-      menu.style.left = left + 'px';
+      menu.style.maxHeight = Math.max(140, Math.min(260, available - 8)) + 'px';
       menu.classList.toggle('is-top', placeTop);
-      if (placeTop) {
-        menu.style.top = 'auto';
-        menu.style.bottom = (window.innerHeight - rect.top + gap) + 'px';
-      } else {
-        menu.style.bottom = 'auto';
-        menu.style.top = (rect.bottom + gap) + 'px';
-      }
     }
 
     function openDesktop() {
+      unlockScrollParents();
       var menu = ensureMenu();
       fillList(menu);
       positionMenu();
@@ -251,7 +263,6 @@
     function onDocDown(e) {
       if (!open) return;
       if (root.contains(e.target)) return;
-      if (menuEl && menuEl.contains(e.target)) return;
       if (sheetEl && sheetEl.contains(e.target)) return;
       close();
     }
@@ -268,6 +279,7 @@
       if (selectEl.disabled) return;
       closeAll(api);
       open = true;
+      root.classList.add('is-open');
       btn.classList.add('is-open');
       btn.setAttribute('aria-expanded', 'true');
       if (isMobileViewport()) openSheet();
@@ -282,11 +294,11 @@
     function close() {
       if (!open) return;
       open = false;
+      root.classList.remove('is-open');
       btn.classList.remove('is-open');
       btn.setAttribute('aria-expanded', 'false');
-      if (menuEl) {
-        menuEl.classList.remove('is-open');
-      }
+      if (menuEl) menuEl.classList.remove('is-open');
+      restoreScrollParents();
       if (sheetEl) {
         sheetEl.classList.remove('is-open');
         var toRemove = sheetEl;
@@ -387,15 +399,14 @@
         if (dayCtl) dayCtl.refresh();
       }
     });
-    // Wrap row if not already
-    var parent = daySelect.closest('.boso-pselect') && daySelect.closest('.boso-pselect').parentNode;
-    if (parent && !parent.classList.contains('boso-pselect-row')) {
-      var dayWrap = daySelect.closest('.boso-pselect');
-      var monthWrap = monthSelect.closest('.boso-pselect');
-      if (dayWrap && monthWrap && dayWrap.parentNode === monthWrap.parentNode) {
+    var dayWrap = daySelect.closest('.boso-pselect');
+    var monthWrap = monthSelect.closest('.boso-pselect');
+    if (dayWrap && monthWrap && dayWrap.parentNode === monthWrap.parentNode) {
+      var parent = dayWrap.parentNode;
+      if (!parent.classList.contains('boso-pselect-row')) {
         var row = document.createElement('div');
         row.className = 'boso-pselect-row';
-        dayWrap.parentNode.insertBefore(row, dayWrap);
+        parent.insertBefore(row, dayWrap);
         row.appendChild(dayWrap);
         row.appendChild(monthWrap);
       }
