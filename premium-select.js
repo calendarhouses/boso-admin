@@ -6,7 +6,7 @@
 (function (global) {
   'use strict';
 
-  var STYLE_ID = 'boso-premium-select-css-v3';
+  var STYLE_ID = 'boso-premium-select-css-v4';
   var OPEN_Z = 10050;
   var instances = [];
 
@@ -60,14 +60,15 @@
       '.boso-pselect-sheet{position:fixed;inset:0;z-index:' + (OPEN_Z + 10) + ';display:flex;align-items:flex-end;justify-content:center;opacity:0;pointer-events:none;transition:opacity .2s ease;}',
       '.boso-pselect-sheet.is-open{opacity:1;pointer-events:auto;}',
       '.boso-pselect-sheet__backdrop{position:absolute;inset:0;background:rgba(15,23,42,.42);}',
-      '.boso-pselect-sheet__panel{position:relative;width:100%;max-width:560px;max-height:min(70dvh,480px);display:flex;flex-direction:column;background:#fff;border-radius:24px 24px 0 0;box-shadow:0 -12px 40px rgba(15,23,42,.18);transform:translateY(110%);transition:transform .28s cubic-bezier(.22,1,.36,1);}',
+      '.boso-pselect-sheet__panel{position:relative;width:100%;max-width:560px;max-height:min(70dvh,480px);display:flex;flex-direction:column;background:#fff;border-radius:24px 24px 0 0;box-shadow:0 -12px 40px rgba(15,23,42,.18);transform:translateY(110%);transition:transform .28s cubic-bezier(.22,1,.36,1);will-change:transform;}',
       '.boso-pselect-sheet.is-open .boso-pselect-sheet__panel{transform:translateY(0);}',
-      '.boso-pselect-sheet__handle{display:flex;justify-content:center;padding:12px 0 6px;}',
+      '.boso-pselect-sheet__panel.is-dragging{transition:none!important;}',
+      '.boso-pselect-sheet__handle{display:flex;justify-content:center;padding:14px 0 8px;cursor:grab;touch-action:none;-webkit-user-select:none;user-select:none;}',
       '.boso-pselect-sheet__handle span{width:44px;height:5px;border-radius:999px;background:#D1D5DB;}',
-      '.boso-pselect-sheet__head{padding:4px 20px 12px;border-bottom:1px solid #F3F4F6;}',
+      '.boso-pselect-sheet__head{padding:4px 20px 12px;border-bottom:1px solid #F3F4F6;touch-action:none;-webkit-user-select:none;user-select:none;}',
       '.boso-pselect-sheet__eyebrow{margin:0;font-size:11px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:#9CA3AF;}',
       '.boso-pselect-sheet__title{margin:4px 0 0;font-size:17px;font-weight:800;color:#111827;}',
-      '.boso-pselect-sheet__list{overflow:auto;padding:10px 12px calc(16px + env(safe-area-inset-bottom,0px));}',
+      '.boso-pselect-sheet__list{overflow:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;padding:10px 12px calc(16px + env(safe-area-inset-bottom,0px));touch-action:pan-y;}',
       '.boso-pselect-row{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.4fr);gap:12px;width:100%;align-items:stretch;}'
     ].join('\n');
     document.head.appendChild(style);
@@ -233,6 +234,100 @@
       });
     }
 
+    function bindSheetSwipe(panel, listEl) {
+      var startY = 0;
+      var startX = 0;
+      var lastY = 0;
+      var lastT = 0;
+      var dy = 0;
+      var dragging = false;
+      var fromChrome = false;
+      var locked = false;
+
+      function setOffset(y) {
+        panel.style.transform = 'translateY(' + Math.max(0, y) + 'px)';
+        if (sheetEl) {
+          var fade = 1 - Math.min(1, Math.max(0, y) / 280);
+          sheetEl.style.opacity = String(0.35 + fade * 0.65);
+        }
+      }
+
+      function resetOffset() {
+        panel.classList.remove('is-dragging');
+        panel.style.transform = '';
+        if (sheetEl) sheetEl.style.opacity = '';
+      }
+
+      function onStart(e) {
+        if (!e.touches || e.touches.length !== 1) return;
+        var t = e.touches[0];
+        var target = e.target;
+        var inList = listEl && listEl.contains(target);
+        fromChrome = !inList;
+        if (inList && listEl.scrollTop > 0) {
+          locked = false;
+          dragging = false;
+          return;
+        }
+        startY = t.clientY;
+        startX = t.clientX;
+        lastY = startY;
+        lastT = Date.now();
+        dy = 0;
+        dragging = false;
+        locked = true;
+      }
+
+      function onMove(e) {
+        if (!locked || !e.touches || e.touches.length !== 1) return;
+        var t = e.touches[0];
+        var moveY = t.clientY - startY;
+        var moveX = t.clientX - startX;
+        if (!dragging) {
+          if (Math.abs(moveX) > Math.abs(moveY) && Math.abs(moveX) > 8) {
+            locked = false;
+            return;
+          }
+          if (moveY < 6) return;
+          if (!fromChrome && listEl && listEl.scrollTop > 0) {
+            locked = false;
+            return;
+          }
+          dragging = true;
+          panel.classList.add('is-dragging');
+        }
+        e.preventDefault();
+        dy = moveY;
+        lastY = t.clientY;
+        lastT = Date.now();
+        setOffset(dy);
+      }
+
+      function onEnd() {
+        if (!locked && !dragging) return;
+        var velocity = 0;
+        var dt = Date.now() - lastT;
+        if (dt > 0 && dt < 80) velocity = (lastY - startY) / Math.max(dt, 1);
+        var shouldClose = dragging && (dy > 90 || velocity > 0.55);
+        locked = false;
+        if (shouldClose) {
+          panel.classList.remove('is-dragging');
+          panel.style.transform = 'translateY(110%)';
+          if (sheetEl) sheetEl.style.opacity = '0';
+          close();
+          return;
+        }
+        if (dragging) resetOffset();
+        dragging = false;
+        dy = 0;
+      }
+
+      panel.addEventListener('touchstart', onStart, { passive: true });
+      panel.addEventListener('touchmove', onMove, { passive: false });
+      panel.addEventListener('touchend', onEnd);
+      panel.addEventListener('touchcancel', onEnd);
+    }
+
     function openSheet() {
       if (sheetEl) sheetEl.remove();
       sheetEl = document.createElement('div');
@@ -248,7 +343,10 @@
           '<div class="boso-pselect-sheet__list"></div>' +
         '</div>';
       sheetEl.querySelector('.boso-pselect-sheet__title').textContent = placeholder;
-      fillList(sheetEl.querySelector('.boso-pselect-sheet__list'));
+      var listEl = sheetEl.querySelector('.boso-pselect-sheet__list');
+      var panel = sheetEl.querySelector('.boso-pselect-sheet__panel');
+      fillList(listEl);
+      bindSheetSwipe(panel, listEl);
       sheetEl.addEventListener('click', function (e) {
         if (e.target && e.target.getAttribute('data-close') === '1') close();
       });
