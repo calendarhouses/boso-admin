@@ -809,12 +809,18 @@
         .sms-template-card[data-sms-tpl="payment"] .sms-template-card__icon { background: #EFF6FF; color: #1D4ED8; }
         .sms-template-card[data-sms-tpl="birthday"] .sms-template-card__icon { background: #FFF7ED; color: #C2410C; }
         .bday-pill {
-            display: inline-flex; align-items: center; margin-left: 6px; padding: 1px 7px;
-            border-radius: 999px; font-size: 9px; font-weight: 800; letter-spacing: 0.04em;
-            text-transform: uppercase; color: #7C2D12;
+            display: inline-flex; align-items: center; justify-content: center;
+            margin-left: 6px; flex-shrink: 0; color: #C2410C;
             background: linear-gradient(180deg, #FFF7ED 0%, #FFEDD5 100%);
-            border: 1px solid rgba(194, 65, 12, 0.22); flex-shrink: 0;
+            border: 1px solid rgba(194, 65, 12, 0.22);
         }
+        .bday-pill--icon { width: 16px; height: 16px; border-radius: 999px; padding: 0; }
+        .bday-pill--icon svg { width: 10px; height: 10px; display: block; }
+        .bday-pill--label {
+            gap: 4px; padding: 2px 8px; border-radius: 999px; font-size: 11px; font-weight: 700;
+            color: #7C2D12; white-space: nowrap;
+        }
+        .bday-pill--label svg { width: 11px; height: 11px; flex-shrink: 0; }
         .sms-template-card__titles { flex: 1; min-width: 0; }
         .sms-template-card__titles strong { display: block; font-size: 14px; }
         .sms-template-card__titles span { display: block; font-size: 11px; color: #6B7280; margin-top: 2px; }
@@ -1846,7 +1852,7 @@
                         <span class="form-section-title">Гість</span>
                         <div class="form-group"><label>Ім'я та Прізвище:</label><input type="text" id="adminName" required></div>
                         <div class="form-group">
-                            <label>День народження <span style="font-weight:500;color:#9CA3AF;text-transform:none;">(за бажанням)</span></label>
+                            <label>День народження</label>
                             <div style="display:flex; gap:8px;">
                                 <select id="adminBdayDay" style="flex:1; height:46px; border:1px solid #D1D5DB; border-radius:12px; padding:0 10px; background:#F9FAFB; font-size:14px;">
                                     <option value="">День</option>
@@ -2509,12 +2515,20 @@
             return mmdd === (String(now.getMonth() + 1).padStart(2, '0') + '-' + String(now.getDate()).padStart(2, '0'));
         }
 
+        function birthdayCakeIconSvg() {
+            return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v3"/><path d="M12 6c.8 0 1.5-.7 1.5-1.5S12.8 3 12 3s-1.5.7-1.5 1.5S11.2 6 12 6z"/><path d="M4 14h16v6a1 1 0 01-1 1H5a1 1 0 01-1-1v-6z"/><path d="M4 14c0-2.2 1.8-4 4-4h8c2.2 0 4 1.8 4 4"/><path d="M8 14v-1.5M12 14v-1.5M16 14v-1.5"/></svg>';
+        }
+        function shouldShowBirthdayBadge(booking) {
+            if (!booking || !booking.birthday) return false;
+            return birthdayFallsInStay(booking.birthday, booking.checkIn, booking.checkOut) || isBirthdayToday(booking.birthday);
+        }
         function birthdayBadgeHtml(booking) {
-            if (!booking || !booking.birthday) return '';
-            if (birthdayFallsInStay(booking.birthday, booking.checkIn, booking.checkOut) || isBirthdayToday(booking.birthday)) {
-                return '<span class="bday-pill" title="День народження">ДН</span>';
-            }
-            return '';
+            if (!shouldShowBirthdayBadge(booking)) return '';
+            return '<span class="bday-pill bday-pill--icon" title="День народження">' + birthdayCakeIconSvg() + '</span>';
+        }
+        function birthdayBadgeLabelHtml(booking) {
+            if (!shouldShowBirthdayBadge(booking)) return '';
+            return '<span class="bday-pill bday-pill--label" title="День народження">' + birthdayCakeIconSvg() + '<span>День народження</span></span>';
         }
 
         function countSmsSegmentsUi(text) {
@@ -6212,7 +6226,7 @@ async function bosoSendRemainderPaymentSms() {
                 checkOut: booking.checkOut
             };
 
-            document.getElementById('drawerTitle').innerHTML = `Деталі броні${birthdayBadgeHtml(booking)}`;
+            document.getElementById('drawerTitle').innerHTML = `Деталі броні${birthdayBadgeLabelHtml(booking)}`;
             document.getElementById('adminDeleteBtn').style.display = 'flex';
             document.getElementById('adminResendTgBtn').style.display = 'flex';
             document.getElementById('adminName').value = String(booking.name).replace(' (Ручна бронь)', '');
